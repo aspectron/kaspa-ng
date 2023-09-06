@@ -38,12 +38,20 @@ impl Unlock {
 
         if let Some(message) = &self.message {
             
+
+
+            
+            
             ui.label(" ");
-            ui.add(egui::Label::new(message));
+            // ui.add(egui::Label::new(message));
+            // ui.label(egui::RichText::new(message).heading().color(egui::Color32::from_rgb(255, 255, 255)));
+            // ui.label(egui::RichText::new(message).heading().color(egui::Color32::from_rgb(255, 128, 128)));
+            ui.label(egui::RichText::new(message).color(egui::Color32::from_rgb(255, 128, 128)));
             ui.label(" ");
         }
 
-        ui.add(egui::Label::new("Password"));
+        // ui.add(egui::Label::new("Password"));
+        ui.label(" ");
         ui.label(" ");
 
         ui.add_sized(size, TextEdit::singleline(&mut self.secret).hint_text("Enter Password...").password(true).vertical_align(Align::Center));
@@ -66,9 +74,13 @@ impl Unlock {
 impl SectionT for Unlock {
     fn render(&mut self, _wallet : &mut Wallet, _ctx: &egui::Context, _frame: &mut eframe::Frame, ui : &mut egui::Ui) {
 
-            ui.heading("Unlock");
-            ui.separator();
+            // ui.horizontal_centered(|ui| {
+
+            //     ui.heading("Unlock");
+            // });
             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                ui.heading("Unlock your wallet");
+                ui.separator();
                 match self.state {
                     State::Locked => self.render_locked(ui),
                     State::Unlocking => self.render_unlocking(ui),
