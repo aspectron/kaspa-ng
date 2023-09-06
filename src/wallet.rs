@@ -1,5 +1,16 @@
-use std::sync::Arc;
-use kaspa_wallet_core::runtime::Wallet;
+// use std::sync::Arc;
+// use workflow_core::channel::Channel;
+use crate::imports::*;
+use runtime::Wallet;
+
+pub enum Section {
+    Overview,
+    Send,
+    Deposit,
+    Transactions,
+    Settings
+}
+
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 // #[derive(serde::Deserialize, serde::Serialize)]
@@ -15,6 +26,8 @@ pub struct KaspaWallet {
     
     // #[serde(skip)]
     wallet: Arc<Wallet>,
+
+    events : Channel<Events>,
 
 }
 
@@ -54,11 +67,30 @@ impl KaspaWallet {
             label: "Hello World!".to_owned(),
             value: 2.7, 
             wallet : Arc::new(wallet),
+            events : Channel::unbounded(),
         }
 
 
         // Default::default()
     }
+
+    // fn handle_events(&mut self) {
+    //     while let Ok(event) = self.events.try_recv() {
+    //         match event {
+    //             Events::TryUnlock(_secret) => {
+    //                 // self.section = Section::Overview;
+    //             },
+    //             Events::UnlockSuccess => {
+
+    //             },
+    //             Events::UnlockFailure => {
+
+    //             },
+    //             _ => unimplemented!()
+    //         }
+    //     }        
+    // }
+
 }
 
 impl eframe::App for KaspaWallet {
@@ -70,6 +102,14 @@ impl eframe::App for KaspaWallet {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+
+        // self.handle_events();
+        while let Ok(event) = self.events.try_recv() {
+            event.handle(self).unwrap_or_else(|err|{
+                panic!("Failed to handle event `{}` - {err}", event.info());
+            })
+        }
+
         let Self { label: _, value: _, .. } = self;
 
         // - TODO - TRY LISTEN TO WALLET EVENTS AND UPDATE UI
@@ -140,4 +180,5 @@ impl eframe::App for KaspaWallet {
             });
         }
     }
+
 }

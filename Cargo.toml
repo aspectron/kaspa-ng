@@ -9,7 +9,7 @@ kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branc
 workflow-core = "0.6.0"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
-
+thiserror = "1.0.47"
 
 egui = "0.22.0"
 eframe = { version = "0.22.0", default-features = false, features = [
