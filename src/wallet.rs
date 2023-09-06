@@ -88,47 +88,29 @@ impl Wallet {
         }
 
 
-        // Default::default()
     }
 
-    // pub fn get<T>(&self, section : Section) -> Rc<RefCell<T>> where T : SectionT {
-    // pub fn get<T>(&self, section : Section) -> &mut T where T : SectionT {
-    //     let section = self.sections.get(&section).unwrap().clone();
-    //     section.borrow_mut().downcast_mut::<T>().unwrap()
-    //     // let bird: Box<Bird> = animal.downcast::<Bird>().ok().unwrap();
-    // }
-
-
-    pub fn get<T: Any>(&self, section : Section)->Ref<'_, T> {
-    // pub fn get<T: SectionT>(&self, section : Section)->Ref<'_, T> {
-        //let cell = self.sections.get(&section).unwrap().clone();
-        // cell.downcast_rc().unwrap()
-        //let r = cell.borrow();
-        //RefCell::new((&(*self.sections.get(&section).unwrap().borrow())).as_any2().downcast_ref::<T>().unwrap()).borrow()
-        //self.sections.get(&section).unwrap().borrow().as_any2().downcast_ref::<&'a T>().unwrap()
-        self.sections.get(&section).unwrap().as_any().downcast_ref::<RefCell<T>>().unwrap().borrow()
-        // Ref::from_raw(r)
-        //RefCell::new((*r).as_any2().downcast_ref::<T>().unwrap()).borrow()
-        // if (*r).type_id() == TypeId::of::<T>() {
-        //     Ref::map(r, |x| x.as_any2().downcast_ref::<T>().unwrap())
-        // } else {
-        //     panic!("Failed to get section")
-        // }
+    pub fn get<T>(&self, section: Section) -> Ref<'_, T>
+    where
+        T: SectionT + 'static,
+    {
+        let cell = self.sections.get(&section).unwrap();
+        Ref::map(cell.borrow(), |r| {
+            (r).as_any().downcast_ref::<T>().expect("unable to downcast section")
+        })
     }
+
+    pub fn get_mut<T>(&mut self, section: Section) -> RefMut<'_, T>
+    where
+        T: SectionT + 'static,
+    {
+        let cell = self.sections.get_mut(&section).unwrap();
+        RefMut::map(cell.borrow_mut(), |r| {
+            (r).as_any_mut().downcast_mut::<T>().expect("unable to downcast_mut section")
+        })
+    }
+
     
-    // pub fn get_mut<T: Any>(cell: &RefCell<dyn Any>)->Option<RefMut<T>> {
-    pub fn get_mut<T: SectionT>(&self, section : Section)->RefMut<'_, T> {
-        // let cell = self.sections.get(&section).unwrap().clone();
-        // let r = cell.borrow_mut();
-        // // (*r).downcast_mut().unwrap()
-        // if (*r).type_id() == TypeId::of::<T>() {
-        //     RefMut::map(r, |x| x.as_any().downcast_mut::<T>().unwrap())
-        // } else {
-        //     panic!("Failed to get section") 
-        // }
-        self.sections.get(&section).unwrap().as_any().downcast_ref::<RefCell<T>>().unwrap().borrow_mut()
-    }
-
 }
 
 impl eframe::App for Wallet {
@@ -139,7 +121,7 @@ impl eframe::App for Wallet {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) { 
 
         // self.handle_events();
         while let Ok(event) = self.events.try_recv() {

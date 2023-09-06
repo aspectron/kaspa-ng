@@ -20,14 +20,11 @@ pub use unlock::Unlock;
 use crate::imports::*;
 
 // pub trait SectionT : DowncastSync {
-pub trait SectionT : Any {
+pub trait SectionT : Downcast {
     fn render(&mut self, _wallet : &mut Wallet, _ctx: &egui::Context, _frame: &mut eframe::Frame, _ui : &mut egui::Ui);
-
-    //fn as_any2<'a>(&'a self) -> &(dyn Any+ 'a){ &self }
 }
 
-//impl_downcast!(dyn SectionT);
-//impl_downcast!(SectionT);
+impl_downcast!(SectionT);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Section {
