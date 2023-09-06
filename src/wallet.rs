@@ -101,28 +101,32 @@ impl Wallet {
 
     pub fn get<T: Any>(&self, section : Section)->Ref<'_, T> {
     // pub fn get<T: SectionT>(&self, section : Section)->Ref<'_, T> {
-        let cell = self.sections.get(&section).unwrap().clone();
+        //let cell = self.sections.get(&section).unwrap().clone();
         // cell.downcast_rc().unwrap()
-        let r = cell.borrow();
+        //let r = cell.borrow();
+        //RefCell::new((&(*self.sections.get(&section).unwrap().borrow())).as_any2().downcast_ref::<T>().unwrap()).borrow()
+        //self.sections.get(&section).unwrap().borrow().as_any2().downcast_ref::<&'a T>().unwrap()
+        self.sections.get(&section).unwrap().as_any().downcast_ref::<RefCell<T>>().unwrap().borrow()
         // Ref::from_raw(r)
-        // (*r).downcast_ref().unwrap()
-        if (*r).type_id() == TypeId::of::<T>() {
-            Ref::map(r, |x| x.downcast_ref::<T>().unwrap())
-        } else {
-            panic!("Failed to get section")
-        }
+        //RefCell::new((*r).as_any2().downcast_ref::<T>().unwrap()).borrow()
+        // if (*r).type_id() == TypeId::of::<T>() {
+        //     Ref::map(r, |x| x.as_any2().downcast_ref::<T>().unwrap())
+        // } else {
+        //     panic!("Failed to get section")
+        // }
     }
     
     // pub fn get_mut<T: Any>(cell: &RefCell<dyn Any>)->Option<RefMut<T>> {
     pub fn get_mut<T: SectionT>(&self, section : Section)->RefMut<'_, T> {
-        let cell = self.sections.get(&section).unwrap().clone();
-        let r = cell.borrow_mut();
-        // (*r).downcast_mut().unwrap()
-        if (*r).type_id() == TypeId::of::<T>() {
-            RefMut::map(r, |x| x.as_any().downcast_mut::<T>().unwrap())
-        } else {
-            panic!("Failed to get section")
-        }
+        // let cell = self.sections.get(&section).unwrap().clone();
+        // let r = cell.borrow_mut();
+        // // (*r).downcast_mut().unwrap()
+        // if (*r).type_id() == TypeId::of::<T>() {
+        //     RefMut::map(r, |x| x.as_any().downcast_mut::<T>().unwrap())
+        // } else {
+        //     panic!("Failed to get section") 
+        // }
+        self.sections.get(&section).unwrap().as_any().downcast_ref::<RefCell<T>>().unwrap().borrow_mut()
     }
 
 }
