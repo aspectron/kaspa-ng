@@ -1,6 +1,7 @@
 use crate::imports::*;
 use crate::result::Result;
 
+#[derive(Debug)]
 pub enum Events {
     TryUnlock(Secret),
     UnlockSuccess,
@@ -32,10 +33,14 @@ impl Events {
         }
     }
 
-    pub fn handle(&self, _wallet : &mut KaspaWallet) -> Result<()> {
+    pub fn handle(&self, wallet : &mut Wallet) -> Result<()> {
         match self {
             Events::TryUnlock(_secret) => {
                 // self.section = Section::Overview;
+                let mut unlock = wallet.get_mut::<section::Unlock>(Section::Unlock);
+                unlock.message = Some("Error unlocking wallet...".to_string());
+                // unlock.state = section::unlock::State::Locked;
+                unlock.lock();
             },
             Events::UnlockSuccess => {
 

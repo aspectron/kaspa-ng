@@ -8,9 +8,9 @@ fn main() -> eframe::Result<()> {
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "kaspa egui",
+        "Kaspa Flow",
         native_options,
-        Box::new(|cc| Box::new(kaspa_egui::KaspaWallet::new(cc))),
+        Box::new(|cc| Box::new(kaspa_egui::Wallet::new(cc))),
     )
 }
 
@@ -27,7 +27,7 @@ fn main() {
             .start(
                 "kaspa-wallet",
                 web_options,
-                Box::new(|cc| Box::new(kaspa_egui::KaspaWallet::new(cc))),
+                Box::new(|cc| Box::new(kaspa_egui::Wallet::new(cc))),
             )
             .await
             .expect("failed to start eframe");

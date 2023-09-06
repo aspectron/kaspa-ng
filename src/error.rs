@@ -5,7 +5,9 @@ use thiserror::Error;
 pub enum Error {
     #[error("{0}")]
     Custom(String),
-    
+
+    // #[error("downcast error for {0}")]
+    // DowncastError(String),
 }
 
 impl Error {
@@ -13,3 +15,9 @@ impl Error {
         Error::Custom(msg.into())
     }
 }
+
+// impl<T> From<downcast::DowncastError<T>> for Error {
+//     fn from(e: downcast::DowncastError<T>) -> Self {
+//         Error::DowncastError(e.to_string())
+//     }
+// }

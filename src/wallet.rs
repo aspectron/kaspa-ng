@@ -1,21 +1,12 @@
 // use std::sync::Arc;
 // use workflow_core::channel::Channel;
 use crate::imports::*;
-use runtime::Wallet;
-
-pub enum Section {
-    Overview,
-    Send,
-    Deposit,
-    Transactions,
-    Settings
-}
 
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 // #[derive(serde::Deserialize, serde::Serialize)]
 // #[serde(default)] // if we add new fields, give them default values when deserializing old state
-pub struct KaspaWallet {
+pub struct Wallet {
     // Example stuff:
     label: String,
 
@@ -25,9 +16,17 @@ pub struct KaspaWallet {
     
     
     // #[serde(skip)]
-    wallet: Arc<Wallet>,
+    wallet: Arc<runtime::Wallet>,
 
     events : Channel<Events>,
+
+    section : Section,
+    // sections : HashMap<Section, Rc<RefCell<dyn Any>>>,
+    sections : HashMap<Section, Rc<RefCell<dyn SectionT>>>,
+    // accounts : sections::Accounts,
+    // deposit : sections::Deposit,
+    // overview : sections::Overview,
+    // request : sections::Request,
 
 }
 
@@ -41,7 +40,7 @@ pub struct KaspaWallet {
 //     }
 // }
 
-impl KaspaWallet {
+impl Wallet {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         // This is also where you can customize the look and feel of egui using
@@ -53,47 +52,82 @@ impl KaspaWallet {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        let storage = Wallet::local_store().unwrap_or_else(|e| {
+        let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
 
 
-        let wallet = Wallet::try_new(storage, None).unwrap_or_else(|e| {
+        let wallet = runtime::Wallet::try_new(storage, None).unwrap_or_else(|e| {
             panic!("Failed to create wallet instance: {}", e);
         });
+
+        let events = Channel::unbounded();
+
+        let sections = {
+            // let mut sections = HashMap::<Section,Rc<RefCell<dyn Any>>>::new();
+            let mut sections = HashMap::<Section,Rc<RefCell<dyn SectionT>>>::new();
+            sections.insert(Section::Accounts, Rc::new(RefCell::new(section::Accounts::new(events.sender.clone()))));
+            sections.insert(Section::Deposit, Rc::new(RefCell::new(section::Deposit::new(events.sender.clone()))));
+            sections.insert(Section::Overview, Rc::new(RefCell::new(section::Overview::new(events.sender.clone()))));
+            sections.insert(Section::Request, Rc::new(RefCell::new(section::Request::new(events.sender.clone()))));
+            sections.insert(Section::Send, Rc::new(RefCell::new(section::Send::new(events.sender.clone()))));
+            sections.insert(Section::Settings, Rc::new(RefCell::new(section::Settings::new(events.sender.clone()))));
+            sections.insert(Section::Transactions, Rc::new(RefCell::new(section::Transactions::new(events.sender.clone()))));
+            sections.insert(Section::Unlock, Rc::new(RefCell::new(section::Unlock::new(events.sender.clone()))));
+            sections
+        };
 
         Self {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7, 
             wallet : Arc::new(wallet),
-            events : Channel::unbounded(),
+            events,
+            section: Section::Unlock,
+            sections,
         }
 
 
         // Default::default()
     }
 
-    // fn handle_events(&mut self) {
-    //     while let Ok(event) = self.events.try_recv() {
-    //         match event {
-    //             Events::TryUnlock(_secret) => {
-    //                 // self.section = Section::Overview;
-    //             },
-    //             Events::UnlockSuccess => {
-
-    //             },
-    //             Events::UnlockFailure => {
-
-    //             },
-    //             _ => unimplemented!()
-    //         }
-    //     }        
+    // pub fn get<T>(&self, section : Section) -> Rc<RefCell<T>> where T : SectionT {
+    // pub fn get<T>(&self, section : Section) -> &mut T where T : SectionT {
+    //     let section = self.sections.get(&section).unwrap().clone();
+    //     section.borrow_mut().downcast_mut::<T>().unwrap()
+    //     // let bird: Box<Bird> = animal.downcast::<Bird>().ok().unwrap();
     // }
+
+
+    pub fn get<T: Any>(&self, section : Section)->Ref<'_, T> {
+    // pub fn get<T: SectionT>(&self, section : Section)->Ref<'_, T> {
+        let cell = self.sections.get(&section).unwrap().clone();
+        // cell.downcast_rc().unwrap()
+        let r = cell.borrow();
+        // Ref::from_raw(r)
+        // (*r).downcast_ref().unwrap()
+        if (*r).type_id() == TypeId::of::<T>() {
+            Ref::map(r, |x| x.downcast_ref::<T>().unwrap())
+        } else {
+            panic!("Failed to get section")
+        }
+    }
+    
+    // pub fn get_mut<T: Any>(cell: &RefCell<dyn Any>)->Option<RefMut<T>> {
+    pub fn get_mut<T: SectionT>(&self, section : Section)->RefMut<'_, T> {
+        let cell = self.sections.get(&section).unwrap().clone();
+        let r = cell.borrow_mut();
+        // (*r).downcast_mut().unwrap()
+        if (*r).type_id() == TypeId::of::<T>() {
+            RefMut::map(r, |x| x.as_any().downcast_mut::<T>().unwrap())
+        } else {
+            panic!("Failed to get section")
+        }
+    }
 
 }
 
-impl eframe::App for KaspaWallet {
+impl eframe::App for Wallet {
     /// Called by the frame work to save state before shutdown.
     // fn save(&mut self, storage: &mut dyn eframe::Storage) {
     //     eframe::set_value(storage, eframe::APP_KEY, self);
@@ -101,7 +135,7 @@ impl eframe::App for KaspaWallet {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
 
         // self.handle_events();
         while let Ok(event) = self.events.try_recv() {
@@ -125,7 +159,7 @@ impl eframe::App for KaspaWallet {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Quit").clicked() {
-                        _frame.close();
+                        frame.close();
                     }
                 });
             });
@@ -158,16 +192,30 @@ impl eframe::App for KaspaWallet {
         //         });
         //     });
         // });
+        let mut style = (*ctx.style()).clone();
+
+
+        // println!("style: {:?}", style.text_styles);
+        // style.text_styles.insert(egui::TextStyle::Button, egui::FontId::new(24.0, egui::FontFamily::Proportional));
+        style.text_styles.insert(egui::TextStyle::Body, egui::FontId::new(18.0, egui::FontFamily::Proportional));
+        style.text_styles.insert(egui::TextStyle::Button, egui::FontId::new(18.0, egui::FontFamily::Proportional));
+        style.text_styles.insert(egui::TextStyle::Monospace, egui::FontId::new(18.0, egui::FontFamily::Proportional));
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            ui.style_mut().text_styles = style.text_styles;
+
             // The central panel the region left after adding TopPanel's and SidePanel's
 
-            ui.heading("Kaspa Wallet");
+            // ui.heading("Kaspa Wallet");
             // ui.hyperlink("https://github.com/emilk/eframe_template");
             // ui.add(egui::github_link_file!(
             //     "https://github.com/emilk/eframe_template/blob/master/",
             //     "Source code."
             // ));
+
+            let section = self.sections.get(&self.section).unwrap().clone();
+            section.borrow_mut().render(self, ctx, frame, ui);
+
             egui::warn_if_debug_build(ui);
         });
 
