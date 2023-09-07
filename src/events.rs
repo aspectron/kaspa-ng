@@ -5,7 +5,7 @@ use crate::result::Result;
 pub enum Events {
     TryUnlock(Secret),
     UnlockSuccess,
-    UnlockFailure,
+    UnlockFailure { message : String },
     Lock,
     Send,
     Deposit,
@@ -20,16 +20,16 @@ impl Events {
     pub fn info(&self) -> String {
         match self {
             Events::TryUnlock(_) => "TryUnlock".to_string(),
-            Events::UnlockSuccess => "UnlockSuccess".to_string(),
-            Events::UnlockFailure => "UnlockFailure".to_string(),
-            Events::Lock => "Lock".to_string(),
-            Events::Send => "Send".to_string(),
-            Events::Deposit => "Deposit".to_string(),
-            Events::Overview => "Overview".to_string(),
-            Events::Transactions => "Transactions".to_string(),
-            Events::Accounts => "Accounts".to_string(),
-            Events::Settings => "Settings".to_string(),
-            Events::Exit => "Exit".to_string(),
+            Events::UnlockSuccess {..} => "UnlockSuccess".to_string(),
+            Events::UnlockFailure {..} => "UnlockFailure".to_string(),
+            Events::Lock {..} => "Lock".to_string(),
+            Events::Send {..} => "Send".to_string(),
+            Events::Deposit {..} => "Deposit".to_string(),
+            Events::Overview {..} => "Overview".to_string(),
+            Events::Transactions {..} => "Transactions".to_string(),
+            Events::Accounts {..} => "Accounts".to_string(),
+            Events::Settings {..} => "Settings".to_string(),
+            Events::Exit {..} => "Exit".to_string(),
         }
     }
 
@@ -41,9 +41,9 @@ impl Events {
                 unlock.lock();
             },
             Events::UnlockSuccess => {
-
+                wallet.select(Section::Overview);
             },
-            Events::UnlockFailure => {
+            Events::UnlockFailure {..} => {
 
             },
             _ => unimplemented!()

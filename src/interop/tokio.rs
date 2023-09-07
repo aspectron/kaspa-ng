@@ -92,7 +92,7 @@ impl AsyncRuntime {
             .collect::<Vec<tokio::task::JoinHandle<Result<()>>>>();
 
         // wait for at least one service to return
-        let (result, idx, remaining_futures) = select_all(futures).await;
+        let (result, _idx, remaining_futures) = select_all(futures).await;
         // trace!("async-runtime worker had service {} returning", self.services.lock().unwrap()[idx].clone().ident());
         // if at least one service yields an error, initiate global shutdown
         // this will cause signal_exit() to be executed externally (by Core invoking `stop()`)

@@ -86,6 +86,16 @@ impl Wallet {
 
     }
 
+    // pub fn 
+
+    pub fn select(&mut self, section : Section) {
+        self.section = section;
+    }
+
+    pub fn sender(&self) -> Sender<Events> {
+        self.events.sender.clone()
+    }
+
     pub fn wallet(&self) -> &Arc<runtime::Wallet> {
         self.interop.wallet()
     }

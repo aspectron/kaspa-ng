@@ -8,6 +8,7 @@ use crate::interop::AsyncService;
 #[derive(Debug)]
 pub enum Events {
     Noop,
+    Open { name : Option<String>, secret : Secret },
     Exit,
 }
 
@@ -47,6 +48,11 @@ impl AsyncService for WalletService {
 
         let this = self.clone();
         Box::pin(async move {
+
+            println!("starting wallet...");
+            this.wallet.start().await.unwrap_or_else(|err| {
+                println!("Wallet start error: {:?}", err);
+            });
 
             loop {
                 select! {
@@ -92,7 +98,12 @@ impl WalletService {
         match event {
             Events::Noop => {},
             Events::Exit => {
+                println!("stopping wallet...");
+                self.wallet.stop().await?;
                 self.shutdown.store(true, Ordering::SeqCst);
+            }
+            Events::Open { name, secret } => {
+                self.wallet.load(secret.0, name).await?;
             }
         }
 

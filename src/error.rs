@@ -6,6 +6,9 @@ pub enum Error {
     #[error("{0}")]
     Custom(String),
 
+    #[error(transparent)]
+    WalletError(#[from] kaspa_wallet_core::error::Error),
+    
     // #[error("downcast error for {0}")]
     // DowncastError(String),
 }
