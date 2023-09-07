@@ -24,15 +24,15 @@ pub trait SectionT : Downcast {
 
 impl_downcast!(SectionT);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Section {
-    Accounts,
-    Deposit,
-    Overview,
-    Request,
-    Send,
-    Settings,
-    Transactions,
-    Unlock,
-}
+// #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+// pub enum Section {
+//     Accounts,
+//     Deposit,
+//     Overview,
+//     Request,
+//     Send,
+//     Settings,
+//     Transactions,
+//     Unlock,
+// }
 

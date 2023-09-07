@@ -36,12 +36,12 @@ impl Events {
     pub fn handle(&self, wallet : &mut Wallet) -> Result<()> {
         match self {
             Events::TryUnlock(_secret) => {
-                let mut unlock = wallet.get_mut::<section::Unlock>(Section::Unlock);
+                let mut unlock = wallet.get_mut::<section::Unlock>();
                 unlock.message = Some("Error unlocking wallet...".to_string());
                 unlock.lock();
             },
             Events::UnlockSuccess => {
-                wallet.select(Section::Overview);
+                wallet.select::<section::Overview>();
             },
             Events::UnlockFailure {..} => {
 

@@ -10,11 +10,11 @@ use crate::interop::Interop;
 // #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct Wallet {
     // Example stuff:
-    label: String,
+    // label: String,
 
     // this how you opt-out of serialization of a member
     // #[serde(skip)]
-    value: f32,
+    // value: f32,
     
     
     // #[serde(skip)]
@@ -23,9 +23,9 @@ pub struct Wallet {
 
     events : Channel<Events>,
 
-    section : Section,
+    section : TypeId,
     // sections : HashMap<Section, Rc<RefCell<dyn Any>>>,
-    sections : HashMap<Section, Rc<RefCell<dyn SectionT>>>,
+    sections : HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
     // accounts : sections::Accounts,
     // deposit : sections::Deposit,
     // overview : sections::Overview,
@@ -42,6 +42,28 @@ pub struct Wallet {
 //         }
 //     }
 // }
+
+trait HashMapTypeIdExtension<T> {
+    // fn insert_typeid<T>(&mut self, value: Rc<RefCell<T>>)
+    fn insert_typeid(&mut self, value: Rc<RefCell<T>>)
+    where
+        T: SectionT + 'static;
+}
+
+// impl<V> HashMapTypeIdExtension for HashMap<TypeId,V> 
+// impl<T> HashMapTypeIdExtension<T> for HashMap<TypeId,Rc<RefCell<T>>> 
+impl<T> HashMapTypeIdExtension<T> for HashMap<TypeId,Rc<RefCell<dyn SectionT>>> 
+where T : SectionT
+{
+    // fn insert_typeid<T>(&mut self, value: Rc<RefCell<T>>)
+    fn insert_typeid(&mut self, value: Rc<RefCell<T>>)
+    // where
+    // K: Eq + Hash + 'static,
+        // T: SectionT + 'static,
+    {
+        self.insert(TypeId::of::<T>(), value);
+    }
+}
 
 impl Wallet {
     /// Called once before the first frame.
@@ -60,26 +82,46 @@ impl Wallet {
 
         let sections = {
             // let mut sections = HashMap::<Section,Rc<RefCell<dyn Any>>>::new();
-            let mut sections = HashMap::<Section,Rc<RefCell<dyn SectionT>>>::new();
-            sections.insert(Section::Accounts, Rc::new(RefCell::new(section::Accounts::new(events.sender.clone()))));
-            sections.insert(Section::Deposit, Rc::new(RefCell::new(section::Deposit::new(events.sender.clone()))));
-            sections.insert(Section::Overview, Rc::new(RefCell::new(section::Overview::new(events.sender.clone()))));
-            sections.insert(Section::Request, Rc::new(RefCell::new(section::Request::new(events.sender.clone()))));
-            sections.insert(Section::Send, Rc::new(RefCell::new(section::Send::new(events.sender.clone()))));
-            sections.insert(Section::Settings, Rc::new(RefCell::new(section::Settings::new(events.sender.clone()))));
-            sections.insert(Section::Transactions, Rc::new(RefCell::new(section::Transactions::new(events.sender.clone()))));
-            sections.insert(Section::Unlock, Rc::new(RefCell::new(section::Unlock::new(events.sender.clone()))));
+            let mut sections = HashMap::<TypeId,Rc<RefCell<dyn SectionT>>>::new();
+            sections.insert_typeid(Rc::new(RefCell::new(section::Accounts::new(events.sender.clone()))));
+            sections.insert_typeid(Rc::new(RefCell::new(section::Deposit::new(events.sender.clone()))));
+            sections.insert_typeid(Rc::new(RefCell::new(section::Overview::new(events.sender.clone()))));
+            sections.insert_typeid(Rc::new(RefCell::new(section::Request::new(events.sender.clone()))));
+            sections.insert_typeid(Rc::new(RefCell::new(section::Send::new(events.sender.clone()))));
+            sections.insert_typeid(Rc::new(RefCell::new(section::Settings::new(events.sender.clone()))));
+            sections.insert_typeid(Rc::new(RefCell::new(section::Transactions::new(events.sender.clone()))));
+            sections.insert_typeid(Rc::new(RefCell::new(section::Unlock::new(events.sender.clone()))));
+            // sections.insert_typeid(Rc::new(RefCell::new(section::Accounts::new(events.sender.clone()))));
+            // sections.insert(TypeId::of::<section::Accounts>(), Rc::new(RefCell::new(section::Accounts::new(events.sender.clone()))));
+            // sections.insert(Section::Deposit, Rc::new(RefCell::new(section::Deposit::new(events.sender.clone()))));
+            // sections.insert(Section::Overview, Rc::new(RefCell::new(section::Overview::new(events.sender.clone()))));
+            // sections.insert(Section::Request, Rc::new(RefCell::new(section::Request::new(events.sender.clone()))));
+            // sections.insert(Section::Send, Rc::new(RefCell::new(section::Send::new(events.sender.clone()))));
+            // sections.insert(Section::Settings, Rc::new(RefCell::new(section::Settings::new(events.sender.clone()))));
+            // sections.insert(Section::Transactions, Rc::new(RefCell::new(section::Transactions::new(events.sender.clone()))));
+            // sections.insert(Section::Unlock, Rc::new(RefCell::new(section::Unlock::new(events.sender.clone()))));
             sections
+
+            // let mut sections = HashMap::<Section,Rc<RefCell<dyn SectionT>>>::new();
+            // sections.insert(Section::Accounts, Rc::new(RefCell::new(section::Accounts::new(events.sender.clone()))));
+            // sections.insert(Section::Deposit, Rc::new(RefCell::new(section::Deposit::new(events.sender.clone()))));
+            // sections.insert(Section::Overview, Rc::new(RefCell::new(section::Overview::new(events.sender.clone()))));
+            // sections.insert(Section::Request, Rc::new(RefCell::new(section::Request::new(events.sender.clone()))));
+            // sections.insert(Section::Send, Rc::new(RefCell::new(section::Send::new(events.sender.clone()))));
+            // sections.insert(Section::Settings, Rc::new(RefCell::new(section::Settings::new(events.sender.clone()))));
+            // sections.insert(Section::Transactions, Rc::new(RefCell::new(section::Transactions::new(events.sender.clone()))));
+            // sections.insert(Section::Unlock, Rc::new(RefCell::new(section::Unlock::new(events.sender.clone()))));
+            // sections
         };
 
         Self {
             // Example stuff:
-            label: "Hello World!".to_owned(),
-            value: 2.7, 
+            // label: "Hello World!".to_owned(),
+            // value: 2.7, 
             // wallet : interop.wallet(), //Arc::new(wallet),
             interop,
             events,
-            section: Section::Unlock,
+            section: TypeId::of::<section::Unlock>(),
             sections,
         }
 
@@ -88,8 +130,11 @@ impl Wallet {
 
     // pub fn 
 
-    pub fn select(&mut self, section : Section) {
-        self.section = section;
+    // pub fn select(&mut self, section : Section) -> RefMut<'_, {
+    pub fn select<T>(&mut self) 
+    where T : 'static
+    {
+        self.section = TypeId::of::<T>();
     }
 
     pub fn sender(&self) -> Sender<Events> {
@@ -108,21 +153,24 @@ impl Wallet {
         self.rpc().clone().downcast_arc::<KaspaRpcClient>().expect("unable to downcast DynRpcApi to KaspaRpcClient")
     }
 
-    pub fn get<T>(&self, section: Section) -> Ref<'_, T>
+    // - TODO - USE TYPEID 
+    // if (*r).type_id() == TypeId::of::<T>() {
+
+    pub fn get<T>(&self) -> Ref<'_, T>
     where
         T: SectionT + 'static,
     {
-        let cell = self.sections.get(&section).unwrap();
+        let cell = self.sections.get(&TypeId::of::<T>()).unwrap();
         Ref::map(cell.borrow(), |r| {
             (r).as_any().downcast_ref::<T>().expect("unable to downcast section")
         })
     }
 
-    pub fn get_mut<T>(&mut self, section: Section) -> RefMut<'_, T>
+    pub fn get_mut<T>(&mut self) -> RefMut<'_, T>
     where
         T: SectionT + 'static,
     {
-        let cell = self.sections.get_mut(&section).unwrap();
+        let cell = self.sections.get_mut(&TypeId::of::<T>()).unwrap();
         RefMut::map(cell.borrow_mut(), |r| {
             (r).as_any_mut().downcast_mut::<T>().expect("unable to downcast_mut section")
         })
@@ -148,7 +196,7 @@ impl eframe::App for Wallet {
             })
         }
 
-        let Self { label: _, value: _, .. } = self;
+        // let Self { label: _, value: _, .. } = self;
 
         // - TODO - TRY LISTEN TO WALLET EVENTS AND UPDATE UI
 

@@ -28,7 +28,7 @@ impl Unlock {
         self.state = State::Locked;
     }
 
-    fn render_unlocking(&mut self, ui : &mut Ui, wallet : &mut Wallet) {
+    fn render_unlocking(&mut self, ui : &mut Ui, _wallet : &mut Wallet) {
         ui.heading("Unlocking");
         ui.separator();
         ui.label("Unlocking wallet, please wait...");
@@ -67,21 +67,33 @@ impl Unlock {
             self.state = State::Unlocking;
             // self.sender.try_send(Events::TryUnlock(secret.into())).unwrap();
 
-            let sender = wallet.sender();
-            let wallet = wallet.wallet().clone();
-            // wallet.spawn(|wallet| {
+
+            // wallet.spawn(|wallet| async move {
+            //     wallet.wallet().load(secret,None).await
+            // }).map(|wallet : &mut Wallet, ok| {
+            //     println!("Wallet unlock success: {:?}", ok);
+            //     wallet.select(Section::Overview);
+            // }).or_else(|wallet : &mut Wallet, err| {
+            //     wallet.select(Section::Unlock);
+            //     let s = wallet.get_mut(Section::Unlock);
+            //     // wallet
+            //     println!("Wallet unlock error: {:?}", err);
             // });
 
-            spawn(async move {
-                match wallet.load(secret,None).await {
-                    Ok(_) => {
-                        sender.send(Events::UnlockSuccess).await.unwrap();
-                    },
-                    Err(err) => {
-                        sender.send(Events::UnlockFailure { message : err.to_string() }).await.unwrap();
-                    }
-                }
-            });
+            
+                
+            // let sender = wallet.sender();
+            // let wallet = wallet.wallet().clone();
+            // spawn(async move {
+            //     match wallet.load(secret,None).await {
+            //         Ok(_) => {
+            //             sender.send(Events::UnlockSuccess).await.unwrap();
+            //         },
+            //         Err(err) => {
+            //             sender.send(Events::UnlockFailure { message : err.to_string() }).await.unwrap();
+            //         }
+            //     }
+            // });
             
             // let channel = wallet.spawn(wallet.wallet().load(secret, None));
 

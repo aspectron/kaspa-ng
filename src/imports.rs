@@ -9,9 +9,9 @@ pub use std::any::{Any,TypeId};
 pub use downcast_rs::{impl_downcast, Downcast, DowncastSync};
 pub use std::cell::{RefCell, Ref, RefMut};
 pub use cfg_if::cfg_if;
-pub use futures_util::future::{BoxFuture};
+pub use futures_util::future::BoxFuture;
 
-pub use crate::section::{Section,SectionT};
+pub use crate::section::SectionT;
 pub use crate::events::Events;
 pub use crate::wallet::Wallet;
 pub use crate::secret::Secret;
