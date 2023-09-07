@@ -1,15 +1,20 @@
 pub use kaspa_wallet_core::runtime;
+pub use kaspa_wrpc_client::KaspaRpcClient;
 pub use std::rc::Rc;
-pub use std::sync::Arc;
-pub use workflow_core::channel::{Channel,Sender,Receiver};
+pub use std::sync::{Arc,Mutex};
+pub use workflow_core::channel::{oneshot, Channel,Sender,Receiver};
 pub use std::collections::HashMap;
 pub use egui::Ui;
 pub use std::any::{Any,TypeId};
 pub use downcast_rs::{impl_downcast, Downcast, DowncastSync};
 pub use std::cell::{RefCell, Ref, RefMut};
+pub use cfg_if::cfg_if;
+pub use futures_util::future::{BoxFuture};
 
 pub use crate::section::{Section,SectionT};
 pub use crate::events::Events;
 pub use crate::wallet::Wallet;
 pub use crate::secret::Secret;
 pub use crate::section;
+pub use crate::error::Error;
+pub use crate::result::Result;

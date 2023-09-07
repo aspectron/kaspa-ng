@@ -10,3 +10,4 @@ pub mod result;
 pub mod error;
 pub mod events;
 pub mod secret;
+pub mod interop;

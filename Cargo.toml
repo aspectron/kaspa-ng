@@ -5,14 +5,23 @@ edition = "2021"
 
 
 [dependencies]
-kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
+kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client" }
 workflow-core = "0.6.0"
+workflow-log = "0.6.0"
+cfg-if = "1.0.0"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
 thiserror = "1.0.47"
 derivative = "2.2.0"
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
+futures = { version = "0.3" }
+futures-util = { version = "0.3", default-features = false, features = [
+    "alloc",
+]}
 
 egui = "0.22.0"
 eframe = { version = "0.22.0", default-features = false, features = [
@@ -24,7 +33,10 @@ eframe = { version = "0.22.0", default-features = false, features = [
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1", features = ["sync", "rt-multi-thread"] }
 env_logger = "0.10"
+num_cpus = "1.15.0"
+
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]

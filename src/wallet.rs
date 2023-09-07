@@ -1,7 +1,9 @@
+use kaspa_wallet_core::DynRpcApi;
+
 // use std::sync::Arc;
 // use workflow_core::channel::Channel;
 use crate::imports::*;
-
+use crate::interop::Interop;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 // #[derive(serde::Deserialize, serde::Serialize)]
@@ -16,7 +18,8 @@ pub struct Wallet {
     
     
     // #[serde(skip)]
-    wallet: Arc<runtime::Wallet>,
+    interop : Interop,
+    // wallet: Arc<runtime::Wallet>,
 
     events : Channel<Events>,
 
@@ -42,7 +45,7 @@ pub struct Wallet {
 
 impl Wallet {
     /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, interop : crate::interop::Interop) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -52,14 +55,6 @@ impl Wallet {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
-            panic!("Failed to open local store: {}", e);
-        });
-
-
-        let wallet = runtime::Wallet::try_new(storage, None).unwrap_or_else(|e| {
-            panic!("Failed to create wallet instance: {}", e);
-        });
 
         let events = Channel::unbounded();
 
@@ -81,13 +76,26 @@ impl Wallet {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7, 
-            wallet : Arc::new(wallet),
+            // wallet : interop.wallet(), //Arc::new(wallet),
+            interop,
             events,
             section: Section::Unlock,
             sections,
         }
 
 
+    }
+
+    pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+        self.interop.wallet()
+    }
+
+    pub fn rpc(&self) -> &Arc<DynRpcApi> {
+        self.wallet().rpc()
+    }
+
+    pub fn rpc_client(&self) -> Arc<KaspaRpcClient> {
+        self.rpc().clone().downcast_arc::<KaspaRpcClient>().expect("unable to downcast DynRpcApi to KaspaRpcClient")
     }
 
     pub fn get<T>(&self, section: Section) -> Ref<'_, T>
