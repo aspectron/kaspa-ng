@@ -8,11 +8,16 @@ edition = "2021"
 # kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
 kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
 kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client" }
+kaspa-utils = { path = "../rusty-kaspa/utils" }
 
-workflow-core = "0.6.0"
-workflow-log = "0.6.0"
+# workflow-core = "0.6.0"
+# workflow-log = "0.6.0"
+workflow-log = { path = "../workflow-rs/log" }
+workflow-core = { path = "../workflow-rs/core" }
+
 
 cfg-if = "1.0.0"
 log = "0.4"

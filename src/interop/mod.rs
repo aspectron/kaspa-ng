@@ -3,7 +3,7 @@ mod wasm;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
-        
+
         pub mod signals;
         pub mod kaspad;
 
@@ -27,19 +27,19 @@ pub mod channel;
 pub use channel::Channel;
 
 pub struct Inner {
-    runtime : Arc<AsyncRuntime>,
-    wallet : Arc<WalletService>,
-    executor : Arc<Executor>,
-    channel : channel::Channel<Events>,
+    runtime: Arc<AsyncRuntime>,
+    wallet: Arc<WalletService>,
+    executor: Arc<Executor>,
+    channel: channel::Channel<Events>,
 }
 // #[derive(Default)]
 #[derive(Clone)]
 pub struct Interop {
-    inner : Arc<Inner>
+    inner: Arc<Inner>,
 }
 
 impl Interop {
-    pub fn new(ctx : &egui::Context) -> Self {
+    pub fn new(ctx: &egui::Context) -> Self {
         let events = channel::Channel::unbounded(ctx);
         let runtime = Arc::new(AsyncRuntime::default());
         let executor = Arc::new(Executor::new(events.clone()));
@@ -49,12 +49,16 @@ impl Interop {
         // runtime.spawn();
 
         Self {
-            inner : Arc::new(Inner { channel: events, runtime, wallet, executor })
+            inner: Arc::new(Inner {
+                channel: events,
+                runtime,
+                wallet,
+                executor,
+            }),
         }
     }
 
     pub fn spawn(&self) {
-
         self.inner.runtime.spawn();
     }
 
@@ -78,12 +82,21 @@ impl Interop {
         &self.inner.wallet
     }
 
+    pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+        &self.inner.wallet.wallet
+    }
+
     pub fn executor_service(&self) -> &Arc<Executor> {
         &self.inner.executor
     }
 
     pub fn channel(&self) -> &Channel<Events> {
         &self.inner.channel
+    }
+
+    pub async fn send(&self, msg: Events) -> Result<()> {
+        self.inner.channel.sender.send(msg).await?;
+        Ok(())
     }
 
     pub fn try_send(&self, msg: Events) -> Result<()> {
@@ -94,5 +107,4 @@ impl Interop {
     // pub fn wallet_service(&self) -> &Arc<runtime::Wallet> {
     //     &self.inner.wallet.wallet
     // }
-
 }

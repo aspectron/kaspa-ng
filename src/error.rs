@@ -1,6 +1,5 @@
-
 use thiserror::Error;
-use workflow_core::channel::TrySendError;
+use workflow_core::channel::{SendError, TrySendError};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -9,9 +8,12 @@ pub enum Error {
 
     #[error(transparent)]
     WalletError(#[from] kaspa_wallet_core::error::Error),
-    
+
     #[error(transparent)]
     IoError(#[from] std::io::Error),
+
+    #[error("Channel send() error")]
+    SendError,
 
     #[error("Channel try_send() error")]
     TrySendError,
@@ -22,6 +24,12 @@ pub enum Error {
 impl Error {
     pub fn custom<T: Into<String>>(msg: T) -> Self {
         Error::Custom(msg.into())
+    }
+}
+
+impl<T> From<SendError<T>> for Error {
+    fn from(_: SendError<T>) -> Self {
+        Error::SendError
     }
 }
 

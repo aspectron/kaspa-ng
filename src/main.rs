@@ -3,13 +3,12 @@
 
 use kaspa_egui::interop;
 
-
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     // use std::sync::Arc;
 
-    use std::sync::{Arc,Mutex};
+    use std::sync::{Arc, Mutex};
 
     // use egui::mutex::Mutex;
 
@@ -18,7 +17,7 @@ fn main() -> eframe::Result<()> {
     // let interop = interop::Interop::new();
     // interop::signals::Signals::bind(&interop);
 
-    let interop : Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
+    let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
     // let delegate = interop.clone();
     let delegate = interop.clone();
     println!("spawn done");
@@ -27,7 +26,6 @@ fn main() -> eframe::Result<()> {
         "DAG Wallet",
         native_options,
         Box::new(move |cc| {
-
             let interop = interop::Interop::new(&cc.egui_ctx);
             delegate.lock().unwrap().replace(interop.clone());
             interop::signals::Signals::bind(&interop);
@@ -55,21 +53,18 @@ fn main() {
 
     let web_options = eframe::WebOptions::default();
 
-    
     wasm_bindgen_futures::spawn_local(async {
-        use workflow_log::*;    
+        use workflow_log::*;
         log_info!("starting");
         eframe::WebRunner::new()
             .start(
                 "kaspa-wallet",
                 web_options,
                 Box::new(move |cc| {
-                
                     let interop = interop::Interop::new(&cc.egui_ctx);
                     interop.spawn();
-                
+
                     Box::new(kaspa_egui::Wallet::new(cc, interop))
-                
                 }),
             )
             .await
@@ -82,5 +77,4 @@ fn main() {
     //     // interop.join();
 
     // });
-
 }

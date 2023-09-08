@@ -1,7 +1,9 @@
-
 use crate::imports::*;
 pub use futures::{future::FutureExt, select, Future};
-use std::{sync::atomic::{AtomicBool,Ordering}, pin::Pin};
+use std::{
+    pin::Pin,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use crate::interop::AsyncService;
 
@@ -33,14 +35,15 @@ where
 {
     unsafe {
         if let Some(sender) = &SENDER {
-            sender.try_send(ExecutorEvents::Spawn(Box::pin(future))).unwrap();
+            sender
+                .try_send(ExecutorEvents::Spawn(Box::pin(future)))
+                .unwrap();
         } else {
             panic!("Unable to spawn non-blocking future - executor service is not initialized")
         }
     }
     // tokio::task::spawn(future);
 }
-
 
 // fn new_with_boxed_task_fn<FN>(task_fn: Box<FN>) -> Task<A, T>
 // where
@@ -51,7 +54,6 @@ where
 //     }
 // }
 
-
 // #[derive(Debug)]
 pub enum ExecutorEvents {
     Spawn(NonblockingFuture<Result<()>>),
@@ -60,15 +62,14 @@ pub enum ExecutorEvents {
 }
 
 pub struct Executor {
-    pub application_events : interop::Channel<Events>,
-    pub executor_events : Channel<ExecutorEvents>,
-    pub shutdown : AtomicBool,
+    pub application_events: interop::Channel<Events>,
+    pub executor_events: Channel<ExecutorEvents>,
+    pub shutdown: AtomicBool,
     // pub wallet : Arc<runtime::Wallet>,
 }
 
 impl Executor {
-    pub fn new(application_events : interop::Channel<crate::events::Events>) -> Self {
-
+    pub fn new(application_events: interop::Channel<crate::events::Events>) -> Self {
         let executor_events = Channel::unbounded();
 
         unsafe {
@@ -78,7 +79,7 @@ impl Executor {
         Self {
             application_events,
             executor_events,
-            shutdown : AtomicBool::new(false),
+            shutdown: AtomicBool::new(false),
         }
     }
 
@@ -97,12 +98,10 @@ impl Drop for Executor {
 
 impl AsyncService for Executor {
     fn start(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
-
         println!("executor relay starting...");
         let this = self.clone();
         let application_events_sender = self.application_events.sender.clone();
         Box::pin(async move {
-
             // println!("starting wallet...");
             // this.wallet.start().await.unwrap_or_else(|err| {
             //     println!("Wallet start error: {:?}", err);
@@ -119,7 +118,7 @@ impl AsyncService for Executor {
                                     let sender = application_events_sender.clone();
                                     workflow_core::task::spawn(async move {
                                         if let Err(err) = task.await {
-                                            sender.send(Events::Error(err.to_string())).await.unwrap();
+                                            sender.send(Events::Error(Box::new(err.to_string()))).await.unwrap();
                                             println!("spawned task error: {:?}", err);
                                         }
                                     });
@@ -138,17 +137,15 @@ impl AsyncService for Executor {
             Ok(())
         })
     }
-    
+
     fn signal_exit(self: Arc<Self>) {
-        self.executor_events.sender.try_send(ExecutorEvents::Exit).unwrap();
+        self.executor_events
+            .sender
+            .try_send(ExecutorEvents::Exit)
+            .unwrap();
     }
 
     fn stop(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
-        Box::pin(async move {
-
-            Ok(())
-        })
-
+        Box::pin(async move { Ok(()) })
     }
 }
-

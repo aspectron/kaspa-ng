@@ -1,14 +1,15 @@
-use workflow_core::channel::{Sender as ChannelSender,Receiver,unbounded,bounded,RecvError,TryRecvError,SendError,TrySendError};
+use workflow_core::channel::{
+    unbounded, Receiver, RecvError, SendError, Sender as ChannelSender, TryRecvError, TrySendError,
+};
 
 #[derive(Debug, Clone)]
 pub struct Sender<T> {
-    ctx : egui::Context,
+    ctx: egui::Context,
     sender: ChannelSender<T>,
 }
 
 impl<T> Sender<T> {
-
-    pub fn new(ctx : egui::Context, sender: ChannelSender<T>) -> Self {
+    pub fn new(ctx: egui::Context, sender: ChannelSender<T>) -> Self {
         Self { ctx, sender }
     }
 
@@ -48,7 +49,10 @@ pub struct Channel<T = ()> {
 impl<T> Channel<T> {
     pub fn unbounded(ctx: &egui::Context) -> Self {
         let (sender, receiver) = unbounded();
-        Self { sender : Sender::new(ctx.clone(),sender), receiver }
+        Self {
+            sender: Sender::new(ctx.clone(), sender),
+            receiver,
+        }
     }
 
     // pub fn bounded(cap: usize) -> Self {

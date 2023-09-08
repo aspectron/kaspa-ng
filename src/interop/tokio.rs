@@ -5,7 +5,7 @@ use crate::result::Result;
 use futures_util::future::{select_all, try_join_all};
 
 pub struct AsyncRuntime {
-    threads : usize,
+    threads: usize,
     services: Mutex<Vec<Arc<dyn AsyncService>>>,
     worker: Mutex<Option<std::thread::JoinHandle<()>>>,
 }
@@ -18,10 +18,13 @@ impl Default for AsyncRuntime {
 }
 
 impl AsyncRuntime {
-
     pub fn new(threads: usize) -> Self {
         // trace!("Creating the async-runtime service");
-        Self { threads, services: Mutex::new(Vec::new()), worker: Mutex::new(None) }
+        Self {
+            threads,
+            services: Mutex::new(Vec::new()),
+            worker: Mutex::new(None),
+        }
     }
 
     pub fn register<T>(&self, service: Arc<T>)
@@ -35,7 +38,12 @@ impl AsyncRuntime {
     pub fn spawn(self: &Arc<AsyncRuntime>) {
         // trace!("initializing async-runtime service");
         let this = self.clone();
-        self.worker.lock().unwrap().replace(std::thread::Builder::new().name("interop".to_string()).spawn(move || this.worker()).unwrap());
+        self.worker.lock().unwrap().replace(
+            std::thread::Builder::new()
+                .name("interop".to_string())
+                .spawn(move || this.worker())
+                .unwrap(),
+        );
     }
 
     pub fn join(self: &Arc<AsyncRuntime>) {
@@ -59,7 +67,7 @@ impl AsyncRuntime {
     //     //    // trace!("spawning async-runtime service");
     //     // std::thread::Builder::new().name("interop".to_string()).spawn(move || self.worker()).unwrap()
     // }
-    
+
     pub fn worker(self: &Arc<AsyncRuntime>) {
         return tokio::runtime::Builder::new_multi_thread()
             .worker_threads(self.threads)

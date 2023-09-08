@@ -1,5 +1,3 @@
-
-
 pub struct Secret(pub kaspa_wallet_core::secret::Secret);
 
 impl std::fmt::Debug for Secret {
@@ -21,4 +19,3 @@ impl From<kaspa_wallet_core::secret::Secret> for Secret {
         Self(secret)
     }
 }
-

@@ -12,15 +12,13 @@ pub struct AsyncRuntime {
 impl Default for AsyncRuntime {
     fn default() -> Self {
         AsyncRuntime {
-            services : Mutex::new(Vec::new()),
-            handles : Mutex::new(Vec::new())
+            services: Mutex::new(Vec::new()),
+            handles: Mutex::new(Vec::new()),
         }
     }
 }
 
 impl AsyncRuntime {
-
-
     pub fn register<T>(&self, service: Arc<T>)
     where
         T: AsyncService + 'static,
@@ -39,7 +37,7 @@ impl AsyncRuntime {
             })
         });
     }
-    
+
     pub fn shutdown(self: &Arc<AsyncRuntime>) {
         for service in self.services.lock().unwrap().iter() {
             service.clone().signal_exit();
@@ -48,7 +46,7 @@ impl AsyncRuntime {
 
     pub async fn join(self: &Arc<AsyncRuntime>) {
         let handles = self.handles.lock().unwrap().clone();
-        let handles = handles.iter().map(|rx|rx.recv()).collect::<Vec<_>>();
+        let handles = handles.iter().map(|rx| rx.recv()).collect::<Vec<_>>();
         join_all(handles).await;
     }
 }

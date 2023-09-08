@@ -3,12 +3,13 @@
 mod wallet;
 pub use wallet::Wallet;
 
-pub mod imports;
-pub mod section;
-pub mod primitives;
-pub mod result;
 pub mod error;
 pub mod events;
-pub mod secret;
+pub mod imports;
 pub mod interop;
+pub mod primitives;
+pub mod result;
+pub mod secret;
+pub mod section;
+pub mod settings;
 pub mod sync;
