@@ -15,6 +15,8 @@ pub struct Wallet {
     channel: interop::Channel<Events>,
     section: TypeId,
     sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
+    #[allow(dead_code)]
+    settings: Settings,
 
     is_synced: Option<bool>,
     sync_state: Option<SyncState>,
@@ -33,7 +35,11 @@ pub struct Wallet {
 
 impl Wallet {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, interop: crate::interop::Interop) -> Self {
+    pub fn new(
+        _cc: &eframe::CreationContext<'_>,
+        interop: crate::interop::Interop,
+        settings: Settings,
+    ) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -65,7 +71,7 @@ impl Wallet {
         ))));
         sections.insert_typeid(Rc::new(RefCell::new(section::Open::new(interop.clone()))));
 
-        let channel = interop.channel().clone();
+        let channel = interop.application_events().clone();
         let wallet = interop.wallet_service().wallet().clone();
 
         Self {
@@ -74,6 +80,7 @@ impl Wallet {
             channel,
             section: TypeId::of::<section::Open>(),
             sections,
+            settings,
 
             wallet_list: Arc::new(Vec::new()),
             account_list: Arc::new(Vec::new()),
@@ -215,20 +222,20 @@ impl Wallet {
                 if self.wallet().is_synced() {
                     self.render_connected_state(ui);
                 } else if let Some(status) = self.sync_state.as_ref().map(SyncStatus::try_from) {
-                        if status.synced {
-                            self.render_connected_state(ui);
-                            ui.separator();
-                            ui.label("Ready...");
-                        } else {
-                            ui.vertical(|ui| {
-                                status.progress_bar().map(|bar| ui.add(bar));
-                                ui.horizontal(|ui| {
-                                    self.render_connected_state(ui);
-                                    status.render_text_state(ui);
-                                    // - TODO - NOT INFO ETC..
-                                });
+                    if status.synced {
+                        self.render_connected_state(ui);
+                        ui.separator();
+                        ui.label("Ready...");
+                    } else {
+                        ui.vertical(|ui| {
+                            status.progress_bar().map(|bar| ui.add(bar));
+                            ui.horizontal(|ui| {
+                                self.render_connected_state(ui);
+                                status.render_text_state(ui);
+                                // - TODO - NOT INFO ETC..
                             });
-                        }
+                        });
+                    }
                 } else {
                     // ui.label("Connected");
                     self.render_connected_state(ui);
@@ -277,7 +284,7 @@ impl Wallet {
                 self.select::<section::Overview>();
             }
             Events::UnlockFailure { .. } => {}
-            Events::Wallet(event) => {
+            Events::Wallet { event } => {
                 match *event {
                     CoreWallet::UtxoProcStart => {}
                     CoreWallet::UtxoProcStop => {}

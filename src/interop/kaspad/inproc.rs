@@ -4,7 +4,7 @@ use kaspa_core::signals::Shutdown;
 use kaspa_rpc_service::service::RpcCoreService;
 use kaspa_wallet_core::DynRpcApi;
 use kaspad::args::Args;
-use kaspad::daemon::create_core;
+use kaspad::daemon::{create_core_with_runtime, Runtime as KaspadRuntime};
 
 struct Inner {
     thread: std::thread::JoinHandle<()>,
@@ -29,15 +29,14 @@ impl InProc {
 
 impl super::Kaspad for InProc {
     fn start(&self, args: Args) -> Result<()> {
-        let (core, rpc_core_service) = create_core(args);
-        // self.inner.core.lock().unwrap().replace(core.clone());
+        let runtime = KaspadRuntime::default();
+        let (core, rpc_core_service) = create_core_with_runtime(&runtime, &args);
         let core_ = core.clone();
         let thread = std::thread::Builder::new()
             .name("kaspad".to_string())
             .spawn(move || {
                 core_.run();
             })?;
-        // self.inner.thread.lock().unwrap().replace(thread);
         self.inner.lock().unwrap().replace(Inner {
             thread,
             core,

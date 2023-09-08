@@ -15,8 +15,10 @@ kaspa-utils = { path = "../rusty-kaspa/utils" }
 
 # workflow-core = "0.6.0"
 # workflow-log = "0.6.0"
+# workflow-dom = "0.6.0"
 workflow-log = { path = "../workflow-rs/log" }
 workflow-core = { path = "../workflow-rs/core" }
+workflow-dom = { path = "../workflow-rs/dom" }
 
 
 cfg-if = "1.0.0"
@@ -44,6 +46,7 @@ eframe = { version = "0.22.0", default-features = false, features = [
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 kaspad = { path = "../rusty-kaspa/kaspad" }
 kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
+kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
 kaspa-core = { path = "../rusty-kaspa/core" }
 tokio = { version = "1", features = ["sync", "rt-multi-thread"] }
 ctrlc = { version = "3.2", features = ["termination"] }

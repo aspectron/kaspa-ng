@@ -2,3 +2,4 @@
 /Cargo.lock
 /dist
 .DS_Store
+datadir

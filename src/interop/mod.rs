@@ -6,9 +6,11 @@ cfg_if! {
 
         pub mod signals;
         pub mod kaspad;
+        pub use kaspad::KaspadService;
 
         mod tokio;
         pub use tokio::*;
+
     } else {
         pub use wasm::*;
     }
@@ -28,9 +30,12 @@ pub use channel::Channel;
 
 pub struct Inner {
     runtime: Arc<AsyncRuntime>,
-    wallet: Arc<WalletService>,
     executor: Arc<Executor>,
-    channel: channel::Channel<Events>,
+    wallet: Arc<WalletService>,
+    application_events: channel::Channel<Events>,
+
+    #[cfg(not(target_arch = "wasm32"))]
+    kaspad: Arc<KaspadService>,
 }
 // #[derive(Default)]
 #[derive(Clone)]
@@ -39,21 +44,30 @@ pub struct Interop {
 }
 
 impl Interop {
-    pub fn new(ctx: &egui::Context) -> Self {
-        let events = channel::Channel::unbounded(ctx);
+    pub fn new(ctx: &egui::Context, settings: &Settings) -> Self {
+        let application_events = channel::Channel::unbounded(ctx);
         let runtime = Arc::new(AsyncRuntime::default());
-        let executor = Arc::new(Executor::new(events.clone()));
-        let wallet = Arc::new(WalletService::new());
-        runtime.register(wallet.clone());
+        let executor = Arc::new(Executor::new(application_events.clone()));
+        let wallet = Arc::new(WalletService::new(application_events.clone()));
+
         runtime.register(executor.clone());
-        // runtime.spawn();
+        runtime.register(wallet.clone());
+
+        cfg_if! {
+            if #[cfg(not(target_arch = "wasm32"))] {
+                let kaspad = Arc::new(KaspadService::new(application_events.clone(), settings));
+                runtime.register(kaspad.clone());
+            }
+        }
 
         Self {
             inner: Arc::new(Inner {
-                channel: events,
+                application_events,
                 runtime,
                 wallet,
                 executor,
+                #[cfg(not(target_arch = "wasm32"))]
+                kaspad,
             }),
         }
     }
@@ -90,17 +104,21 @@ impl Interop {
         &self.inner.executor
     }
 
-    pub fn channel(&self) -> &Channel<Events> {
-        &self.inner.channel
+    pub fn kaspad_service(&self) -> &Arc<KaspadService> {
+        &self.inner.kaspad
+    }
+
+    pub fn application_events(&self) -> &Channel<Events> {
+        &self.inner.application_events
     }
 
     pub async fn send(&self, msg: Events) -> Result<()> {
-        self.inner.channel.sender.send(msg).await?;
+        self.inner.application_events.sender.send(msg).await?;
         Ok(())
     }
 
     pub fn try_send(&self, msg: Events) -> Result<()> {
-        self.inner.channel.sender.try_send(msg)?;
+        self.inner.application_events.sender.try_send(msg)?;
         Ok(())
     }
 

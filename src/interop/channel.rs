@@ -1,16 +1,20 @@
+use std::sync::Arc;
 use workflow_core::channel::{
     unbounded, Receiver, RecvError, SendError, Sender as ChannelSender, TryRecvError, TrySendError,
 };
 
 #[derive(Debug, Clone)]
 pub struct Sender<T> {
-    ctx: egui::Context,
+    ctx: Arc<egui::Context>,
     sender: ChannelSender<T>,
 }
 
 impl<T> Sender<T> {
     pub fn new(ctx: egui::Context, sender: ChannelSender<T>) -> Self {
-        Self { ctx, sender }
+        Self {
+            ctx: Arc::new(ctx),
+            sender,
+        }
     }
 
     pub async fn send(&self, msg: T) -> Result<(), SendError<T>> {
@@ -34,12 +38,6 @@ impl<T> Sender<T> {
     }
 }
 
-// impl<T> From<ChannelSender<T>> for Sender<T> {
-//     fn from(sender: ChannelSender<T>, ctx : egui::Context) -> Self {
-//         Self { sender, ctx }
-//     }
-// }
-
 #[derive(Debug, Clone)]
 pub struct Channel<T = ()> {
     pub sender: Sender<T>,
@@ -54,16 +52,6 @@ impl<T> Channel<T> {
             receiver,
         }
     }
-
-    // pub fn bounded(cap: usize) -> Self {
-    //     let (sender, receiver) = bounded(cap);
-    //     Self { sender : sender.into(), receiver }
-    // }
-
-    // pub fn oneshot() -> Self {
-    //     let (sender, receiver) = bounded(1);
-    //     Self { sender : sender.into(), receiver }
-    // }
 
     pub fn drain(&self) -> std::result::Result<(), TryRecvError> {
         while !self.receiver.is_empty() {

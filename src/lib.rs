@@ -7,6 +7,7 @@ pub mod error;
 pub mod events;
 pub mod imports;
 pub mod interop;
+pub mod network;
 pub mod primitives;
 pub mod result;
 pub mod secret;

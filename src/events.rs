@@ -10,7 +10,9 @@ pub enum Events {
     AccountList {
         account_list: Arc<Vec<Arc<dyn runtime::Account>>>,
     },
-    Wallet(Box<kaspa::Events>),
+    Wallet {
+        event: Box<kaspa::Events>,
+    },
     // TryUnlock(Secret),
     UnlockSuccess,
     UnlockFailure {

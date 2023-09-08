@@ -1,33 +1,21 @@
 use crate::imports::*;
 pub use futures::{future::FutureExt, select, Future};
-use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::interop::AsyncService;
 
 #[derive(Debug)]
 pub enum Events {
-    Noop,
-    Open {
-        name: Option<String>,
-        secret: Secret,
-    },
     Exit,
 }
 
 pub struct WalletService {
-    pub channel: Channel<Events>,
-    pub shutdown: AtomicBool,
+    pub application_events: interop::Channel<crate::events::Events>,
+    pub service_events: Channel<Events>,
     pub wallet: Arc<runtime::Wallet>,
 }
 
-impl Default for WalletService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl WalletService {
-    pub fn new() -> Self {
+    pub fn new(application_events: interop::Channel<crate::events::Events>) -> Self {
         let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
@@ -37,14 +25,10 @@ impl WalletService {
         });
 
         Self {
-            channel: Channel::unbounded(),
-            shutdown: AtomicBool::new(false),
+            application_events,
+            service_events: Channel::unbounded(),
             wallet: Arc::new(wallet),
         }
-    }
-
-    pub fn shutdown(&self) {
-        self.shutdown.store(true, Ordering::SeqCst);
     }
 
     pub fn wallet(&self) -> &Arc<runtime::Wallet> {
@@ -61,20 +45,24 @@ impl AsyncService for WalletService {
                 println!("Wallet start error: {:?}", err);
             });
 
+            let wallet_multiplexer = this.wallet.multiplexer().channel();
+
             loop {
                 select! {
-                    msg = this.as_ref().channel.receiver.recv().fuse() => {
-                        println!("Wallet received message: {:?}", msg);
-
+                    msg = this.as_ref().service_events.receiver.recv().fuse() => {
                         if let Ok(event) = msg {
-                            self.handle_event(event).await.unwrap_or_else(|err| {
-                                println!("Wallet service error: {:?}", err);
-                            });
-
-                            if self.shutdown.load(Ordering::SeqCst) {
-                                break;
+                            match event {
+                                Events::Exit => {
+                                    break;
+                                }
                             }
-
+                        } else {
+                            break;
+                        }
+                    },
+                    msg = wallet_multiplexer.recv().fuse() => {
+                        if let Ok(event) = msg {
+                            this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
                         } else {
                             break;
                         }
@@ -82,33 +70,17 @@ impl AsyncService for WalletService {
                 }
             }
 
+            self.wallet.stop().await?;
+
             Ok(())
         })
     }
 
     fn signal_exit(self: Arc<Self>) {
-        self.channel.sender.try_send(Events::Exit).unwrap();
+        self.service_events.sender.try_send(Events::Exit).unwrap();
     }
 
     fn stop(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
         Box::pin(async move { Ok(()) })
-    }
-}
-
-impl WalletService {
-    async fn handle_event(self: &Arc<Self>, event: Events) -> Result<()> {
-        match event {
-            Events::Noop => {}
-            Events::Exit => {
-                println!("stopping wallet...");
-                self.wallet.stop().await?;
-                self.shutdown.store(true, Ordering::SeqCst);
-            }
-            Events::Open { name, secret } => {
-                self.wallet.load(secret.0, name).await?;
-            }
-        }
-
-        Ok(())
     }
 }
