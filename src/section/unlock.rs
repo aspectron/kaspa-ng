@@ -1,6 +1,6 @@
 use crate::imports::*;
 use egui::*;
-use workflow_core::task::spawn;
+// use workflow_core::task::spawn;
 
 pub enum State {
     Locked,
@@ -8,16 +8,16 @@ pub enum State {
 }
 
 pub struct Unlock {
-    sender : Sender<Events>,
+    interop : Interop,
     secret : String,
     pub state : State,
     pub message: Option<String>,
 }
 
 impl Unlock {
-    pub fn new(sender : Sender<Events>) -> Self {
+    pub fn new(interop : Interop) -> Self {
         Self {
-            sender,
+            interop,
             secret : String::new(),
             state : State::Locked,
             message: None,
@@ -82,18 +82,19 @@ impl Unlock {
 
 
                 
-            // let sender = wallet.sender();
-            // let wallet = wallet.wallet().clone();
-            // spawn(async move {
-            //     match wallet.load(secret,None).await {
-            //         Ok(_) => {
-            //             sender.send(Events::UnlockSuccess).await.unwrap();
-            //         },
-            //         Err(err) => {
-            //             sender.send(Events::UnlockFailure { message : err.to_string() }).await.unwrap();
-            //         }
-            //     }
-            // });
+            let sender = wallet.sender();
+            let wallet = wallet.wallet().clone();
+            // let s = secret.0;
+
+            // spawn(wallet.load(secret,None));
+
+            spawn(async move {
+                println!("inside executor spawn...");
+                // let result = 
+                wallet.load(secret,None).await?;
+                // println!("Wallet unlock result: {:?}", result);
+                Ok(())
+            });
             
             // let channel = wallet.spawn(wallet.wallet().load(secret, None));
 
@@ -111,8 +112,9 @@ impl SectionT for Unlock {
             //     ui.heading("Unlock");
             // });
             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                ui.label(" ");
                 ui.heading("Unlock your wallet");
-                ui.separator();
+                // ui.separator();
                 match self.state {
                     State::Locked => self.render_locked(ui, wallet),
                     State::Unlocking => self.render_unlocking(ui, wallet),

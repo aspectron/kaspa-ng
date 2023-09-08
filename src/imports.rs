@@ -10,7 +10,11 @@ pub use downcast_rs::{impl_downcast, Downcast, DowncastSync};
 pub use std::cell::{RefCell, Ref, RefMut};
 pub use cfg_if::cfg_if;
 pub use futures_util::future::BoxFuture;
+pub use separator::*;
 
+pub use crate::interop;
+pub use crate::interop::Interop;
+pub use crate::interop::executor::spawn;
 pub use crate::section::SectionT;
 pub use crate::events::Events;
 pub use crate::wallet::Wallet;

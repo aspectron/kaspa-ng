@@ -9,18 +9,35 @@ use kaspa_egui::interop;
 fn main() -> eframe::Result<()> {
     // use std::sync::Arc;
 
+    use std::sync::{Arc,Mutex};
+
+    // use egui::mutex::Mutex;
+
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    let interop = interop::Interop::new();
+    // let interop = interop::Interop::new();
+    // interop::signals::Signals::bind(&interop);
+
+    let interop : Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
+    // let delegate = interop.clone();
     let delegate = interop.clone();
     println!("spawn done");
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "Kaspa Flow",
+        "DAG Wallet",
         native_options,
-        Box::new(move |cc| Box::new(kaspa_egui::Wallet::new(cc, delegate))),
+        Box::new(move |cc| {
+
+            let interop = interop::Interop::new(&cc.egui_ctx);
+            delegate.lock().unwrap().replace(interop.clone());
+            interop::signals::Signals::bind(&interop);
+            interop.spawn();
+
+            Box::new(kaspa_egui::Wallet::new(cc, interop))
+        }),
     )?;
 
+    let interop = interop.lock().unwrap().take().unwrap();
     println!("wallet shutdown");
     interop.shutdown();
     println!("worker join");
@@ -49,7 +66,17 @@ log_info!("starting");
             .start(
                 "kaspa-wallet",
                 web_options,
-                Box::new(move |cc| Box::new(kaspa_egui::Wallet::new(cc, delegate))),
+                Box::new(move |cc| {
+                
+                    let interop = interop::Interop::new(&cc.egui_ctx);
+                    delegate_.lock().unwrap().replace(interop.clone());
+                    interop::signals::Signals::bind(&interop);
+                    interop.spawn();
+        
+                
+                    Box::new(kaspa_egui::Wallet::new(cc, delegate))
+                
+                }),
             )
             .await
             .expect("failed to start eframe");

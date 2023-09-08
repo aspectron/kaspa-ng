@@ -1,14 +1,14 @@
 use crate::imports::*;
 
 pub struct Deposit {
-    sender : Sender<Events>,
+    interop : Interop
 
 }
 
 impl Deposit {
-    pub fn new(sender : Sender<Events>) -> Self {
+    pub fn new(interop : Interop) -> Self {
         Self {
-            sender,
+            interop,
         }
     }
 }

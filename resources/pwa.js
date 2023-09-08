@@ -1,4 +1,4 @@
-var cacheName = 'kaspa-egui-pwa';
+var cacheName = 'dag-wallet';
 var filesToCache = [
   './',
   './index.html',

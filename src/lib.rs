@@ -11,3 +11,4 @@ pub mod error;
 pub mod events;
 pub mod secret;
 pub mod interop;
+pub mod sync;

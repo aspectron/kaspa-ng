@@ -1,14 +1,14 @@
 use crate::imports::*;
 
 pub struct Transactions {
-    sender : Sender<Events>,
+    interop : Interop
 
 }
 
 impl Transactions {
-    pub fn new(sender : Sender<Events>) -> Self {
+    pub fn new(interop : Interop) -> Self {
         Self {
-            sender,
+            interop,
         }
     }
 }

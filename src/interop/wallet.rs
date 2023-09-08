@@ -41,6 +41,10 @@ impl WalletService {
     pub fn shutdown(&self) {
         self.shutdown.store(true, Ordering::SeqCst);
     }
+
+    pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+        &self.wallet
+    }
 }
 
 impl AsyncService for WalletService {

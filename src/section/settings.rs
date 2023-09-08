@@ -1,14 +1,14 @@
 use crate::imports::*;
 
 pub struct Settings {
-    sender : Sender<Events>,
+    interop : Interop,
 
 }
 
 impl Settings {
-    pub fn new(sender : Sender<Events>) -> Self {
+    pub fn new(interop : Interop) -> Self {
         Self {
-            sender,
+            interop,
         }
     }
 }
