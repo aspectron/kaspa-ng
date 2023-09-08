@@ -10,9 +10,6 @@ edition = "2021"
 # kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
 kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client" }
-kaspad = { path = "../rusty-kaspa/kaspad" }
-kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
-kaspa-core = { path = "../rusty-kaspa/core" }
 
 workflow-core = "0.6.0"
 workflow-log = "0.6.0"
@@ -40,6 +37,9 @@ eframe = { version = "0.22.0", default-features = false, features = [
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+kaspad = { path = "../rusty-kaspa/kaspad" }
+kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
+kaspa-core = { path = "../rusty-kaspa/core" }
 tokio = { version = "1", features = ["sync", "rt-multi-thread"] }
 ctrlc = { version = "3.2", features = ["termination"] }
 env_logger = "0.10"

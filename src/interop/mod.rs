@@ -1,9 +1,12 @@
 use crate::imports::*;
-pub mod signals;
 mod wasm;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
+        
+        pub mod signals;
+        pub mod kaspad;
+
         mod tokio;
         pub use tokio::*;
     } else {
@@ -20,7 +23,6 @@ pub use wallet::WalletService;
 pub mod executor;
 pub use executor::Executor;
 
-pub mod kaspad;
 pub mod channel;
 pub use channel::Channel;
 

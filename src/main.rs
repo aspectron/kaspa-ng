@@ -57,11 +57,8 @@ fn main() {
 
     
     wasm_bindgen_futures::spawn_local(async {
-    use workflow_log::*;    
-        let interop = interop::Interop::new();
-        interop.spawn();
-        let delegate = interop.clone();
-log_info!("starting");
+        use workflow_log::*;    
+        log_info!("starting");
         eframe::WebRunner::new()
             .start(
                 "kaspa-wallet",
@@ -69,12 +66,9 @@ log_info!("starting");
                 Box::new(move |cc| {
                 
                     let interop = interop::Interop::new(&cc.egui_ctx);
-                    delegate_.lock().unwrap().replace(interop.clone());
-                    interop::signals::Signals::bind(&interop);
                     interop.spawn();
-        
                 
-                    Box::new(kaspa_egui::Wallet::new(cc, delegate))
+                    Box::new(kaspa_egui::Wallet::new(cc, interop))
                 
                 }),
             )

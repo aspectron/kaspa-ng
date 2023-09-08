@@ -348,8 +348,11 @@ impl Wallet {
     pub fn handle_events(&mut self, event : Events, ctx: &egui::Context, frame: &mut eframe::Frame) -> Result<()> {
         match event {
             Events::Exit => {
-                frame.close();
-                // wallet.exit();
+                cfg_if! {
+                    if #[cfg(not(target_arch = "wasm32"))] {
+                        frame.close();
+                    }
+                }
             },
             Events::Error(_error) => {
 
