@@ -10,7 +10,6 @@ pub mod interop;
 pub mod network;
 pub mod primitives;
 pub mod result;
-pub mod secret;
 pub mod section;
 pub mod settings;
 pub mod sync;

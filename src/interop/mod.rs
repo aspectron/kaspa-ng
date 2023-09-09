@@ -55,7 +55,7 @@ impl Interop {
 
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
-                let kaspad = Arc::new(KaspadService::new(application_events.clone(), settings));
+                let kaspad = Arc::new(KaspadService::new(application_events.clone(), settings, wallet.clone()));
                 runtime.register(kaspad.clone());
             }
         }

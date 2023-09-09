@@ -28,6 +28,7 @@ impl From<Config> for Args {
             }
         }
 
+        args.utxoindex = true;
         args.rpclisten_borsh = Some(WrpcNetAddress::Default);
 
         args

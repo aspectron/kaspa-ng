@@ -62,6 +62,7 @@ impl AsyncService for WalletService {
                     },
                     msg = wallet_multiplexer.recv().fuse() => {
                         if let Ok(event) = msg {
+                            println!("wallet event: {:?}", event);
                             this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
                         } else {
                             break;
@@ -70,7 +71,7 @@ impl AsyncService for WalletService {
                 }
             }
 
-            self.wallet.stop().await?;
+            // self.wallet.stop().await?;
 
             Ok(())
         })

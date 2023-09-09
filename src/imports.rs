@@ -1,8 +1,10 @@
 pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
 pub use kaspa_utils::hashmap::GroupExtension;
+pub use kaspa_wallet_core::events::SyncState;
+pub use kaspa_wallet_core::rpc::DynRpcApi;
 pub use kaspa_wallet_core::runtime;
-pub use kaspa_wallet_core::storage::PrvKeyDataId;
-pub use kaspa_wallet_core::{DynRpcApi, SyncState};
+pub use kaspa_wallet_core::secret::Secret;
+pub use kaspa_wallet_core::storage::{PrvKeyDataId, WalletDescriptor};
 pub use kaspa_wrpc_client::KaspaRpcClient;
 
 pub use cfg_if::cfg_if;
@@ -18,6 +20,7 @@ pub use std::rc::Rc;
 pub use std::sync::{Arc, Mutex};
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_log::*;
+pub use zeroize::Zeroize;
 
 pub use crate::error::Error;
 pub use crate::events::Events;
@@ -26,7 +29,6 @@ pub use crate::interop::executor::spawn;
 pub use crate::interop::Interop;
 pub use crate::network::Network;
 pub use crate::result::Result;
-pub use crate::secret::Secret;
 pub use crate::section;
 pub use crate::section::SectionT;
 pub use crate::settings::{KaspadNodeKind, Settings};

@@ -64,13 +64,8 @@ impl Open {
         if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
             println!("secret: {}", self.secret);
             let secret = kaspa_wallet_core::secret::Secret::new(self.secret.as_bytes().to_vec());
-            unsafe {
-                self.secret
-                    .as_mut_vec()
-                    .iter_mut()
-                    .for_each(|byte| *byte = 0);
-            }
-            self.secret.clear();
+            // unsafe {
+            self.secret.zeroize();
             self.state = State::Unlocking;
             // self.sender.try_send(Events::TryUnlock(secret.into())).unwrap();
 

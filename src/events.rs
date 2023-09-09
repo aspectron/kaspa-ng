@@ -5,7 +5,7 @@ use kaspa_wallet_core::events as kaspa;
 pub enum Events {
     Error(Box<String>),
     WalletList {
-        wallet_list: Arc<Vec<String>>,
+        wallet_list: Arc<Vec<WalletDescriptor>>,
     },
     AccountList {
         account_list: Arc<Vec<Arc<dyn runtime::Account>>>,

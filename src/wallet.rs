@@ -6,7 +6,7 @@ use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
 
 pub enum Exception {
-    UtxoIndexNotEnabled { url: String },
+    UtxoIndexNotEnabled { url: Option<String> },
 }
 
 pub struct Wallet {
@@ -28,7 +28,7 @@ pub struct Wallet {
     discard_hint: bool,
     exception: Option<Exception>,
 
-    wallet_list: Arc<Vec<String>>,
+    wallet_list: Arc<Vec<WalletDescriptor>>,
     account_list: Arc<Vec<Arc<dyn runtime::Account>>>,
     selected_account: Option<Arc<dyn runtime::Account>>,
 }
@@ -113,15 +113,12 @@ impl Wallet {
         &self.wallet
     }
 
-    pub fn rpc(&self) -> &Arc<DynRpcApi> {
-        self.wallet().rpc()
+    pub fn rpc_api(&self) -> Arc<DynRpcApi> {
+        self.wallet().rpc_api()
     }
 
-    pub fn rpc_client(&self) -> Arc<KaspaRpcClient> {
-        self.rpc()
-            .clone()
-            .downcast_arc::<KaspaRpcClient>()
-            .expect("unable to downcast DynRpcApi to KaspaRpcClient")
+    pub fn rpc_client(&self) -> Option<Arc<KaspaRpcClient>> {
+        self.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok()
     }
 
     // pub fn url(&self) -> String {
@@ -247,7 +244,8 @@ impl Wallet {
     }
 
     fn render_connected_state(&self, ui: &mut egui::Ui) {
-        ui.label(format!("Connected to {}", self.rpc_client().url()));
+        // ui.label(format!("Connected to {}", self.rpc_client().url()));
+        ui.label("CONNECTED".to_string());
     }
 
     pub fn handle_events(
@@ -294,7 +292,7 @@ impl Wallet {
                     #[allow(unused_variables)]
                     CoreWallet::Connect { url, network_id } => {
                         // log_info!("Connected to {url}");
-                        self.url = Some(url);
+                        self.url = url;
                         self.network_id = Some(network_id);
                     }
                     #[allow(unused_variables)]
@@ -323,7 +321,7 @@ impl Wallet {
                     } => {
                         self.is_synced = Some(is_synced);
                         self.server_version = Some(server_version);
-                        self.url = Some(url);
+                        self.url = url;
                         self.network_id = Some(network_id);
                     }
                     CoreWallet::WalletHint { hint } => {

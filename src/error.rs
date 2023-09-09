@@ -19,6 +19,8 @@ pub enum Error {
     TrySendError,
     // #[error("downcast error for {0}")]
     // DowncastError(String),
+    #[error(transparent)]
+    WrpcClientError(#[from] kaspa_wrpc_client::error::Error),
 }
 
 impl Error {
