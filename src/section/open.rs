@@ -97,6 +97,18 @@ impl Open {
 
             // let channel = wallet.spawn(wallet.wallet().load(secret, None));
         }
+
+        ui.label(" ");
+        ui.label(" ");
+        ui.label(" ");
+        ui.label(" ");
+        if ui.add_sized(size, egui::Button::new("Test")).clicked() {
+            println!("[0] secret: {}", self.secret);
+
+            with_secret(|secret| {
+                println!("[1] secret: {:?}", secret);
+            });
+        }
     }
 }
 

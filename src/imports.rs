@@ -28,6 +28,7 @@ pub use crate::interop;
 pub use crate::interop::executor::spawn;
 pub use crate::interop::Interop;
 pub use crate::network::Network;
+pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
 pub use crate::section;
 pub use crate::section::SectionT;

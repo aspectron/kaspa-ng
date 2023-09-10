@@ -175,6 +175,10 @@ impl eframe::App for Wallet {
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
 
+        if crate::prompt::prompt().render(ctx) {
+            return;
+        }
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |_ui| {
             // The top panel is often a good place for a menu bar:
             #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
