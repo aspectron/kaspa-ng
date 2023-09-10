@@ -1,5 +1,6 @@
 use crate::imports::*;
 use egui::*;
+use crate::wizard::*;
 // use workflow_core::task::spawn;
 
 pub enum State {
@@ -111,6 +112,59 @@ impl Open {
         }
         if ui.add_sized(size, egui::Button::new("Test2")).clicked() {
             println!("[0] secret: {}", self.secret);
+
+            #[derive(Default, Debug)]
+            struct Test {
+
+            }
+            crate::wizard::Wizard::<Test>::default()
+            .with_window(|_ctx| {
+                egui::Window::new("Wizard Window")
+            })
+            // .stage::<_, fn(&mut Ui, &mut Test) -> Disposition>(|ui: &mut Ui, ctx: &mut Test| {
+            .stage(|ui: &mut Ui, _ctx: &mut Test| {
+                ui.label("stage 1");
+                // if ui.add(egui::Button::new("Prev")).clicked() {
+                //     return Disposition::Previous;
+                // }
+                
+                if ui.add(egui::Button::new("Next")).clicked() {
+                    return Disposition::Next;
+                }
+                Disposition::Current
+
+            })
+            .stage(|ui: &mut Ui, _ctx: &mut Test| {
+                ui.label("stage 2");
+                if ui.add(egui::Button::new("Prev")).clicked() {
+                    return Disposition::Previous;
+                }
+                
+                if ui.add(egui::Button::new("Next")).clicked() {
+                    return Disposition::Next;
+                }
+                Disposition::Current
+
+
+            })
+            .stage(|ui: &mut Ui, _ctx: &mut Test| {
+                ui.label("stage 3");
+                if ui.add(egui::Button::new("Prev")).clicked() {
+                    return Disposition::Previous;
+                }
+                
+                if ui.add(egui::Button::new("Next")).clicked() {
+                    return Disposition::Next;
+                }
+                Disposition::Current
+
+
+            })
+            .finish(|ctx| {
+                println!("finish: {:#?}", ctx);
+            })
+            ;
+
 
             // cascade(
             //     |ui: &mut Ui| {

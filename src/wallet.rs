@@ -175,8 +175,14 @@ impl eframe::App for Wallet {
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
 
-        if crate::prompt::prompt().render(ctx) {
-            return;
+        // if crate::prompt::prompt().render(ctx) {
+        //     return;
+        // }
+
+        if let Some(wizard) = crate::wizard::wizard() {
+            if wizard.render_with_context(ctx) {
+                return;
+            }
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |_ui| {
