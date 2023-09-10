@@ -2,12 +2,12 @@ use crate::imports::*;
 pub use futures::{future::FutureExt, select, Future};
 
 trait BindingT: Send + Sync + 'static {
-    fn render(&self) -> bool;
+    fn render(&self, ui: &mut Ui) -> bool;
 }
 
 pub struct Binding<FnRender, FnHandler, V>
 where
-    FnRender: Fn() -> Option<V> + Send + Sync + 'static,
+    FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
     FnHandler: Fn(V) + Send + Sync + 'static,
 {
     render: FnRender,
@@ -16,12 +16,12 @@ where
 
 impl<FnRender, FnHandler, V> BindingT for Binding<FnRender, FnHandler, V>
 where
-    FnRender: Fn() -> Option<V> + Send + Sync + 'static,
+    FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
     FnHandler: Fn(V) + Send + Sync + 'static,
     V: 'static,
 {
-    fn render(&self) -> bool {
-        if let Some(resp) = (self.render)() {
+    fn render(&self, ui: &mut Ui) -> bool {
+        if let Some(resp) = (self.render)(ui) {
             (self.handler)(resp);
             true
         } else {
@@ -51,10 +51,10 @@ impl Prompt {
 
     pub fn cascade<FnRender, FnHandler, V>(
         &mut self,
-        render: impl Fn() -> Option<V> + Send + Sync + 'static,
+        render: impl Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
         handler: impl Fn(V) + Send + Sync + 'static,
     ) where
-        FnRender: Fn() -> V + Send + Sync + 'static,
+        FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
         FnHandler: Fn(V) + Send + Sync + 'static,
         V: 'static,
     {
@@ -66,13 +66,16 @@ impl Prompt {
     }
 
     pub fn render(&mut self, ctx: &egui::Context) -> bool {
-        // if let Some(binding) = &self.binding {
-        //     if binding.render() {
-        //         self.binding = None
-        //     }
-        // }
-
-        if self.callback.is_some() {
+        if let Some(binding) = &self.binding.clone() {
+            egui::Window::new("Please enter your password")
+                .collapsible(false)
+                .show(ctx, |ui| {
+                    if binding.render(ui) {
+                        self.binding = None
+                    }
+                });
+            false
+        } else if self.callback.is_some() {
             egui::Window::new("Please enter your password")
                 .collapsible(false)
                 .show(ctx, |ui| {
@@ -126,16 +129,29 @@ pub fn with_secret(callback: impl Fn(Secret) + Send + Sync + 'static) {
     // self.callback = Some(Arc::new(callback));
 }
 
+// pub fn cascade<V>(
 pub fn cascade<FnRender, FnHandler, V>(
-    render: impl Fn() -> Option<V> + Send + Sync + 'static,
+    render: impl Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
     handler: impl Fn(V) + Send + Sync + 'static,
-) where
-    FnRender: Fn() -> V + Send + Sync + 'static,
+) 
+where
+    FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
     FnHandler: Fn(V) + Send + Sync + 'static,
-    V: 'static,
+V: 'static,
 {
     prompt().cascade::<FnRender, FnHandler, V>(render, handler);
 }
+
+// pub fn cascade<FnRender, FnHandler, V>(
+//     render: impl Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
+//     handler: impl Fn(V) + Send + Sync + 'static,
+// ) where
+//     FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
+//     FnHandler: Fn(V) + Send + Sync + 'static,
+//     V: 'static,
+// {
+//     prompt().cascade::<FnRender, FnHandler, V>(render, handler);
+// }
 
 static mut PROMPT: Option<Prompt> = None;
 
