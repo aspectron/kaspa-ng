@@ -30,6 +30,7 @@ where
     }
 }
 
+#[derive(Default)]
 pub struct Prompt {
     secret: String,
     callback: Option<Arc<dyn Fn(Secret) + Send + Sync + 'static>>,
@@ -133,11 +134,10 @@ pub fn with_secret(callback: impl Fn(Secret) + Send + Sync + 'static) {
 pub fn cascade<FnRender, FnHandler, V>(
     render: impl Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
     handler: impl Fn(V) + Send + Sync + 'static,
-) 
-where
+) where
     FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
     FnHandler: Fn(V) + Send + Sync + 'static,
-V: 'static,
+    V: 'static,
 {
     prompt().cascade::<FnRender, FnHandler, V>(render, handler);
 }

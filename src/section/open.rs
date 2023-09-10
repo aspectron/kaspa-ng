@@ -109,6 +109,28 @@ impl Open {
                 println!("[1] secret: {:?}", secret);
             });
         }
+        if ui.add_sized(size, egui::Button::new("Test2")).clicked() {
+            println!("[0] secret: {}", self.secret);
+
+            // cascade(
+            //     |ui: &mut Ui| {
+            //         println!("[1] secret: ");
+
+            //         if ui.add(egui::Button::new("Test123")).clicked() {
+            //             return Some(123u64);
+            //         }
+            //         if ui.add(egui::Button::new("Test456")).clicked() {
+            //             return Some(456u64);
+            //         }
+
+            //         // None
+            //         Some(768u64)
+            //     },
+            //     |v| {
+            //         println!("*** V: {v}");
+            //     },
+            // );
+        }
     }
 }
 
