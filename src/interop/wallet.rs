@@ -37,7 +37,7 @@ impl WalletService {
 }
 
 impl AsyncService for WalletService {
-    fn start(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
+    fn start_service(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
         let this = self.clone();
         Box::pin(async move {
             println!("starting wallet...");
@@ -77,11 +77,11 @@ impl AsyncService for WalletService {
         })
     }
 
-    fn signal_exit(self: Arc<Self>) {
+    fn signal_termination(self: Arc<Self>) {
         self.service_events.sender.try_send(Events::Exit).unwrap();
     }
 
-    fn stop(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
+    fn stop_service(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
         Box::pin(async move { Ok(()) })
     }
 }

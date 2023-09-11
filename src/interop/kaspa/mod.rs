@@ -1,10 +1,14 @@
 pub mod config;
-pub mod daemon;
-pub mod inproc;
 pub use config::Config;
+use workflow_core::prelude::DuplexChannel;
+pub mod daemon;
+// pub use daemon::Daemon;
+pub mod inproc;
+// pub use inproc::InProc;
+
 
 use crate::imports::*;
-use crate::interop::{AsyncService, WalletService};
+use crate::interop::Service;
 pub use futures::{future::FutureExt, select, Future};
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 pub use kaspad::args::Args;
@@ -25,19 +29,22 @@ pub enum KaspadServiceEvents {
     Exit,
 }
 
-pub struct KaspadService {
+pub struct KaspaService {
     pub application_events: interop::Channel<Events>,
     pub service_events: Channel<KaspadServiceEvents>,
+    pub task_ctl: Channel<()>,//DuplexChannel<()>,
     pub network: Mutex<Network>,
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
-    pub wallet_service: Arc<WalletService>,
+    // pub wallet_service: Arc<WalletService>,
+    pub wallet: Arc<runtime::Wallet>,
+
 }
 
-impl KaspadService {
+impl KaspaService {
     pub fn new(
         application_events: interop::Channel<Events>,
         settings: &Settings,
-        wallet_service: Arc<WalletService>,
+        // wallet_service: Arc<WalletService>,
     ) -> Self {
         let service_events = Channel::unbounded();
 
@@ -72,12 +79,23 @@ impl KaspadService {
             }
         }
 
+        let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
+            panic!("Failed to open local store: {}", e);
+        });
+
+        let wallet = runtime::Wallet::try_new(storage, None).unwrap_or_else(|e| {
+            panic!("Failed to create wallet instance: {}", e);
+        });
+
         Self {
             application_events,
             service_events,
+            task_ctl: Channel::oneshot(),
             network: Mutex::new(settings.network),
             kaspad: Mutex::new(None),
-            wallet_service,
+            wallet: Arc::new(wallet),
+
+            // wallet_service,
             // kaspad : Arc::
             // config : Mutex::new(),
         }
@@ -96,6 +114,12 @@ impl KaspadService {
     // pub fn shutdown(&self) {
     //     self.shutdown.store(true, Ordering::SeqCst);
     // }
+
+    pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+        &self.wallet
+    }
+
+
 }
 
 // impl Drop for Executor {
@@ -103,14 +127,35 @@ impl KaspadService {
 //     }
 // }
 
-impl AsyncService for KaspadService {
-    fn start(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
+#[async_trait]
+impl Service for KaspaService {
+    async fn spawn(self: Arc<Self>) -> Result<()> {
         println!("kaspad manager service starting...");
         let this = self.clone();
+
+        println!("starting wallet...");
+        this.wallet.start().await.unwrap_or_else(|err| {
+            println!("Wallet start error: {:?}", err);
+        });
+
+
+        let wallet_events = this.wallet.multiplexer().channel();
+
         let _application_events_sender = self.application_events.sender.clone();
-        Box::pin(async move {
+        // spawn(async move {
             loop {
+                println!("loop...");
                 select! {
+
+                    msg = wallet_events.recv().fuse() => {
+                        if let Ok(event) = msg {
+                            println!("wallet event: {:?}", event);
+                            this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
+                        } else {
+                            break;
+                        }
+                    }
+
                     msg = this.as_ref().service_events.receiver.recv().fuse() => {
 
                         if let Ok(event) = msg {
@@ -118,8 +163,8 @@ impl AsyncService for KaspadService {
 
                                 KaspadServiceEvents::StartInternalInProc { config } => {
 
-                                    this.wallet_service.wallet().stop().await.expect("Unable to stop wallet");
-                                    this.wallet_service.wallet().bind_rpc(None).await?;
+                                    this.wallet().stop().await.expect("Unable to stop wallet");
+                                    this.wallet().bind_rpc(None).await?;
 
                                     if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
                                         println!("*** STOPPING KASPAD ***");
@@ -143,8 +188,8 @@ impl AsyncService for KaspadService {
                                     // - CONNECT NEVER REACHES BECAUSE WHEN IT IS BROADCASTED,
                                     // - MULTIPLEXER CLIENT DOES NOT YET EXISTS
 
-                                    this.wallet_service.wallet().bind_rpc(Some(rpc)).await.unwrap();
-                                    this.wallet_service.wallet().start().await.expect("Unable to stop wallet");
+                                    this.wallet().bind_rpc(Some(rpc)).await.unwrap();
+                                    this.wallet().start().await.expect("Unable to stop wallet");
 
 
                                     rpc_ctl.try_signal_open().expect("Unable to signal `open` event to rpc ctl");
@@ -174,12 +219,11 @@ impl AsyncService for KaspadService {
             }
 
             println!("stopping wallet from node manager...");
-            this.wallet_service
-                .wallet()
+            this.wallet()
                 .stop()
                 .await
                 .expect("Unable to stop wallet");
-            this.wallet_service.wallet().bind_rpc(None).await?;
+            this.wallet().bind_rpc(None).await?;
 
             println!("shutting down kaspad manager service...");
             if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
@@ -188,18 +232,23 @@ impl AsyncService for KaspadService {
                 }
             }
 
-            Ok(())
-        })
+            this.task_ctl.send(()).await.unwrap();
+            // Ok(())
+        // });
+
+        Ok(())
     }
 
-    fn signal_exit(self: Arc<Self>) {
+    fn terminate(self: Arc<Self>) {
         self.service_events
             .sender
             .try_send(KaspadServiceEvents::Exit)
             .unwrap();
     }
 
-    fn stop(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
-        Box::pin(async move { Ok(()) })
+    async fn join(self: Arc<Self>) -> Result<()> {
+        self.task_ctl.recv().await.unwrap();
+        Ok(())
+        // Box::pin(async move { Ok(()) })
     }
 }

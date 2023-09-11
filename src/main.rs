@@ -10,7 +10,8 @@ cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
         // When compiling natively:
-        fn main() -> eframe::Result<()> {
+        #[tokio::main]
+        async fn main() -> eframe::Result<()> {
             // use std::sync::Arc;
 
             use std::sync::{Arc, Mutex};
@@ -36,19 +37,20 @@ cfg_if! {
                     let interop = Interop::new(&cc.egui_ctx, &settings);
                     delegate.lock().unwrap().replace(interop.clone());
                     interop::signals::Signals::bind(&interop);
-                    interop.spawn();
+                    interop.run();
 
                     Box::new(kaspa_egui::Wallet::new(cc, interop, settings))
                 }),
             )?;
+            println!("exit initiated...");
 
             let interop = interop.lock().unwrap().take().unwrap();
             println!("wallet shutdown");
             interop.shutdown();
             println!("worker join");
-            interop.join();
+            interop.join().await;
             println!("exit");
-
+            interop.drop();
             Ok(())
         }
     } else {

@@ -14,15 +14,23 @@ pub fn spawn<F>(future: F)
 where
     F: Future<Output = Result<()>> + Send + 'static,
 {
-    unsafe {
-        if let Some(sender) = &SENDER {
-            sender
-                .try_send(ExecutorEvents::Spawn(Box::pin(future)))
-                .unwrap();
-        } else {
-            panic!("Unable to spawn non-blocking future - executor service is not initialized")
+    let sender = application_events_sender.clone();
+    workflow_core::task::spawn(async move {
+        if let Err(err) = task.await {
+            sender.send(Events::Error(Box::new(err.to_string()))).await.unwrap();
+            println!("spawned task error: {:?}", err);
         }
-    }
+    });
+
+    // unsafe {
+    //     if let Some(sender) = &SENDER {
+    //         sender
+    //             .try_send(ExecutorEvents::Spawn(Box::pin(future)))
+    //             .unwrap();
+    //     } else {
+    //         panic!("Unable to spawn non-blocking future - executor service is not initialized")
+    //     }
+    // }
 }
 
 pub enum ExecutorEvents {
@@ -65,7 +73,7 @@ impl Drop for Executor {
 }
 
 impl AsyncService for Executor {
-    fn start(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
+    fn start_service(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
         println!("executor relay starting...");
         let this = self.clone();
         let application_events_sender = self.application_events.sender.clone();
@@ -100,14 +108,14 @@ impl AsyncService for Executor {
         })
     }
 
-    fn signal_exit(self: Arc<Self>) {
+    fn signal_termination(self: Arc<Self>) {
         self.executor_events
             .sender
             .try_send(ExecutorEvents::Exit)
             .unwrap();
     }
 
-    fn stop(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
+    fn stop_service(self: Arc<Self>) -> BoxFuture<'static, Result<()>> {
         Box::pin(async move { Ok(()) })
     }
 }

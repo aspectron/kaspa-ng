@@ -72,7 +72,7 @@ impl Wallet {
         sections.insert_typeid(Rc::new(RefCell::new(section::Open::new(interop.clone()))));
 
         let channel = interop.application_events().clone();
-        let wallet = interop.wallet_service().wallet().clone();
+        let wallet = interop.wallet().clone();
 
         Self {
             interop,
@@ -154,7 +154,9 @@ impl eframe::App for Wallet {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        // println!("update...");
         for event in self.channel.iter() {
+            println!("processing wallet event..");
             if let Err(err) = self.handle_events(event.clone(), ctx, frame) {
                 log_error!("error processing wallet interop event: {}", err);
             }
@@ -266,6 +268,7 @@ impl Wallet {
     ) -> Result<()> {
         match event {
             Events::Exit => {
+                println!("Exit...");
                 cfg_if! {
                     if #[cfg(not(target_arch = "wasm32"))] {
                         _frame.close();

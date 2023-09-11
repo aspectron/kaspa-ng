@@ -1,12 +1,12 @@
 use crate::imports::*;
 // use std::thread::JoinHandle;
-use crate::interop::AsyncService;
+use crate::interop::Service;
 use crate::result::Result;
 use futures_util::future::{select_all, try_join_all};
 
 pub struct AsyncRuntime {
     threads: usize,
-    services: Mutex<Vec<Arc<dyn AsyncService>>>,
+    services: Mutex<Vec<Arc<dyn Service>>>,
     worker: Mutex<Option<std::thread::JoinHandle<()>>>,
 }
 
@@ -29,7 +29,7 @@ impl AsyncRuntime {
 
     pub fn register<T>(&self, service: Arc<T>)
     where
-        T: AsyncService + 'static,
+        T: Service + 'static,
     {
         // trace!("async-runtime registering service {}", service.clone().ident());
         self.services.lock().unwrap().push(service);
@@ -96,7 +96,7 @@ impl AsyncRuntime {
             .lock()
             .unwrap()
             .iter()
-            .map(|x| tokio::spawn(x.clone().start()))
+            .map(|x| tokio::spawn(x.clone().start_service()))
             .collect::<Vec<tokio::task::JoinHandle<Result<()>>>>();
 
         // wait for at least one service to return
@@ -123,7 +123,7 @@ impl AsyncRuntime {
             .lock()
             .unwrap()
             .iter()
-            .map(|x| tokio::spawn(x.clone().stop()))
+            .map(|x| tokio::spawn(x.clone().stop_service()))
             .collect::<Vec<tokio::task::JoinHandle<Result<()>>>>();
         try_join_all(futures).await.unwrap();
 
@@ -133,7 +133,7 @@ impl AsyncRuntime {
     pub fn shutdown(self: &Arc<AsyncRuntime>) {
         // trace!("Sending an exit signal to all async-runtime services");
         for service in self.services.lock().unwrap().iter() {
-            service.clone().signal_exit();
+            service.clone().signal_termination();
         }
     }
 }

@@ -24,8 +24,11 @@ impl<T> Sender<T> {
     }
 
     pub fn try_send(&self, msg: T) -> Result<(), TrySendError<T>> {
+        println!("channel try_send");
         self.sender.try_send(msg)?;
+        println!("request repaint");
         self.ctx.request_repaint();
+        println!("request repaint finished");
         Ok(())
     }
 
@@ -45,10 +48,10 @@ pub struct Channel<T = ()> {
 }
 
 impl<T> Channel<T> {
-    pub fn unbounded(ctx: &egui::Context) -> Self {
+    pub fn unbounded(ctx: egui::Context) -> Self {
         let (sender, receiver) = unbounded();
         Self {
-            sender: Sender::new(ctx.clone(), sender),
+            sender: Sender::new(ctx, sender),
             receiver,
         }
     }

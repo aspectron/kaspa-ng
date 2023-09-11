@@ -1,4 +1,4 @@
-use crate::imports::*;
+use crate::{imports::*, interop::spawn_with_result};
 use egui::*;
 use crate::wizard::*;
 // use workflow_core::task::spawn;
@@ -115,7 +115,7 @@ impl Open {
 
             #[derive(Default, Debug)]
             struct Test {
-
+                value : usize
             }
 
             crate::wizard::Wizard::<Test>::default()
@@ -147,12 +147,36 @@ impl Open {
                     if ui.add(egui::Button::new("Cancel")).clicked() {
                         return Disposition::Cancel;
                     }
-                    Disposition::Current
+
+                    let payload = Payload::<Result<usize>>::new("test");
+
+                    if ui.add_enabled(!payload.is_pending(), egui::Button::new("Test SPAWN")).clicked() {
+
+                        spawn_with_result(&payload, async move {
+                            // payload.store(());
+                            Ok(123)
+                        });
+                        return Disposition::Current;
+                    }
+
+                    if let Some(result) = payload.take() {
+                        // ui.label(format!("Result: {:?}", result));
+                        _ctx.value = result.unwrap();
+                        Disposition::Next
+                    } else {
+
+                        Disposition::Current
+                    }
+
+
 
 
                 })
                 .stage(|ui: &mut Ui, _ctx: &mut Test| {
                     ui.label("stage 3");
+
+                    ui.label(format!("Result: {:?}", _ctx.value));
+
                     if ui.add(egui::Button::new("Prev")).clicked() {
                         return Disposition::Previous;
                     }

@@ -32,6 +32,7 @@ separator = "0.4.1"
 futures = { version = "0.3" }
 futures-util = { version = "0.3", default-features = false, features = ["alloc"]}
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
+async-trait = "0.1.73"
 
 
 egui = "0.22.0"

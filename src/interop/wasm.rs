@@ -5,7 +5,7 @@ use futures_util::future::join_all;
 use workflow_core::task::spawn;
 
 pub struct AsyncRuntime {
-    services: Mutex<Vec<Arc<dyn AsyncService>>>,
+    services: Mutex<Vec<Arc<dyn Service>>>,
     handles: Mutex<Vec<Receiver<()>>>,
 }
 
@@ -21,7 +21,7 @@ impl Default for AsyncRuntime {
 impl AsyncRuntime {
     pub fn register<T>(&self, service: Arc<T>)
     where
-        T: AsyncService + 'static,
+        T: Service + 'static,
     {
         self.services.lock().unwrap().push(service);
     }
@@ -32,7 +32,7 @@ impl AsyncRuntime {
             self.handles.lock().unwrap().push(rx);
             let service = service.clone();
             spawn(async move {
-                service.start().await.expect("service start error");
+                service.spawn().await.expect("service start error");
                 tx.send(()).await.unwrap();
             })
         });
@@ -40,7 +40,7 @@ impl AsyncRuntime {
 
     pub fn shutdown(self: &Arc<AsyncRuntime>) {
         for service in self.services.lock().unwrap().iter() {
-            service.clone().signal_exit();
+            service.clone().terminate();
         }
     }
 
