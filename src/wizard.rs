@@ -12,6 +12,7 @@ pub enum Disposition {
     Current,
     Previous,
     Next,
+    Cancel,
 }
 
 pub trait WizardT {
@@ -162,6 +163,9 @@ impl<Ctx> Wizard<Ctx> {
                 self.index += 1;
             }
             Disposition::Current => {}
+            Disposition::Cancel => {
+                set_active_wizard(None);
+            }
         }
     }
 }
