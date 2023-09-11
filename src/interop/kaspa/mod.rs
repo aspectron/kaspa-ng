@@ -1,11 +1,7 @@
 pub mod config;
 pub use config::Config;
-use workflow_core::prelude::DuplexChannel;
 pub mod daemon;
-// pub use daemon::Daemon;
 pub mod inproc;
-// pub use inproc::InProc;
-
 
 use crate::imports::*;
 use crate::interop::Service;
@@ -32,12 +28,11 @@ pub enum KaspadServiceEvents {
 pub struct KaspaService {
     pub application_events: interop::Channel<Events>,
     pub service_events: Channel<KaspadServiceEvents>,
-    pub task_ctl: Channel<()>,//DuplexChannel<()>,
+    pub task_ctl: Channel<()>, //DuplexChannel<()>,
     pub network: Mutex<Network>,
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
     // pub wallet_service: Arc<WalletService>,
     pub wallet: Arc<runtime::Wallet>,
-
 }
 
 impl KaspaService {
@@ -94,7 +89,6 @@ impl KaspaService {
             network: Mutex::new(settings.network),
             kaspad: Mutex::new(None),
             wallet: Arc::new(wallet),
-
             // wallet_service,
             // kaspad : Arc::
             // config : Mutex::new(),
@@ -118,14 +112,7 @@ impl KaspaService {
     pub fn wallet(&self) -> &Arc<runtime::Wallet> {
         &self.wallet
     }
-
-
 }
-
-// impl Drop for Executor {
-//     fn drop(&mut self) {
-//     }
-// }
 
 #[async_trait]
 impl Service for KaspaService {
@@ -138,102 +125,98 @@ impl Service for KaspaService {
             println!("Wallet start error: {:?}", err);
         });
 
-
         let wallet_events = this.wallet.multiplexer().channel();
 
         let _application_events_sender = self.application_events.sender.clone();
         // spawn(async move {
-            loop {
-                println!("loop...");
-                select! {
+        loop {
+            println!("loop...");
+            select! {
 
-                    msg = wallet_events.recv().fuse() => {
-                        if let Ok(event) = msg {
-                            println!("wallet event: {:?}", event);
-                            this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
-                        } else {
-                            break;
-                        }
+                msg = wallet_events.recv().fuse() => {
+                    if let Ok(event) = msg {
+                        println!("wallet event: {:?}", event);
+                        this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
+                    } else {
+                        break;
                     }
+                }
 
-                    msg = this.as_ref().service_events.receiver.recv().fuse() => {
+                msg = this.as_ref().service_events.receiver.recv().fuse() => {
 
-                        if let Ok(event) = msg {
-                            match event {
+                    if let Ok(event) = msg {
+                        match event {
 
-                                KaspadServiceEvents::StartInternalInProc { config } => {
+                            KaspadServiceEvents::StartInternalInProc { config } => {
 
-                                    this.wallet().stop().await.expect("Unable to stop wallet");
-                                    this.wallet().bind_rpc(None).await?;
+                                this.wallet().stop().await.expect("Unable to stop wallet");
+                                this.wallet().bind_rpc(None).await?;
 
-                                    if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
-                                        println!("*** STOPPING KASPAD ***");
-                                        if let Err(err) = kaspad.stop() {
-                                            println!("error stopping kaspad: {}", err);
-                                        }
+                                if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
+                                    println!("*** STOPPING KASPAD ***");
+                                    if let Err(err) = kaspad.stop() {
+                                        println!("error stopping kaspad: {}", err);
                                     }
-
-                                    println!("*** STARTING NEW KASPAD ***");
-                                    let kaspad = Arc::new(inproc::InProc::default());
-                                    this.kaspad.lock().unwrap().replace(kaspad.clone());
-                                    kaspad.start(config.into()).unwrap();
-
-
-                                    println!("*** SETTING UP DIRECT RPC BINDING ***");
-                                    let rpc_api = kaspad.rpc_core_services().expect("Unable to obtain inproc rpc api");
-                                    let rpc_ctl = RpcCtl::new();
-                                    let rpc = Rpc::new(rpc_api, rpc_ctl.clone());
-
-
-                                    // - CONNECT NEVER REACHES BECAUSE WHEN IT IS BROADCASTED,
-                                    // - MULTIPLEXER CLIENT DOES NOT YET EXISTS
-
-                                    this.wallet().bind_rpc(Some(rpc)).await.unwrap();
-                                    this.wallet().start().await.expect("Unable to stop wallet");
-
-
-                                    rpc_ctl.try_signal_open().expect("Unable to signal `open` event to rpc ctl");
-
-                                },
-                                KaspadServiceEvents::StartInternalAsDaemon { config:_ } => {
-
-
-
-                                },
-                                KaspadServiceEvents::StartExternalAsDaemon { path:_, config:_ } => {
-
-                                },
-                                KaspadServiceEvents::StartRemoteConnection { url: _ } => {
-
-                                },
-
-                                KaspadServiceEvents::Exit => {
-                                    break;
                                 }
+
+                                println!("*** STARTING NEW KASPAD ***");
+                                let kaspad = Arc::new(inproc::InProc::default());
+                                this.kaspad.lock().unwrap().replace(kaspad.clone());
+                                kaspad.start(config.into()).unwrap();
+
+
+                                println!("*** SETTING UP DIRECT RPC BINDING ***");
+                                let rpc_api = kaspad.rpc_core_services().expect("Unable to obtain inproc rpc api");
+                                let rpc_ctl = RpcCtl::new();
+                                let rpc = Rpc::new(rpc_api, rpc_ctl.clone());
+
+
+                                // - CONNECT NEVER REACHES BECAUSE WHEN IT IS BROADCASTED,
+                                // - MULTIPLEXER CLIENT DOES NOT YET EXISTS
+
+                                this.wallet().bind_rpc(Some(rpc)).await.unwrap();
+                                this.wallet().start().await.expect("Unable to stop wallet");
+
+
+                                rpc_ctl.try_signal_open().expect("Unable to signal `open` event to rpc ctl");
+
+                            },
+                            KaspadServiceEvents::StartInternalAsDaemon { config:_ } => {
+
+
+
+                            },
+                            KaspadServiceEvents::StartExternalAsDaemon { path:_, config:_ } => {
+
+                            },
+                            KaspadServiceEvents::StartRemoteConnection { url: _ } => {
+
+                            },
+
+                            KaspadServiceEvents::Exit => {
+                                break;
                             }
-                        } else {
-                            break;
                         }
+                    } else {
+                        break;
                     }
                 }
             }
+        }
 
-            println!("stopping wallet from node manager...");
-            this.wallet()
-                .stop()
-                .await
-                .expect("Unable to stop wallet");
-            this.wallet().bind_rpc(None).await?;
+        println!("stopping wallet from node manager...");
+        this.wallet().stop().await.expect("Unable to stop wallet");
+        this.wallet().bind_rpc(None).await?;
 
-            println!("shutting down kaspad manager service...");
-            if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
-                if let Err(err) = kaspad.stop() {
-                    println!("error stopping kaspad: {}", err);
-                }
+        println!("shutting down kaspad manager service...");
+        if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
+            if let Err(err) = kaspad.stop() {
+                println!("error stopping kaspad: {}", err);
             }
+        }
 
-            this.task_ctl.send(()).await.unwrap();
-            // Ok(())
+        this.task_ctl.send(()).await.unwrap();
+        // Ok(())
         // });
 
         Ok(())
@@ -249,6 +232,5 @@ impl Service for KaspaService {
     async fn join(self: Arc<Self>) -> Result<()> {
         self.task_ctl.recv().await.unwrap();
         Ok(())
-        // Box::pin(async move { Ok(()) })
     }
 }

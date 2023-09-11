@@ -74,19 +74,20 @@ impl<Ctx> Wizard<Ctx> {
 
     // pub fn stage<FnStageT>(
     pub fn stage(
-    // pub fn stage(
+        // pub fn stage(
         mut self,
         stage: impl Fn(&mut Ui, &mut Ctx) -> Disposition + 'static,
         // stage: &dyn Fn(&mut Ui, &mut Ctx) -> Disposition,
     ) -> Self
-    // where
+// where
     //     FnStageT: Fn(&mut Ui, &mut Ctx) -> Disposition + 'static,
     {
         self.stages.push(Rc::new(stage));
         self
     }
 
-    pub fn finish(mut self, finish: impl Fn(&mut Ctx) + 'static) // -> &mut Self
+    pub fn finish(mut self, finish: impl Fn(&mut Ctx) + 'static)
+    // -> &mut Self
     where
         Ctx: 'static,
     {
@@ -201,4 +202,3 @@ fn set_active_wizard(wizard: Option<Box<dyn WizardT>>) {
         WIZARD = wizard;
     }
 }
-

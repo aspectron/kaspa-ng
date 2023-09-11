@@ -1,4 +1,1 @@
-
-pub struct Daemon {
-    
-}
+pub struct Daemon {}

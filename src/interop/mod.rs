@@ -4,7 +4,6 @@ use crate::imports::*;
 //     sync::atomic::{AtomicBool, Ordering},
 // };
 
-
 // mod wasm;
 
 cfg_if! {
@@ -50,10 +49,8 @@ pub struct Inner {
     // #[cfg(not(target_arch = "wasm32"))]
     kaspa: Arc<KaspaService>,
 
-    services : Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
-
+    services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
     // egui_ctx : egui::Context,
-
 }
 // #[derive(Default)]
 #[derive(Clone)]
@@ -72,7 +69,7 @@ impl Interop {
         // runtime.register(wallet.clone());
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
 
-        let services : Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![
+        let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![
             kaspa.clone(),
             // wallet.clone(),
         ];
@@ -86,7 +83,7 @@ impl Interop {
             inner: Arc::new(Inner {
                 application_events,
                 kaspa,
-                services : Mutex::new(services),
+                services: Mutex::new(services),
                 // egui_ctx : egui_ctx.clone(),
                 // runtime,
                 // wallet,
@@ -108,9 +105,7 @@ impl Interop {
 
         let services = self.services();
         for service in services {
-            spawn(async move {
-                service.spawn().await
-            });
+            spawn(async move { service.spawn().await });
         }
         // let futures = services.into_iter().map(|service|service.spawn()).collect::<Vec<_>>();
         // spawn(async move {
@@ -124,11 +119,17 @@ impl Interop {
 
     pub fn shutdown(&self) {
         // self.inner.runtime.shutdown();
-        self.services().into_iter().for_each(|service|service.terminate());
+        self.services()
+            .into_iter()
+            .for_each(|service| service.terminate());
     }
 
     pub async fn join(&self) {
-        let futures = self.services().into_iter().map(|service|service.join()).collect::<Vec<_>>();
+        let futures = self
+            .services()
+            .into_iter()
+            .map(|service| service.join())
+            .collect::<Vec<_>>();
         join_all(futures).await;
     }
 
@@ -136,8 +137,6 @@ impl Interop {
         register(None);
     }
     // cfg_if! {
-
-
 
     //     if #[cfg(not(target_arch = "wasm32"))] {
     //         pub fn join(&self) {
@@ -185,7 +184,6 @@ impl Interop {
     //     &self.inner.wallet.wallet
     // }
 
-
     pub fn spawn_task<F>(&self, task: F)
     where
         F: Future<Output = Result<()>> + Send + 'static,
@@ -193,15 +191,21 @@ impl Interop {
         let sender = self.inner.application_events.sender.clone();
         workflow_core::task::spawn(async move {
             if let Err(err) = task.await {
-                sender.send(Events::Error(Box::new(err.to_string()))).await.unwrap();
+                sender
+                    .send(Events::Error(Box::new(err.to_string())))
+                    .await
+                    .unwrap();
                 println!("spawned task error: {:?}", err);
             }
         });
     }
-    
-    pub fn spawn_task_with_result<R,F>(&self,semaphore : &Payload<std::result::Result<R,Error>>, task: F)
-    where
-        R : Clone + Send + 'static,
+
+    pub fn spawn_task_with_result<R, F>(
+        &self,
+        semaphore: &Payload<std::result::Result<R, Error>>,
+        task: F,
+    ) where
+        R: Clone + Send + 'static,
         F: Future<Output = Result<R>> + Send + 'static,
     {
         // let sender = self.inner.application_events.sender.clone();
@@ -210,7 +214,7 @@ impl Interop {
             let result = task.await;
             // semaphore.set(result);
             match result {
-                Ok(r) => { semaphore.store(Ok(r)) },
+                Ok(r) => semaphore.store(Ok(r)),
                 Err(err) => {
                     semaphore.store(Err(err));
                     // sender.send(Events::Error(Box::new(err.to_string()))).await.unwrap();
@@ -223,8 +227,6 @@ impl Interop {
             // }
         });
     }
-    
-
 }
 
 // impl Drop for Interop {
@@ -233,7 +235,7 @@ impl Interop {
 //     }
 // }
 
-static mut INTEROP : Option<Interop> = None;
+static mut INTEROP: Option<Interop> = None;
 
 fn interop() -> &'static Interop {
     unsafe {
@@ -254,15 +256,14 @@ fn register(interop: Option<Interop>) {
 pub fn spawn<F>(task: F)
 where
     F: Future<Output = Result<()>> + Send + 'static,
-{    
+{
     interop().spawn_task(task);
 }
 
-pub fn spawn_with_result<R,F>(semaphore : &Payload<std::result::Result<R,Error>>, task: F)
+pub fn spawn_with_result<R, F>(semaphore: &Payload<std::result::Result<R, Error>>, task: F)
 where
     R: Clone + Send + 'static,
     F: Future<Output = Result<R>> + Send + 'static,
-{    
+{
     interop().spawn_task_with_result(semaphore, task);
 }
-

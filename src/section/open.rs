@@ -1,6 +1,6 @@
+use crate::wizard::*;
 use crate::{imports::*, interop::spawn_with_result};
 use egui::*;
-use crate::wizard::*;
 // use workflow_core::task::spawn;
 
 pub enum State {
@@ -115,32 +115,29 @@ impl Open {
 
             #[derive(Default, Debug)]
             struct Test {
-                value : usize
+                value: usize,
             }
 
             crate::wizard::Wizard::<Test>::default()
-                .with_window(|_ctx| {
-                    egui::Window::new("Wizard Window")
-                })
+                .with_window(|_ctx| egui::Window::new("Wizard Window"))
                 // .stage::<_, fn(&mut Ui, &mut Test) -> Disposition>(|ui: &mut Ui, ctx: &mut Test| {
                 .stage(|ui: &mut Ui, _ctx: &mut Test| {
                     ui.label("stage 1");
                     // if ui.add(egui::Button::new("Prev")).clicked() {
                     //     return Disposition::Previous;
                     // }
-                    
+
                     if ui.add(egui::Button::new("Next")).clicked() {
                         return Disposition::Next;
                     }
                     Disposition::Current
-
                 })
                 .stage(|ui: &mut Ui, _ctx: &mut Test| {
                     ui.label("stage 2");
                     if ui.add(egui::Button::new("Prev")).clicked() {
                         return Disposition::Previous;
                     }
-                    
+
                     if ui.add(egui::Button::new("Next")).clicked() {
                         return Disposition::Next;
                     }
@@ -150,8 +147,10 @@ impl Open {
 
                     let payload = Payload::<Result<usize>>::new("test");
 
-                    if ui.add_enabled(!payload.is_pending(), egui::Button::new("Test SPAWN")).clicked() {
-
+                    if ui
+                        .add_enabled(!payload.is_pending(), egui::Button::new("Test SPAWN"))
+                        .clicked()
+                    {
                         spawn_with_result(&payload, async move {
                             // payload.store(());
                             Ok(123)
@@ -164,13 +163,8 @@ impl Open {
                         _ctx.value = result.unwrap();
                         Disposition::Next
                     } else {
-
                         Disposition::Current
                     }
-
-
-
-
                 })
                 .stage(|ui: &mut Ui, _ctx: &mut Test| {
                     ui.label("stage 3");
@@ -180,19 +174,15 @@ impl Open {
                     if ui.add(egui::Button::new("Prev")).clicked() {
                         return Disposition::Previous;
                     }
-                    
+
                     if ui.add(egui::Button::new("Next")).clicked() {
                         return Disposition::Next;
                     }
                     Disposition::Current
-
-
                 })
                 .finish(|ctx| {
                     println!("finish: {:#?}", ctx);
-                })
-                ;
-
+                });
 
             // cascade(
             //     |ui: &mut Ui| {
