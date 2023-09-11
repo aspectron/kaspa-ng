@@ -1,4 +1,4 @@
-use crate::wizard::*;
+use crate::sequence::*;
 use crate::{imports::*, interop::spawn_with_result};
 use egui::*;
 // use workflow_core::task::spawn;
@@ -118,7 +118,7 @@ impl Open {
                 value: usize,
             }
 
-            crate::wizard::Wizard::<Test>::default()
+            crate::sequence::Sequence::<Test>::default()
                 .with_window(|_ctx| egui::Window::new("Wizard Window"))
                 // .stage::<_, fn(&mut Ui, &mut Test) -> Disposition>(|ui: &mut Ui, ctx: &mut Test| {
                 .stage(|ui: &mut Ui, _ctx: &mut Test| {
@@ -128,21 +128,21 @@ impl Open {
                     // }
 
                     if ui.add(egui::Button::new("Next")).clicked() {
-                        return Disposition::Next;
+                        return Stage::Next;
                     }
-                    Disposition::Current
+                    Stage::Current
                 })
                 .stage(|ui: &mut Ui, _ctx: &mut Test| {
                     ui.label("stage 2");
                     if ui.add(egui::Button::new("Prev")).clicked() {
-                        return Disposition::Previous;
+                        return Stage::Previous;
                     }
 
                     if ui.add(egui::Button::new("Next")).clicked() {
-                        return Disposition::Next;
+                        return Stage::Next;
                     }
                     if ui.add(egui::Button::new("Cancel")).clicked() {
-                        return Disposition::Cancel;
+                        return Stage::Cancel;
                     }
 
                     let payload = Payload::<Result<usize>>::new("test");
@@ -155,15 +155,15 @@ impl Open {
                             // payload.store(());
                             Ok(123)
                         });
-                        return Disposition::Current;
+                        return Stage::Current;
                     }
 
                     if let Some(result) = payload.take() {
                         // ui.label(format!("Result: {:?}", result));
                         _ctx.value = result.unwrap();
-                        Disposition::Next
+                        Stage::Next
                     } else {
-                        Disposition::Current
+                        Stage::Current
                     }
                 })
                 .stage(|ui: &mut Ui, _ctx: &mut Test| {
@@ -172,13 +172,13 @@ impl Open {
                     ui.label(format!("Result: {:?}", _ctx.value));
 
                     if ui.add(egui::Button::new("Prev")).clicked() {
-                        return Disposition::Previous;
+                        return Stage::Previous;
                     }
 
                     if ui.add(egui::Button::new("Next")).clicked() {
-                        return Disposition::Next;
+                        return Stage::Next;
                     }
-                    Disposition::Current
+                    Stage::Current
                 })
                 .finish(|ctx| {
                     println!("finish: {:#?}", ctx);

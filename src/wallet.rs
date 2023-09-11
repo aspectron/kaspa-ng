@@ -181,7 +181,7 @@ impl eframe::App for Wallet {
         //     return;
         // }
 
-        if let Some(wizard) = crate::wizard::wizard() {
+        if let Some(wizard) = crate::sequence::stages() {
             if wizard.render_with_context(ctx) {
                 return;
             }

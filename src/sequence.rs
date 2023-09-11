@@ -1,145 +1,204 @@
-use std::{collections::VecDeque, marker::PhantomData};
-
 use crate::imports::*;
 pub use futures::{future::FutureExt, select, Future};
 
-// trait StageT: 'static {
-trait StageT {
-    fn render(&self, ui: &mut Ui) -> bool;
+pub enum Container {
+    Window(Box<dyn Fn(&egui::Context) -> egui::Window<'_>>),
+    TopBottomPanel(Box<dyn Fn(&egui::Context) -> egui::TopBottomPanel>),
+    CentralPanel(Box<dyn Fn(&egui::Context) -> egui::CentralPanel>),
+    SidePanel(Box<dyn Fn(&egui::Context) -> egui::SidePanel>),
 }
 
-// pub struct StageBinding<FnRender, In, Out>
+pub enum Stage {
+    Current,
+    Previous,
+    Next,
+    Cancel,
+}
+
+pub trait SequenceT {
+    fn render_with_context(&mut self, ctx: &egui::Context) -> bool;
+    fn render_with_ui(&mut self, ui: &mut egui::Ui) -> bool;
+}
+
+type FnStage<Ctx> = dyn Fn(&mut Ui, &mut Ctx) -> Stage + 'static;
+type FnFinish<Ctx> = dyn Fn(&mut Ctx) + 'static;
+
+#[derive(Default)]
+pub struct Sequence<Ctx> {
+    ctx: Rc<RefCell<Ctx>>,
+    stages: Vec<Rc<FnStage<Ctx>>>,
+    finish: Option<Box<FnFinish<Ctx>>>,
+    index: usize,
+    container: Option<Container>,
+}
+
+impl<Ctx> Sequence<Ctx> {
+    pub fn new() -> Self
+    where
+        Ctx: Default,
+    {
+        Self {
+            ctx: Rc::new(RefCell::new(Ctx::default())),
+            stages: vec![],
+            finish: None,
+            index: 0,
+            container: None,
+        }
+    }
+
+    pub fn with_context(ctx: Ctx) -> Self {
+        Self {
+            ctx: Rc::new(RefCell::new(ctx)),
+            stages: vec![],
+            finish: None,
+            index: 0,
+            container: None,
+        }
+    }
+
+    pub fn with_window(
+        mut self,
+        ctor: impl Fn(&egui::Context) -> egui::Window<'_> + 'static,
+    ) -> Self {
+        self.container = Some(Container::Window(Box::new(ctor)));
+        self
+    }
+
+    pub fn with_top_bottom_panel(
+        mut self,
+        ctor: impl Fn(&egui::Context) -> egui::TopBottomPanel + 'static,
+    ) -> Self {
+        self.container = Some(Container::TopBottomPanel(Box::new(ctor)));
+        self
+    }
+
+    // pub fn stage<FnStageT>(
+    pub fn stage(
+        // pub fn stage(
+        mut self,
+        stage: impl Fn(&mut Ui, &mut Ctx) -> Stage + 'static,
+        // stage: &dyn Fn(&mut Ui, &mut Ctx) -> Disposition,
+    ) -> Self
 // where
-//     FnRender: Fn(&mut Ui, In) -> Option<Out> + 'static,
-//     // FnHandler: Fn(V) + Send + Sync + 'static,
-// {
-//     render: FnRender,
-// }
+    //     FnStageT: Fn(&mut Ui, &mut Ctx) -> Disposition + 'static,
+    {
+        self.stages.push(Rc::new(stage));
+        self
+    }
 
-// impl<FnRender, In, Out> StageT for StageBinding<FnRender, In, Out>
-// where
-//     FnRender: Fn(&mut Ui, In) -> Option<Out> + 'static,
-//     // FnHandler: Fn(V) + Send + Sync + 'static,
-//     // I: 'static,
-// {
-//     fn render(&self, ui: &mut Ui) -> bool {
-//         false
-//         // if let Some(resp) = (self.render)(ui) {
-//         //     (self.handler)(resp);
-//         //     true
-//         // } else {
-//         //     false
-//         // }
-//     }
+    pub fn finish(mut self, finish: impl Fn(&mut Ctx) + 'static)
+    // -> &mut Self
+    where
+        Ctx: 'static,
+    {
+        self.finish = Some(Box::new(finish));
 
-//     // fn then(self, render: FnRender) -> Stage<FnRender, V>
-//     // where
-//     //     FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
-//     //     V: 'static,
-//     // {
-//     //     Stage { render }
-//     // }
-// }
+        set_active_sequence(Some(Box::new(self)))
 
-// pub struct Stage//<FnRender, V>
-// // where
-// //     FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
-// {
-//     // render: FnRender,
-//     binding: Rc<RefCell<VecDeque<Box<dyn StageT>>>>,
+        // self
+    }
 
-// }
+    pub fn render_with_context_impl(&mut self, ctx: &egui::Context) -> bool {
+        if self.index == self.stages.len() {
+            let finish = self.finish.as_ref().expect("Missing `finish` phase");
+            finish(&mut self.ctx.borrow_mut());
 
-// impl Stage {
-//     pub fn stage<FnRender, Out>(
-//         self : &Rc<Self>,
-//         // &mut self,
-//         render: impl Fn(&mut Ui) -> Option<Out> + 'static,
-//     ) -> NextStage<Out> where
-//         FnRender: Fn(&mut Ui) -> Option<Out> + 'static,
-//         // Out: 'static,
-//     {
-//         let binding = Binding { render };
+            set_active_sequence(None);
 
-//         let binding: Box<dyn StageT> = Box::new(binding);
+            true
+        } else {
+            let container = self
+                .container
+                .as_ref()
+                .expect("Missing `container` (window or panel)");
 
-//         // self.binding = Some(binding);
-//         self.binding.borrow_mut().push_back(binding);
+            match container {
+                Container::Window(window) => {
+                    (window)(ctx).show(ctx, |ui| {
+                        self.render_stage(ui);
+                    });
+                }
+                Container::TopBottomPanel(panel) => {
+                    (panel)(ctx).show(ctx, |ui| {
+                        self.render_stage(ui);
+                    });
+                }
+                Container::CentralPanel(panel) => {
+                    (panel)(ctx).show(ctx, |ui| {
+                        self.render_stage(ui);
+                    });
+                }
+                Container::SidePanel(panel) => {
+                    (panel)(ctx).show(ctx, |ui| {
+                        self.render_stage(ui);
+                    });
+                }
+            }
 
-//         NextStage::new(self)
-//     }
+            false
+        }
+    }
 
-// }
+    pub fn render_with_ui_impl(&mut self, ui: &mut egui::Ui) -> bool {
+        if self.index == self.stages.len() {
+            let finish = self.finish.as_ref().expect("Missing `finish` phase");
+            finish(&mut self.ctx.borrow_mut());
+            true
+        } else {
+            self.render_stage(ui);
+            false
+        }
+    }
 
-// pub struct NextStage<V>//<FnRender, V>
-// // where
-// //     FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
-// {
-//     // render: FnRender,
-//     // binding: Arc<dyn StageT + Send + Sync>,
-//     _phantom: PhantomData<V>,
-//     stage : Rc<Stage>,
-// }
+    fn render_stage(&mut self, ui: &mut Ui) {
+        let stage = self.stages[self.index].clone();
+        match stage(ui, &mut self.ctx.borrow_mut()) {
+            Stage::Previous => {
+                if self.index > 0 {
+                    self.index -= 1;
+                } else {
+                    panic!("Wizard `Disposition::Previous` invoked on the first stage")
+                }
+            }
+            Stage::Next => {
+                self.index += 1;
+            }
+            Stage::Current => {}
+            Stage::Cancel => {
+                set_active_sequence(None);
+            }
+        }
+    }
+}
 
-// impl<V> NextStage<V> {
-//     pub fn new(stage : &Rc<Stage>) -> Self {
-//         Self {
-//             // binding: Arc::new(binding),
-//             _phantom: PhantomData,
-//             stage : stage.clone(),
-//         }
-//     }
+impl<Ctx> SequenceT for Sequence<Ctx> {
+    fn render_with_context(&mut self, ctx: &egui::Context) -> bool {
+        self.render_with_context_impl(ctx)
+    }
+    fn render_with_ui(&mut self, ctx: &mut egui::Ui) -> bool {
+        self.render_with_ui_impl(ctx)
+    }
+}
 
-//     pub fn then<FnRender>(
-//         // self : &Rc<Self>,
-//         &mut self,
-//         render: impl Fn(&mut Ui) -> Option<V> + 'static,
-//     ) -> NextStage<V> where
-//         FnRender: Fn(&mut Ui) -> Option<V> + 'static,
-//         V: 'static,
-//     {
-//         let binding = Binding { render };
+// - -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// - -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//         let binding: Box<dyn StageT> = Box::new(binding);
+static mut SEQUENCE: Option<Box<dyn SequenceT>> = None;
 
-//         // self.binding = Some(binding);
-//         self.stage.binding.borrow_mut().push_back(binding);
+pub fn stages() -> Option<&'static mut Box<dyn SequenceT>> {
+    unsafe {
+        if SEQUENCE.is_none() {
+            None
+        } else {
+            SEQUENCE.as_mut()
+        }
+    }
+}
 
-//         NextStage::new(&self.stage)
-//     }
-
-//     pub fn finish<FnRender>(
-//         // self : &Rc<Self>,
-//         &mut self,
-//         finish: impl Fn(&mut Ui) -> Option<V> + 'static,
-//     ) -> NextStage<V> where
-//         FnRender: Fn(&mut Ui) -> Option<V> + 'static,
-//         V: 'static,
-//     {
-//         let binding = Binding { render };
-
-//         let binding: Box<dyn StageT> = Box::new(binding);
-
-//         // self.binding = Some(binding);
-//         self.stage.binding.borrow_mut().push_back(binding);
-
-//         NextStage::new(&self.stage)
-//     }
-
-// }
-
-//     pub fn stage<FnRender, FnHandler, V>(
-//         &mut self,
-//         render: impl Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
-//     ) -> Stage where
-//         FnRender: Fn(&mut Ui) -> Option<V> + Send + Sync + 'static,
-//         V: 'static,
-//     {
-//         let binding = Binding { render };
-
-//         let binding: Arc<dyn StageT + Send + Sync + 'static> = Arc::new(binding);
-
-//         self.binding = Some(binding);
-//     }
-
-// }
+fn set_active_sequence(wizard: Option<Box<dyn SequenceT>>) {
+    unsafe {
+        SEQUENCE = wizard;
+    }
+}

@@ -15,4 +15,4 @@ pub mod section;
 // pub mod sequence;
 pub mod settings;
 pub mod sync;
-pub mod wizard;
+pub mod sequence;
