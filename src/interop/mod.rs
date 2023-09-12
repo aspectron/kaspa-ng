@@ -260,10 +260,10 @@ where
     interop().spawn_task(task);
 }
 
-pub fn spawn_with_result<R, F>(semaphore: &Payload<std::result::Result<R, Error>>, task: F)
+pub fn spawn_with_result<R, F>(payload: &Payload<std::result::Result<R, Error>>, task: F)
 where
     R: Clone + Send + 'static,
     F: Future<Output = Result<R>> + Send + 'static,
 {
-    interop().spawn_task_with_result(semaphore, task);
+    interop().spawn_task_with_result(payload, task);
 }

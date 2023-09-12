@@ -18,6 +18,8 @@ pub struct Wallet {
     #[allow(dead_code)]
     settings: Settings,
 
+    large_style : egui::Style,
+
     is_synced: Option<bool>,
     sync_state: Option<SyncState>,
     server_version: Option<String>,
@@ -36,10 +38,38 @@ pub struct Wallet {
 impl Wallet {
     /// Called once before the first frame.
     pub fn new(
-        _cc: &eframe::CreationContext<'_>,
+        cc: &eframe::CreationContext<'_>,
         interop: crate::interop::Interop,
         settings: Settings,
     ) -> Self {
+
+
+        let mut fonts = egui::FontDefinitions::default();
+        egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+        cc.egui_ctx.set_fonts(fonts);
+
+
+        let mut style = (*cc.egui_ctx.style()).clone();
+        // println!("style: {:?}", style.text_styles);
+        style.text_styles.insert(
+            egui::TextStyle::Heading,
+            egui::FontId::new(22.0, egui::FontFamily::Proportional),
+        );
+        style.text_styles.insert(
+            egui::TextStyle::Body,
+            egui::FontId::new(18.0, egui::FontFamily::Proportional),
+        );
+        style.text_styles.insert(
+            egui::TextStyle::Button,
+            egui::FontId::new(18.0, egui::FontFamily::Proportional),
+        );
+        style.text_styles.insert(
+            egui::TextStyle::Monospace,
+            egui::FontId::new(18.0, egui::FontFamily::Proportional),
+        );
+
+        // cc.egui_ctx.set_style(style);
+
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -70,6 +100,8 @@ impl Wallet {
             interop.clone(),
         ))));
         sections.insert_typeid(Rc::new(RefCell::new(section::Open::new(interop.clone()))));
+        sections.insert_typeid(Rc::new(RefCell::new(section::Create::new(interop.clone()))));
+        sections.insert_typeid(Rc::new(RefCell::new(section::Import::new(interop.clone()))));
 
         let channel = interop.application_events().clone();
         let wallet = interop.wallet().clone();
@@ -81,6 +113,8 @@ impl Wallet {
             section: TypeId::of::<section::Open>(),
             sections,
             settings,
+
+            large_style : style,
 
             wallet_list: Vec::new(),
             account_list: Vec::new(),
@@ -107,6 +141,10 @@ impl Wallet {
         T: 'static,
     {
         self.section = TypeId::of::<T>();
+        println!("selecting section: {:?}", self.section);
+        if self.sections.get(&self.section).is_none() {
+            panic!("Unknown section type {:?}", self.section);
+        }
     }
 
     pub fn sender(&self) -> interop::channel::Sender<Events> {
@@ -171,20 +209,20 @@ impl eframe::App for Wallet {
         // return;
 
 
-        let mut style = (*ctx.style()).clone();
-        // println!("style: {:?}", style.text_styles);
-        style.text_styles.insert(
-            egui::TextStyle::Body,
-            egui::FontId::new(18.0, egui::FontFamily::Proportional),
-        );
-        style.text_styles.insert(
-            egui::TextStyle::Button,
-            egui::FontId::new(18.0, egui::FontFamily::Proportional),
-        );
-        style.text_styles.insert(
-            egui::TextStyle::Monospace,
-            egui::FontId::new(18.0, egui::FontFamily::Proportional),
-        );
+        // let mut style = (*ctx.style()).clone();
+        // // println!("style: {:?}", style.text_styles);
+        // style.text_styles.insert(
+        //     egui::TextStyle::Body,
+        //     egui::FontId::new(18.0, egui::FontFamily::Proportional),
+        // );
+        // style.text_styles.insert(
+        //     egui::TextStyle::Button,
+        //     egui::FontId::new(18.0, egui::FontFamily::Proportional),
+        // );
+        // style.text_styles.insert(
+        //     egui::TextStyle::Monospace,
+        //     egui::FontId::new(18.0, egui::FontFamily::Proportional),
+        // );
 
         // if crate::prompt::prompt().render(ctx) {
         //     return;
@@ -235,10 +273,26 @@ impl eframe::App for Wallet {
         egui::CentralPanel::default()
         
         .show(ctx, |ui| {
-            ui.style_mut().text_styles = style.text_styles;
+            ui.style_mut().text_styles = self.large_style.text_styles.clone();
 
             if !self.wallet().is_open() {
-                let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
+
+                let section = if self.section == TypeId::of::<section::Open>() || self.section == TypeId::of::<section::Create>() {
+                    self.section
+                } else {
+                    TypeId::of::<section::Open>()
+                };
+
+                // let section = match self.section {
+                //      | TypeId::of::<section::Create>() => {
+                //         self.section
+                //     },
+                //     _ => {
+                //         self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone()
+                //     }
+                // };
+
+                let section = self.sections.get(&section).unwrap().clone();
                 section.borrow_mut().render(self, ctx, frame, ui);
             }
             else

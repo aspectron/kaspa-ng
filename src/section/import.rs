@@ -6,11 +6,11 @@ use egui::*;
 #[derive(Clone)]
 pub enum State {
     Select,
-    Unlock(Option<Arc<Error>>),
+    Unlock(Option<String>),
     Unlocking,
 }
 
-pub struct Open {
+pub struct Import {
     #[allow(dead_code)]
     interop: Interop,
     secret: String,
@@ -18,11 +18,9 @@ pub struct Open {
     pub message: Option<String>,
 
     selected_wallet : Option<String>,
-
-    back_color : Color32,
 }
 
-impl Open {
+impl Import {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
@@ -30,7 +28,6 @@ impl Open {
             state: State::Select,
             message: None,
             selected_wallet : None,
-            back_color : Color32::from_rgb(0, 0, 0),
         }
     }
 
@@ -39,7 +36,7 @@ impl Open {
     }
 }
 
-impl SectionT for Open {
+impl SectionT for Import {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -55,32 +52,8 @@ impl SectionT for Open {
 
             match self.state.clone() {
                 State::Select => {
-                    // ui.heading("Select Wallet");
-                    let width = ui.available_width();
-                    ui.columns(3, |cols| {
-                        
-                        if cols[0].label(egui::RichText::new(format!("{}", egui_phosphor::regular::ARROW_BEND_UP_LEFT)).size(26.0).color(self.back_color)).hovered() {
-                            self.back_color = Color32::WHITE;
-                        } else {
-                            self.back_color = Color32::GRAY;
-
-                        }
-                        cols[1].heading("Select Wallet");
-                        // cols[1].set_width(ui.available_width());
-                        // cols[1].set_width(width);
-                        cols[2].label(egui::RichText::new(format!("{}", egui_phosphor::regular::X)).size(26.0));
-                    });
-                    
-                    // ui.label(egui::RichText::new(format!("{}", egui_phosphor::regular::FILE_CODE)).size(32.0));
-
-
-                    ui.horizontal(|ui|{
-                        ui.label(" ");
-                        if ui.add(egui::Button::new("Create")).clicked() {
-                            wallet.select::<section::Create>();
-                        }
-                    });
-
+                    ui.heading("Select Wallet");
+                    ui.label(" ");
                     ui.label("Select a wallet to unlock");
                     ui.label(" ");
                     // ui.add_space(32.);
@@ -99,7 +72,7 @@ impl SectionT for Open {
                         });
         
                 }
-                State::Unlock(error) => {
+                State::Unlock(message) => {
                     ui.heading("Unlock Wallet");
 
                     egui::ScrollArea::vertical()
@@ -110,10 +83,17 @@ impl SectionT for Open {
                         ui.label(format!("Opening wallet: \"{}\"",self.selected_wallet.as_ref().unwrap()));
                         ui.label(" ");
 
-                        if let Some(err) = error {
+                        if let Some(message) = message {
                             ui.label(" ");
+
+
+                            // ui.label(format!("Error: {}",message));
+
+
                             ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
-                            ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
+                            ui.label(egui::RichText::new(message).color(egui::Color32::from_rgb(255, 120, 120)));
+
+
                             ui.label(" ");
                         }
 
@@ -173,7 +153,7 @@ impl SectionT for Open {
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);
-                                self.state = State::Unlock(Some(Arc::new(err)));
+                                self.state = State::Unlock(Some(err.to_string()));
                             }
                         }
                         // ui.label(format!("Result: {:?}", result));

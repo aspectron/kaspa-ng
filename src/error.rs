@@ -17,10 +17,12 @@ pub enum Error {
 
     #[error("Channel try_send() error")]
     TrySendError,
-    // #[error("downcast error for {0}")]
-    // DowncastError(String),
+
     #[error(transparent)]
     WrpcClientError(#[from] kaspa_wrpc_client::error::Error),
+
+    #[error(transparent)]
+    Bip32(#[from] kaspa_bip32::Error),
 }
 
 impl Error {
