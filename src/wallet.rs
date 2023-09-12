@@ -28,9 +28,9 @@ pub struct Wallet {
     discard_hint: bool,
     exception: Option<Exception>,
 
-    wallet_list: Arc<Vec<WalletDescriptor>>,
-    account_list: Arc<Vec<Arc<dyn runtime::Account>>>,
-    selected_account: Option<Arc<dyn runtime::Account>>,
+    pub wallet_list: Vec<WalletDescriptor>,
+    pub account_list: Vec<Arc<dyn runtime::Account>>,
+    pub selected_account: Option<Arc<dyn runtime::Account>>,
 }
 
 impl Wallet {
@@ -74,7 +74,7 @@ impl Wallet {
         let channel = interop.application_events().clone();
         let wallet = interop.wallet().clone();
 
-        Self {
+        let this = Self {
             interop,
             wallet,
             channel,
@@ -82,8 +82,8 @@ impl Wallet {
             sections,
             settings,
 
-            wallet_list: Arc::new(Vec::new()),
-            account_list: Arc::new(Vec::new()),
+            wallet_list: Vec::new(),
+            account_list: Vec::new(),
             selected_account: None,
 
             sync_state: None,
@@ -95,7 +95,11 @@ impl Wallet {
             discard_hint: false,
             current_daa_score: None,
             exception: None,
-        }
+        };
+
+        this.wallet_list();
+
+        this
     }
 
     pub fn select<T>(&mut self)
@@ -162,6 +166,11 @@ impl eframe::App for Wallet {
             }
         }
 
+        // let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
+        // section.borrow_mut().render(self, ctx, frame, ui);
+        // return;
+
+
         let mut style = (*ctx.style()).clone();
         // println!("style: {:?}", style.text_styles);
         style.text_styles.insert(
@@ -181,11 +190,14 @@ impl eframe::App for Wallet {
         //     return;
         // }
 
-        if let Some(wizard) = crate::sequence::stages() {
-            if wizard.render_with_context(ctx) {
-                return;
-            }
-        }
+        // if let Some(wizard) = crate::stages::stages() {
+        //     if wizard.render_with_context(ctx) {
+        //         return;
+        //     }
+        // }
+
+        // let rect = ctx.screen_rect();
+        let size = ctx.screen_rect().size();
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |_ui| {
             // The top panel is often a good place for a menu bar:
@@ -203,15 +215,104 @@ impl eframe::App for Wallet {
             self.render_status(ui);
             egui::warn_if_debug_build(ui);
         });
+        /*
+        if size.x > 600. {
+            egui::SidePanel::left("left_panel").show(&ctx, |ui| {
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+                if ui.add(egui::Button::new("Overview")).clicked() {
+                    // return Stage::Next;
+                }
+                if ui.add(egui::Button::new("Transactions")).clicked() {
+                    // return Stage::Next;
+                }
+
+                // let section = self.sections.get(&self.section).unwrap().clone();
+                // section.borrow_mut().render(self, ctx, frame, ui);
+            });
+        }
+        */
+
+        egui::CentralPanel::default()
+        
+        .show(ctx, |ui| {
             ui.style_mut().text_styles = style.text_styles;
 
-            let section = self.sections.get(&self.section).unwrap().clone();
-            section.borrow_mut().render(self, ctx, frame, ui);
+            if !self.wallet().is_open() {
+                let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
+                section.borrow_mut().render(self, ctx, frame, ui);
+            }
+            else
+            if size.x > 500. {
+
+                    ui.columns(2, |uis| {
+    
+                        let section = self.sections.get(&TypeId::of::<section::Overview>()).unwrap().clone();
+                        section.borrow_mut().render(self, ctx, frame, &mut uis[0]);
+                        let section = self.sections.get(&self.section).unwrap().clone();
+                        section.borrow_mut().render(self, ctx, frame, &mut uis[1]);
+    
+                    });
+            } else {
+            
+                let section = self.sections.get(&self.section).unwrap().clone();
+                section.borrow_mut().render(self, ctx, frame, ui);
+            
+            }
+
         });
 
-        if true {
+        
+
+        // egui::CentralPanel::default().show(ctx, |ui| {
+        //     // ui.style_mut().text_styles = style.text_styles;
+        //     let section = self.sections.get(&self.section).unwrap().clone();
+        //     section.borrow_mut().render(self, ctx, frame, ui);
+        // });
+
+        
+
+/*
+        egui::Window::new("main")
+        .resize(|r|{
+            // r.resizable(false)
+            // r.fixed_size(rect.size())
+            r.fixed_size(ctx.screen_rect().size())
+        })
+        // .interactable(false)
+        .resizable(false)
+        .movable(false)
+        .title_bar(false)
+        .frame(egui::Frame::none())
+        .show(ctx, |ui| {
+
+
+            egui::TopBottomPanel::top("top_panel").show_inside(ui, |_ui| {
+                // The top panel is often a good place for a menu bar:
+                #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
+                egui::menu::bar(_ui, |ui| {
+                    ui.menu_button("File", |ui| {
+                        if ui.button("Quit").clicked() {
+                            frame.close();
+                        }
+                    });
+                });
+            });
+
+            egui::TopBottomPanel::bottom("bottom_panel").show_inside(ui, |ui| {
+                self.render_status(ui);
+                egui::warn_if_debug_build(ui);
+            });
+
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                ui.style_mut().text_styles = style.text_styles;
+
+                let section = self.sections.get(&self.section).unwrap().clone();
+                section.borrow_mut().render(self, ctx, frame, ui);
+            });
+        });
+*/
+
+        if false {
             egui::Window::new("Window").show(ctx, |ui| {
                 ui.label("Windows can be moved by dragging them.");
                 ui.label("They are automatically sized based on contents.");
@@ -277,10 +378,11 @@ impl Wallet {
             }
             Events::Error(_error) => {}
             Events::WalletList { wallet_list } => {
-                self.wallet_list = wallet_list;
+                println!("getting wallet list!, {:?}", wallet_list);
+                self.wallet_list = (*wallet_list).clone();
             }
             Events::AccountList { account_list } => {
-                self.account_list = account_list;
+                self.account_list = (*account_list).clone();
             }
             Events::Close { .. } => {}
             // Events::Send { .. } => { },
@@ -297,7 +399,12 @@ impl Wallet {
             Events::UnlockFailure { .. } => {}
             Events::Wallet { event } => {
                 match *event {
-                    CoreWallet::UtxoProcStart => {}
+                    CoreWallet::UtxoProcStart => {
+
+                        // println!("UtxoProcStart...");
+                        // self.wallet_list();
+
+                    }
                     CoreWallet::UtxoProcStop => {}
                     CoreWallet::UtxoProcError { message: _ } => {
                         // terrorln!(this,"{err}");

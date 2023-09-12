@@ -86,6 +86,6 @@ where
 }
 
 fn registry() -> &'static Mutex<HashMap<String, Box<dyn Any + Sync + Send>>> {
-    static MEM: OnceLock<Mutex<HashMap<String, Box<dyn Any + Sync + Send>>>> = OnceLock::new();
-    MEM.get_or_init(|| Mutex::new(HashMap::new()))
+    static REGISTRY: OnceLock<Mutex<HashMap<String, Box<dyn Any + Sync + Send>>>> = OnceLock::new();
+    REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
 }

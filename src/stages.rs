@@ -15,7 +15,7 @@ pub enum Stage {
     Cancel,
 }
 
-pub trait SequenceT {
+pub trait StagesT {
     fn render_with_context(&mut self, ctx: &egui::Context) -> bool;
     fn render_with_ui(&mut self, ui: &mut egui::Ui) -> bool;
 }
@@ -24,7 +24,8 @@ type FnStage<Ctx> = dyn Fn(&mut Ui, &mut Ctx) -> Stage + 'static;
 type FnFinish<Ctx> = dyn Fn(&mut Ctx) + 'static;
 
 #[derive(Default)]
-pub struct Sequence<Ctx> {
+pub struct Stages<Ctx> {
+    id : String,
     ctx: Rc<RefCell<Ctx>>,
     stages: Vec<Rc<FnStage<Ctx>>>,
     finish: Option<Box<FnFinish<Ctx>>>,
@@ -32,12 +33,15 @@ pub struct Sequence<Ctx> {
     container: Option<Container>,
 }
 
-impl<Ctx> Sequence<Ctx> {
-    pub fn new() -> Self
+impl<Ctx> Stages<Ctx> {
+    pub fn new<S: std::fmt::Display>(id: S) -> Self
     where
         Ctx: Default,
     {
+        let id = id.to_string();
+
         Self {
+            id,
             ctx: Rc::new(RefCell::new(Ctx::default())),
             stages: vec![],
             finish: None,
@@ -46,8 +50,12 @@ impl<Ctx> Sequence<Ctx> {
         }
     }
 
-    pub fn with_context(ctx: Ctx) -> Self {
+    pub fn with_context<S: std::fmt::Display>(id: S, ctx: Ctx) -> Self {
+
+        let id = id.to_string();
+
         Self {
+            id,
             ctx: Rc::new(RefCell::new(ctx)),
             stages: vec![],
             finish: None,
@@ -171,7 +179,7 @@ impl<Ctx> Sequence<Ctx> {
     }
 }
 
-impl<Ctx> SequenceT for Sequence<Ctx> {
+impl<Ctx> StagesT for Stages<Ctx> {
     fn render_with_context(&mut self, ctx: &egui::Context) -> bool {
         self.render_with_context_impl(ctx)
     }
@@ -185,9 +193,9 @@ impl<Ctx> SequenceT for Sequence<Ctx> {
 // - -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-static mut SEQUENCE: Option<Box<dyn SequenceT>> = None;
+static mut SEQUENCE: Option<Box<dyn StagesT>> = None;
 
-pub fn stages() -> Option<&'static mut Box<dyn SequenceT>> {
+pub fn stages() -> Option<&'static mut Box<dyn StagesT>> {
     unsafe {
         if SEQUENCE.is_none() {
             None
@@ -197,8 +205,20 @@ pub fn stages() -> Option<&'static mut Box<dyn SequenceT>> {
     }
 }
 
-fn set_active_sequence(wizard: Option<Box<dyn SequenceT>>) {
+fn set_active_sequence(wizard: Option<Box<dyn StagesT>>) {
     unsafe {
         SEQUENCE = wizard;
     }
+}
+
+// - -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// - -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// - =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+
+
+fn registry() -> &'static Mutex<HashMap<String, Box<dyn StagesT + Sync + Send>>> {
+    static REGISTRY: OnceLock<Mutex<HashMap<String, Box<dyn StagesT + Sync + Send>>>> = OnceLock::new();
+    REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
 }
