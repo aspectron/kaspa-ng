@@ -38,9 +38,7 @@ impl Interop {
         let application_events = channel::Channel::unbounded(egui_ctx.clone());
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
 
-        let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![
-            kaspa.clone(),
-        ];
+        let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![kaspa.clone()];
 
         let interop = Self {
             inner: Arc::new(Inner {
@@ -56,18 +54,10 @@ impl Interop {
     }
 
     pub fn start(&self) {
-        // self.inner.runtime.spawn();
-
-        // register(Some(self));
-
         let services = self.services();
         for service in services {
             spawn(async move { service.spawn().await });
         }
-        // let futures = services.into_iter().map(|service|service.spawn()).collect::<Vec<_>>();
-        // spawn(async move {
-        //     try_join_all(futures).await.unwrap();
-        // });
     }
 
     pub fn services(&self) -> Vec<Arc<dyn Service + Send + Sync + 'static>> {
@@ -75,7 +65,6 @@ impl Interop {
     }
 
     pub fn shutdown(&self) {
-        // self.inner.runtime.shutdown();
         self.services()
             .into_iter()
             .for_each(|service| service.terminate());
@@ -93,34 +82,10 @@ impl Interop {
     pub fn drop(&self) {
         register(None);
     }
-    // cfg_if! {
-
-    //     if #[cfg(not(target_arch = "wasm32"))] {
-    //         pub fn join(&self) {
-    //             self.inner.runtime.join();
-    //         }
-    //     } else {
-    //         pub async fn join(&self) {
-    //             self.inner.runtime.join().await;
-    //         }
-    //     }
-    // }
-
-    // pub fn wallet_service(&self) -> &Arc<WalletService> {
-    //     &self.inner.wallet
-    // }
 
     pub fn wallet(&self) -> &Arc<runtime::Wallet> {
         &self.inner.kaspa.wallet
     }
-
-    // pub fn executor_service(&self) -> &Arc<Executor> {
-    //     &self.inner.executor
-    // }
-
-    // pub fn kaspad_service(&self) -> &Arc<KaspadService> {
-    //     &self.inner.kaspad
-    // }
 
     pub fn application_events(&self) -> &Channel<Events> {
         &self.inner.application_events
@@ -136,10 +101,6 @@ impl Interop {
         self.inner.application_events.sender.try_send(msg)?;
         Ok(())
     }
-
-    // pub fn wallet_service(&self) -> &Arc<runtime::Wallet> {
-    //     &self.inner.wallet.wallet
-    // }
 
     pub fn spawn_task<F>(&self, task: F)
     where
@@ -159,38 +120,24 @@ impl Interop {
 
     pub fn spawn_task_with_result<R, F>(
         &self,
-        semaphore: &Payload<std::result::Result<R, Error>>,
+        payload: &Payload<std::result::Result<R, Error>>,
         task: F,
     ) where
         R: Clone + Send + 'static,
         F: Future<Output = Result<R>> + Send + 'static,
     {
-        // let sender = self.inner.application_events.sender.clone();
-        let semaphore = (*semaphore).clone();
+        let payload = (*payload).clone();
         workflow_core::task::spawn(async move {
             let result = task.await;
-            // semaphore.set(result);
             match result {
-                Ok(r) => semaphore.store(Ok(r)),
+                Ok(r) => payload.store(Ok(r)),
                 Err(err) => {
-                    semaphore.store(Err(err));
-                    // sender.send(Events::Error(Box::new(err.to_string()))).await.unwrap();
-                    // println!("spawned task error: {:?}", err);
+                    payload.store(Err(err));
                 }
             }
-            // if let Err(err) = task.await {
-            //     sender.send(Events::Error(Box::new(err.to_string()))).await.unwrap();
-            //     println!("spawned task error: {:?}", err);
-            // }
         });
     }
 }
-
-// impl Drop for Interop {
-//     fn drop(&mut self) {
-//         register(None);
-//     }
-// }
 
 static mut INTEROP: Option<Interop> = None;
 
