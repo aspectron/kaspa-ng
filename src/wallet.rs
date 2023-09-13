@@ -18,7 +18,8 @@ pub struct Wallet {
     #[allow(dead_code)]
     settings: Settings,
 
-    large_style: egui::Style,
+    pub large_style: egui::Style,
+    pub default_style: egui::Style,
 
     is_synced: Option<bool>,
     sync_state: Option<SyncState>,
@@ -47,21 +48,22 @@ impl Wallet {
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
         cc.egui_ctx.set_fonts(fonts);
 
-        let mut style = (*cc.egui_ctx.style()).clone();
+        let default_style = (*cc.egui_ctx.style()).clone();
+        let mut large_style = (*cc.egui_ctx.style()).clone();
         // println!("style: {:?}", style.text_styles);
-        style.text_styles.insert(
+        large_style.text_styles.insert(
             egui::TextStyle::Heading,
             egui::FontId::new(22.0, egui::FontFamily::Proportional),
         );
-        style.text_styles.insert(
+        large_style.text_styles.insert(
             egui::TextStyle::Body,
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
-        style.text_styles.insert(
+        large_style.text_styles.insert(
             egui::TextStyle::Button,
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
-        style.text_styles.insert(
+        large_style.text_styles.insert(
             egui::TextStyle::Monospace,
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
@@ -114,7 +116,8 @@ impl Wallet {
             sections,
             settings,
 
-            large_style: style,
+            default_style,
+            large_style,
 
             wallet_list: Vec::new(),
             account_list: Vec::new(),
@@ -273,6 +276,7 @@ impl eframe::App for Wallet {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.style_mut().text_styles = self.large_style.text_styles.clone();
 
+            // if false && !self.wallet().is_open() {
             if !self.wallet().is_open() {
                 let section = if self.section == TypeId::of::<section::Open>()
                     || self.section == TypeId::of::<section::CreateWallet>()

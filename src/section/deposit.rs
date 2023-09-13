@@ -12,7 +12,7 @@ impl Deposit {
 }
 
 impl SectionT for Deposit {
-    fn render(
+    fn main(
         &mut self,
         _wallet: &mut Wallet,
         _ctx: &egui::Context,

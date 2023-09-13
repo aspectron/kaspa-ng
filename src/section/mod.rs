@@ -23,13 +23,24 @@ pub use transactions::Transactions;
 use crate::imports::*;
 
 pub trait SectionT: Downcast {
-    fn render(
+    fn main(
         &mut self,
         _wallet: &mut Wallet,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         _ui: &mut egui::Ui,
     );
+
+    fn render(
+        &mut self,
+        wallet: &mut Wallet,
+        _ctx: &egui::Context,
+        _frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
+        ui.style_mut().text_styles = wallet.large_style.text_styles.clone();
+        self.main(wallet, _ctx, _frame, ui);
+    }
 }
 
 impl_downcast!(SectionT);

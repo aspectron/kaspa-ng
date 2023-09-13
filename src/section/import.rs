@@ -34,7 +34,7 @@ impl Import {
 }
 
 impl SectionT for Import {
-    fn render(
+    fn main(
         &mut self,
         wallet: &mut Wallet,
         _ctx: &egui::Context,

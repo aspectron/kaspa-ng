@@ -12,7 +12,7 @@ impl Accounts {
 }
 
 impl SectionT for Accounts {
-    fn render(
+    fn main(
         &mut self,
         _wallet: &mut Wallet,
         _ctx: &egui::Context,
