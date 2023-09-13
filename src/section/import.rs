@@ -1,7 +1,4 @@
-use crate::stages::*;
-use crate::{imports::*, interop::spawn_with_result};
-use egui::*;
-// use workflow_core::task::spawn;
+use crate::imports::*;
 
 #[derive(Clone)]
 pub enum State {
@@ -17,7 +14,7 @@ pub struct Import {
     pub state: State,
     pub message: Option<String>,
 
-    selected_wallet : Option<String>,
+    selected_wallet: Option<String>,
 }
 
 impl Import {
@@ -27,7 +24,7 @@ impl Import {
             secret: String::new(),
             state: State::Select,
             message: None,
-            selected_wallet : None,
+            selected_wallet: None,
         }
     }
 
@@ -44,9 +41,7 @@ impl SectionT for Import {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-
             let size = egui::Vec2::new(200_f32, 40_f32);
             let unlock_result = Payload::<Result<()>>::new("test");
 
@@ -64,13 +59,15 @@ impl SectionT for Import {
                             ui.set_width(ui.available_width());
 
                             for wallet in wallet.wallet_list.iter() {
-                                if ui.add_sized(size, egui::Button::new(wallet.filename.clone())).clicked() {
+                                if ui
+                                    .add_sized(size, egui::Button::new(wallet.filename.clone()))
+                                    .clicked()
+                                {
                                     self.selected_wallet = Some(wallet.filename.clone());
                                     self.state = State::Unlock(None);
                                 }
                             }
                         });
-        
                 }
                 State::Unlock(message) => {
                     ui.heading("Unlock Wallet");
@@ -78,61 +75,66 @@ impl SectionT for Import {
                     egui::ScrollArea::vertical()
                         .id_source("unlock-wallet")
                         .show(ui, |ui| {
-
-                        ui.label(" ");
-                        ui.label(format!("Opening wallet: \"{}\"",self.selected_wallet.as_ref().unwrap()));
-                        ui.label(" ");
-
-                        if let Some(message) = message {
+                            ui.label(" ");
+                            ui.label(format!(
+                                "Opening wallet: \"{}\"",
+                                self.selected_wallet.as_ref().unwrap()
+                            ));
                             ui.label(" ");
 
+                            if let Some(message) = message {
+                                ui.label(" ");
 
-                            // ui.label(format!("Error: {}",message));
+                                // ui.label(format!("Error: {}",message));
 
+                                ui.label(
+                                    egui::RichText::new("Error unlocking wallet")
+                                        .color(egui::Color32::from_rgb(255, 120, 120)),
+                                );
+                                ui.label(
+                                    egui::RichText::new(message)
+                                        .color(egui::Color32::from_rgb(255, 120, 120)),
+                                );
 
-                            ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
-                            ui.label(egui::RichText::new(message).color(egui::Color32::from_rgb(255, 120, 120)));
+                                ui.label(" ");
+                            }
 
+                            ui.label("Enter your password to unlock your wallet");
+                            ui.label(" ");
+
+                            ui.add_sized(
+                                size,
+                                TextEdit::singleline(&mut self.secret)
+                                    .hint_text("Enter Password...")
+                                    .password(true)
+                                    .vertical_align(Align::Center),
+                            );
+
+                            if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
+                                let secret = kaspa_wallet_core::secret::Secret::new(
+                                    self.secret.as_bytes().to_vec(),
+                                );
+                                self.secret.zeroize();
+                                let wallet = self.interop.wallet().clone();
+                                let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
+
+                                spawn_with_result(&unlock_result, async move {
+                                    wallet.load(secret, wallet_name).await?;
+                                    Ok(())
+                                });
+
+                                self.state = State::Unlocking;
+                            }
 
                             ui.label(" ");
-                        }
 
-                        ui.label("Enter your password to unlock your wallet");
-                        ui.label(" ");
-
-                        ui.add_sized(
-                            size,
-                            TextEdit::singleline(&mut self.secret)
-                                .hint_text("Enter Password...")
-                                .password(true)
-                                .vertical_align(Align::Center),
-                        );
-
-                        if ui
-                            .add_sized(size, egui::Button::new("Unlock"))
-                            .clicked()
-                        {
-                            let secret = kaspa_wallet_core::secret::Secret::new(self.secret.as_bytes().to_vec());
-                            self.secret.zeroize();
-                            let wallet = self.interop.wallet().clone();
-                            let wallet_name = self.selected_wallet.clone();//.expect("Wallet name not set");
-                            
-                            spawn_with_result(&unlock_result, async move {
-                                wallet.load(secret, wallet_name).await?;
-                                Ok(())
-                            });
-
-                            self.state = State::Unlocking;
-                        }
-
-                        ui.label(" ");
-
-                        if ui
-                            .add_sized(size, egui::Button::new("Select a different wallet"))
-                            .clicked() {
+                            if ui
+                                .add_sized(size, egui::Button::new("Select a different wallet"))
+                                .clicked()
+                            {
                                 self.state = State::Select;
                             }
-                    });
+                        });
                 }
                 State::Unlocking => {
                     ui.heading("Unlocking");
@@ -144,7 +146,6 @@ impl SectionT for Import {
                     ui.add(egui::Spinner::new().size(92.));
 
                     if let Some(result) = unlock_result.take() {
-
                         match result {
                             Ok(_) => {
                                 println!("Unlock success");
@@ -162,10 +163,8 @@ impl SectionT for Import {
                     } else {
                         // Stage::Current
                     }
-
                 }
             }
-
         });
     }
 }

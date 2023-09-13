@@ -1,7 +1,4 @@
-use crate::stages::*;
-use crate::{imports::*, interop::spawn_with_result};
-use egui::*;
-// use workflow_core::task::spawn;
+use crate::imports::*;
 
 #[derive(Clone)]
 pub enum State {
@@ -16,10 +13,7 @@ pub struct Open {
     secret: String,
     pub state: State,
     pub message: Option<String>,
-
-    selected_wallet : Option<String>,
-
-    back_color : Color32,
+    selected_wallet: Option<String>,
 }
 
 impl Open {
@@ -29,8 +23,7 @@ impl Open {
             secret: String::new(),
             state: State::Select,
             message: None,
-            selected_wallet : None,
-            back_color : Color32::from_rgb(0, 0, 0),
+            selected_wallet: None,
         }
     }
 
@@ -47,25 +40,20 @@ impl SectionT for Open {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-
             let size = egui::Vec2::new(200_f32, 40_f32);
             let unlock_result = Payload::<Result<()>>::new("test");
 
             match self.state.clone() {
                 State::Select => {
-
                     Panel::new(self)
                         .with_caption("Select Wallet")
-                        .with_close_enabled(false, |_|{
-                        })
-                        .with_header(|_ctx,ui| {
+                        .with_close_enabled(false, |_| {})
+                        .with_header(|_ctx, ui| {
                             ui.label("Select a wallet to unlock");
                         })
-                        .with_body(|this,ui| {
+                        .with_body(|this, ui| {
                             for wallet in wallet.wallet_list.iter() {
-
                                 // let text = render_wallet_descriptor(wallet, ui);
                                 let text = wallet.filename.clone();
 
@@ -78,7 +66,10 @@ impl SectionT for Open {
                             ui.label(" ");
                             ui.separator();
                             ui.label(" ");
-                            if ui.add_sized(size, egui::Button::new("Create new wallet")).clicked() {
+                            if ui
+                                .add_sized(size, egui::Button::new("Create new wallet"))
+                                .clicked()
+                            {
                                 wallet.select::<section::CreateWallet>();
                             }
 
@@ -92,16 +83,19 @@ impl SectionT for Open {
                     // let theme = theme();
                     Panel::new(self)
                         .with_caption("Unlock Wallet")
-                        .with_back(|ctx|{
+                        .with_back(|ctx| {
                             ctx.state = State::Select;
                         })
-                        .with_close(|_ctx|{})
-                        .with_body(|ctx,ui| {
+                        .with_close(|_ctx| {})
+                        .with_body(|ctx, ui| {
                             // ui.label(" ");
-                            ui.label(format!("Opening wallet: \"{}\"",ctx.selected_wallet.as_ref().unwrap()));
+                            ui.label(format!(
+                                "Opening wallet: \"{}\"",
+                                ctx.selected_wallet.as_ref().unwrap()
+                            ));
                             ui.label(" ");
                             // ui.add_space(24.);
-    
+
                             if let Some(err) = error {
                                 // ui.horizontal(|ui| {
                                 //     ui.vertical(|ui| {
@@ -115,13 +109,16 @@ impl SectionT for Open {
                                 //         // ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
                                 //     });
                                 // });
-                                ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
+                                ui.label(
+                                    egui::RichText::new(err.to_string())
+                                        .color(egui::Color32::from_rgb(255, 120, 120)),
+                                );
                                 ui.label(" ");
                             }
-    
+
                             ui.label("Enter your password to unlock your wallet");
                             ui.label(" ");
-    
+
                             ui.add_sized(
                                 size,
                                 TextEdit::singleline(&mut ctx.secret)
@@ -129,26 +126,24 @@ impl SectionT for Open {
                                     .password(true)
                                     .vertical_align(Align::Center),
                             );
-    
-                            if ui
-                                .add_sized(size, egui::Button::new("Unlock"))
-                                .clicked()
-                            {
-                                let secret = kaspa_wallet_core::secret::Secret::new(ctx.secret.as_bytes().to_vec());
+
+                            if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
+                                let secret = kaspa_wallet_core::secret::Secret::new(
+                                    ctx.secret.as_bytes().to_vec(),
+                                );
                                 ctx.secret.zeroize();
                                 let wallet = ctx.interop.wallet().clone();
-                                let wallet_name = ctx.selected_wallet.clone();//.expect("Wallet name not set");
-                                
+                                let wallet_name = ctx.selected_wallet.clone(); //.expect("Wallet name not set");
+
                                 spawn_with_result(&unlock_result, async move {
                                     wallet.load(secret, wallet_name).await?;
                                     Ok(())
                                 });
-    
+
                                 ctx.state = State::Unlocking;
                             }
-    
+
                             ui.label(" ");
-    
                         })
                         // .with_footer(|ui|{
                         //     if ui
@@ -159,11 +154,9 @@ impl SectionT for Open {
                         // })
                         .render(ui);
 
-
                     // egui::ScrollArea::vertical()
                     //     .id_source("unlock-wallet")
                     //     .show(ui, |ui| {
-
 
                     //     if ui
                     //         .add_sized(size, egui::Button::new("Select a different wallet"))
@@ -182,7 +175,6 @@ impl SectionT for Open {
                     ui.add(egui::Spinner::new().size(92.));
 
                     if let Some(result) = unlock_result.take() {
-
                         match result {
                             Ok(_) => {
                                 println!("Unlock success");
@@ -200,24 +192,28 @@ impl SectionT for Open {
                     } else {
                         // Stage::Current
                     }
-
                 }
             }
-
         });
     }
 }
 
+fn _render_wallet_descriptor(wallet: &WalletDescriptor, ui: &mut Ui) -> LayoutJob {
+    let mut job = LayoutJob {
+        halign: Align::Center,
+        ..Default::default()
+    };
 
-fn render_wallet_descriptor(wallet : &WalletDescriptor, ui : &mut Ui) -> LayoutJob {
-    let mut job = LayoutJob::default();
-    job.halign = Align::Center;
     job.append(
-        wallet.title.clone().unwrap_or_else(||"NO NAME".to_string()).as_str(),
+        wallet
+            .title
+            .clone()
+            .unwrap_or_else(|| "NO NAME".to_string())
+            .as_str(),
         0.0,
         TextFormat {
             font_id: FontId::new(18.0, FontFamily::Proportional),
-            color: ui.ctx().style().visuals.strong_text_color(),//text_color(),
+            color: ui.ctx().style().visuals.strong_text_color(), //text_color(),
             ..Default::default()
         },
     );

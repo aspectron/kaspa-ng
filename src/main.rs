@@ -3,8 +3,7 @@
 
 use cfg_if::cfg_if;
 use kaspa_egui::interop;
-use kaspa_egui::interop::Interop;
-use kaspa_egui::settings::Settings;
+use kaspa_egui::settings;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -23,9 +22,9 @@ cfg_if! {
             // let interop = interop::Interop::new();
             // interop::signals::Signals::bind(&interop);
 
-            let settings = Settings::default();
+            let settings = settings::Settings::default();
 
-            let interop: Arc<Mutex<Option<Interop>>> = Arc::new(Mutex::new(None));
+            let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
             // let delegate = interop.clone();
             let delegate = interop.clone();
             println!("spawn done");
@@ -34,7 +33,7 @@ cfg_if! {
                 "DAG Wallet",
                 native_options,
                 Box::new(move |cc| {
-                    let interop = Interop::new(&cc.egui_ctx, &settings);
+                    let interop = interop::Interop::new(&cc.egui_ctx, &settings);
                     delegate.lock().unwrap().replace(interop.clone());
                     interop::signals::Signals::bind(&interop);
                     interop.start();
@@ -71,7 +70,7 @@ cfg_if! {
                         "kaspa-wallet",
                         web_options,
                         Box::new(move |cc| {
-                            let settings = Settings::default();
+                            let settings = settings::Settings::default();
                             let interop = interop::Interop::new(&cc.egui_ctx, &settings);
                             interop.start();
 

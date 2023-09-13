@@ -1,10 +1,10 @@
 #![allow(unused_imports)]
 
 use crate::imports::*;
-use kaspa_wallet_core::runtime::{WalletCreateArgs, PrvKeyDataCreateArgs, AccountCreateArgs};
-use kaspa_wallet_core::storage::interface::AccessContext;
-use kaspa_wallet_core::storage::{AccountKind, AccessContextT};
 use kaspa_bip32::Mnemonic;
+use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
+use kaspa_wallet_core::storage::interface::AccessContext;
+use kaspa_wallet_core::storage::{AccessContextT, AccountKind};
 
 #[derive(Clone)]
 pub enum State {
@@ -24,22 +24,24 @@ pub enum State {
 #[derive(Clone, Default)]
 struct Context {
     wallet_title: String,
-    wallet_filename : String,
+    // TODO generate wallet filename
+    _wallet_filename: String,
     account_title: String,
     phishing_hint: String,
     wallet_secret: String,
     wallet_secret_confirm: String,
-    enable_payment_secret: bool,
+    // TODO add payment secret checkbox
+    _enable_payment_secret: bool,
     payment_secret: String,
     payment_secret_confirm: String,
-    mnemonic: Vec<String>,
+    // mnemonic: Vec<String>,
 }
 
 pub struct CreateWallet {
     #[allow(dead_code)]
     interop: Interop,
-    secret: String,
-    args : Context,
+    // secret: String,
+    args: Context,
     pub state: State,
 }
 
@@ -47,12 +49,11 @@ impl CreateWallet {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
-            secret: String::new(),
+            // secret: String::new(),
             state: State::Start,
-            args : Default::default(),
+            args: Default::default(),
         }
     }
-
 }
 
 impl SectionT for CreateWallet {
@@ -63,11 +64,9 @@ impl SectionT for CreateWallet {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
 
             let size = egui::Vec2::new(200_f32, 40_f32);
-            let wallet_exists_result = Payload::<Result<bool>>::new("wallet_exists_result");
 
             match self.state.clone() {
                 State::Start => {
@@ -92,6 +91,10 @@ impl SectionT for CreateWallet {
                         .render(ui);
                 }
                 State::WalletName => {
+
+                    // TODO - check if wallet exists
+                    let _wallet_exists_result = Payload::<Result<bool>>::new("wallet_exists_result");
+
                     Panel::new(self)
                     .with_caption("Wallet Name")
                     .with_back(|this| {
@@ -150,7 +153,6 @@ impl SectionT for CreateWallet {
                             }
                         })
                         .render(ui);
-        
                 }
                 State::PhishingHint => {
 
@@ -189,7 +191,6 @@ impl SectionT for CreateWallet {
                             }
                         })
                         .render(ui);
-        
                 }
                 State::WalletSecret => {
 
@@ -225,7 +226,7 @@ impl SectionT for CreateWallet {
                                     .vertical_align(Align::Center),
                             );
 
-                            if this.args.wallet_secret_confirm.len() > 0 && this.args.wallet_secret != this.args.wallet_secret_confirm {
+                            if this.args.wallet_secret_confirm.is_not_empty() && this.args.wallet_secret != this.args.wallet_secret_confirm {
                                 ui.label(" ");
                                 ui.label(egui::RichText::new("Passwords do not match").color(egui::Color32::from_rgb(255, 120, 120)));
                                 ui.label(" ");
@@ -235,7 +236,7 @@ impl SectionT for CreateWallet {
                         })
                         .with_footer(|this,ui| {
                             let size = theme().large_button_size;
-                            let ok = this.args.wallet_secret == this.args.wallet_secret_confirm && this.args.wallet_secret.len() > 0;
+                            let ok = this.args.wallet_secret == this.args.wallet_secret_confirm && this.args.wallet_secret.is_not_empty();
                             if ui.add_enabled(ok, egui::Button::new("Continue").min_size(size)).clicked() {
                                 this.state = State::PaymentSecret;
                             }
@@ -278,7 +279,7 @@ impl SectionT for CreateWallet {
                                     .vertical_align(Align::Center),
                             );
 
-                            if this.args.wallet_secret_confirm.len() > 0 && this.args.payment_secret != this.args.payment_secret_confirm {
+                            if this.args.wallet_secret_confirm.is_not_empty() && this.args.payment_secret != this.args.payment_secret_confirm {
                                 ui.label(" ");
                                 ui.label(egui::RichText::new("Passwords do not match").color(egui::Color32::from_rgb(255, 120, 120)));
                                 ui.label(" ");
@@ -294,7 +295,6 @@ impl SectionT for CreateWallet {
                             }
                         })
                         .render(ui);
-        
                 }
                 State::CreateWallet => {
 
@@ -313,7 +313,8 @@ impl SectionT for CreateWallet {
                     let wallet_create_result = Payload::<Result<Arc<Mnemonic>>>::new("wallet_create_result");
                     if !wallet_create_result.is_pending() {
 
-                        let wallet = self.interop.wallet();
+                        // TODO CREATE WALLET !
+                        let _wallet = self.interop.wallet();
                         spawn_with_result(&wallet_create_result, async move {
                             // suspend commits for multiple operations
                             // wallet.store().batch().await?;
@@ -350,7 +351,7 @@ impl SectionT for CreateWallet {
 
                 State::WalletError(err) => {
 
-                    panel(self)
+                    Panel::new(self)
                     .with_caption("Error")
                     .with_header(move |this,ui| {
                         ui.label(" ");
@@ -361,10 +362,8 @@ impl SectionT for CreateWallet {
                         if ui.add_sized(size, egui::Button::new("Restart")).clicked() {
                             this.state = State::Start;
                         }
-    
                     })
                     .render(ui);
-                
                 }
 
                 State::PresentMnemonic(mnemonic) => {
@@ -389,7 +388,7 @@ impl SectionT for CreateWallet {
                             ui.label(" ");
 
                             // let phrase = mnemonic.phrase();
-                            let words = phrase.split(" ").collect::<Vec<&str>>();
+                            let words = phrase.split(' ').collect::<Vec<&str>>();
                             let chunks = words.chunks(6).collect::<Vec<&[&str]>>();
                             // let lines = chunks.iter().map(|chunk| chunk.join(" ")).collect::<Vec<String>>();
                             // let text = lines.join("\n");
@@ -400,7 +399,6 @@ impl SectionT for CreateWallet {
 
                                         for col in 0..chunk.len() {
                                             cols[col].label(egui::RichText::new(chunk[col]).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
-                                            
                                         }
                                     })
                             //         for word in chunk {
@@ -428,41 +426,38 @@ impl SectionT for CreateWallet {
                 }
 
                 State::ConfirmMnemonic(mnemonic) => {
-                    panel(self)
-                    .with_caption("Confirm Mnemonic")
-                    .with_back(|this|{
-                        this.state = State::PresentMnemonic(mnemonic);
-                    })
-                    .with_header(|_this,ui| {
-                        ui.label("Please validate your mnemonic");
-                    })
-                    .with_footer(move |this,ui| {
-                        if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                            this.state = State::Finish;
-                        }
-                    })
-                    .render(ui);
+                    Panel::new(self)
+                        .with_caption("Confirm Mnemonic")
+                        .with_back(|this|{
+                            this.state = State::PresentMnemonic(mnemonic);
+                        })
+                        .with_header(|_this,ui| {
+                            ui.label("Please validate your mnemonic");
+                        })
+                        .with_footer(move |this,ui| {
+                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                                this.state = State::Finish;
+                            }
+                        })
+                        .render(ui);
                 }
 
                 State::Finish => {
 
-                    panel(self)
-                    .with_caption("Wallet Created")
-                    .with_body(|_this,ui| {
-                        ui.label(" ");
-                        ui.label("Your wallet has been created and is ready to use.");
-                        ui.label(" ");
-                    })
-                    .with_footer(move |this,ui| {
-                        if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                            this.state = State::Start;
-                            wallet.select::<section::Overview>();
-                        }
-                    })
-                    .render(ui);
-
-                    // ui.heading("Wallet Created");
-
+                    Panel::new(self)
+                        .with_caption("Wallet Created")
+                        .with_body(|_this,ui| {
+                            ui.label(" ");
+                            ui.label("Your wallet has been created and is ready to use.");
+                            ui.label(" ");
+                        })
+                        .with_footer(move |this,ui| {
+                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                                this.state = State::Start;
+                                wallet.select::<section::Overview>();
+                            }
+                        })
+                        .render(ui);
                 }
 
             }

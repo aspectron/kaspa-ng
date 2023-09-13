@@ -25,6 +25,7 @@ type FnFinish<Ctx> = dyn Fn(&mut Ctx) + 'static;
 
 #[derive(Default)]
 pub struct Stages<Ctx> {
+    #[allow(dead_code)]
     id : String,
     ctx: Rc<RefCell<Ctx>>,
     stages: Vec<Rc<FnStage<Ctx>>>,

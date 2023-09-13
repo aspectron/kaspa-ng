@@ -25,17 +25,21 @@ pub use std::sync::{
 };
 pub use std::sync::{Arc, Mutex};
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
+pub use workflow_core::extensions::is_not_empty::*;
 pub use workflow_log::*;
 pub use zeroize::Zeroize;
 
+pub use egui::epaint::{
+    text::{LayoutJob, TextFormat},
+    FontFamily, FontId,
+};
 pub use egui::*;
-pub use egui::epaint::{text::{LayoutJob, TextFormat}, FontFamily, FontId};
-
 
 pub use crate::error::Error;
 pub use crate::events::Events;
 pub use crate::interop;
 // pub use crate::interop::executor::spawn;
+pub use crate::icons::{icons, Icon, IconSize, Icons};
 pub use crate::interop::{spawn, spawn_with_result, Interop, Payload};
 pub use crate::network::Network;
 pub use crate::prompt::{cascade, with_secret};
@@ -44,9 +48,8 @@ pub use crate::section;
 pub use crate::section::SectionT;
 pub use crate::settings::{KaspadNodeKind, Settings};
 pub use crate::wallet::Wallet;
-pub use crate::icons::{Icon,Icons,IconSize,icons};
 // pub use crate::panel::{Panel,PanelExtension};
-pub use crate::panel::{Panel,panel};
+pub use crate::panel::Panel;
 pub use crate::theme::theme;
 // pub use workflow_core::task::spawn;
 

@@ -1,11 +1,13 @@
 use crate::imports::*;
 use crate::interop::Service;
 pub use futures::{future::FutureExt, select, Future};
+#[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
-use std::path::PathBuf;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
+        use std::path::PathBuf;
+
         pub mod config;
         pub use config::Config;
         pub mod daemon;
@@ -46,14 +48,8 @@ pub struct KaspaService {
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
 }
 
-
-
 impl KaspaService {
-    pub fn new(
-        application_events: interop::Channel<Events>,
-        settings: &Settings,
-    ) -> Self {
-
+    pub fn new(application_events: interop::Channel<Events>, settings: &Settings) -> Self {
         // create service event channel
         let service_events = Channel::unbounded();
 
@@ -61,12 +57,9 @@ impl KaspaService {
         // start kaspad or initiate connection to remote kaspad
         match KaspadServiceEvents::try_from(settings) {
             Ok(event) => {
-                service_events
-                    .sender
-                    .try_send(event)
-                    .unwrap_or_else(|err| {
-                        println!("KaspadService error: {}", err);
-                    });
+                service_events.sender.try_send(event).unwrap_or_else(|err| {
+                    println!("KaspadService error: {}", err);
+                });
             }
             Err(err) => {
                 println!("KaspadServiceEvents::try_from() error: {}", err);
@@ -237,7 +230,7 @@ impl TryFrom<&Settings> for KaspadServiceEvents {
     fn try_from(settings: &Settings) -> std::result::Result<Self, Self::Error> {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
-        
+
                 let config = Config::from(settings.clone());
 
                 match &settings.kaspad {

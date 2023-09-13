@@ -18,7 +18,7 @@ pub struct Wallet {
     #[allow(dead_code)]
     settings: Settings,
 
-    large_style : egui::Style,
+    large_style: egui::Style,
 
     is_synced: Option<bool>,
     sync_state: Option<SyncState>,
@@ -33,7 +33,6 @@ pub struct Wallet {
     pub wallet_list: Vec<WalletDescriptor>,
     pub account_list: Vec<Arc<dyn runtime::Account>>,
     pub selected_account: Option<Arc<dyn runtime::Account>>,
-
     // pub icons : Icons,
 }
 
@@ -44,12 +43,9 @@ impl Wallet {
         interop: crate::interop::Interop,
         settings: Settings,
     ) -> Self {
-
-
         let mut fonts = egui::FontDefinitions::default();
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
         cc.egui_ctx.set_fonts(fonts);
-
 
         let mut style = (*cc.egui_ctx.style()).clone();
         // println!("style: {:?}", style.text_styles);
@@ -102,7 +98,9 @@ impl Wallet {
             interop.clone(),
         ))));
         sections.insert_typeid(Rc::new(RefCell::new(section::Open::new(interop.clone()))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::CreateWallet::new(interop.clone()))));
+        sections.insert_typeid(Rc::new(RefCell::new(section::CreateWallet::new(
+            interop.clone(),
+        ))));
         sections.insert_typeid(Rc::new(RefCell::new(section::Import::new(interop.clone()))));
 
         let channel = interop.application_events().clone();
@@ -116,7 +114,7 @@ impl Wallet {
             sections,
             settings,
 
-            large_style : style,
+            large_style: style,
 
             wallet_list: Vec::new(),
             account_list: Vec::new(),
@@ -131,7 +129,6 @@ impl Wallet {
             discard_hint: false,
             current_daa_score: None,
             exception: None,
-
             // icons : Icons::default(),
         };
 
@@ -212,7 +209,6 @@ impl eframe::App for Wallet {
         // section.borrow_mut().render(self, ctx, frame, ui);
         // return;
 
-
         // let mut style = (*ctx.style()).clone();
         // // println!("style: {:?}", style.text_styles);
         // style.text_styles.insert(
@@ -274,14 +270,13 @@ impl eframe::App for Wallet {
         }
         */
 
-        egui::CentralPanel::default()
-        
-        .show(ctx, |ui| {
+        egui::CentralPanel::default().show(ctx, |ui| {
             ui.style_mut().text_styles = self.large_style.text_styles.clone();
 
             if !self.wallet().is_open() {
-
-                let section = if self.section == TypeId::of::<section::Open>() || self.section == TypeId::of::<section::CreateWallet>() {
+                let section = if self.section == TypeId::of::<section::Open>()
+                    || self.section == TypeId::of::<section::CreateWallet>()
+                {
                     self.section
                 } else {
                     TypeId::of::<section::Open>()
@@ -298,28 +293,22 @@ impl eframe::App for Wallet {
 
                 let section = self.sections.get(&section).unwrap().clone();
                 section.borrow_mut().render(self, ctx, frame, ui);
-            }
-            else
-            if size.x > 500. {
-
-                    ui.columns(2, |uis| {
-    
-                        let section = self.sections.get(&TypeId::of::<section::Overview>()).unwrap().clone();
-                        section.borrow_mut().render(self, ctx, frame, &mut uis[0]);
-                        let section = self.sections.get(&self.section).unwrap().clone();
-                        section.borrow_mut().render(self, ctx, frame, &mut uis[1]);
-    
-                    });
+            } else if size.x > 500. {
+                ui.columns(2, |uis| {
+                    let section = self
+                        .sections
+                        .get(&TypeId::of::<section::Overview>())
+                        .unwrap()
+                        .clone();
+                    section.borrow_mut().render(self, ctx, frame, &mut uis[0]);
+                    let section = self.sections.get(&self.section).unwrap().clone();
+                    section.borrow_mut().render(self, ctx, frame, &mut uis[1]);
+                });
             } else {
-            
                 let section = self.sections.get(&self.section).unwrap().clone();
                 section.borrow_mut().render(self, ctx, frame, ui);
-            
             }
-
         });
-
-        
 
         // egui::CentralPanel::default().show(ctx, |ui| {
         //     // ui.style_mut().text_styles = style.text_styles;
@@ -327,48 +316,46 @@ impl eframe::App for Wallet {
         //     section.borrow_mut().render(self, ctx, frame, ui);
         // });
 
-        
-
-/*
-        egui::Window::new("main")
-        .resize(|r|{
-            // r.resizable(false)
-            // r.fixed_size(rect.size())
-            r.fixed_size(ctx.screen_rect().size())
-        })
-        // .interactable(false)
-        .resizable(false)
-        .movable(false)
-        .title_bar(false)
-        .frame(egui::Frame::none())
-        .show(ctx, |ui| {
+        /*
+                egui::Window::new("main")
+                .resize(|r|{
+                    // r.resizable(false)
+                    // r.fixed_size(rect.size())
+                    r.fixed_size(ctx.screen_rect().size())
+                })
+                // .interactable(false)
+                .resizable(false)
+                .movable(false)
+                .title_bar(false)
+                .frame(egui::Frame::none())
+                .show(ctx, |ui| {
 
 
-            egui::TopBottomPanel::top("top_panel").show_inside(ui, |_ui| {
-                // The top panel is often a good place for a menu bar:
-                #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
-                egui::menu::bar(_ui, |ui| {
-                    ui.menu_button("File", |ui| {
-                        if ui.button("Quit").clicked() {
-                            frame.close();
-                        }
+                    egui::TopBottomPanel::top("top_panel").show_inside(ui, |_ui| {
+                        // The top panel is often a good place for a menu bar:
+                        #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
+                        egui::menu::bar(_ui, |ui| {
+                            ui.menu_button("File", |ui| {
+                                if ui.button("Quit").clicked() {
+                                    frame.close();
+                                }
+                            });
+                        });
+                    });
+
+                    egui::TopBottomPanel::bottom("bottom_panel").show_inside(ui, |ui| {
+                        self.render_status(ui);
+                        egui::warn_if_debug_build(ui);
+                    });
+
+                    egui::CentralPanel::default().show_inside(ui, |ui| {
+                        ui.style_mut().text_styles = style.text_styles;
+
+                        let section = self.sections.get(&self.section).unwrap().clone();
+                        section.borrow_mut().render(self, ctx, frame, ui);
                     });
                 });
-            });
-
-            egui::TopBottomPanel::bottom("bottom_panel").show_inside(ui, |ui| {
-                self.render_status(ui);
-                egui::warn_if_debug_build(ui);
-            });
-
-            egui::CentralPanel::default().show_inside(ui, |ui| {
-                ui.style_mut().text_styles = style.text_styles;
-
-                let section = self.sections.get(&self.section).unwrap().clone();
-                section.borrow_mut().render(self, ctx, frame, ui);
-            });
-        });
-*/
+        */
 
         if false {
             egui::Window::new("Window").show(ctx, |ui| {
@@ -461,7 +448,6 @@ impl Wallet {
 
                         // println!("UtxoProcStart...");
                         // self.wallet_list();
-
                     }
                     CoreWallet::UtxoProcStop => {}
                     CoreWallet::UtxoProcError { message: _ } => {
