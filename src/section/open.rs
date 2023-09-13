@@ -55,104 +55,112 @@ impl SectionT for Open {
 
             match self.state.clone() {
                 State::Select => {
-                    // ui.heading("Select Wallet");
-                    let width = ui.available_width();
-                    ui.columns(3, |cols| {
-                        
-                        if cols[0].label(egui::RichText::new(format!("{}", egui_phosphor::regular::ARROW_BEND_UP_LEFT)).size(26.0).color(self.back_color)).hovered() {
-                            self.back_color = Color32::WHITE;
-                        } else {
-                            self.back_color = Color32::GRAY;
 
-                        }
-                        cols[1].heading("Select Wallet");
-                        // cols[1].set_width(ui.available_width());
-                        // cols[1].set_width(width);
-                        cols[2].label(egui::RichText::new(format!("{}", egui_phosphor::regular::X)).size(26.0));
-                    });
-                    
-                    // ui.label(egui::RichText::new(format!("{}", egui_phosphor::regular::FILE_CODE)).size(32.0));
+                    if ui.label("HELLO CLICKED!").clicked() {
+                        println!("HELLO CLICKED!");
+                    }
 
+                    if ui.add(egui::Button::new("test click")).clicked() {
+                        println!("BUTTON CLICKED");
+                    }
 
-                    ui.horizontal(|ui|{
-                        ui.label(" ");
-                        if ui.add(egui::Button::new("Create")).clicked() {
-                            wallet.select::<section::Create>();
-                        }
-                    });
+                    // if ui.add(Label::new(egui::RichText::new("HELLO"))).clicked() {
+                    //     println!("HELLO CLICKED!");
+                    // }
 
-                    ui.label("Select a wallet to unlock");
-                    ui.label(" ");
-                    // ui.add_space(32.);
+                    Panel::new(self)
+                        .with_caption("Select Wallet")
+                        .with_close(|_|{
 
-                    egui::ScrollArea::vertical()
-                        .id_source("wallet-list")
-                        .show(ui, |ui| {
-                            ui.set_width(ui.available_width());
-
+                            println!("CLOSE CLICKED");
+                        })
+                        .with_header(|_ctx,ui| {
+                            ui.label("Select a wallet to unlock");
+                        })
+                        .with_body(|ctx,ui| {
                             for wallet in wallet.wallet_list.iter() {
                                 if ui.add_sized(size, egui::Button::new(wallet.filename.clone())).clicked() {
-                                    self.selected_wallet = Some(wallet.filename.clone());
-                                    self.state = State::Unlock(None);
+                                    ctx.selected_wallet = Some(wallet.filename.clone());
+                                    ctx.state = State::Unlock(None);
                                 }
                             }
-                        });
-        
+                        })
+                        .render(ui);
                 }
+
                 State::Unlock(error) => {
-                    ui.heading("Unlock Wallet");
 
-                    egui::ScrollArea::vertical()
-                        .id_source("unlock-wallet")
-                        .show(ui, |ui| {
-
-                        ui.label(" ");
-                        ui.label(format!("Opening wallet: \"{}\"",self.selected_wallet.as_ref().unwrap()));
-                        ui.label(" ");
-
-                        if let Some(err) = error {
+                    Panel::new(self)
+                        .with_caption("Unlock Wallet")
+                        .with_back(|ctx|{
+                            println!("clicking BACK!");
+                            ctx.state = State::Select;
+                        })
+                        .with_close(|_ctx|{})
+                        .with_body(|ctx,ui| {
                             ui.label(" ");
-                            ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
-                            ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
+                            ui.label(format!("Opening wallet: \"{}\"",ctx.selected_wallet.as_ref().unwrap()));
                             ui.label(" ");
-                        }
-
-                        ui.label("Enter your password to unlock your wallet");
-                        ui.label(" ");
-
-                        ui.add_sized(
-                            size,
-                            TextEdit::singleline(&mut self.secret)
-                                .hint_text("Enter Password...")
-                                .password(true)
-                                .vertical_align(Align::Center),
-                        );
-
-                        if ui
-                            .add_sized(size, egui::Button::new("Unlock"))
-                            .clicked()
-                        {
-                            let secret = kaspa_wallet_core::secret::Secret::new(self.secret.as_bytes().to_vec());
-                            self.secret.zeroize();
-                            let wallet = self.interop.wallet().clone();
-                            let wallet_name = self.selected_wallet.clone();//.expect("Wallet name not set");
-                            
-                            spawn_with_result(&unlock_result, async move {
-                                wallet.load(secret, wallet_name).await?;
-                                Ok(())
-                            });
-
-                            self.state = State::Unlocking;
-                        }
-
-                        ui.label(" ");
-
-                        if ui
-                            .add_sized(size, egui::Button::new("Select a different wallet"))
-                            .clicked() {
-                                self.state = State::Select;
+    
+                            if let Some(err) = error {
+                                ui.label(" ");
+                                ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
+                                ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
+                                ui.label(" ");
                             }
-                    });
+    
+                            ui.label("Enter your password to unlock your wallet");
+                            ui.label(" ");
+    
+                            ui.add_sized(
+                                size,
+                                TextEdit::singleline(&mut ctx.secret)
+                                    .hint_text("Enter Password...")
+                                    .password(true)
+                                    .vertical_align(Align::Center),
+                            );
+    
+                            if ui
+                                .add_sized(size, egui::Button::new("Unlock"))
+                                .clicked()
+                            {
+                                let secret = kaspa_wallet_core::secret::Secret::new(ctx.secret.as_bytes().to_vec());
+                                ctx.secret.zeroize();
+                                let wallet = ctx.interop.wallet().clone();
+                                let wallet_name = ctx.selected_wallet.clone();//.expect("Wallet name not set");
+                                
+                                spawn_with_result(&unlock_result, async move {
+                                    wallet.load(secret, wallet_name).await?;
+                                    Ok(())
+                                });
+    
+                                ctx.state = State::Unlocking;
+                            }
+    
+                            ui.label(" ");
+    
+                        })
+                        // .with_footer(|ui|{
+                        //     if ui
+                        //         .add_sized(size, egui::Button::new("Select a different wallet"))
+                        //         .clicked() {
+                        //             self.state = State::Select;
+                        //         }
+                        // })
+                        .render(ui);
+
+
+                    // egui::ScrollArea::vertical()
+                    //     .id_source("unlock-wallet")
+                    //     .show(ui, |ui| {
+
+
+                    //     if ui
+                    //         .add_sized(size, egui::Button::new("Select a different wallet"))
+                    //         .clicked() {
+                    //             self.state = State::Select;
+                    //         }
+                    // });
                 }
                 State::Unlocking => {
                     ui.heading("Unlocking");

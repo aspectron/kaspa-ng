@@ -33,6 +33,8 @@ pub struct Wallet {
     pub wallet_list: Vec<WalletDescriptor>,
     pub account_list: Vec<Arc<dyn runtime::Account>>,
     pub selected_account: Option<Arc<dyn runtime::Account>>,
+
+    // pub icons : Icons,
 }
 
 impl Wallet {
@@ -129,6 +131,8 @@ impl Wallet {
             discard_hint: false,
             current_daa_score: None,
             exception: None,
+
+            // icons : Icons::default(),
         };
 
         this.wallet_list();

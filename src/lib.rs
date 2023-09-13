@@ -16,3 +16,6 @@ pub mod section;
 pub mod settings;
 pub mod sync;
 pub mod stages;
+pub mod icons;
+pub mod panel;
+pub mod theme;

@@ -27,6 +27,8 @@ pub use std::sync::{Arc, Mutex};
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_log::*;
 pub use zeroize::Zeroize;
+pub use egui::*;
+
 
 pub use crate::error::Error;
 pub use crate::events::Events;
@@ -40,7 +42,10 @@ pub use crate::section;
 pub use crate::section::SectionT;
 pub use crate::settings::{KaspadNodeKind, Settings};
 pub use crate::wallet::Wallet;
-
+pub use crate::icons::{Icon,IconSize};
+// pub use crate::panel::{Panel,PanelExtension};
+pub use crate::panel::Panel;
+pub use crate::theme::theme;
 // pub use workflow_core::task::spawn;
 
 // cfg_if! {
