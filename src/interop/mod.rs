@@ -98,7 +98,7 @@ impl Interop {
         interop
     }
 
-    pub fn run(&self) {
+    pub fn start(&self) {
         // self.inner.runtime.spawn();
 
         // register(Some(self));

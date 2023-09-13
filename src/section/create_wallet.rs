@@ -5,12 +5,11 @@ use kaspa_wallet_core::runtime::{WalletCreateArgs, PrvKeyDataCreateArgs, Account
 use kaspa_wallet_core::storage::interface::AccessContext;
 use kaspa_wallet_core::storage::{AccountKind, AccessContextT};
 use kaspa_bip32::Mnemonic;
-// use workflow_core::task::spawn;
 
 #[derive(Clone)]
 pub enum State {
     Start,
-    WalletName, // Wallet and Account name
+    WalletName,
     AccountName,
     PhishingHint,
     WalletSecret,
@@ -18,7 +17,7 @@ pub enum State {
     CreateWallet,
     WalletError(Arc<Error>),
     PresentMnemonic(Arc<Mnemonic>),
-    ConfirmMnemonic,
+    ConfirmMnemonic(Arc<Mnemonic>),
     Finish,
 }
 
@@ -42,8 +41,6 @@ pub struct CreateWallet {
     secret: String,
     args : Context,
     pub state: State,
-    // pub message: Option<String>,
-    // selected_wallet : Option<String>,
 }
 
 impl CreateWallet {
@@ -53,8 +50,6 @@ impl CreateWallet {
             secret: String::new(),
             state: State::Start,
             args : Default::default(),
-            // message: None,
-            // selected_wallet : None,
         }
     }
 
@@ -87,22 +82,6 @@ impl SectionT for CreateWallet {
                             ui.label(" ");
                             ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
                         })
-                        // .with_body(|this,ui| {
-                        //     for wallet in wallet.wallet_list.iter() {
-                        //         if ui.add_sized(size, egui::Button::new(wallet.filename.clone())).clicked() {
-                        //             this.selected_wallet = Some(wallet.filename.clone());
-                        //             this.state = State::Unlock(None);
-                        //         }
-                        //     }
-                        //     ui.label(" ");
-                        //     ui.separator();
-                        //     ui.label(" ");
-                        //     if ui.add_sized(size, egui::Button::new("Create new wallet")).clicked() {
-                        //         wallet.select::<section::CreateWallet>();
-                        //     }
-
-                        //     ui.label(" ");
-                        // })
                         .with_footer(|this,ui| {
                             // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
                             let size = theme().large_button_size;
@@ -111,31 +90,6 @@ impl SectionT for CreateWallet {
                             }
                         })
                         .render(ui);
-
-                    // ui.label(" ");
-                    // ui.heading("Create a Wallet");
-                    // ui.label(" ");
-                    // ui.label(" ");
-                    // ui.label("The following will guide you through the process of creating a new wallet");
-                    // ui.label(" ");
-                    // ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
-                    // ui.label(" ");
-
-                    // ui.add_space(32.);
-
-                    // egui::ScrollArea::vertical()
-                    //     // .id_source("wallet-list")
-                        
-                    //     .show(ui, |ui| {
-                    //         ui.set_width(ui.available_width());
-                    //         ui.set_height(ui.available_height()-64.);
-
-                    //     });
-                    // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                    //     self.state = State::WalletName;
-                    // }
-                    // ui.add_space(64.);
-        
                 }
                 State::WalletName => {
                     Panel::new(self)
@@ -277,8 +231,6 @@ impl SectionT for CreateWallet {
                                 ui.label(" ");
                             } else {
                                 ui.label(" ");
-                                // ui.label(" ");
-                                // ui.label(" ");
                             }
                         })
                         .with_footer(|this,ui| {
@@ -289,32 +241,8 @@ impl SectionT for CreateWallet {
                             }
                         })
                         .render(ui);
-        
-
-                    // ----
-
-                    // ui.heading("Wallet Encryption Password");
-                    // ui.label(" ");
-                    // ui.label("Wallet password is used to encrypt your wallet.");
-                    // ui.label(" ");
-
-                    // ui.add_space(32.);
-
-                    // egui::ScrollArea::vertical()
-                    //     .show(ui, |ui| {
-                    //         ui.set_width(ui.available_width());
-
-
-
-                    //         // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                    //         //     self.state = State::AccountName;
-                    //         // }
-                    //     });
-        
                 }
                 State::PaymentSecret => {
-
-
 
                     Panel::new(self)
                         .with_caption("Payment & Recovery Password")
@@ -356,8 +284,6 @@ impl SectionT for CreateWallet {
                                 ui.label(" ");
                             } else {
                                 ui.label(" ");
-                                // ui.label(" ");
-                                // ui.label(" ");
                             }
                         })
                         .with_footer(|this,ui| {
@@ -369,56 +295,12 @@ impl SectionT for CreateWallet {
                         })
                         .render(ui);
         
-
-
-                    // ---
-
-                    // ui.heading("Payment & Recovery Password");
-                    // ui.label(" ");
-                    // ui.heading("Optional");
-                    // ui.label(" ");
-                    
-                    // egui::ScrollArea::vertical()
-                    //     .show(ui, |ui| {
-                    //         ui.set_width(ui.available_width());
-
-                    //         ui.label("The optional payment & recovery password, if provided, will be required to \
-                    //         send payments. This password will also be required when recovering your wallet \
-                    //         in addition to your private key or mnemonic. If you loose this password, you will not \
-                    //         be able to use mnemonic to recover your wallet!");
-                    //         ui.label(" ");
-        
-                    //         ui.add_space(32.);
-
-                    //         ui.add_sized(
-                    //             size,
-                    //             TextEdit::singleline(&mut self.args.payment_secret)
-                    //                 .hint_text("Payment password...")
-                    //                 .vertical_align(Align::Center),
-                    //         );
-
-                    //         ui.add_sized(
-                    //             size,
-                    //             TextEdit::singleline(&mut self.args.payment_secret_confirm)
-                    //                 .hint_text("Payment password...")
-                    //                 .vertical_align(Align::Center),
-                    //         );
-
-                    //         let ok = self.args.wallet_secret == self.args.wallet_secret_confirm;
-                    //         if ui.add_enabled(ok, egui::Button::new("Continue").min_size(size)).clicked() {
-                    //             self.state = State::CreateWallet;
-                    //         }
-                    //         // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                    //         //     self.state = State::AccountName;
-                    //         // }
-                    //     });
-        
                 }
                 State::CreateWallet => {
 
                     Panel::new(self)
                     .with_caption("Creating Wallet")
-                    .with_header(|this, ui|{
+                    .with_header(|_, ui|{
                         ui.label(" ");
                         ui.label("Please wait...");
                         ui.label(" ");
@@ -427,10 +309,6 @@ impl SectionT for CreateWallet {
                         ui.add(egui::Spinner::new().size(92.));
                     })
                     .render(ui);
-
-                    // ui.heading("Creating Wallet");
-                    // ui.heading("Please wait...");
-                    // ui.add_space(64.);
 
                     let wallet_create_result = Payload::<Result<Arc<Mnemonic>>>::new("wallet_create_result");
                     if !wallet_create_result.is_pending() {
@@ -487,126 +365,76 @@ impl SectionT for CreateWallet {
                     })
                     .render(ui);
                 
-                // ui.heading("Error");
-                //     ui.label(" ");
-
-                //     if ui.add_sized(size, egui::Button::new("Restart")).clicked() {
-                //         self.state = State::Start;
-                //     }
                 }
 
                 State::PresentMnemonic(mnemonic) => {
+                    let mut phrase = mnemonic.phrase().to_string();
 
-                    panel(self)
-                    .with_caption("Private Key Mnemonic")
-                    .with_body(move |_this,ui| {
-                        ui.label(RichText::new("Your mnemonic phrase allows your to re-create your private key. \
-                            The person who has access to this mnemonic will have full control of \
-                            the Kaspa stored in it. Keep your mnemonic safe. Write it down and \
-                            store it in a safe, preferably in a fire-resistant location. Do not \
-                            store your mnemonic on this computer or a mobile device. This wallet \
-                            will never ask you for this mnemonic phrase unless you manually \
-                            initiate a private key recovery.").size(14.));
-                        ui.label(" ");
-                        ui.label(RichText::new("Never share your mnemonic with anyone!").color(Color32::RED));
-                        ui.label(" ");
-                        ui.label("Your default account private key mnemonic is:");
-                        ui.label(" ");
-                        ui.separator();
-                        ui.label(" ");
+                    Panel::new(self)
+                        .with_caption("Private Key Mnemonic")
+                        .with_body(|_this,ui| {
+                            ui.label(RichText::new("Your mnemonic phrase allows your to re-create your private key. \
+                                The person who has access to this mnemonic will have full control of \
+                                the Kaspa stored in it. Keep your mnemonic safe. Write it down and \
+                                store it in a safe, preferably in a fire-resistant location. Do not \
+                                store your mnemonic on this computer or a mobile device. This wallet \
+                                will never ask you for this mnemonic phrase unless you manually \
+                                initiate a private key recovery.").size(14.));
+                            ui.label(" ");
+                            ui.label(RichText::new("Never share your mnemonic with anyone!").color(Color32::RED));
+                            ui.label(" ");
+                            ui.label("Your default account private key mnemonic is:");
+                            ui.label(" ");
+                            ui.separator();
+                            ui.label(" ");
 
-                        let phrase = mnemonic.phrase();
-                        let words = phrase.split(" ").collect::<Vec<&str>>();
-                        let chunks = words.chunks(6).collect::<Vec<&[&str]>>();
-                        // let lines = chunks.iter().map(|chunk| chunk.join(" ")).collect::<Vec<String>>();
-                        // let text = lines.join("\n");
-                        for chunk in chunks {
-                        // for col in chunks.len() {
-                            ui.horizontal(|ui| {
-                                ui.columns(6, |cols| {
+                            // let phrase = mnemonic.phrase();
+                            let words = phrase.split(" ").collect::<Vec<&str>>();
+                            let chunks = words.chunks(6).collect::<Vec<&[&str]>>();
+                            // let lines = chunks.iter().map(|chunk| chunk.join(" ")).collect::<Vec<String>>();
+                            // let text = lines.join("\n");
+                            for chunk in chunks {
+                            // for col in chunks.len() {
+                                ui.horizontal(|ui| {
+                                    ui.columns(6, |cols| {
 
-                                    for col in 0..chunk.len() {
-                                        cols[col].label(egui::RichText::new(chunk[col]).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
-                                        
-                                    }
-                                })
-                        //         for word in chunk {
-                        //             ui.label(egui::RichText::new(*word).family(FontFamily::Monospace).color(egui::Color32::WHITE));
-                        //             ui.add_space(8.);
-                        //         }
-                            });
-                        }
+                                        for col in 0..chunk.len() {
+                                            cols[col].label(egui::RichText::new(chunk[col]).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
+                                            
+                                        }
+                                    })
+                            //         for word in chunk {
+                            //             ui.label(egui::RichText::new(*word).family(FontFamily::Monospace).color(egui::Color32::WHITE));
+                            //             ui.add_space(8.);
+                            //         }
+                                });
+                            }
 
-                        // ui.label(egui::RichText::new(text).family(FontFamily::Monospace).color(egui::Color32::WHITE));
-                        // ui.label(egui::RichText::new(mnemonic.phrase()).family(FontFamily::Monospace).color(egui::Color32::WHITE));
+                            phrase.zeroize();
 
-                        // ui.add(TextEdit::multiline(&mut this.args.payment_secret_confirm)
-                        // .vertical_align(Align::Center));
+                            // ui.label(egui::RichText::new(text).family(FontFamily::Monospace).color(egui::Color32::WHITE));
+                            // ui.label(egui::RichText::new(mnemonic.phrase()).family(FontFamily::Monospace).color(egui::Color32::WHITE));
+
+                            // ui.add(TextEdit::multiline(&mut this.args.payment_secret_confirm)
+                            // .vertical_align(Align::Center));
                     })
-                    .with_footer(move |this,ui| {
+                    .with_footer(|this,ui| {
                         if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                            this.state = State::ConfirmMnemonic;
+                            this.state = State::ConfirmMnemonic(mnemonic);
                         }
                     })
                     .render(ui);
 
-                    // ui.heading("Private Key Mnemonic");
-                    // ui.label(" ");
-
-                    // egui::ScrollArea::vertical()
-                    // .show(ui, |ui| {
-                    //     ui.set_width(ui.available_width());
-
-                    //     ui.label("Your mnemonic phrase allows your to re-create your private key. \
-                    //     The person who has access to this mnemonic will have full control of \
-                    //     the Kaspa stored in it. Keep your mnemonic safe. Write it down and \
-                    //     store it in a safe, preferably in a fire-resistant location. Do not \
-                    //     store your mnemonic on this computer or a mobile device. This wallet \
-                    //     will never ask you for this mnemonic phrase unless you manually \
-                    //     initiate a private key recovery.");
-                    //     ui.label(" ");
-                    //     ui.label("Never share your mnemonic with anyone!");
-                    //     ui.label(" ");
-                    //     ui.label("Your default account private key mnemonic is:");
-                    //     ui.separator();
-                    //     ui.label(egui::RichText::new(mnemonic.phrase()).color(egui::Color32::WHITE));
-
-                    //     ui.add(TextEdit::multiline(&mut self.args.payment_secret_confirm)
-                    //     // .hint_text("Payment password...")
-                        
-                    //     .vertical_align(Align::Center));
-
-
-
-                    //     ui.separator();
-                    //     ui.label(" ");
-
-                    //     if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                    //         self.state = State::ConfirmMnemonic;
-                    //     }
-
-                        /*
-                        if ui
-                            .add(
-                                egui::Label::new("Label Text")
-                                    .sense(egui::Sense::click()),
-                            )
-                            .on_hover_text("Click to copy 'Label Text'")
-                            .clicked()
-                        {
-                            ui.output_mut(|po| {
-                                po.copied_text = String::from("Label Text");
-                            });
-                        }
-                         */
-                    // });
                 }
 
-                State::ConfirmMnemonic => {
+                State::ConfirmMnemonic(mnemonic) => {
                     panel(self)
                     .with_caption("Confirm Mnemonic")
+                    .with_back(|this|{
+                        this.state = State::PresentMnemonic(mnemonic);
+                    })
                     .with_header(|_this,ui| {
-
+                        ui.label("Please validate your mnemonic");
                     })
                     .with_footer(move |this,ui| {
                         if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
@@ -614,17 +442,6 @@ impl SectionT for CreateWallet {
                         }
                     })
                     .render(ui);
-                    // ui.heading("Confirm Mnemonic");
-                    // ui.label(" ");
-                    // ui.label(" ");
-                    // ui.separator();
-                    // // ui.label(egui::RichText::new(mnemonic.phrase()).color(egui::Color32::WHITE));
-                    // ui.separator();
-                    // ui.label(" ");
-
-                    // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                    //     self.state = State::ConfirmMnemonic;
-                    // }
                 }
 
                 State::Finish => {

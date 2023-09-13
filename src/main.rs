@@ -37,7 +37,7 @@ cfg_if! {
                     let interop = Interop::new(&cc.egui_ctx, &settings);
                     delegate.lock().unwrap().replace(interop.clone());
                     interop::signals::Signals::bind(&interop);
-                    interop.run();
+                    interop.start();
 
                     Box::new(kaspa_egui::Wallet::new(cc, interop, settings))
                 }),
@@ -71,10 +71,11 @@ cfg_if! {
                         "kaspa-wallet",
                         web_options,
                         Box::new(move |cc| {
-                            let interop = interop::Interop::new(&cc.egui_ctx);
-                            interop.spawn();
+                            let settings = Settings::default();
+                            let interop = interop::Interop::new(&cc.egui_ctx, &settings);
+                            interop.start();
 
-                            Box::new(kaspa_egui::Wallet::new(cc, interop))
+                            Box::new(kaspa_egui::Wallet::new(cc, interop, settings))
                         }),
                     )
                     .await

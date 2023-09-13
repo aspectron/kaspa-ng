@@ -22,7 +22,7 @@ cfg_if! {
         impl Default for KaspadNodeKind {
             fn default() -> Self {
                 use workflow_dom::utils::*;
-                let url = window().location().hostname();
+                let url = window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
                 KaspadNodeKind::Remote { url }
             }
         }
@@ -33,7 +33,7 @@ cfg_if! {
 pub struct Settings {
     pub url: String,
     pub network: Network,
-    pub kaspad_node: KaspadNodeKind,
+    pub kaspad: KaspadNodeKind,
 }
 
 impl Default for Settings {
@@ -43,7 +43,7 @@ impl Default for Settings {
             // network: Network::Mainnet,
             network: Network::Testnet10,
             // kaspad_node: KaspadNodeKind::InternalInProc,
-            kaspad_node: KaspadNodeKind::Remote {
+            kaspad: KaspadNodeKind::Remote {
                 url: "".to_string(),
             },
         }

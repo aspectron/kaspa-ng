@@ -1,5 +1,7 @@
 use crate::imports::*;
 use kaspa_wrpc_server::address::WrpcNetAddress;
+
+#[cfg(not(target_arch = "wasm32"))]
 pub use kaspad::args::Args;
 
 pub struct Config {
@@ -13,6 +15,7 @@ impl From<Settings> for Config {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<Config> for Args {
     fn from(config: Config) -> Self {
         let mut args = Args::default();

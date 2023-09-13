@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 
+[features]
+browser-extension = []
+default = []
+
 [dependencies]
 # kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }

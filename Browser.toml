@@ -1,0 +1,10 @@
+[build]
+target = "browser/index.html"
+# Build in release mode.
+release = false
+# The output dir for all final assets.
+dist = "dist-browser"
+
+# DOCS:
+# https://github.com/thedodd/trunk/blob/master/Trunk.toml
+# https://trunkrs.dev/assets/#rust
