@@ -57,26 +57,29 @@ impl Icon {
         }
     }
 
-    pub fn render(&self, ui : &mut egui::Ui, size : &IconSize) -> Response {
+    // pub fn render(&self, ui : &mut egui::Ui, size : f32, color: Color32) -> Response {
+    pub fn render(&self, ui : &mut egui::Ui, size : &IconSize, color: Color32) -> Response {
         match self.kind {
             Kind::Phosphor { symbol } => {
-                let color = if self.hover.load(Ordering::Relaxed) {
+                // let response = ui.add(Label::new(egui::RichText::new(symbol).size(size.inner.y).color(color)).sense(Sense::click()));
+                // ui.add(Label::new(egui::RichText::new(symbol).size(size).color(color)).sense(Sense::click()))
+                ui.add(Label::new(egui::RichText::new(symbol).size(size.inner.y).color(color)).sense(Sense::click()))
+            }
+        }
+    }
+
+    pub fn render_with_options(&self, ui : &mut egui::Ui, size : &IconSize, active : bool) -> Response {
+        match self.kind {
+            Kind::Phosphor { symbol } => {
+                let color = if !active {
+                    ui.ctx().style().visuals.noninteractive().text_color()
+                } else if self.hover.load(Ordering::Relaxed){
                     ui.ctx().style().visuals.strong_text_color()
                 } else {
                     ui.ctx().style().visuals.text_color()
                 };
-                let response = ui.label(egui::RichText::new(symbol).size(size.inner.y).color(color));
+                let response = ui.add(Label::new(egui::RichText::new(symbol).size(size.inner.y).color(color)).sense(Sense::click()));
                 // let response = ui.add_sized(size.outer, Label::new(egui::RichText::new(symbol).size(size.inner.y).color(color)));
-                // let response = ui.add(Label::new(egui::RichText::new(symbol).size(size.inner.y).color(color)));
-                // let response = ui.label(egui::RichText::new(symbol).size(size).color(color));
-
-                if response.clicked() {
-                    println!("ICON CLICKED...");
-                }
-
-                // if response.hovered() {
-                    // println!("ICON HOVERED");
-                // }
                 if response.hovered() {
                     self.hover.store(true, Ordering::Relaxed);
                 } else {
@@ -90,7 +93,7 @@ impl Icon {
 
 macro_rules! phosphor {
     ($symbol:ident) => (
-        Icon::new(egui_phosphor::regular::$symbol)
+        Icon::new(egui_phosphor::thin::$symbol)
     );
 }
 
@@ -98,6 +101,7 @@ macro_rules! phosphor {
 pub struct Icons {
     pub back : Icon,
     pub close : Icon,
+    pub error : Icon,
 }
 
 impl Default for Icons {
@@ -105,6 +109,7 @@ impl Default for Icons {
         Self {
             back : phosphor!(ARROW_BEND_UP_LEFT),
             close : phosphor!(X),
+            error : phosphor!(SEAL_WARNING),
         }
     }
 }

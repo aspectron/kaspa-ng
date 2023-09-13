@@ -56,55 +56,60 @@ impl SectionT for Open {
             match self.state.clone() {
                 State::Select => {
 
-                    if ui.label("HELLO CLICKED!").clicked() {
-                        println!("HELLO CLICKED!");
-                    }
-
-                    if ui.add(egui::Button::new("test click")).clicked() {
-                        println!("BUTTON CLICKED");
-                    }
-
-                    // if ui.add(Label::new(egui::RichText::new("HELLO"))).clicked() {
-                    //     println!("HELLO CLICKED!");
-                    // }
-
                     Panel::new(self)
                         .with_caption("Select Wallet")
-                        .with_close(|_|{
-
-                            println!("CLOSE CLICKED");
+                        .with_close_enabled(false, |_|{
                         })
                         .with_header(|_ctx,ui| {
                             ui.label("Select a wallet to unlock");
                         })
-                        .with_body(|ctx,ui| {
+                        .with_body(|this,ui| {
                             for wallet in wallet.wallet_list.iter() {
                                 if ui.add_sized(size, egui::Button::new(wallet.filename.clone())).clicked() {
-                                    ctx.selected_wallet = Some(wallet.filename.clone());
-                                    ctx.state = State::Unlock(None);
+                                    this.selected_wallet = Some(wallet.filename.clone());
+                                    this.state = State::Unlock(None);
                                 }
                             }
+                            ui.label(" ");
+                            ui.separator();
+                            ui.label(" ");
+                            if ui.add_sized(size, egui::Button::new("Create new wallet")).clicked() {
+                                wallet.select::<section::CreateWallet>();
+                            }
+
+                            ui.label(" ");
                         })
                         .render(ui);
                 }
 
                 State::Unlock(error) => {
-
+                    let width = ui.available_width();
+                    let theme = theme();
                     Panel::new(self)
                         .with_caption("Unlock Wallet")
                         .with_back(|ctx|{
-                            println!("clicking BACK!");
                             ctx.state = State::Select;
                         })
                         .with_close(|_ctx|{})
                         .with_body(|ctx,ui| {
-                            ui.label(" ");
+                            // ui.label(" ");
                             ui.label(format!("Opening wallet: \"{}\"",ctx.selected_wallet.as_ref().unwrap()));
                             ui.label(" ");
+                            // ui.add_space(24.);
     
                             if let Some(err) = error {
-                                ui.label(" ");
-                                ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
+                                // ui.horizontal(|ui| {
+                                //     ui.vertical(|ui| {
+                                //         ui.horizontal(|ui| {
+                                //             ui.set_width(theme.error_icon_size.outer_width());
+                                //             icons().error.render(ui,&theme.error_icon_size,theme.error_color);
+                                //         });
+                                //     });
+                                //     ui.vertical(|ui| {
+                                //         // ui.set_width(width-theme.error_icon_size.outer_width());
+                                //         // ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
+                                //     });
+                                // });
                                 ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
                                 ui.label(" ");
                             }

@@ -6,15 +6,19 @@ pub enum PanelEvents {
 }
 
 pub struct Panel<'panel,Context> {
-    pub ctx : &'panel mut Context,
+    pub this : &'panel mut Context,
     // pub icons : &'static Icons,
     // pub ui : &'panel mut egui::Ui,
     caption : Option<String>,
-    close : Option<Box<dyn FnOnce(&mut Context) + 'static>>,
-    back : Option<Box<dyn FnOnce(&mut Context) + 'static>>,
-    header : Option<Box<dyn FnOnce(&mut Context,&mut Ui) + 'static>>,
+    close : Option<Box<dyn FnOnce(&mut Context) + 'panel>>,
+    close_enabled : bool,
+    close_active : bool,
+    back : Option<Box<dyn FnOnce(&mut Context) + 'panel>>,
+    back_enabled : bool,
+    back_active : bool,
+    header : Option<Box<dyn FnOnce(&mut Context,&mut Ui) + 'panel>>,
     body : Option<Box<dyn FnOnce(&mut Context,&mut Ui) + 'panel>>,
-    footer : Option<Box<dyn FnOnce(&mut Context,&mut Ui) + 'static>>,
+    footer : Option<Box<dyn FnOnce(&mut Context,&mut Ui) + 'panel>>,
 }
 
 impl<'panel,Context> Panel<'panel,Context> {
@@ -22,13 +26,17 @@ impl<'panel,Context> Panel<'panel,Context> {
     // const ICONS : &'static Icons = icons();
 
     // pub fn new(ctx : &'panel mut Context, ui : &'panel mut egui::Ui) -> Self {
-    pub fn new(ctx : &'panel mut Context) -> Self {
+    pub fn new(this : &'panel mut Context) -> Self {
         Self {
-            ctx,
+            this,
             // icons : icons(),
             // ui,
             close: None,
+            close_enabled: true,
+            close_active: true,
             back : None,
+            back_enabled : true,
+            back_active : true,
             caption: None,
             header: None,
             body: None,
@@ -36,13 +44,25 @@ impl<'panel,Context> Panel<'panel,Context> {
         }
     }
 
-    pub fn with_close(mut self, close : impl FnOnce(&mut Context) + 'static) -> Self {
+    pub fn with_close(mut self, close : impl FnOnce(&mut Context) + 'panel) -> Self {
         self.close = Some(Box::new(close));
         self
     }
 
-    pub fn with_back(mut self, back : impl FnOnce(&mut Context) + 'static) -> Self {
+    pub fn with_close_enabled(mut self, enabled : bool, close : impl FnOnce(&mut Context) + 'panel) -> Self {
+        self.close = Some(Box::new(close));
+        self.close_enabled = enabled;
+        self
+    }
+
+    pub fn with_back(mut self, back : impl FnOnce(&mut Context) + 'panel) -> Self {
         self.back = Some(Box::new(back));
+        self
+    }
+
+    pub fn with_back_enabled(mut self, enabled : bool, back : impl FnOnce(&mut Context) + 'panel) -> Self {
+        self.back = Some(Box::new(back));
+        self.back_enabled = enabled;
         self
     }
 
@@ -51,20 +71,17 @@ impl<'panel,Context> Panel<'panel,Context> {
         self
     }
 
-    pub fn with_header(mut self, header : impl FnOnce(&mut Context, &mut Ui) + 'static) -> Self {
+    pub fn with_header(mut self, header : impl FnOnce(&mut Context, &mut Ui) + 'panel) -> Self {
         self.header = Some(Box::new(header));
         self
     }
 
     pub fn with_body(mut self, body : impl FnOnce(&mut Context, &mut Ui) + 'panel) -> Self {
-    // pub fn with_body(mut self, body : impl FnOnce(&mut Ui) + 'panel) -> Self {
-    // pub fn with_body(mut self, body : &'panel dyn FnOnce(&mut Ui)) -> Self {
-        // self.body = Some(body);
         self.body = Some(Box::new(body));
         self
     }
 
-    pub fn with_footer(mut self, footer : impl FnOnce(&mut Context, &mut Ui) + 'static) -> Self {
+    pub fn with_footer(mut self, footer : impl FnOnce(&mut Context, &mut Ui) + 'panel) -> Self {
         self.footer = Some(Box::new(footer));
         self
     }
@@ -75,59 +92,114 @@ impl<'panel,Context> Panel<'panel,Context> {
             let icon_size = theme().panel_icon_size();
 
             ui.horizontal(|ui| {
-                if let Some(back) = self.back {
-                    if icons().back.render(ui, icon_size).clicked() {
-                        println!("RECEIVED CLICK TO BACK!");
-                        // back(&mut self.ctx);
-                        back(self.ctx);
+                match self.back {
+                    Some(back) if self.back_enabled => {
+                        if icons().back.render_with_options(ui, icon_size, self.back_active).clicked() {
+                            back(self.this);
+                        }
+                    },
+                    _ => {
+                        ui.add_space(icon_size.outer_width());
                     }
-                } else {
-                    ui.add_space(icon_size.outer_width());
                 }
 
                 if let Some(caption) = self.caption {
                     ui.add_sized(Vec2::new(width-icon_size.outer_width()*2.,icon_size.outer_height()),Label::new(WidgetText::from(caption).heading()));
                 }
 
-                if let Some(close) = self.close {
-                    if icons().close.render(ui, icon_size).clicked() {
-                        close(self.ctx);
+                match self.close {
+                    Some(close) if self.close_enabled => {
+                        if icons().close.render_with_options(ui, icon_size, self.close_active).clicked() {
+                            close(self.this);
+                        }
+                    },
+                    _ => {
+                        ui.add_space(icon_size.outer_width());
                     }
-                } else {
-                    ui.add_space(icon_size.outer_width());
                 }
             });
 
+            ui.add_space(24.);
             
             if let Some(header) = self.header {
-                header(self.ctx, ui);
-            } else {
-                ui.add_space(24.);
+                header(self.this, ui);
             }
 
-            // ui.label("Select a wallet to unlock");
-            // ui.label(" ");
-            // ui.add_space(32.);
+            ui.add_space(24.);
+
+            // } else {
+            //     ui.add_space(icon_size.outer_width());
+            // }
+            // let height_before
+            println!("H1: {}",ui.available_height());
+            // println!("used size: {:?}",ui.ctx()..used_size());
+            
+
+
+
+            // let height = ui.ctx().used_size().y - ui.available_height()
+            // let height = ui.available_height()
+
+            // ui.allocate_space(Vec2 { x: width, y: ui.available_height() - 64. });
 
             egui::ScrollArea::vertical()
-                // .id_source("wallet-list")
                 .show(ui, |ui| {
                     ui.set_width(ui.available_width());
-                    ui.set_height(ui.available_height()-64.);
-
+                    // ui.
+                    // if 
+                    // ui.set_height(ui.available_height()-64.);
+                    
                     if let Some(body) = self.body {
-                        body(self.ctx, ui);
-                        // (*body)(ui);
+                        body(self.this, ui);
                     }
+                    
+                    println!("H2: {}",ui.available_height());
+                        // println!("used size in scroll: {:?}",ui.ctx().used_size());
+
+                    // let padding = ui.available_height() - 64.;
+                    let padding = ui.available_height() - theme().panel_footer_height;
+                    if padding > 0. {
+                        ui.add_space(padding);
+                    }
+
+                    // ui.
+
                 });
 
+            // let min_height = ui.ctx().used_size().y - 64.;
+            // if ui.available_height() < min_height {
+            //     ui.set_height(min_height);
+            // }
+            
+
+            println!("---");
+            println!("used size: {:?}",ui.ctx().used_size());
+            println!("available height: {}",ui.available_height());
+            
+            // ui.expand_to_include_y(ui.ctx().used_size().y - 64.);
+
+            // ui.set_height(ui.ctx().used_size().y - 64.);
+            println!("used size: {:?}",ui.ctx().used_size());
+            println!("available height: {}",ui.available_height());
+            println!("---");
+
             if let Some(footer) = self.footer {
-                footer(self.ctx, ui);
+                footer(self.this, ui);
             }
+            println!("H3: {}",ui.available_height());
+
+            // println!("used size in after: {:?}",ui.ctx().used_size());
         
     }
 
 }
+
+pub fn panel<'panel, Context>(this : &'panel mut Context) -> Panel<'panel, Context> {
+    Panel::new(this)
+}
+// pub fn panel<'panel, S: Display>(this : &'panel mut Context, caption : S) -> Panel<'panel, Context> {
+//     Panel::new(this).with_caption(caption)
+// }
 
 // pub trait PanelExtension<'ui,Context> {
 //     fn panel(&'ui mut self, ctx : &mut Context, caption : &'static str) -> Panel<'ui,Context>;
@@ -146,7 +218,7 @@ macro_rules! phosphor {
 }
 
 // #[derive(Clone)]
-pub struct Icons {
+struct Icons {
     pub back : Icon,
     pub close : Icon,
 }
@@ -160,7 +232,7 @@ impl Default for Icons {
     }
 }
 
-pub fn icons() -> &'static Icons {
+fn icons() -> &'static Icons {
     static ICONS: OnceLock<Icons> = OnceLock::new();
     ICONS.get_or_init(|| Icons::default())
 }

@@ -102,7 +102,7 @@ impl Wallet {
             interop.clone(),
         ))));
         sections.insert_typeid(Rc::new(RefCell::new(section::Open::new(interop.clone()))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Create::new(interop.clone()))));
+        sections.insert_typeid(Rc::new(RefCell::new(section::CreateWallet::new(interop.clone()))));
         sections.insert_typeid(Rc::new(RefCell::new(section::Import::new(interop.clone()))));
 
         let channel = interop.application_events().clone();
@@ -281,7 +281,7 @@ impl eframe::App for Wallet {
 
             if !self.wallet().is_open() {
 
-                let section = if self.section == TypeId::of::<section::Open>() || self.section == TypeId::of::<section::Create>() {
+                let section = if self.section == TypeId::of::<section::Open>() || self.section == TypeId::of::<section::CreateWallet>() {
                     self.section
                 } else {
                     TypeId::of::<section::Open>()

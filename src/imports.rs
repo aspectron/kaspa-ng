@@ -42,9 +42,9 @@ pub use crate::section;
 pub use crate::section::SectionT;
 pub use crate::settings::{KaspadNodeKind, Settings};
 pub use crate::wallet::Wallet;
-pub use crate::icons::{Icon,IconSize};
+pub use crate::icons::{Icon,Icons,IconSize,icons};
 // pub use crate::panel::{Panel,PanelExtension};
-pub use crate::panel::Panel;
+pub use crate::panel::{Panel,panel};
 pub use crate::theme::theme;
 // pub use workflow_core::task::spawn;
 

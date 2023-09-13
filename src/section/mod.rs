@@ -6,7 +6,7 @@ pub mod request;
 pub mod send;
 pub mod settings;
 pub mod transactions;
-pub mod create;
+pub mod create_wallet;
 pub mod import;
 
 pub use accounts::Accounts;
@@ -17,7 +17,7 @@ pub use request::Request;
 pub use send::Send;
 pub use settings::Settings;
 pub use transactions::Transactions;
-pub use create::Create;
+pub use create_wallet::CreateWallet;
 pub use import::Import;
 
 use crate::imports::*;
