@@ -65,7 +65,12 @@ impl SectionT for Open {
                         })
                         .with_body(|this,ui| {
                             for wallet in wallet.wallet_list.iter() {
-                                if ui.add_sized(size, egui::Button::new(wallet.filename.clone())).clicked() {
+
+                                // let text = render_wallet_descriptor(wallet, ui);
+                                let text = wallet.filename.clone();
+
+                                // if ui.add_sized(size, egui::Button::new(wallet.filename.clone())).clicked() {
+                                if ui.add_sized(size, egui::Button::new(text)).clicked() {
                                     this.selected_wallet = Some(wallet.filename.clone());
                                     this.state = State::Unlock(None);
                                 }
@@ -83,8 +88,8 @@ impl SectionT for Open {
                 }
 
                 State::Unlock(error) => {
-                    let width = ui.available_width();
-                    let theme = theme();
+                    // let width = ui.available_width();
+                    // let theme = theme();
                     Panel::new(self)
                         .with_caption("Unlock Wallet")
                         .with_back(|ctx|{
@@ -201,4 +206,40 @@ impl SectionT for Open {
 
         });
     }
+}
+
+
+fn render_wallet_descriptor(wallet : &WalletDescriptor, ui : &mut Ui) -> LayoutJob {
+    let mut job = LayoutJob::default();
+    job.halign = Align::Center;
+    job.append(
+        wallet.title.clone().unwrap_or_else(||"NO NAME".to_string()).as_str(),
+        0.0,
+        TextFormat {
+            font_id: FontId::new(18.0, FontFamily::Proportional),
+            color: ui.ctx().style().visuals.strong_text_color(),//text_color(),
+            ..Default::default()
+        },
+    );
+    //  job.append(text, leading_space, format)
+    job.append(
+        "\n",
+        0.0,
+        TextFormat {
+            font_id: FontId::new(12.0, FontFamily::Proportional),
+            color: ui.ctx().style().visuals.text_color(),
+            ..Default::default()
+        },
+    );
+    job.append(
+        wallet.filename.clone().as_str(),
+        0.0,
+        TextFormat {
+            font_id: FontId::new(12.0, FontFamily::Proportional),
+            color: ui.ctx().style().visuals.text_color(),
+            ..Default::default()
+        },
+    );
+
+    job
 }

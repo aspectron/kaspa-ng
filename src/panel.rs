@@ -87,108 +87,75 @@ impl<'panel,Context> Panel<'panel,Context> {
     }
 
     pub fn render(self, ui : &mut Ui) {
-            let width = ui.available_width();
+        let theme = theme();
+        
+        let icon_size = theme.panel_icon_size();
+        let panel_margin_size = theme.panel_margin_size();
+        let panel_width = ui.available_width();
+        let inner_panel_width = panel_width - panel_margin_size * 2.;
 
-            let icon_size = theme().panel_icon_size();
-
-            ui.horizontal(|ui| {
-                match self.back {
-                    Some(back) if self.back_enabled => {
-                        if icons().back.render_with_options(ui, icon_size, self.back_active).clicked() {
-                            back(self.this);
-                        }
-                    },
-                    _ => {
-                        ui.add_space(icon_size.outer_width());
+        ui.horizontal(|ui| {
+            match self.back {
+                Some(back) if self.back_enabled => {
+                    if icons().back.render_with_options(ui, icon_size, self.back_active).clicked() {
+                        back(self.this);
                     }
+                },
+                _ => {
+                    ui.add_space(icon_size.outer_width());
                 }
+            }
 
-                if let Some(caption) = self.caption {
-                    ui.add_sized(Vec2::new(width-icon_size.outer_width()*2.,icon_size.outer_height()),Label::new(WidgetText::from(caption).heading()));
-                }
+            if let Some(caption) = self.caption {
+                ui.add_sized(Vec2::new(panel_width-icon_size.outer_width()*2.,icon_size.outer_height()),Label::new(WidgetText::from(caption).heading()));
+            }
 
-                match self.close {
-                    Some(close) if self.close_enabled => {
-                        if icons().close.render_with_options(ui, icon_size, self.close_active).clicked() {
-                            close(self.this);
-                        }
-                    },
-                    _ => {
-                        ui.add_space(icon_size.outer_width());
+            match self.close {
+                Some(close) if self.close_enabled => {
+                    if icons().close.render_with_options(ui, icon_size, self.close_active).clicked() {
+                        close(self.this);
                     }
+                },
+                _ => {
+                    ui.add_space(icon_size.outer_width());
+                }
+            }
+        });
+
+        if let Some(header) = self.header {
+            ui.add_space(24.);
+
+            ui.vertical_centered(|ui|{
+                ui.set_width(inner_panel_width);
+                header(self.this, ui);
+            });
+
+        }
+
+        ui.add_space(24.);
+
+        egui::ScrollArea::vertical()
+            .show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                
+                if let Some(body) = self.body {
+                    ui.vertical_centered(|ui|{
+                        ui.set_width(inner_panel_width);
+        
+                        body(self.this, ui);
+                    });
+                }
+                
+                let padding = ui.available_height() - theme.panel_footer_height;
+                if padding > 0. {
+                    ui.add_space(padding);
                 }
             });
 
-            ui.add_space(24.);
-            
-            if let Some(header) = self.header {
-                header(self.this, ui);
-            }
 
-            ui.add_space(24.);
-
-            // } else {
-            //     ui.add_space(icon_size.outer_width());
-            // }
-            // let height_before
-            println!("H1: {}",ui.available_height());
-            // println!("used size: {:?}",ui.ctx()..used_size());
-            
-
-
-
-            // let height = ui.ctx().used_size().y - ui.available_height()
-            // let height = ui.available_height()
-
-            // ui.allocate_space(Vec2 { x: width, y: ui.available_height() - 64. });
-
-            egui::ScrollArea::vertical()
-                .show(ui, |ui| {
-                    ui.set_width(ui.available_width());
-                    // ui.
-                    // if 
-                    // ui.set_height(ui.available_height()-64.);
-                    
-                    if let Some(body) = self.body {
-                        body(self.this, ui);
-                    }
-                    
-                    println!("H2: {}",ui.available_height());
-                        // println!("used size in scroll: {:?}",ui.ctx().used_size());
-
-                    // let padding = ui.available_height() - 64.;
-                    let padding = ui.available_height() - theme().panel_footer_height;
-                    if padding > 0. {
-                        ui.add_space(padding);
-                    }
-
-                    // ui.
-
-                });
-
-            // let min_height = ui.ctx().used_size().y - 64.;
-            // if ui.available_height() < min_height {
-            //     ui.set_height(min_height);
-            // }
-            
-
-            println!("---");
-            println!("used size: {:?}",ui.ctx().used_size());
-            println!("available height: {}",ui.available_height());
-            
-            // ui.expand_to_include_y(ui.ctx().used_size().y - 64.);
-
-            // ui.set_height(ui.ctx().used_size().y - 64.);
-            println!("used size: {:?}",ui.ctx().used_size());
-            println!("available height: {}",ui.available_height());
-            println!("---");
-
-            if let Some(footer) = self.footer {
-                footer(self.this, ui);
-            }
-            println!("H3: {}",ui.available_height());
-
-            // println!("used size in after: {:?}",ui.ctx().used_size());
+        if let Some(footer) = self.footer {
+            footer(self.this, ui);
+        }
         
     }
 

@@ -27,14 +27,16 @@ pub use std::sync::{Arc, Mutex};
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_log::*;
 pub use zeroize::Zeroize;
+
 pub use egui::*;
+pub use egui::epaint::{text::{LayoutJob, TextFormat}, FontFamily, FontId};
 
 
 pub use crate::error::Error;
 pub use crate::events::Events;
 pub use crate::interop;
 // pub use crate::interop::executor::spawn;
-pub use crate::interop::{spawn, Interop, Payload};
+pub use crate::interop::{spawn, spawn_with_result, Interop, Payload};
 pub use crate::network::Network;
 pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;

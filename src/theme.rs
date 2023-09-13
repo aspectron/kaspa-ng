@@ -4,6 +4,7 @@ use crate::imports::*;
 // #[derive(Default)]
 pub struct Theme {
     pub panel_icon_size : IconSize,
+    pub panel_margin_size : f32,
     pub error_icon_size : IconSize,
     pub large_button_size : Vec2,
     pub panel_footer_height : f32, //72_f32,
@@ -24,6 +25,7 @@ impl Default for Theme {
             error_icon_size : IconSize::new(Vec2::splat(64.)).with_padding(Vec2::new(6.,6.)),
             large_button_size : Vec2::new(200_f32, 40_f32),
             panel_footer_height : 72_f32,
+            panel_margin_size : 24_f32,
             // panel_error_icon_size : IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6.,0.)),
             error_color : Color32::from_rgb(255, 136, 136), //Color32::from_rgb(255, 0, 0),
             warning_color : Color32::from_rgb(255, 255, 0),
@@ -36,6 +38,11 @@ impl Theme {
     pub fn panel_icon_size(&self) -> &IconSize {
         &self.panel_icon_size
     }
+
+    pub fn panel_margin_size(&self) -> f32 {
+        self.panel_margin_size
+    }
+    
     // pub fn panel_icon_padding(&self) -> f32 {
     //     self.panel_icon_padding
     // }

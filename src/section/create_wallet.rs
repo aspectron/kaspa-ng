@@ -1,6 +1,6 @@
-use crate::stages::*;
-use crate::{imports::*, interop::spawn_with_result};
-use egui::*;
+#![allow(unused_imports)]
+
+use crate::imports::*;
 use kaspa_wallet_core::runtime::{WalletCreateArgs, PrvKeyDataCreateArgs, AccountCreateArgs};
 use kaspa_wallet_core::storage::interface::AccessContext;
 use kaspa_wallet_core::storage::{AccountKind, AccessContextT};
@@ -499,23 +499,46 @@ impl SectionT for CreateWallet {
 
                     panel(self)
                     .with_caption("Private Key Mnemonic")
-                    .with_header(move |this,ui| {
-                        ui.label(" ");
-                        ui.label(" ");
-                        ui.label("Your mnemonic phrase allows your to re-create your private key. \
+                    .with_body(move |_this,ui| {
+                        ui.label(RichText::new("Your mnemonic phrase allows your to re-create your private key. \
                             The person who has access to this mnemonic will have full control of \
                             the Kaspa stored in it. Keep your mnemonic safe. Write it down and \
                             store it in a safe, preferably in a fire-resistant location. Do not \
                             store your mnemonic on this computer or a mobile device. This wallet \
                             will never ask you for this mnemonic phrase unless you manually \
-                            initiate a private key recovery.");
+                            initiate a private key recovery.").size(14.));
                         ui.label(" ");
-                        ui.label("Never share your mnemonic with anyone!");
+                        ui.label(RichText::new("Never share your mnemonic with anyone!").color(Color32::RED));
                         ui.label(" ");
                         ui.label("Your default account private key mnemonic is:");
+                        ui.label(" ");
                         ui.separator();
+                        ui.label(" ");
 
-                        ui.label(egui::RichText::new(mnemonic.phrase()).color(egui::Color32::WHITE));
+                        let phrase = mnemonic.phrase();
+                        let words = phrase.split(" ").collect::<Vec<&str>>();
+                        let chunks = words.chunks(6).collect::<Vec<&[&str]>>();
+                        // let lines = chunks.iter().map(|chunk| chunk.join(" ")).collect::<Vec<String>>();
+                        // let text = lines.join("\n");
+                        for chunk in chunks {
+                        // for col in chunks.len() {
+                            ui.horizontal(|ui| {
+                                ui.columns(6, |cols| {
+
+                                    for col in 0..chunk.len() {
+                                        cols[col].label(egui::RichText::new(chunk[col]).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
+                                        
+                                    }
+                                })
+                        //         for word in chunk {
+                        //             ui.label(egui::RichText::new(*word).family(FontFamily::Monospace).color(egui::Color32::WHITE));
+                        //             ui.add_space(8.);
+                        //         }
+                            });
+                        }
+
+                        // ui.label(egui::RichText::new(text).family(FontFamily::Monospace).color(egui::Color32::WHITE));
+                        // ui.label(egui::RichText::new(mnemonic.phrase()).family(FontFamily::Monospace).color(egui::Color32::WHITE));
 
                         // ui.add(TextEdit::multiline(&mut this.args.payment_secret_confirm)
                         // .vertical_align(Align::Center));
