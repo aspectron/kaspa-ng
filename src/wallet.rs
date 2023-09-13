@@ -315,7 +315,7 @@ impl eframe::App for Wallet {
                 // let section = self.sections.get(&section).unwrap().section.clone();
                 // section.borrow_mut().render(self, ctx, frame, ui);
                 self.sections.get(&section).unwrap().clone().render(self, ctx, frame, ui);
-            } else if size.x > 500. {
+            } else if false && size.x > 500. {
                 ui.columns(2, |uis| {
                     let section = self
                         .sections
