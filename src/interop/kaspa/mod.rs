@@ -179,7 +179,7 @@ impl Service for KaspaService {
                                 todo!()
                             },
                             KaspadServiceEvents::StartRemoteConnection { url: _ } => {
-                                todo!()
+                                println!("TODO - implement remote connection");
                             },
 
                             KaspadServiceEvents::Exit => {
@@ -213,6 +213,7 @@ impl Service for KaspaService {
     }
 
     fn terminate(self: Arc<Self>) {
+        println!("POSTING TERMINATION EVENT...");
         self.service_events
             .sender
             .try_send(KaspadServiceEvents::Exit)

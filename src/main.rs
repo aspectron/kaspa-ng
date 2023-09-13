@@ -15,17 +15,13 @@ cfg_if! {
 
             use std::sync::{Arc, Mutex};
 
-            // use egui::mutex::Mutex;
+            interop::panic::init_panic_handler();
 
-            env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
-
-            // let interop = interop::Interop::new();
-            // interop::signals::Signals::bind(&interop);
+            // Log to stderr (if you run with `RUST_LOG=debug`).
+            env_logger::init();
 
             let settings = settings::Settings::default();
-
             let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
-            // let delegate = interop.clone();
             let delegate = interop.clone();
             println!("spawn done");
             let native_options = eframe::NativeOptions::default();

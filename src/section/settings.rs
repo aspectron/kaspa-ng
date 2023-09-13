@@ -19,8 +19,19 @@ impl SectionT for Settings {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        ui.heading("Settings");
-        ui.separator();
-        ui.label("This is the settings page");
+        // ui.heading("Settings");
+        // ui.separator();
+        // ui.label("This is the settings page");
+
+        CollapsingHeader::new("Kaspa Node")
+            .default_open(false)
+            .show(ui, |ui| {
+                ui.label("This is the settings page");
+            });
+        CollapsingHeader::new("RPC Protocol")
+            .default_open(false)
+            .show(ui, |ui| {
+                ui.label("This is the settings page");
+            });
     }
 }

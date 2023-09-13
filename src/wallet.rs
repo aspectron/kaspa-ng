@@ -110,7 +110,7 @@ impl Wallet {
             interop,
             wallet,
             channel,
-            section: TypeId::of::<section::Open>(),
+            section: TypeId::of::<section::Settings>(),
             sections,
             settings,
 

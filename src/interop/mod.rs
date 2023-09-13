@@ -1,35 +1,17 @@
 use crate::imports::*;
-// use std::{
-//     pin::Pin,
-//     sync::atomic::{AtomicBool, Ordering},
-// };
-
-// mod wasm;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
-
         pub mod signals;
-        // pub mod kaspad;
-        // pub use kaspad::KaspadService;
-
-        // mod tokio;
-        // pub use tokio::*;
-
+        pub mod panic;
     } else {
-        // pub use wasm::*;
+        // ...
     }
 }
 
 pub mod service;
 use futures_util::future::join_all;
 pub use service::Service;
-
-// pub mod wallet;
-// pub use wallet::WalletService;
-
-// pub mod executor;
-// pub use executor::Executor;
 
 pub mod kaspa;
 pub use kaspa::KaspaService;
@@ -41,18 +23,11 @@ pub mod payload;
 pub use payload::Payload;
 
 pub struct Inner {
-    // runtime: Arc<AsyncRuntime>,
-    // executor: Arc<Executor>,
-    // wallet: Arc<WalletService>,
     application_events: channel::Channel<Events>,
-
-    // #[cfg(not(target_arch = "wasm32"))]
     kaspa: Arc<KaspaService>,
-
     services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
-    // egui_ctx : egui::Context,
 }
-// #[derive(Default)]
+
 #[derive(Clone)]
 pub struct Interop {
     inner: Arc<Inner>,
@@ -61,35 +36,17 @@ pub struct Interop {
 impl Interop {
     pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
         let application_events = channel::Channel::unbounded(egui_ctx.clone());
-        // let runtime = Arc::new(AsyncRuntime::default());
-        // let executor = Arc::new(Executor::new(application_events.clone()));
-        // let wallet = Arc::new(WalletService::new(application_events.clone()));
-
-        // runtime.register(executor.clone());
-        // runtime.register(wallet.clone());
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
 
         let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![
             kaspa.clone(),
-            // wallet.clone(),
         ];
-        // cfg_if! {
-        //     if #[cfg(not(target_arch = "wasm32"))] {
-        //         runtime.register(kaspad.clone());
-        //     }
-        // }
 
         let interop = Self {
             inner: Arc::new(Inner {
                 application_events,
                 kaspa,
                 services: Mutex::new(services),
-                // egui_ctx : egui_ctx.clone(),
-                // runtime,
-                // wallet,
-                // executor,
-                // #[cfg(not(target_arch = "wasm32"))]
-                // kaspad,
             }),
         };
 
