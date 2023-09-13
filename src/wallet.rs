@@ -5,6 +5,8 @@ use crate::sync::SyncStatus;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
 
+const FORCE_WALLET_OPEN: bool = false;
+
 pub enum Exception {
     UtxoIndexNotEnabled { url: Option<String> },
 }
@@ -14,7 +16,8 @@ pub struct Wallet {
     wallet: Arc<runtime::Wallet>,
     channel: interop::Channel<Events>,
     section: TypeId,
-    sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
+    // sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
+    sections: HashMap<TypeId, Section>,
     #[allow(dead_code)]
     settings: Settings,
 
@@ -79,7 +82,8 @@ impl Wallet {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        let mut sections = HashMap::<TypeId, Rc<RefCell<dyn SectionT>>>::new();
+        // let mut sections = HashMap::<TypeId, Rc<RefCell<dyn SectionT>>>::new();
+        let mut sections = HashMap::<TypeId, Section>::new();
         sections.insert_typeid(Rc::new(RefCell::new(section::Accounts::new(
             interop.clone(),
         ))));
@@ -112,7 +116,7 @@ impl Wallet {
             interop,
             wallet,
             channel,
-            section: TypeId::of::<section::Settings>(),
+            section: TypeId::of::<section::Open>(),
             sections,
             settings,
 
@@ -176,7 +180,7 @@ impl Wallet {
         T: SectionT + 'static,
     {
         let cell = self.sections.get(&TypeId::of::<T>()).unwrap();
-        Ref::map(cell.borrow(), |r| {
+        Ref::map(cell.inner.section.borrow(), |r| {
             (r).as_any()
                 .downcast_ref::<T>()
                 .expect("unable to downcast section")
@@ -188,7 +192,7 @@ impl Wallet {
         T: SectionT + 'static,
     {
         let cell = self.sections.get_mut(&TypeId::of::<T>()).unwrap();
-        RefMut::map(cell.borrow_mut(), |r| {
+        RefMut::map(cell.inner.section.borrow_mut(), |r| {
             (r).as_any_mut()
                 .downcast_mut::<T>()
                 .expect("unable to downcast_mut section")
@@ -242,12 +246,25 @@ impl eframe::App for Wallet {
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |_ui| {
             // The top panel is often a good place for a menu bar:
-            #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
+            // #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
             egui::menu::bar(_ui, |ui| {
                 ui.menu_button("File", |ui| {
+                    #[cfg(not(target_arch = "wasm32"))]
                     if ui.button("Quit").clicked() {
                         frame.close();
                     }
+                    ui.separator();
+                    ui.label(" ~ Debug Sections ~");
+                    ui.label(" ");
+
+                    let sections = self.sections.values().cloned().collect::<Vec<_>>();
+
+                    sections.into_iter().for_each(|section| {
+                        // let SectionInner { name,type_id, .. } = section.inner;
+                        if ui.button(section.name()).clicked() {
+                            self.section = section.type_id();
+                        }
+                    });
                 });
             });
         });
@@ -277,7 +294,7 @@ impl eframe::App for Wallet {
             ui.style_mut().text_styles = self.large_style.text_styles.clone();
 
             // if false && !self.wallet().is_open() {
-            if !self.wallet().is_open() {
+            if FORCE_WALLET_OPEN && !self.wallet().is_open() {
                 let section = if self.section == TypeId::of::<section::Open>()
                     || self.section == TypeId::of::<section::CreateWallet>()
                 {
@@ -295,21 +312,24 @@ impl eframe::App for Wallet {
                 //     }
                 // };
 
-                let section = self.sections.get(&section).unwrap().clone();
-                section.borrow_mut().render(self, ctx, frame, ui);
+                // let section = self.sections.get(&section).unwrap().section.clone();
+                // section.borrow_mut().render(self, ctx, frame, ui);
+                self.sections.get(&section).unwrap().clone().render(self, ctx, frame, ui);
             } else if size.x > 500. {
                 ui.columns(2, |uis| {
                     let section = self
                         .sections
                         .get(&TypeId::of::<section::Overview>())
                         .unwrap()
+                        .inner
+                        .section
                         .clone();
                     section.borrow_mut().render(self, ctx, frame, &mut uis[0]);
-                    let section = self.sections.get(&self.section).unwrap().clone();
+                    let section = self.sections.get(&self.section).unwrap().inner.section.clone();
                     section.borrow_mut().render(self, ctx, frame, &mut uis[1]);
                 });
             } else {
-                let section = self.sections.get(&self.section).unwrap().clone();
+                let section = self.sections.get(&self.section).unwrap().inner.section.clone();
                 section.borrow_mut().render(self, ctx, frame, ui);
             }
         });

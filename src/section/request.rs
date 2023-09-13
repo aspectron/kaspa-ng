@@ -12,7 +12,7 @@ impl Request {
 }
 
 impl SectionT for Request {
-    fn main(
+    fn render(
         &mut self,
         _wallet: &mut Wallet,
         _ctx: &egui::Context,

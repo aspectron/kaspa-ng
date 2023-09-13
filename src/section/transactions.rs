@@ -12,7 +12,7 @@ impl Transactions {
 }
 
 impl SectionT for Transactions {
-    fn main(
+    fn render(
         &mut self,
         _wallet: &mut Wallet,
         _ctx: &egui::Context,

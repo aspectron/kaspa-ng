@@ -33,7 +33,7 @@ impl Open {
 }
 
 impl SectionT for Open {
-    fn main(
+    fn render(
         &mut self,
         wallet: &mut Wallet,
         _ctx: &egui::Context,

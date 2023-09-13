@@ -57,7 +57,7 @@ impl CreateWallet {
 }
 
 impl SectionT for CreateWallet {
-    fn main(
+    fn render(
         &mut self,
         wallet: &mut Wallet,
         _ctx: &egui::Context,

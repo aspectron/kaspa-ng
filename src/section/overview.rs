@@ -12,7 +12,7 @@ impl Overview {
 }
 
 impl SectionT for Overview {
-    fn main(
+    fn render(
         &mut self,
         _wallet: &mut Wallet,
         _ctx: &egui::Context,
