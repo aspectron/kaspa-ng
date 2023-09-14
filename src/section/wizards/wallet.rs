@@ -25,13 +25,15 @@ pub enum State {
 struct Context {
     wallet_title: String,
     // TODO generate wallet filename
-    _wallet_filename: String,
+    wallet_filename: String,
     account_title: String,
+    account_name: String,
+    enable_phishing_hint: bool,
     phishing_hint: String,
     wallet_secret: String,
     wallet_secret_confirm: String,
     // TODO add payment secret checkbox
-    _enable_payment_secret: bool,
+    enable_payment_secret: bool,
     payment_secret: String,
     payment_secret_confirm: String,
     // mnemonic: Vec<String>,
@@ -310,35 +312,66 @@ impl SectionT for CreateWallet {
                     })
                     .render(ui);
 
-                    let wallet_create_result = Payload::<Result<Arc<Mnemonic>>>::new("wallet_create_result");
+                    let args = self.args.clone();
+                    let wallet_create_result = Payload::<Result<(Arc<Mnemonic>,Arc<dyn runtime::Account>)>>::new("wallet_create_result");
                     if !wallet_create_result.is_pending() {
 
                         // TODO CREATE WALLET !
-                        let _wallet = self.interop.wallet();
+                        let wallet = self.interop.wallet().clone();
                         spawn_with_result(&wallet_create_result, async move {
+
+                            if args.enable_payment_secret && args.payment_secret.is_empty() {
+                                return Err(Error::custom("Payment secret is empty"));
+                            }
+
+                            if args.enable_phishing_hint && args.phishing_hint.is_empty() {
+                                return Err(Error::custom("Phishing hint is empty"));
+                            }
+
+                            let wallet_secret = Secret::from(args.wallet_secret);
+                            let payment_secret = args.enable_payment_secret.then_some(Secret::from(args.payment_secret));
+
                             // suspend commits for multiple operations
-                            // wallet.store().batch().await?;
+                            wallet.store().batch().await?;
 
-                            // let account_kind = AccountKind::Bip32;
-                            // let wallet_args = WalletCreateArgs::new(name.map(String::from), hint, wallet_secret.clone(), true);
-                            // let prv_key_data_args = PrvKeyDataCreateArgs::new(None, wallet_secret.clone(), payment_secret.clone());
-                            // let account_args = AccountCreateArgs::new(account_name, account_title, account_kind, wallet_secret.clone(), payment_secret);
-                            // let descriptor = wallet.create_wallet(wallet_args).await?;
-                            // let (prv_key_data_id, mnemonic) = wallet.create_prv_key_data(prv_key_data_args).await?;
-                            // let account = wallet.create_bip32_account(prv_key_data_id, account_args).await?;
+                            let account_kind = AccountKind::Bip32;
+                            let wallet_args = WalletCreateArgs::new(
+                                args.wallet_title.is_not_empty().then_some(args.wallet_title),
+                                args.wallet_filename.is_not_empty().then_some(args.wallet_filename),
+                                args.enable_phishing_hint.then_some(args.phishing_hint.into()),
+                                wallet_secret.clone(),
+                                false
+                            );
+                            let prv_key_data_args = PrvKeyDataCreateArgs::new(
+                                None,
+                                wallet_secret.clone(),
+                                payment_secret.clone()
+                            );
+                            let account_args = AccountCreateArgs::new(
+                                args.account_name.is_not_empty().then_some(args.account_name),
+                                args.account_title.is_not_empty().then_some(args.account_title),
+                                account_kind,
+                                wallet_secret.clone(),
+                                payment_secret.clone(),
+                            );
+                            let _descriptor = wallet.create_wallet(wallet_args).await?;
+                            let (prv_key_data_id, mnemonic) = wallet.create_prv_key_data(prv_key_data_args).await?;
+                            let account = wallet.create_bip32_account(prv_key_data_id, account_args).await?;
 
-                            // // flush data to storage
-                            // let access_ctx: Arc<dyn AccessContextT> = Arc::new(AccessContext::new(wallet_secret));
-                            // wallet.store().flush(&access_ctx).await?;
-                            Ok(Arc::new(Mnemonic::create_random()?))
+                            // flush data to storage
+                            let access_ctx: Arc<dyn AccessContextT> = Arc::new(AccessContext::new(wallet_secret));
+                            wallet.store().flush(&access_ctx).await?;
+
+                            Ok((Arc::new(mnemonic), account))
                         });
                     }
 
                     if let Some(result) = wallet_create_result.take() {
                         match result {
-                            Ok(mnemonic) => {
+                            Ok((mnemonic,account)) => {
                                 println!("Wallet created successfully");
                                 self.state = State::PresentMnemonic(mnemonic);
+                                wallet.get_mut::<section::Account>().select(Some(account));
                             }
                             Err(err) => {
                                 println!("Wallet creation error: {}", err);
@@ -454,7 +487,7 @@ impl SectionT for CreateWallet {
                         .with_footer(move |this,ui| {
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 this.state = State::Start;
-                                wallet.select::<section::Overview>();
+                                wallet.select::<section::Account>();
                             }
                         })
                         .render(ui);

@@ -6,6 +6,7 @@ use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
 
 const FORCE_WALLET_OPEN: bool = false;
+const ENABLE_DUAL_PANE: bool = false;
 
 pub enum Exception {
     UtxoIndexNotEnabled { url: Option<String> },
@@ -84,30 +85,18 @@ impl Wallet {
 
         // let mut sections = HashMap::<TypeId, Rc<RefCell<dyn SectionT>>>::new();
         let mut sections = HashMap::<TypeId, Section>::new();
-        sections.insert_typeid(Rc::new(RefCell::new(section::Accounts::new(
-            interop.clone(),
-        ))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Deposit::new(
-            interop.clone(),
-        ))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Overview::new(
-            interop.clone(),
-        ))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Request::new(
-            interop.clone(),
-        ))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Send::new(interop.clone()))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Settings::new(
-            interop.clone(),
-        ))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Transactions::new(
-            interop.clone(),
-        ))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Open::new(interop.clone()))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::CreateWallet::new(
-            interop.clone(),
-        ))));
-        sections.insert_typeid(Rc::new(RefCell::new(section::Import::new(interop.clone()))));
+        sections.insert_typeid(section::Account::new(interop.clone()));
+        sections.insert_typeid(section::Deposit::new(interop.clone()));
+        sections.insert_typeid(section::Request::new(interop.clone()));
+        sections.insert_typeid(section::Send::new(interop.clone()));
+        sections.insert_typeid(section::Settings::new(interop.clone()));
+        sections.insert_typeid(section::Metrics::new(interop.clone()));
+        sections.insert_typeid(section::Transactions::new(interop.clone()));
+        sections.insert_typeid(section::OpenWallet::new(interop.clone()));
+        sections.insert_typeid(section::CreateWallet::new(interop.clone()));
+        sections.insert_typeid(section::CreateAccount::new(interop.clone()));
+        sections.insert_typeid(section::Import::new(interop.clone()));
+        sections.insert_typeid(section::Export::new(interop.clone()));
 
         let channel = interop.application_events().clone();
         let wallet = interop.wallet().clone();
@@ -116,7 +105,7 @@ impl Wallet {
             interop,
             wallet,
             channel,
-            section: TypeId::of::<section::Open>(),
+            section: TypeId::of::<section::OpenWallet>(),
             sections,
             settings,
 
@@ -139,7 +128,7 @@ impl Wallet {
             // icons : Icons::default(),
         };
 
-        this.wallet_list();
+        this.update_wallet_list();
 
         this
     }
@@ -169,6 +158,14 @@ impl Wallet {
 
     pub fn rpc_client(&self) -> Option<Arc<KaspaRpcClient>> {
         self.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok()
+    }
+
+    pub fn wallet_list(&self) -> &Vec<WalletDescriptor> {
+        &self.wallet_list
+    }
+
+    pub fn account_list(&self) -> &Vec<Arc<dyn runtime::Account>> {
+        &self.account_list
     }
 
     // pub fn url(&self) -> String {
@@ -257,8 +254,8 @@ impl eframe::App for Wallet {
                     ui.label(" ~ Debug Sections ~");
                     ui.label(" ");
 
-                    let sections = self.sections.values().cloned().collect::<Vec<_>>();
-
+                    let mut sections = self.sections.values().cloned().collect::<Vec<_>>();
+                    sections.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
                     sections.into_iter().for_each(|section| {
                         // let SectionInner { name,type_id, .. } = section.inner;
                         if ui.button(section.name()).clicked() {
@@ -295,12 +292,12 @@ impl eframe::App for Wallet {
 
             // if false && !self.wallet().is_open() {
             if FORCE_WALLET_OPEN && !self.wallet().is_open() {
-                let section = if self.section == TypeId::of::<section::Open>()
+                let section = if self.section == TypeId::of::<section::OpenWallet>()
                     || self.section == TypeId::of::<section::CreateWallet>()
                 {
                     self.section
                 } else {
-                    TypeId::of::<section::Open>()
+                    TypeId::of::<section::OpenWallet>()
                 };
 
                 // let section = match self.section {
@@ -314,22 +311,38 @@ impl eframe::App for Wallet {
 
                 // let section = self.sections.get(&section).unwrap().section.clone();
                 // section.borrow_mut().render(self, ctx, frame, ui);
-                self.sections.get(&section).unwrap().clone().render(self, ctx, frame, ui);
-            } else if false && size.x > 500. {
+                self.sections
+                    .get(&section)
+                    .unwrap()
+                    .clone()
+                    .render(self, ctx, frame, ui);
+            } else if ENABLE_DUAL_PANE && size.x > 500. {
                 ui.columns(2, |uis| {
                     let section = self
                         .sections
-                        .get(&TypeId::of::<section::Overview>())
+                        .get(&TypeId::of::<section::Account>())
                         .unwrap()
                         .inner
                         .section
                         .clone();
                     section.borrow_mut().render(self, ctx, frame, &mut uis[0]);
-                    let section = self.sections.get(&self.section).unwrap().inner.section.clone();
+                    let section = self
+                        .sections
+                        .get(&self.section)
+                        .unwrap()
+                        .inner
+                        .section
+                        .clone();
                     section.borrow_mut().render(self, ctx, frame, &mut uis[1]);
                 });
             } else {
-                let section = self.sections.get(&self.section).unwrap().inner.section.clone();
+                let section = self
+                    .sections
+                    .get(&self.section)
+                    .unwrap()
+                    .inner
+                    .section
+                    .clone();
                 section.borrow_mut().render(self, ctx, frame, ui);
             }
         });
@@ -463,7 +476,7 @@ impl Wallet {
             //     unlock.lock();
             // },
             Events::UnlockSuccess => {
-                self.select::<section::Overview>();
+                // self.select::<section::Account>();
             }
             Events::UnlockFailure { .. } => {}
             Events::Wallet { event } => {
@@ -517,7 +530,7 @@ impl Wallet {
                         self.discard_hint = false;
                     }
                     CoreWallet::WalletOpen | CoreWallet::WalletReload => {
-                        self.account_list();
+                        self.update_account_list();
                     }
                     CoreWallet::WalletError { message: _ } => {}
                     CoreWallet::WalletClose => {
@@ -553,7 +566,7 @@ impl Wallet {
         Ok(())
     }
 
-    pub fn wallet_list(&self) {
+    pub fn update_wallet_list(&self) {
         let interop = self.interop.clone();
         spawn(async move {
             let wallet_list = Arc::new(interop.wallet().store().wallet_list().await?);
@@ -562,7 +575,7 @@ impl Wallet {
         });
     }
 
-    pub fn account_list(&self) {
+    pub fn update_account_list(&self) {
         let interop = self.interop.clone();
         spawn(async move {
             // let account_map = HashMap::group_from(account_list.into_iter().map(|account| (account.prv_key_data_id().unwrap(), account)));

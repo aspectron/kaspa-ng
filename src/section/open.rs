@@ -7,7 +7,7 @@ pub enum State {
     Unlocking,
 }
 
-pub struct Open {
+pub struct OpenWallet {
     #[allow(dead_code)]
     interop: Interop,
     secret: String,
@@ -16,7 +16,7 @@ pub struct Open {
     selected_wallet: Option<String>,
 }
 
-impl Open {
+impl OpenWallet {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
@@ -32,7 +32,7 @@ impl Open {
     }
 }
 
-impl SectionT for Open {
+impl SectionT for OpenWallet {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -179,7 +179,7 @@ impl SectionT for Open {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<section::Overview>();
+                                wallet.select::<section::Account>();
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);

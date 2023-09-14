@@ -45,7 +45,7 @@ pub use crate::network::Network;
 pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
 pub use crate::section;
-pub use crate::section::{Section,SectionT};
+pub use crate::section::{Section, SectionT};
 pub use crate::settings::{KaspadNodeKind, Settings};
 pub use crate::wallet::Wallet;
 // pub use crate::panel::{Panel,PanelExtension};

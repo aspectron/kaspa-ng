@@ -150,7 +150,7 @@ impl SectionT for Import {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<section::Overview>();
+                                wallet.select::<section::Account>();
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);

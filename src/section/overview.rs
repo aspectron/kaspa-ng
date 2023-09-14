@@ -3,11 +3,16 @@ use crate::imports::*;
 pub struct Overview {
     #[allow(dead_code)]
     interop: Interop,
+    account : Option<Arc<dyn runtime::Account>>,
 }
 
 impl Overview {
     pub fn new(interop: Interop) -> Self {
-        Self { interop }
+        Self { interop, account : None }
+    }
+
+    pub fn select(&mut self, account : Option<Arc<dyn runtime::Account>>) {
+        self.account = account;
     }
 }
 
@@ -19,8 +24,9 @@ impl SectionT for Overview {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        ui.heading("Overview");
-        ui.separator();
-        ui.label("This is the overview page");
+
+
+
+
     }
 }

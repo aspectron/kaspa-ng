@@ -1,28 +1,37 @@
-pub mod accounts;
-pub mod create_wallet;
+pub mod account;
 pub mod deposit;
-pub mod import;
+pub mod metrics;
 pub mod open;
-pub mod overview;
 pub mod request;
 pub mod send;
 pub mod settings;
 pub mod transactions;
+pub mod wizards;
 
 use std::any::type_name;
 
-pub use accounts::Accounts;
-pub use create_wallet::CreateWallet;
+pub use account::Account;
 pub use deposit::Deposit;
-pub use import::Import;
-pub use open::Open;
-pub use overview::Overview;
+pub use metrics::Metrics;
+pub use open::OpenWallet;
 pub use request::Request;
 pub use send::Send;
 pub use settings::Settings;
 pub use transactions::Transactions;
 
+pub use wizards::account::CreateAccount;
+pub use wizards::export::Export;
+pub use wizards::import::Import;
+pub use wizards::wallet::CreateWallet;
+
 use crate::imports::*;
+
+// pub enum SectionCaps {
+//     Large,
+//     Small,
+//     Mobile,
+//     Web,
+// }
 
 pub trait SectionT: Downcast {
     fn render(
@@ -50,14 +59,13 @@ impl_downcast!(SectionT);
 pub struct Inner {
     pub name: String,
     pub type_name: String,
-    pub type_id : TypeId,
+    pub type_id: TypeId,
     pub section: Rc<RefCell<dyn SectionT>>,
-
 }
 
 #[derive(Clone)]
 pub struct Section {
-    pub inner : Rc<Inner>,
+    pub inner: Rc<Inner>,
 }
 
 impl Section {
@@ -68,7 +76,10 @@ impl Section {
         frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        self.inner.section.borrow_mut().render(wallet, ctx, frame, ui)
+        self.inner
+            .section
+            .borrow_mut()
+            .render(wallet, ctx, frame, ui)
     }
 
     pub fn name(&self) -> &str {
@@ -88,12 +99,19 @@ where
         let type_name = type_name::<T>().to_string();
         let name = type_name.split("::").last().unwrap().to_string();
         let type_id = TypeId::of::<T>();
-        Self { inner : Rc::new(Inner{ name, type_name, type_id, section }) }
+        Self {
+            inner: Rc::new(Inner {
+                name,
+                type_name,
+                type_id,
+                section,
+            }),
+        }
     }
 }
 
 pub trait HashMapSectionExtension<T> {
-    fn insert_typeid(&mut self, value: Rc<RefCell<T>>)
+    fn insert_typeid(&mut self, value: T)
     where
         T: SectionT + 'static;
 }
@@ -103,7 +121,8 @@ impl<T> HashMapSectionExtension<T> for HashMap<TypeId, Section>
 where
     T: SectionT,
 {
-    fn insert_typeid(&mut self, section: Rc<RefCell<T>>) {
+    fn insert_typeid(&mut self, section: T) {
+        let section = Rc::new(RefCell::new(section));
         // let name = type_name::<T>().to_string();
         self.insert(TypeId::of::<T>(), section.into());
     }
