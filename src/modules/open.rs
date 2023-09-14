@@ -34,7 +34,7 @@ impl OpenWallet {
     }
 }
 
-impl SectionT for OpenWallet {
+impl ModuleT for OpenWallet {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -74,7 +74,7 @@ impl SectionT for OpenWallet {
                             {
                                 // wallet.get::<section::CreateWallet>().
                                 // wallet.select::<section::CreateWallet>(TypeId::of::<section::OpenWallet>());
-                                wallet.select::<section::CreateWallet>();
+                                wallet.select::<modules::CreateWallet>();
                             }
 
                             ui.label(" ");
@@ -194,7 +194,7 @@ impl SectionT for OpenWallet {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<section::Accounts>();
+                                wallet.select::<modules::Accounts>();
                                 self.state = Default::default();
                             }
                             Err(err) => {

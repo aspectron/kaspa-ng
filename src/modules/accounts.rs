@@ -30,7 +30,7 @@ impl Accounts {
     }
 }
 
-impl SectionT for Accounts {
+impl ModuleT for Accounts {
     fn render(
         &mut self,
         wallet: &mut Wallet,

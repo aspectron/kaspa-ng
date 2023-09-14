@@ -83,7 +83,7 @@ impl CreateWallet {
     }
 }
 
-impl SectionT for CreateWallet {
+impl ModuleT for CreateWallet {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -452,7 +452,7 @@ impl SectionT for CreateWallet {
                             Ok((mnemonic,account)) => {
                                 println!("Wallet created successfully");
                                 self.state = State::PresentMnemonic(mnemonic);
-                                wallet.get_mut::<section::Accounts>().select(Some(account.into()));
+                                wallet.get_mut::<modules::Accounts>().select(Some(account.into()));
                             }
                             Err(err) => {
                                 println!("Wallet creation error: {}", err);
@@ -570,7 +570,7 @@ impl SectionT for CreateWallet {
                         .with_footer(move |this,ui| {
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 this.state = State::Start;
-                                wallet.select::<section::Accounts>();
+                                wallet.select::<modules::Accounts>();
                                 wallet.update_wallet_list();
                             }
                         })

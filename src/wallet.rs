@@ -1,6 +1,6 @@
 use crate::imports::*;
 use crate::interop::Interop;
-use crate::section::HashMapSectionExtension;
+use crate::modules::HashMapModuleExtension;
 use crate::sync::SyncStatus;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
@@ -16,10 +16,10 @@ pub struct Wallet {
     interop: Interop,
     wallet: Arc<runtime::Wallet>,
     channel: interop::Channel<Events>,
-    section: TypeId,
+    module: TypeId,
     stack: VecDeque<TypeId>,
     // sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
-    sections: HashMap<TypeId, Section>,
+    modules: HashMap<TypeId, Module>,
     #[allow(dead_code)]
     settings: Settings,
 
@@ -87,19 +87,19 @@ impl Wallet {
         // }
 
         // let mut sections = HashMap::<TypeId, Rc<RefCell<dyn SectionT>>>::new();
-        let mut sections = HashMap::<TypeId, Section>::new();
-        sections.insert_typeid(section::Accounts::new(interop.clone()));
-        sections.insert_typeid(section::Deposit::new(interop.clone()));
-        sections.insert_typeid(section::Request::new(interop.clone()));
-        sections.insert_typeid(section::Send::new(interop.clone()));
-        sections.insert_typeid(section::Settings::new(interop.clone()));
-        sections.insert_typeid(section::Metrics::new(interop.clone()));
-        sections.insert_typeid(section::Transactions::new(interop.clone()));
-        sections.insert_typeid(section::OpenWallet::new(interop.clone()));
-        sections.insert_typeid(section::CreateWallet::new(interop.clone()));
-        sections.insert_typeid(section::CreateAccount::new(interop.clone()));
-        sections.insert_typeid(section::Import::new(interop.clone()));
-        sections.insert_typeid(section::Export::new(interop.clone()));
+        let mut modules = HashMap::<TypeId, Module>::new();
+        modules.insert_typeid(modules::Accounts::new(interop.clone()));
+        modules.insert_typeid(modules::Deposit::new(interop.clone()));
+        modules.insert_typeid(modules::Request::new(interop.clone()));
+        modules.insert_typeid(modules::Send::new(interop.clone()));
+        modules.insert_typeid(modules::Settings::new(interop.clone()));
+        modules.insert_typeid(modules::Metrics::new(interop.clone()));
+        modules.insert_typeid(modules::Transactions::new(interop.clone()));
+        modules.insert_typeid(modules::OpenWallet::new(interop.clone()));
+        modules.insert_typeid(modules::CreateWallet::new(interop.clone()));
+        modules.insert_typeid(modules::CreateAccount::new(interop.clone()));
+        modules.insert_typeid(modules::Import::new(interop.clone()));
+        modules.insert_typeid(modules::Export::new(interop.clone()));
 
         let channel = interop.application_events().clone();
         let wallet = interop.wallet().clone();
@@ -108,8 +108,8 @@ impl Wallet {
             interop,
             wallet,
             channel,
-            section: TypeId::of::<section::OpenWallet>(),
-            sections,
+            module: TypeId::of::<modules::OpenWallet>(),
+            modules,
             stack: VecDeque::new(),
             settings,
 
@@ -141,12 +141,12 @@ impl Wallet {
     where
         T: 'static,
     {
-        self.stack.push_back(self.section);
+        self.stack.push_back(self.module);
 
-        self.section = TypeId::of::<T>();
-        println!("selecting section: {:?}", self.section);
-        if self.sections.get(&self.section).is_none() {
-            panic!("Unknown section type {:?}", self.section);
+        self.module = TypeId::of::<T>();
+        println!("selecting module: {:?}", self.module);
+        if self.modules.get(&self.module).is_none() {
+            panic!("Unknown module type {:?}", self.module);
         }
     }
 
@@ -155,8 +155,8 @@ impl Wallet {
     }
 
     pub fn back(&mut self) {
-        if let Some(section) = self.stack.pop_back() {
-            self.section = section;
+        if let Some(module) = self.stack.pop_back() {
+            self.module = module;
         }
     }
 
@@ -199,10 +199,10 @@ impl Wallet {
 
     pub fn get<T>(&self) -> Ref<'_, T>
     where
-        T: SectionT + 'static,
+        T: ModuleT + 'static,
     {
-        let cell = self.sections.get(&TypeId::of::<T>()).unwrap();
-        Ref::map(cell.inner.section.borrow(), |r| {
+        let cell = self.modules.get(&TypeId::of::<T>()).unwrap();
+        Ref::map(cell.inner.module.borrow(), |r| {
             (r).as_any()
                 .downcast_ref::<T>()
                 .expect("unable to downcast section")
@@ -211,13 +211,13 @@ impl Wallet {
 
     pub fn get_mut<T>(&mut self) -> RefMut<'_, T>
     where
-        T: SectionT + 'static,
+        T: ModuleT + 'static,
     {
-        let cell = self.sections.get_mut(&TypeId::of::<T>()).unwrap();
-        RefMut::map(cell.inner.section.borrow_mut(), |r| {
+        let cell = self.modules.get_mut(&TypeId::of::<T>()).unwrap();
+        RefMut::map(cell.inner.module.borrow_mut(), |r| {
             (r).as_any_mut()
                 .downcast_mut::<T>()
-                .expect("unable to downcast_mut section")
+                .expect("unable to downcast_mut module")
         })
     }
 }
@@ -276,15 +276,15 @@ impl eframe::App for Wallet {
                         frame.close();
                     }
                     ui.separator();
-                    ui.label(" ~ Debug Sections ~");
+                    ui.label(" ~ Debug Modules ~");
                     ui.label(" ");
 
-                    let mut sections = self.sections.values().cloned().collect::<Vec<_>>();
-                    sections.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
-                    sections.into_iter().for_each(|section| {
+                    let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
+                    modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
+                    modules.into_iter().for_each(|module| {
                         // let SectionInner { name,type_id, .. } = section.inner;
-                        if ui.button(section.name()).clicked() {
-                            self.section = section.type_id();
+                        if ui.button(module.name()).clicked() {
+                            self.module = module.type_id();
                         }
                     });
                 });
@@ -317,12 +317,12 @@ impl eframe::App for Wallet {
 
             // if false && !self.wallet().is_open() {
             if FORCE_WALLET_OPEN && !self.wallet().is_open() {
-                let section = if self.section == TypeId::of::<section::OpenWallet>()
-                    || self.section == TypeId::of::<section::CreateWallet>()
+                let module = if self.module == TypeId::of::<modules::OpenWallet>()
+                    || self.module == TypeId::of::<modules::CreateWallet>()
                 {
-                    self.section
+                    self.module
                 } else {
-                    TypeId::of::<section::OpenWallet>()
+                    TypeId::of::<modules::OpenWallet>()
                 };
 
                 // let section = match self.section {
@@ -336,39 +336,27 @@ impl eframe::App for Wallet {
 
                 // let section = self.sections.get(&section).unwrap().section.clone();
                 // section.borrow_mut().render(self, ctx, frame, ui);
-                self.sections
-                    .get(&section)
+                self.modules
+                    .get(&module)
                     .unwrap()
                     .clone()
                     .render(self, ctx, frame, ui);
             } else if ENABLE_DUAL_PANE && size.x > 500. {
                 ui.columns(2, |uis| {
-                    let section = self
-                        .sections
-                        .get(&TypeId::of::<section::Accounts>())
+                    let module = self
+                        .modules
+                        .get(&TypeId::of::<modules::Accounts>())
                         .unwrap()
                         .inner
-                        .section
+                        .module
                         .clone();
-                    section.borrow_mut().render(self, ctx, frame, &mut uis[0]);
-                    let section = self
-                        .sections
-                        .get(&self.section)
-                        .unwrap()
-                        .inner
-                        .section
-                        .clone();
-                    section.borrow_mut().render(self, ctx, frame, &mut uis[1]);
+                    module.borrow_mut().render(self, ctx, frame, &mut uis[0]);
+                    let module = self.modules.get(&self.module).unwrap().inner.module.clone();
+                    module.borrow_mut().render(self, ctx, frame, &mut uis[1]);
                 });
             } else {
-                let section = self
-                    .sections
-                    .get(&self.section)
-                    .unwrap()
-                    .inner
-                    .section
-                    .clone();
-                section.borrow_mut().render(self, ctx, frame, ui);
+                let module = self.modules.get(&self.module).unwrap().inner.module.clone();
+                module.borrow_mut().render(self, ctx, frame, ui);
             }
         });
 

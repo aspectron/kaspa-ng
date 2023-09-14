@@ -35,7 +35,7 @@ use crate::imports::*;
 //     Web,
 // }
 
-pub trait SectionT: Downcast {
+pub trait ModuleT: Downcast {
     fn render(
         &mut self,
         _wallet: &mut Wallet,
@@ -56,21 +56,21 @@ pub trait SectionT: Downcast {
     // }
 }
 
-impl_downcast!(SectionT);
+impl_downcast!(ModuleT);
 
 pub struct Inner {
     pub name: String,
     pub type_name: String,
     pub type_id: TypeId,
-    pub section: Rc<RefCell<dyn SectionT>>,
+    pub module: Rc<RefCell<dyn ModuleT>>,
 }
 
 #[derive(Clone)]
-pub struct Section {
+pub struct Module {
     pub inner: Rc<Inner>,
 }
 
-impl Section {
+impl Module {
     pub fn render(
         &self,
         wallet: &mut Wallet,
@@ -79,7 +79,7 @@ impl Section {
         ui: &mut egui::Ui,
     ) {
         self.inner
-            .section
+            .module
             .borrow_mut()
             .render(wallet, ctx, frame, ui)
     }
@@ -93,9 +93,9 @@ impl Section {
     }
 }
 
-impl<T> From<Rc<RefCell<T>>> for Section
+impl<T> From<Rc<RefCell<T>>> for Module
 where
-    T: SectionT + 'static,
+    T: ModuleT + 'static,
 {
     fn from(section: Rc<RefCell<T>>) -> Self {
         let type_name = type_name::<T>().to_string();
@@ -106,22 +106,22 @@ where
                 name,
                 type_name,
                 type_id,
-                section,
+                module: section,
             }),
         }
     }
 }
 
-pub trait HashMapSectionExtension<T> {
+pub trait HashMapModuleExtension<T> {
     fn insert_typeid(&mut self, value: T)
     where
-        T: SectionT + 'static;
+        T: ModuleT + 'static;
 }
 
 // impl<T> HashMapSectionExtension<T> for HashMap<TypeId, Rc<RefCell<dyn SectionT>>>
-impl<T> HashMapSectionExtension<T> for HashMap<TypeId, Section>
+impl<T> HashMapModuleExtension<T> for HashMap<TypeId, Module>
 where
-    T: SectionT,
+    T: ModuleT,
 {
     fn insert_typeid(&mut self, section: T) {
         let section = Rc::new(RefCell::new(section));

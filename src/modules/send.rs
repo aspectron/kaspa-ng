@@ -1,17 +1,17 @@
 use crate::imports::*;
 
-pub struct Request {
+pub struct Send {
     #[allow(dead_code)]
     interop: Interop,
 }
 
-impl Request {
+impl Send {
     pub fn new(interop: Interop) -> Self {
         Self { interop }
     }
 }
 
-impl SectionT for Request {
+impl ModuleT for Send {
     fn render(
         &mut self,
         _wallet: &mut Wallet,
@@ -19,8 +19,8 @@ impl SectionT for Request {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        ui.heading("Request");
+        ui.heading("Send");
         ui.separator();
-        ui.label("This is the payment request page");
+        ui.label("This is the send page");
     }
 }

@@ -1,17 +1,17 @@
 use crate::imports::*;
 
-pub struct Metrics {
+pub struct Settings {
     #[allow(dead_code)]
     interop: Interop,
 }
 
-impl Metrics {
+impl Settings {
     pub fn new(interop: Interop) -> Self {
         Self { interop }
     }
 }
 
-impl SectionT for Metrics {
+impl ModuleT for Settings {
     fn render(
         &mut self,
         wallet: &mut Wallet,

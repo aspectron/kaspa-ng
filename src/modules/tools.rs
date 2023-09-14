@@ -26,7 +26,7 @@ impl Tools {
     }
 }
 
-impl SectionT for Tools {
+impl ModuleT for Tools {
     fn render(
         &mut self,
         wallet: &mut Wallet,
