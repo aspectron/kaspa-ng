@@ -20,6 +20,9 @@ pub struct Panel<'panel, Context> {
     header: Option<RenderFn<'panel, Context>>,
     body: Option<RenderFn<'panel, Context>>,
     footer: Option<RenderFn<'panel, Context>>,
+    handler: Option<ActionFn<'panel, Context>>,
+    handler_text: Option<String>,
+    handler_enabled: bool,
 }
 
 impl<'panel, Context> Panel<'panel, Context> {
@@ -36,6 +39,9 @@ impl<'panel, Context> Panel<'panel, Context> {
             header: None,
             body: None,
             footer: None,
+            handler: None,
+            handler_text: None,
+            handler_enabled: true,
         }
     }
 
@@ -86,6 +92,31 @@ impl<'panel, Context> Panel<'panel, Context> {
 
     pub fn with_footer(mut self, footer: impl FnOnce(&mut Context, &mut Ui) + 'panel) -> Self {
         self.footer = Some(Box::new(footer));
+        self
+    }
+
+    pub fn with_handler(mut self, handler: impl FnOnce(&mut Context) + 'panel) -> Self {
+        self.handler = Some(Box::new(handler));
+        self
+    }
+
+    pub fn with_handler_enabled(
+        mut self,
+        enabled: bool,
+        handler: impl FnOnce(&mut Context) + 'panel,
+    ) -> Self {
+        self.handler = Some(Box::new(handler));
+        self.handler_enabled = enabled;
+        self
+    }
+
+    pub fn with_custom_handler(
+        mut self,
+        handler_text: impl Display,
+        handler: impl FnOnce(&mut Context) + 'panel,
+    ) -> Self {
+        self.handler = Some(Box::new(handler));
+        self.handler_text = Some(handler_text.to_string());
         self
     }
 
@@ -169,6 +200,16 @@ impl<'panel, Context> Panel<'panel, Context> {
 
         if let Some(footer) = self.footer {
             footer(self.this, ui);
+        }
+
+        if let Some(handler) = self.handler {
+            let text = self.handler_text.as_deref();
+            if ui
+                .large_button_enabled(self.handler_enabled, text.unwrap_or("Continue"))
+                .clicked()
+            {
+                handler(self.this);
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ pub mod open;
 pub mod request;
 pub mod send;
 pub mod settings;
+pub mod tools;
 pub mod transactions;
 pub mod wizards;
 
@@ -17,6 +18,7 @@ pub use open::OpenWallet;
 pub use request::Request;
 pub use send::Send;
 pub use settings::Settings;
+pub use tools::Tools;
 pub use transactions::Transactions;
 
 pub use wizards::account::CreateAccount;

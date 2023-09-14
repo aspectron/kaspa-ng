@@ -113,12 +113,15 @@ impl SectionT for CreateWallet {
                             ui.label(" ");
                             ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
                         })
-                        .with_footer(|this,ui| {
-                            // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
-                            let size = theme().large_button_size;
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                                this.state = State::WalletName;
-                            }
+                        // .with_footer(|this,ui| {
+                        //     // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
+                        //     let size = theme().large_button_size;
+                        //     if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                        //         this.state = State::WalletName;
+                        //     }
+                        // })
+                        .with_handler(|this| {
+                            this.state = State::WalletName;
                         })
                         .render(ui);
                 }
@@ -173,11 +176,13 @@ impl SectionT for CreateWallet {
                         //     this.state = State::AccountName;
                         // }
 
-                        let size = theme().large_button_size;
-                        // let ok = ;
-                        if ui.add_enabled(this.args.wallet_title.is_not_empty(), egui::Button::new("Continue").min_size(size)).clicked() {
+                        // let size = theme().large_button_size;
+                        if ui.large_button_enabled(this.args.wallet_title.is_not_empty(), "Continue").clicked() {
                             this.state = State::AccountName;
                         }
+                        // if ui.add_enabled(this.args.wallet_title.is_not_empty(), egui::Button::new("Continue").min_size(size)).clicked() {
+                        //     this.state = State::AccountName;
+                        // }
 
                     })
                     .render(ui);
@@ -207,10 +212,13 @@ impl SectionT for CreateWallet {
 
                         })
                         .with_footer(|this,ui| {
-                            let size = theme().large_button_size;
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                            // let size = theme().large_button_size;
+                            if ui.large_button("Continue").clicked() {
                                 this.state = State::PhishingHint;
                             }
+                            // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                            //     this.state = State::PhishingHint;
+                            // }
                         })
                         .render(ui);
                 }
@@ -244,11 +252,15 @@ impl SectionT for CreateWallet {
                             );
 
                         })
-                        .with_footer(|this,ui| {
-                            let size = theme().large_button_size;
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                                this.state = State::WalletSecret;
-                            }
+                        // .with_footer(|this,ui| {
+                        //     // let size = theme().large_button_size;
+                        //     if ui.large_button("Continue").clicked() {
+                        //     // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                        //         this.state = State::WalletSecret;
+                        //     }
+                        // })
+                        .with_handler(|this| {
+                            this.state = State::WalletSecret;
                         })
                         .render(ui);
                 }
@@ -295,9 +307,10 @@ impl SectionT for CreateWallet {
                             }
                         })
                         .with_footer(|this,ui| {
-                            let size = theme().large_button_size;
+                            // let size = theme().large_button_size;
                             let ok = this.args.wallet_secret == this.args.wallet_secret_confirm && this.args.wallet_secret.is_not_empty();
-                            if ui.add_enabled(ok, egui::Button::new("Continue").min_size(size)).clicked() {
+                            if ui.large_button_enabled(ok, "Continue").clicked() {
+                            // if ui.add_enabled(ok, egui::Button::new("Continue").min_size(size)).clicked() {
                                 this.state = State::PaymentSecret;
                             }
                         })

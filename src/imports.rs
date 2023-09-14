@@ -7,6 +7,7 @@ pub use kaspa_wallet_core::runtime::Balance;
 pub use kaspa_wallet_core::secret::Secret;
 pub use kaspa_wallet_core::storage::{PrvKeyDataId, WalletDescriptor};
 pub use kaspa_wallet_core::utils::*;
+pub use kaspa_wallet_core::Address;
 pub use kaspa_wrpc_client::KaspaRpcClient;
 
 pub use cfg_if::cfg_if;
