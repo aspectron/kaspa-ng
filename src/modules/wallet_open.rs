@@ -8,7 +8,7 @@ pub enum State {
     Unlocking,
 }
 
-pub struct OpenWallet {
+pub struct WalletOpen {
     #[allow(dead_code)]
     interop: Interop,
     secret: String,
@@ -17,7 +17,7 @@ pub struct OpenWallet {
     selected_wallet: Option<String>,
 }
 
-impl OpenWallet {
+impl WalletOpen {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
@@ -34,7 +34,7 @@ impl OpenWallet {
     }
 }
 
-impl ModuleT for OpenWallet {
+impl ModuleT for WalletOpen {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -74,7 +74,7 @@ impl ModuleT for OpenWallet {
                             {
                                 // wallet.get::<section::CreateWallet>().
                                 // wallet.select::<section::CreateWallet>(TypeId::of::<section::OpenWallet>());
-                                wallet.select::<modules::CreateWallet>();
+                                wallet.select::<modules::WalletCreate>();
                             }
 
                             ui.label(" ");
@@ -194,7 +194,7 @@ impl ModuleT for OpenWallet {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<modules::Accounts>();
+                                wallet.select::<modules::AccountManager>();
                                 self.state = Default::default();
                             }
                             Err(err) => {

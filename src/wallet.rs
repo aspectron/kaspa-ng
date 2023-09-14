@@ -1,6 +1,6 @@
 use crate::imports::*;
 use crate::interop::Interop;
-use crate::modules::HashMapModuleExtension;
+// use crate::modules::HashMapModuleExtension;
 use crate::sync::SyncStatus;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
@@ -87,19 +87,21 @@ impl Wallet {
         // }
 
         // let mut sections = HashMap::<TypeId, Rc<RefCell<dyn SectionT>>>::new();
-        let mut modules = HashMap::<TypeId, Module>::new();
-        modules.insert_typeid(modules::Accounts::new(interop.clone()));
-        modules.insert_typeid(modules::Deposit::new(interop.clone()));
-        modules.insert_typeid(modules::Request::new(interop.clone()));
-        modules.insert_typeid(modules::Send::new(interop.clone()));
-        modules.insert_typeid(modules::Settings::new(interop.clone()));
-        modules.insert_typeid(modules::Metrics::new(interop.clone()));
-        modules.insert_typeid(modules::Transactions::new(interop.clone()));
-        modules.insert_typeid(modules::OpenWallet::new(interop.clone()));
-        modules.insert_typeid(modules::CreateWallet::new(interop.clone()));
-        modules.insert_typeid(modules::CreateAccount::new(interop.clone()));
-        modules.insert_typeid(modules::Import::new(interop.clone()));
-        modules.insert_typeid(modules::Export::new(interop.clone()));
+        // let mut modules = HashMap::<TypeId, Module>::new();
+        // modules.insert_typeid(modules::Accounts::new(interop.clone()));
+        // modules.insert_typeid(modules::Deposit::new(interop.clone()));
+        // modules.insert_typeid(modules::Request::new(interop.clone()));
+        // modules.insert_typeid(modules::Send::new(interop.clone()));
+        // modules.insert_typeid(modules::Settings::new(interop.clone()));
+        // modules.insert_typeid(modules::Metrics::new(interop.clone()));
+        // modules.insert_typeid(modules::Transactions::new(interop.clone()));
+        // modules.insert_typeid(modules::OpenWallet::new(interop.clone()));
+        // modules.insert_typeid(modules::CreateWallet::new(interop.clone()));
+        // modules.insert_typeid(modules::CreateAccount::new(interop.clone()));
+        // modules.insert_typeid(modules::Import::new(interop.clone()));
+        // modules.insert_typeid(modules::Export::new(interop.clone()));
+
+        let modules = crate::modules::register_modules(&interop);
 
         let channel = interop.application_events().clone();
         let wallet = interop.wallet().clone();
@@ -108,7 +110,7 @@ impl Wallet {
             interop,
             wallet,
             channel,
-            module: TypeId::of::<modules::OpenWallet>(),
+            module: TypeId::of::<modules::WalletOpen>(),
             modules,
             stack: VecDeque::new(),
             settings,
@@ -317,12 +319,12 @@ impl eframe::App for Wallet {
 
             // if false && !self.wallet().is_open() {
             if FORCE_WALLET_OPEN && !self.wallet().is_open() {
-                let module = if self.module == TypeId::of::<modules::OpenWallet>()
-                    || self.module == TypeId::of::<modules::CreateWallet>()
+                let module = if self.module == TypeId::of::<modules::WalletOpen>()
+                    || self.module == TypeId::of::<modules::WalletCreate>()
                 {
                     self.module
                 } else {
-                    TypeId::of::<modules::OpenWallet>()
+                    TypeId::of::<modules::WalletOpen>()
                 };
 
                 // let section = match self.section {
@@ -345,7 +347,7 @@ impl eframe::App for Wallet {
                 ui.columns(2, |uis| {
                     let module = self
                         .modules
-                        .get(&TypeId::of::<modules::Accounts>())
+                        .get(&TypeId::of::<modules::AccountManager>())
                         .unwrap()
                         .inner
                         .module

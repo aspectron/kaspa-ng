@@ -8,7 +8,7 @@ enum State {
     Receive { account: Account },
 }
 
-pub struct Accounts {
+pub struct AccountManager {
     #[allow(dead_code)]
     interop: Interop,
 
@@ -16,7 +16,7 @@ pub struct Accounts {
     state: State,
 }
 
-impl Accounts {
+impl AccountManager {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
@@ -30,7 +30,7 @@ impl Accounts {
     }
 }
 
-impl ModuleT for Accounts {
+impl ModuleT for AccountManager {
     fn render(
         &mut self,
         wallet: &mut Wallet,

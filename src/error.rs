@@ -1,5 +1,6 @@
 use thiserror::Error;
 use workflow_core::channel::{SendError, TrySendError};
+use wasm_bindgen::JsValue;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -28,6 +29,12 @@ pub enum Error {
 impl Error {
     pub fn custom<T: Into<String>>(msg: T) -> Self {
         Error::Custom(msg.into())
+    }
+}
+
+impl From<Error> for JsValue {
+    fn from(err: Error) -> Self {
+        JsValue::from_str(&err.to_string())
     }
 }
 

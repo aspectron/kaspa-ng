@@ -1,32 +1,46 @@
-pub mod accounts;
-pub mod deposit;
-pub mod metrics;
-pub mod open;
-pub mod request;
-pub mod send;
-pub mod settings;
-pub mod tools;
-pub mod transactions;
-pub mod wizards;
+// pub mod accounts;
+// // pub mod deposit;
+// pub mod metrics;
+// pub mod open_wallet;
+// pub mod request;
+// pub mod send;
+// pub mod settings;
+// pub mod tools;
+// pub mod transactions;
+// pub mod wizards;
 
 use std::any::type_name;
 
-pub use accounts::Accounts;
-pub use deposit::Deposit;
-pub use metrics::Metrics;
-pub use open::OpenWallet;
-pub use request::Request;
-pub use send::Send;
-pub use settings::Settings;
-pub use tools::Tools;
-pub use transactions::Transactions;
+// pub use accounts::Accounts;
+// // pub use deposit::Deposit;
+// pub use metrics::Metrics;
+// pub use open::OpenWallet;
+// pub use request::Request;
+// pub use send::Send;
+// pub use settings::Settings;
+// pub use transactions::Transactions;
 
-pub use wizards::account::CreateAccount;
-pub use wizards::export::Export;
-pub use wizards::import::Import;
-pub use wizards::wallet::CreateWallet;
+// // pub use wizards::create_account::CreateAccount;
+// pub use wizards::export::Export;
+// pub use wizards::import::Import;
+// pub use wizards::create_wallet::CreateWallet;
 
 use crate::imports::*;
+
+kaspa_egui_macros::register_modules!([
+    account_manager,
+    deposit,
+    metrics,
+    wallet_open,
+    request,
+    send,
+    settings,
+    transactions,
+    account_create,
+    wallet_create,
+    export,
+    import,
+]);
 
 // pub enum SectionCaps {
 //     Large,

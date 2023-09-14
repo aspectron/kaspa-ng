@@ -62,7 +62,7 @@ struct Context {
 //     }
 // }
 
-pub struct CreateWallet {
+pub struct WalletCreate {
     #[allow(dead_code)]
     interop: Interop,
     // secret: String,
@@ -71,7 +71,7 @@ pub struct CreateWallet {
     pub origin: Option<TypeId>,
 }
 
-impl CreateWallet {
+impl WalletCreate {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
@@ -83,7 +83,7 @@ impl CreateWallet {
     }
 }
 
-impl ModuleT for CreateWallet {
+impl ModuleT for WalletCreate {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -452,7 +452,7 @@ impl ModuleT for CreateWallet {
                             Ok((mnemonic,account)) => {
                                 println!("Wallet created successfully");
                                 self.state = State::PresentMnemonic(mnemonic);
-                                wallet.get_mut::<modules::Accounts>().select(Some(account.into()));
+                                wallet.get_mut::<modules::AccountManager>().select(Some(account.into()));
                             }
                             Err(err) => {
                                 println!("Wallet creation error: {}", err);
@@ -570,7 +570,7 @@ impl ModuleT for CreateWallet {
                         .with_footer(move |this,ui| {
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 this.state = State::Start;
-                                wallet.select::<modules::Accounts>();
+                                wallet.select::<modules::AccountManager>();
                                 wallet.update_wallet_list();
                             }
                         })

@@ -150,7 +150,7 @@ impl ModuleT for Export {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<modules::Accounts>();
+                                wallet.select::<modules::AccountManager>();
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);

@@ -14,6 +14,15 @@
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
     <base data-trunk-public-url />
 
+    <script>
+        console.log("window.adaptor 1:", window.adaptor);
+        (async () => {
+            console.log("window.adaptor 2:", window.adaptor); 
+
+            // await start_app();
+        })();
+    </script>
+
     <link data-trunk rel="icon" href="resources/favicon.ico">
 
     <link data-trunk rel="copy-file" href="resources/pwa.js" />

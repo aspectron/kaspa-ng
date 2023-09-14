@@ -50,9 +50,19 @@ cfg_if! {
         }
     } else {
 
+        // use wasm_bindgen::prelude::*;
+
         // When compiling to web using trunk:
         // #[cfg(target_arch = "wasm32")]
+        // #[wasm_bindgen]
+        // fn main() {
+        // }
+
+        // #[wasm_bindgen]
+        // pub async fn start_app() {
         fn main() {
+            use wasm_bindgen::prelude::*;
+
             // Redirect `log` message to `console.log` and friends:
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 
@@ -69,6 +79,14 @@ cfg_if! {
                             let settings = settings::Settings::default();
                             let interop = interop::Interop::new(&cc.egui_ctx, &settings);
                             interop.start();
+
+                            let adaptor = kaspa_egui::adaptor::Adaptor::new(interop.clone());
+                            let window = web_sys::window().expect("no global `window` exists");
+                            js_sys::Reflect::set(
+                                &window,
+                                &JsValue::from_str("adaptor"),
+                                &JsValue::from(adaptor),
+                            ).expect("failed to set adaptor");
 
                             Box::new(kaspa_egui::Wallet::new(cc, interop, settings))
                         }),

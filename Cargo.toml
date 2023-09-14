@@ -9,6 +9,8 @@ browser-extension = []
 default = []
 
 [dependencies]
+kaspa-egui-macros = { version = "0.1.0", path = "macros/" }
+
 # kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
@@ -41,6 +43,9 @@ async-trait = "0.1.73"
 egui-phosphor = { version = "0.2.0", features = ["thin","light","regular","bold"] }
 slug = "0.1.4"
 qrcode = "0.12.0"
+js-sys = "0.3.64"
+wasm-bindgen = "0.2.87"
+
 
 egui = "0.22.0"
 egui_extras = { version = "0.22.0", features = ["svg"] }
@@ -50,6 +55,17 @@ eframe = { version = "0.22.0", default-features = false, features = [
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
+
+[dependencies.web-sys]
+version = "0.3.64"
+features = [
+    # 'console',
+    # 'Document',
+    # 'Element',
+    # 'HtmlElement',
+    'Window',
+]
+
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

@@ -1,4 +1,5 @@
 /target
+/macros/target
 /Cargo.lock
 /dist
 /dist-chrome

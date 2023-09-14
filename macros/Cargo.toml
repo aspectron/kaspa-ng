@@ -1,0 +1,24 @@
+[package]
+name = "kaspa-egui-macros"
+version = "0.1.0"
+edition = "2021"
+keywords = ["kaspa"]
+categories = []
+exclude = ["/.*", "/test"]
+description = """
+Macros for the kaspa egui project
+"""
+
+[lib]
+proc-macro = true
+
+[dependencies]
+convert_case = "0.6.0"
+parse-variants = "1.0.1"
+proc-macro-error = { version = "1.0.4", default-features = false }
+proc-macro2 = { version = "1.0.50" }
+quote = "1.0.23"
+sha2 = "0.10.7"
+syn = {version="1.0.107",features=["full","fold","extra-traits","parsing","proc-macro"]}
+
+# workflow-macro-tools.workspace = true
