@@ -387,8 +387,12 @@ impl SectionT for CreateAccount {
                         .with_footer(move |this,ui| {
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 this.state = State::Start;
-                                wallet.select::<section::Account>();
-                                wallet.get_mut::<section::Account>().select(Some(account));
+
+                                let account = Account::from(account);
+                                wallet.account_list.push(account.clone());
+
+                                wallet.select::<section::Accounts>();
+                                wallet.get_mut::<section::Accounts>().select(Some(account));
                             }
                         })
                         .render(ui);

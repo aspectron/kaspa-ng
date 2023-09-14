@@ -3,20 +3,20 @@ use crate::imports::*;
 #[allow(dead_code)]
 enum State {
     Select,
-    Overview { account: Arc<dyn runtime::Account> },
-    Send { account: Arc<dyn runtime::Account> },
-    Receive { account: Arc<dyn runtime::Account> },
+    Overview { account: Account },
+    Send { account: Account },
+    Receive { account: Account },
 }
 
-pub struct Account {
+pub struct Accounts {
     #[allow(dead_code)]
     interop: Interop,
 
-    selected: Option<Arc<dyn runtime::Account>>,
+    selected: Option<Account>,
     state: State,
 }
 
-impl Account {
+impl Accounts {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
@@ -25,12 +25,12 @@ impl Account {
         }
     }
 
-    pub fn select(&mut self, account: Option<Arc<dyn runtime::Account>>) {
+    pub fn select(&mut self, account: Option<Account>) {
         self.selected = account;
     }
 }
 
-impl SectionT for Account {
+impl SectionT for Accounts {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -73,25 +73,33 @@ impl SectionT for Account {
                 if let Ok(network_id) = wallet.network_id() {
                     let network_type = network_id.network_type();
 
-                    let address = account
-                        .receive_address()
-                        .map(String::from)
-                        .unwrap_or(String::from("N/A"));
-                    ui.label(format!("Address: {}", address));
-                    // let balance = account.balance();
-                    if let Some(balance) = account.balance() {
-                        ui.label(format!(
-                            "Balance: {}",
-                            sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)
-                        ));
-                        if balance.pending != 0 {
+                    if let Some(context) = account.context() {
+                        ui.label(format!("Address: {}", context.address()));
+                        // let balance = account.balance();
+                        if let Some(balance) = account.balance() {
                             ui.label(format!(
-                                "Pending: {}",
-                                sompi_to_kaspa_string_with_suffix(balance.pending, &network_type)
+                                "Balance: {}",
+                                sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)
                             ));
+                            if balance.pending != 0 {
+                                ui.label(format!(
+                                    "Pending: {}",
+                                    sompi_to_kaspa_string_with_suffix(
+                                        balance.pending,
+                                        &network_type
+                                    )
+                                ));
+                            }
+                        } else {
+                            ui.label("Balance: N/A");
                         }
+
+                        ui.vertical_centered(|ui| {
+                            context.qr().show(ui);
+                        });
+                        // qr.0.show_size(ui, bevy_egui::egui::Vec2::new(smaller, smaller));
                     } else {
-                        ui.label("Balance: N/A");
+                        ui.label("Account is missing context");
                     }
                 } else {
                     ui.label("Network is not selected");

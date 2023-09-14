@@ -194,7 +194,7 @@ impl SectionT for OpenWallet {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<section::Account>();
+                                wallet.select::<section::Accounts>();
                                 self.state = Default::default();
                             }
                             Err(err) => {

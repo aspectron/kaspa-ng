@@ -37,8 +37,10 @@ pub struct Wallet {
     exception: Option<Exception>,
 
     pub wallet_list: Vec<WalletDescriptor>,
-    pub account_list: Vec<Arc<dyn runtime::Account>>,
-    pub selected_account: Option<Arc<dyn runtime::Account>>,
+    // pub account_list: Vec<Arc<dyn runtime::Account>>,
+    pub account_list: Vec<Account>,
+    // pub selected_account: Option<Arc<dyn runtime::Account>>,
+    pub selected_account: Option<Account>,
     // pub icons : Icons,
 }
 
@@ -86,7 +88,7 @@ impl Wallet {
 
         // let mut sections = HashMap::<TypeId, Rc<RefCell<dyn SectionT>>>::new();
         let mut sections = HashMap::<TypeId, Section>::new();
-        sections.insert_typeid(section::Account::new(interop.clone()));
+        sections.insert_typeid(section::Accounts::new(interop.clone()));
         sections.insert_typeid(section::Deposit::new(interop.clone()));
         sections.insert_typeid(section::Request::new(interop.clone()));
         sections.insert_typeid(section::Send::new(interop.clone()));
@@ -187,7 +189,7 @@ impl Wallet {
         &self.wallet_list
     }
 
-    pub fn account_list(&self) -> &Vec<Arc<dyn runtime::Account>> {
+    pub fn account_list(&self) -> &Vec<Account> {
         &self.account_list
     }
 
@@ -343,7 +345,7 @@ impl eframe::App for Wallet {
                 ui.columns(2, |uis| {
                     let section = self
                         .sections
-                        .get(&TypeId::of::<section::Account>())
+                        .get(&TypeId::of::<section::Accounts>())
                         .unwrap()
                         .inner
                         .section
@@ -565,7 +567,7 @@ impl Wallet {
                         self.hint = None;
                     }
                     CoreWallet::AccountSelection { id: _ } => {
-                        self.selected_account = self.wallet().account().ok();
+                        // self.selected_account = self.wallet().account().ok();
                     }
                     CoreWallet::DAAScoreChange { current_daa_score } => {
                         self.current_daa_score = Some(current_daa_score);
@@ -597,8 +599,12 @@ impl Wallet {
     pub fn update_wallet_list(&self) {
         let interop = self.interop.clone();
         spawn(async move {
-            let wallet_list = Arc::new(interop.wallet().store().wallet_list().await?);
-            interop.send(Events::WalletList { wallet_list }).await?;
+            let wallet_list = interop.wallet().store().wallet_list().await?;
+            interop
+                .send(Events::WalletList {
+                    wallet_list: Arc::new(wallet_list),
+                })
+                .await?;
             Ok(())
         });
     }
@@ -607,13 +613,21 @@ impl Wallet {
         let interop = self.interop.clone();
         spawn(async move {
             // let account_map = HashMap::group_from(account_list.into_iter().map(|account| (account.prv_key_data_id().unwrap(), account)));
-            let account_list = Arc::new(interop.wallet().activate_all_stored_accounts().await?);
-            interop.send(Events::AccountList { account_list }).await?;
+            let account_list = interop.wallet().activate_all_stored_accounts().await?;
+            let account_list = account_list
+                .into_iter()
+                .map(Account::from)
+                .collect::<Vec<_>>();
             interop
-                .wallet()
-                .autoselect_default_account_if_single()
-                .await
-                .ok();
+                .send(Events::AccountList {
+                    account_list: Arc::new(account_list),
+                })
+                .await?;
+            // interop
+            //     .wallet()
+            //     .autoselect_default_account_if_single()
+            //     .await
+            //     .ok();
             Ok(())
         });
     }

@@ -18,3 +18,4 @@ pub mod section;
 pub mod settings;
 pub mod sync;
 pub mod theme;
+pub mod utils;

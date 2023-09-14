@@ -8,7 +8,8 @@ pub enum Events {
         wallet_list: Arc<Vec<WalletDescriptor>>,
     },
     AccountList {
-        account_list: Arc<Vec<Arc<dyn runtime::Account>>>,
+        // account_list: Arc<Vec<Arc<dyn runtime::Account>>>,
+        account_list: Arc<Vec<Account>>,
     },
     Wallet {
         event: Box<kaspa::Events>,

@@ -1,4 +1,4 @@
-pub mod account;
+pub mod accounts;
 pub mod deposit;
 pub mod metrics;
 pub mod open;
@@ -10,7 +10,7 @@ pub mod wizards;
 
 use std::any::type_name;
 
-pub use account::Account;
+pub use accounts::Accounts;
 pub use deposit::Deposit;
 pub use metrics::Metrics;
 pub use open::OpenWallet;
