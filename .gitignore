@@ -1,6 +1,7 @@
 /target
 /Cargo.lock
 /dist
-/dist-browser
+/dist-chrome
+/dist-firefox
 .DS_Store
 datadir
