@@ -5,6 +5,7 @@ use kaspa_bip32::Mnemonic;
 use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
 use kaspa_wallet_core::storage::interface::AccessContext;
 use kaspa_wallet_core::storage::{AccessContextT, AccountKind};
+use slug::slugify;
 
 #[derive(Clone)]
 pub enum State {
@@ -23,6 +24,7 @@ pub enum State {
 
 #[derive(Clone, Default)]
 struct Context {
+    // custom_wallet_filename : bool,
     wallet_title: String,
     // TODO generate wallet filename
     wallet_filename: String,
@@ -39,12 +41,34 @@ struct Context {
     // mnemonic: Vec<String>,
 }
 
+// impl Default for Context {
+//     fn default() -> Self {
+//         Self {
+//             // use_default_wallet : false,
+//             ..Default::default()
+//             // wallet_title: String::new(),
+//             // wallet_filename: String::new(),
+//             // account_title: String::new(),
+//             // account_name: String::new(),
+//             // enable_phishing_hint: false,
+//             // phishing_hint: String::new(),
+//             // wallet_secret: String::new(),
+//             // wallet_secret_confirm: String::new(),
+//             // enable_payment_secret: false,
+//             // payment_secret: String::new(),
+//             // payment_secret_confirm: String::new(),
+//             // mnemonic: Vec::new(),
+//         }
+//     }
+// }
+
 pub struct CreateWallet {
     #[allow(dead_code)]
     interop: Interop,
     // secret: String,
     args: Context,
     pub state: State,
+    pub origin: Option<TypeId>,
 }
 
 impl CreateWallet {
@@ -54,6 +78,7 @@ impl CreateWallet {
             // secret: String::new(),
             state: State::Start,
             args: Default::default(),
+            origin: None,
         }
     }
 }
@@ -72,9 +97,14 @@ impl SectionT for CreateWallet {
 
             match self.state.clone() {
                 State::Start => {
+                    // let has_origin = self.origin.is_some();
 
                     Panel::new(self)
                         .with_caption("Create Wallet")
+                        .with_back_enabled(wallet.has_stack(), |_|{
+                            // wallet.select_with_type_id(this.origin.take().unwrap())
+                            wallet.back()
+                        })
                         .with_close_enabled(false, |_|{
                         })
                         .with_header(|_ctx,ui| {
@@ -109,18 +139,46 @@ impl SectionT for CreateWallet {
                         ui.label("Please specify the name of the wallet");
                     })
                     .with_body(|this,ui| {
+                        // let response = 
+
+
+
+
+                        let mut wallet_title = this.args.wallet_title.clone();
                         ui.add_sized(
                             size,
-                            TextEdit::singleline(&mut this.args.wallet_title)
+                            TextEdit::singleline(&mut wallet_title)
                                 .hint_text("Wallet Name...")
                                 .vertical_align(Align::Center),
                         );
+
+                        if wallet_title != this.args.wallet_title {
+                            this.args.wallet_title = wallet_title;
+                            this.args.wallet_filename = slugify(&this.args.wallet_title);
+                        }
+
+                        if this.args.wallet_filename.is_not_empty() {
+                            ui.label(" ");
+                            ui.label(format!("Filename: {}", this.args.wallet_filename));
+                            ui.label(" ");
+                        }
+
+                        // if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                        //     this.state = State::AccountName;
+                        // }
                     })
                     .with_footer(|this,ui| {
+                        // let size = theme().large_button_size;
+                        // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                        //     this.state = State::AccountName;
+                        // }
+
                         let size = theme().large_button_size;
-                        if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                        // let ok = ;
+                        if ui.add_enabled(this.args.wallet_title.is_not_empty(), egui::Button::new("Continue").min_size(size)).clicked() {
                             this.state = State::AccountName;
                         }
+
                     })
                     .render(ui);
                 }
@@ -320,6 +378,8 @@ impl SectionT for CreateWallet {
                         let wallet = self.interop.wallet().clone();
                         spawn_with_result(&wallet_create_result, async move {
 
+                            println!("### A");
+
                             if args.enable_payment_secret && args.payment_secret.is_empty() {
                                 return Err(Error::custom("Payment secret is empty"));
                             }
@@ -330,6 +390,9 @@ impl SectionT for CreateWallet {
 
                             let wallet_secret = Secret::from(args.wallet_secret);
                             let payment_secret = args.enable_payment_secret.then_some(Secret::from(args.payment_secret));
+
+
+                            println!("### B");
 
                             // suspend commits for multiple operations
                             wallet.store().batch().await?;
@@ -358,9 +421,14 @@ impl SectionT for CreateWallet {
                             let (prv_key_data_id, mnemonic) = wallet.create_prv_key_data(prv_key_data_args).await?;
                             let account = wallet.create_bip32_account(prv_key_data_id, account_args).await?;
 
+                            println!("### C");
+
                             // flush data to storage
                             let access_ctx: Arc<dyn AccessContextT> = Arc::new(AccessContext::new(wallet_secret));
                             wallet.store().flush(&access_ctx).await?;
+
+                            println!("### D");
+
 
                             Ok((Arc::new(mnemonic), account))
                         });
@@ -391,6 +459,8 @@ impl SectionT for CreateWallet {
                         ui.label(" ");
                         ui.label(egui::RichText::new("Error creating a wallet").color(egui::Color32::from_rgb(255, 120, 120)));
                         ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
+                        ui.label(" ");
+                        ui.label(" ");
 
                         if ui.add_sized(size, egui::Button::new("Restart")).clicked() {
                             this.state = State::Start;
@@ -488,6 +558,7 @@ impl SectionT for CreateWallet {
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 this.state = State::Start;
                                 wallet.select::<section::Account>();
+                                wallet.update_wallet_list();
                             }
                         })
                         .render(ui);

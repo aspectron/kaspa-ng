@@ -69,6 +69,10 @@ where
         self.inner.pending.load(Ordering::SeqCst)
     }
 
+    pub fn mark_pending(&self) {
+        self.inner.pending.store(true, Ordering::SeqCst);
+    }
+
     pub fn is_some(&self) -> bool {
         self.inner.payload.lock().unwrap().is_some()
     }

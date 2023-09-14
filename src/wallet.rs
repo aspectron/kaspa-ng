@@ -17,6 +17,7 @@ pub struct Wallet {
     wallet: Arc<runtime::Wallet>,
     channel: interop::Channel<Events>,
     section: TypeId,
+    stack: VecDeque<TypeId>,
     // sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
     sections: HashMap<TypeId, Section>,
     #[allow(dead_code)]
@@ -107,6 +108,7 @@ impl Wallet {
             channel,
             section: TypeId::of::<section::OpenWallet>(),
             sections,
+            stack: VecDeque::new(),
             settings,
 
             default_style,
@@ -137,12 +139,29 @@ impl Wallet {
     where
         T: 'static,
     {
+        self.stack.push_back(self.section);
+
         self.section = TypeId::of::<T>();
         println!("selecting section: {:?}", self.section);
         if self.sections.get(&self.section).is_none() {
             panic!("Unknown section type {:?}", self.section);
         }
     }
+
+    pub fn has_stack(&self) -> bool {
+        !self.stack.is_empty()
+    }
+
+    pub fn back(&mut self) {
+        if let Some(section) = self.stack.pop_back() {
+            self.section = section;
+        }
+    }
+
+    // pub fn select_with_type_id(&mut self, type_id : TypeId)
+    // {
+    //     self.section = type_id;
+    // }
 
     pub fn sender(&self) -> interop::channel::Sender<Events> {
         self.channel.sender.clone()
@@ -158,6 +177,10 @@ impl Wallet {
 
     pub fn rpc_client(&self) -> Option<Arc<KaspaRpcClient>> {
         self.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok()
+    }
+
+    pub fn network_id(&self) -> Result<NetworkId> {
+        Ok(self.wallet().network_id()?)
     }
 
     pub fn wallet_list(&self) -> &Vec<WalletDescriptor> {
@@ -462,6 +485,11 @@ impl Wallet {
             Events::WalletList { wallet_list } => {
                 println!("getting wallet list!, {:?}", wallet_list);
                 self.wallet_list = (*wallet_list).clone();
+                self.wallet_list.sort();
+                // self.wallet_list.sort_by(|a, b| {
+                //     // a.title.partial_cmp(&b.title).unwrap()
+                //     a.filename.partial_cmp(&b.filename).unwrap()
+                // });
             }
             Events::AccountList { account_list } => {
                 self.account_list = (*account_list).clone();

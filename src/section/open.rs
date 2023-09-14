@@ -1,7 +1,8 @@
 use crate::imports::*;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub enum State {
+    #[default]
     Select,
     Unlock(Option<Arc<Error>>),
     Unlocking,
@@ -28,6 +29,7 @@ impl OpenWallet {
     }
 
     pub fn lock(&mut self) {
+        // Go to unlock page
         self.state = State::Unlock(None);
     }
 }
@@ -70,6 +72,8 @@ impl SectionT for OpenWallet {
                                 .add_sized(size, egui::Button::new("Create new wallet"))
                                 .clicked()
                             {
+                                // wallet.get::<section::CreateWallet>().
+                                // wallet.select::<section::CreateWallet>(TypeId::of::<section::OpenWallet>());
                                 wallet.select::<section::CreateWallet>();
                             }
 
@@ -119,15 +123,26 @@ impl SectionT for OpenWallet {
                             ui.label("Enter your password to unlock your wallet");
                             ui.label(" ");
 
-                            ui.add_sized(
-                                size,
-                                TextEdit::singleline(&mut ctx.secret)
-                                    .hint_text("Enter Password...")
-                                    .password(true)
-                                    .vertical_align(Align::Center),
-                            );
+                            let mut unlock = false;
+
+                            if ui
+                                .add_sized(
+                                    size,
+                                    TextEdit::singleline(&mut ctx.secret)
+                                        .hint_text("Enter Password...")
+                                        .password(true)
+                                        .vertical_align(Align::Center),
+                                )
+                                .text_edit_submit(ui)
+                            {
+                                unlock = true;
+                            }
 
                             if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
+                                unlock = true;
+                            }
+
+                            if unlock {
                                 let secret = kaspa_wallet_core::secret::Secret::new(
                                     ctx.secret.as_bytes().to_vec(),
                                 );
@@ -180,6 +195,7 @@ impl SectionT for OpenWallet {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
                                 wallet.select::<section::Account>();
+                                self.state = Default::default();
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);

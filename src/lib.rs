@@ -3,19 +3,18 @@
 mod wallet;
 pub use wallet::Wallet;
 
+pub mod egui;
 pub mod error;
 pub mod events;
+pub mod icons;
 pub mod imports;
 pub mod interop;
 pub mod network;
+pub mod panel;
 pub mod primitives;
 pub mod prompt;
 pub mod result;
 pub mod section;
-// pub mod sequence;
 pub mod settings;
 pub mod sync;
-// pub mod stages;
-pub mod icons;
-pub mod panel;
 pub mod theme;

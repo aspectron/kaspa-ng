@@ -5,6 +5,7 @@ pub use kaspa_wallet_core::rpc::DynRpcApi;
 pub use kaspa_wallet_core::runtime;
 pub use kaspa_wallet_core::secret::Secret;
 pub use kaspa_wallet_core::storage::{PrvKeyDataId, WalletDescriptor};
+pub use kaspa_wallet_core::utils::*;
 pub use kaspa_wrpc_client::KaspaRpcClient;
 
 pub use cfg_if::cfg_if;
@@ -18,6 +19,7 @@ pub use serde::{Deserialize, Serialize};
 pub use std::any::{Any, TypeId};
 pub use std::cell::{Ref, RefCell, RefMut};
 pub use std::collections::HashMap;
+pub use std::collections::VecDeque;
 pub use std::rc::Rc;
 pub use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -49,6 +51,7 @@ pub use crate::section::{Section, SectionT};
 pub use crate::settings::{KaspadNodeKind, Settings};
 pub use crate::wallet::Wallet;
 // pub use crate::panel::{Panel,PanelExtension};
+pub use crate::egui::*;
 pub use crate::panel::Panel;
 pub use crate::theme::theme;
 // pub use workflow_core::task::spawn;

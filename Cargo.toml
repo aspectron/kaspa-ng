@@ -39,6 +39,7 @@ futures-util = { version = "0.3", default-features = false, features = ["alloc"]
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 async-trait = "0.1.73"
 egui-phosphor = { version = "0.2.0", features = ["thin","light","regular","bold"] }
+slug = "0.1.4"
 
 
 egui = "0.22.0"

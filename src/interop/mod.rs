@@ -127,6 +127,7 @@ impl Interop {
         F: Future<Output = Result<R>> + Send + 'static,
     {
         let payload = (*payload).clone();
+        payload.mark_pending();
         workflow_core::task::spawn(async move {
             let result = task.await;
             match result {
