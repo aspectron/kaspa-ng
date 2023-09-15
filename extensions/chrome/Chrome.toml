@@ -4,6 +4,8 @@ target = "index.html"
 release = false
 # The output dir for all final assets.
 dist = "../../dist-chrome"
+# Whether to inject scripts (and module preloads) into the finalized output.
+inject_scripts = true
 
 # DOCS:
 # https://github.com/thedodd/trunk/blob/master/Trunk.toml
