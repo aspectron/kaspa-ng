@@ -3,6 +3,7 @@
 mod wallet;
 pub use wallet::Wallet;
 
+pub mod adaptor;
 pub mod egui;
 pub mod error;
 pub mod events;
@@ -19,4 +20,3 @@ pub mod settings;
 pub mod sync;
 pub mod theme;
 pub mod utils;
-pub mod adaptor;

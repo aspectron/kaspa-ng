@@ -26,6 +26,7 @@ kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
 workflow-log = { path = "../workflow-rs/log" }
 workflow-core = { path = "../workflow-rs/core" }
 workflow-dom = { path = "../workflow-rs/dom" }
+workflow-store = { path = "../workflow-rs/store" }
 
 
 cfg-if = "1.0.0"

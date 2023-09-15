@@ -1,6 +1,6 @@
 use thiserror::Error;
-use workflow_core::channel::{SendError, TrySendError};
 use wasm_bindgen::JsValue;
+use workflow_core::channel::{SendError, TrySendError};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -21,6 +21,9 @@ pub enum Error {
 
     #[error(transparent)]
     WrpcClientError(#[from] kaspa_wrpc_client::error::Error),
+
+    #[error(transparent)]
+    WorkflowStorage(#[from] workflow_store::error::Error),
 
     #[error(transparent)]
     Bip32(#[from] kaspa_bip32::Error),
