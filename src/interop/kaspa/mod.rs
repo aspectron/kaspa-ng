@@ -12,7 +12,7 @@ cfg_if! {
         pub use config::Config;
         pub mod daemon;
         pub mod inproc;
-        pub use kaspad::args::Args;
+        pub use kaspad_lib::args::Args;
 
         pub trait Kaspad {
             fn start(&self, args: Args) -> Result<()>;
@@ -70,9 +70,10 @@ impl KaspaService {
             panic!("Failed to open local store: {}", e);
         });
 
-        let wallet = runtime::Wallet::try_new(storage, None).unwrap_or_else(|e| {
-            panic!("Failed to create wallet instance: {}", e);
-        });
+        let wallet = runtime::Wallet::try_new(storage, Some(settings.network.into()))
+            .unwrap_or_else(|e| {
+                panic!("Failed to create wallet instance: {}", e);
+            });
 
         Self {
             application_events,
