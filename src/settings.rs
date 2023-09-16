@@ -90,7 +90,7 @@ impl Default for Settings {
                 let wrpc_url = "127.0.0.1";
             } else {
                 use workflow_dom::utils::*;
-                let wrpc_url = window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
+                let wrpc_url = ""; // window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
             }
         }
 
