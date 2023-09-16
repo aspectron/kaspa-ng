@@ -1,4 +1,5 @@
 use thiserror::Error;
+use wasm_bindgen::JsValue;
 use workflow_core::channel::{SendError, TrySendError};
 
 #[derive(Debug, Error)]
@@ -22,12 +23,27 @@ pub enum Error {
     WrpcClientError(#[from] kaspa_wrpc_client::error::Error),
 
     #[error(transparent)]
+    WorkflowStorage(#[from] workflow_store::error::Error),
+
+    #[error(transparent)]
     Bip32(#[from] kaspa_bip32::Error),
+
+    #[error("Missing external kaspad node binary")]
+    MissingExternalKaspadBinary,
+
+    #[error("Invalid URL: {0}")]
+    InvalidUrl(String),
 }
 
 impl Error {
     pub fn custom<T: Into<String>>(msg: T) -> Self {
         Error::Custom(msg.into())
+    }
+}
+
+impl From<Error> for JsValue {
+    fn from(err: Error) -> Self {
+        JsValue::from_str(&err.to_string())
     }
 }
 

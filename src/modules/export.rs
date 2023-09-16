@@ -7,7 +7,7 @@ pub enum State {
     Unlocking,
 }
 
-pub struct Import {
+pub struct Export {
     #[allow(dead_code)]
     interop: Interop,
     secret: String,
@@ -17,7 +17,7 @@ pub struct Import {
     selected_wallet: Option<String>,
 }
 
-impl Import {
+impl Export {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
@@ -33,7 +33,7 @@ impl Import {
     }
 }
 
-impl SectionT for Import {
+impl ModuleT for Export {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -150,7 +150,7 @@ impl SectionT for Import {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<section::Accounts>();
+                                wallet.select::<modules::AccountManager>();
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);

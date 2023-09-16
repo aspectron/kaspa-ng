@@ -41,6 +41,10 @@ impl Theme {
         self.panel_margin_size
     }
 
+    pub fn large_button_size(&self) -> Vec2 {
+        self.large_button_size
+    }
+
     // pub fn panel_icon_padding(&self) -> f32 {
     //     self.panel_icon_padding
     // }

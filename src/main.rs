@@ -3,7 +3,8 @@
 
 use cfg_if::cfg_if;
 use kaspa_egui::interop;
-use kaspa_egui::settings;
+use kaspa_egui::settings::Settings;
+use workflow_log::*;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -20,7 +21,11 @@ cfg_if! {
             // Log to stderr (if you run with `RUST_LOG=debug`).
             env_logger::init();
 
-            let settings = settings::Settings::default();
+            let settings = Settings::load().unwrap_or_else(|err| {
+                log_error!("Unable to load settings: {err}");
+                Settings::default()
+            });
+
             let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
             let delegate = interop.clone();
             println!("spawn done");
@@ -50,13 +55,27 @@ cfg_if! {
         }
     } else {
 
+        // use wasm_bindgen::prelude::*;
+
         // When compiling to web using trunk:
         // #[cfg(target_arch = "wasm32")]
+        // #[wasm_bindgen]
+        // fn main() {
+        // }
+
+        // #[wasm_bindgen]
+        // pub async fn start_app() {
         fn main() {
+            use wasm_bindgen::prelude::*;
+
             // Redirect `log` message to `console.log` and friends:
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();
-
             let web_options = eframe::WebOptions::default();
+
+            let settings = Settings::load().unwrap_or_else(|err| {
+                log_error!("Unable to load settings: {err}");
+                Settings::default()
+            });
 
             wasm_bindgen_futures::spawn_local(async {
                 use workflow_log::*;
@@ -66,9 +85,16 @@ cfg_if! {
                         "kaspa-wallet",
                         web_options,
                         Box::new(move |cc| {
-                            let settings = settings::Settings::default();
                             let interop = interop::Interop::new(&cc.egui_ctx, &settings);
                             interop.start();
+
+                            let adaptor = kaspa_egui::adaptor::Adaptor::new(interop.clone());
+                            let window = web_sys::window().expect("no global `window` exists");
+                            js_sys::Reflect::set(
+                                &window,
+                                &JsValue::from_str("adaptor"),
+                                &JsValue::from(adaptor),
+                            ).expect("failed to set adaptor");
 
                             Box::new(kaspa_egui::Wallet::new(cc, interop, settings))
                         }),

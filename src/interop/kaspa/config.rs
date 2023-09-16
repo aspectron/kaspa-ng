@@ -2,7 +2,7 @@ use crate::imports::*;
 use kaspa_wrpc_server::address::WrpcNetAddress;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use kaspad::args::Args;
+pub use kaspad_lib::args::Args;
 
 pub struct Config {
     network: Network,

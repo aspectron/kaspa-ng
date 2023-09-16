@@ -56,7 +56,7 @@ struct Context {
     payment_secret_confirm: String,
 }
 
-pub struct CreateAccount {
+pub struct AccountCreate {
     #[allow(dead_code)]
     interop: Interop,
     // secret: String,
@@ -64,7 +64,7 @@ pub struct CreateAccount {
     pub state: State,
 }
 
-impl CreateAccount {
+impl AccountCreate {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
@@ -75,7 +75,7 @@ impl CreateAccount {
     }
 }
 
-impl SectionT for CreateAccount {
+impl ModuleT for AccountCreate {
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -391,8 +391,8 @@ impl SectionT for CreateAccount {
                                 let account = Account::from(account);
                                 wallet.account_list.push(account.clone());
 
-                                wallet.select::<section::Accounts>();
-                                wallet.get_mut::<section::Accounts>().select(Some(account));
+                                wallet.select::<modules::AccountManager>();
+                                wallet.get_mut::<modules::AccountManager>().select(Some(account));
                             }
                         })
                         .render(ui);

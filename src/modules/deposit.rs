@@ -11,7 +11,7 @@ impl Deposit {
     }
 }
 
-impl SectionT for Deposit {
+impl ModuleT for Deposit {
     fn render(
         &mut self,
         _wallet: &mut Wallet,
