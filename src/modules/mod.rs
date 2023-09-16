@@ -50,8 +50,7 @@ kaspa_egui_macros::register_modules!([
 // }
 
 pub trait ModuleT: Downcast {
-
-    fn init(&mut self, _wallet : &mut Wallet) { }
+    fn init(&mut self, _wallet: &mut Wallet) {}
 
     fn render(
         &mut self,
@@ -144,7 +143,7 @@ pub trait HashMapModuleExtension<T> {
 
     // fn get_mut_with_typeid<M>(&mut self) -> RefMut<'_, M>
     // where
-    //     M: ModuleT + 'static;    
+    //     M: ModuleT + 'static;
 }
 
 // impl<T> HashMapSectionExtension<T> for HashMap<TypeId, Rc<RefCell<dyn SectionT>>>
@@ -157,7 +156,6 @@ where
         // let name = type_name::<T>().to_string();
         self.insert(TypeId::of::<T>(), section.into());
     }
-
 
     // fn get_with_typeid<M>(&self) -> Ref<'_, M>
     // where

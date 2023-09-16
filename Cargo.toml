@@ -41,21 +41,35 @@ futures = { version = "0.3" }
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 async-trait = "0.1.73"
-egui-phosphor = { version = "0.2.0", features = ["thin","light","regular","bold"] }
 slug = "0.1.4"
 qrcode = "0.12.0"
 js-sys = "0.3.64"
 wasm-bindgen = "0.2.87"
 
 
-egui = "0.22.0"
-egui_extras = { version = "0.22.0", features = ["svg"] }
-eframe = { version = "0.22.0", default-features = false, features = [
+# egui = "0.22.0"
+# egui_extras = { version = "0.22.0", features = ["svg"] }
+# eframe = { version = "0.22.0", default-features = false, features = [
+#     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+#     "default_fonts", # Embed the default egui fonts.
+#     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+#     "persistence",   # Enable restoring app state when restarting the app.
+# ] }
+# egui-phosphor = { version = "0.2.0", features = ["thin","light","regular","bold"] }
+# egui-notify = "0.9.0"
+
+egui = { path = "../egui/crates/egui" }
+egui_extras = { path = "../egui/crates/egui_extras", features = ["svg"] }
+eframe = { path = "../egui/crates/eframe", default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
+egui-phosphor = { path = "../egui-phosphor", features = ["thin","light","regular","bold"] }
+egui-notify = { path = "../egui-notify" }
+
+
 
 [dependencies.web-sys]
 version = "0.3.64"

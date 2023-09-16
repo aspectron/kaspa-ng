@@ -32,7 +32,6 @@ cfg_if! {
     }
 }
 
-
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub enum RpcKind {
     #[default]
@@ -72,9 +71,9 @@ pub enum RpcConfig {
 pub struct Settings {
     // #[serde(rename = "rpc")]
     pub rpc_kind: RpcKind,
-    pub wrpc_url : String,
-    pub wrpc_encoding : WrpcEncoding,
-    pub grpc_url : String,
+    pub wrpc_url: String,
+    pub wrpc_encoding: WrpcEncoding,
+    pub grpc_url: String,
 
     // pub rpc: RpcConfig,
     pub network: Network,
@@ -84,7 +83,6 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Self {
-
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
                 let wrpc_url = "127.0.0.1";
@@ -96,11 +94,10 @@ impl Default for Settings {
         }
 
         Self {
-
-            wrpc_url : wrpc_url.to_string(),  // : "127.0.0.1".to_string(),
-            wrpc_encoding : WrpcEncoding::Borsh,
-            grpc_url : "127.0.0.1".to_string(),
-            rpc_kind : RpcKind::Wrpc,
+            wrpc_url: wrpc_url.to_string(), // : "127.0.0.1".to_string(),
+            wrpc_encoding: WrpcEncoding::Borsh,
+            grpc_url: "127.0.0.1".to_string(),
+            rpc_kind: RpcKind::Wrpc,
             // rpc: RpcConfig::default(),
             // network: Network::Mainnet,
             network: Network::Testnet10,
@@ -157,4 +154,3 @@ impl From<&Settings> for RpcConfig {
         }
     }
 }
-

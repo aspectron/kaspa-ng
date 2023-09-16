@@ -115,9 +115,9 @@ impl Wallet {
             wallet,
             channel,
             module: TypeId::of::<modules::WalletOpen>(),
-            modules : modules.clone(),
+            modules: modules.clone(),
             stack: VecDeque::new(),
-            settings : settings.clone(),
+            settings: settings.clone(),
 
             default_style,
             large_style,
@@ -141,7 +141,7 @@ impl Wallet {
         modules.values().for_each(|module| {
             module.init(&mut this);
         });
-        
+
         this.update_wallet_list();
 
         this

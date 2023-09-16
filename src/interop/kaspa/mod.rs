@@ -241,10 +241,10 @@ impl Service for KaspaService {
                                 // rpc.connect()
 
                                 if let Some(wrpc_client) = wrpc_client {
-                                    let options = ConnectOptions { 
-                                        block_async_connect: false, 
-                                        strategy: ConnectStrategy::Retry, 
-                                        url : None, 
+                                    let options = ConnectOptions {
+                                        block_async_connect: false,
+                                        strategy: ConnectStrategy::Retry,
+                                        url : None,
                                         connect_timeout: None,
                                         retry_interval: Some(Duration::from_millis(3000)),
                                     };
