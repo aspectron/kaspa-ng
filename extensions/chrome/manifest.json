@@ -4,18 +4,14 @@
   "version_name": "1.0 beta",
   "name": "Kaspa EGUI PWA",
   "short_name": "kaspa-egui-pwa",
-  "permissions": ["scripting", "alarms", "storage", "activeTab", "offscreen"],
+  "permissions": ["scripting", "alarms", "storage", "activeTab"],
   "content_security_policy": {
-    "extension_pages": "default-src 'self' 'wasm-unsafe-eval'",
-    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'wasm-eval' 'unsafe-eval'"
+    "extension_pages": "default-src 'self' 'wasm-unsafe-eval'"
   },
   "background": {
       "service_worker": "background.js",
       "type": "module"
       
-  },
-  "sandbox": {
-    "pages": ["sandbox.html", "popup-sandbox.html"]
   },
   "host_permissions": [
       "https://*/*", 
