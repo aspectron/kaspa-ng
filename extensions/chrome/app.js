@@ -27,5 +27,5 @@ chrome.runtime.onMessage.addListener((message, sender, reply)=>{
     }
 })
 
-import init from '/kaspa-egui-74ad2a9f577367ef.js';
-init('/kaspa-egui-74ad2a9f577367ef_bg.wasm');
+//import '/kaspa-egui.js';
+wasm_bindgen('/kaspa-egui_bg.wasm');
