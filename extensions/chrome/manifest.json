@@ -6,7 +6,8 @@
   "short_name": "kaspa-egui-pwa",
   "permissions": ["scripting", "alarms", "storage", "activeTab", "offscreen"],
   "content_security_policy": {
-    "sandbox": "sandbox allow-scripts allow-same-origin; script-src 'self' 'unsafe-inline' 'wasm-eval' 'unsafe-eval'"
+    "extension_pages": "default-src 'self' 'wasm-unsafe-eval'",
+    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'wasm-eval' 'unsafe-eval'"
   },
   "background": {
       "service_worker": "background.js",
