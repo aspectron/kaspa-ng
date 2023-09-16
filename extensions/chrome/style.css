@@ -6,6 +6,10 @@ html {
     color: #fff;
     font-size:20px;
 }
+#sandbox-iframe{
+    border:1px solid #b48282;
+    box-sizing: border-box;
+}
 
 body {
     /* Light mode background color for what is not covered by the egui canvas,

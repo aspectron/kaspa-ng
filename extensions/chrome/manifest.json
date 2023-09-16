@@ -5,14 +5,16 @@
   "name": "Kaspa EGUI PWA",
   "short_name": "kaspa-egui-pwa",
   "permissions": ["scripting", "alarms", "storage", "activeTab", "offscreen"],
-  
+  "content_security_policy": {
+    "sandbox": "sandbox allow-scripts allow-same-origin; script-src 'self' 'unsafe-inline' 'wasm-eval' 'unsafe-eval'"
+  },
   "background": {
       "service_worker": "background.js",
       "type": "module"
       
   },
   "sandbox": {
-    "pages": ["sandbox.html"]
+    "pages": ["sandbox.html", "popup-sandbox.html"]
   },
   "host_permissions": [
       "https://*/*", 

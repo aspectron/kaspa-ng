@@ -5,7 +5,7 @@ release = false
 # The output dir for all final assets.
 dist = "../../dist-chrome"
 # Whether to inject scripts (and module preloads) into the finalized output.
-inject_scripts = true
+inject_scripts = false
 
 # DOCS:
 # https://github.com/thedodd/trunk/blob/master/Trunk.toml

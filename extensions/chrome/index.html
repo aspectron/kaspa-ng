@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <!--meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' kaspa-egui-57c7a8dd13e092be.js 'wasm-eval'"-->
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
-    <!-- <link data-trunk rel="rust" data-wasm-opt="2" data-cargo-features="browser-extension" href="../../Cargo.toml"/> -->
+    <link data-trunk rel="rust" data-wasm-opt="2" data-cargo-features="browser-extension" href="../../Cargo.toml"/>
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
     <base data-trunk-public-url />
     <link data-trunk rel="icon" href="../../resources/icons/favicon.ico">
@@ -16,6 +16,7 @@
     <link data-trunk rel="copy-file" href="./style.css" />
     <link data-trunk rel="copy-file" href="./manifest.json" />
     <link data-trunk rel="copy-file" href="./sandbox.html" />
+    <link data-trunk rel="copy-file" href="./popup-sandbox.html" />
     <link data-trunk rel="copy-file" href="./offscreen.html" />
     <link data-trunk rel="copy-file" href="./offscreen.js" />
     <link data-trunk rel="copy-file" href="./background.js" />
@@ -30,11 +31,12 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#404040">
 </head>
 <body>
-    <canvas id="kaspa-wallet"></canvas>
+    <!-- <canvas id="kaspa-wallet"></canvas> -->
     <!--Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality). -->
     <!-- Force refresh (Ctrl + F5) to load the latest files instead of cached files  -->
     <script type="module" src="./app.js"></script>
     <div id="counter"></div>
     <button id="btn">Test</button>
+    <iframe id="sandbox-iframe" width="100%" height="200" src="popup-sandbox.html"></iframe>
 </body>
 </html><!-- Powered by egui: https://github.com/emilk/egui/ -->

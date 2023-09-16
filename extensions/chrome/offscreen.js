@@ -31,8 +31,6 @@ const sandboxIframe = document.querySelector('#sandbox-iframe');
 // dispatching the
 // message to a more specific message handler.
 async function handleMessages(message, sender, reply) {
-    console.log("message", message, sender, reply)
-
     if (sender.id != chrome.runtime.id)
         return
 
@@ -40,6 +38,8 @@ async function handleMessages(message, sender, reply) {
     if (message.target !== 'offscreen') {
         return;
     }
+
+    console.log("message", message, sender, reply)
 
     reply("from offscreen, counter:"+counter);
 
