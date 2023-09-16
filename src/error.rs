@@ -27,6 +27,12 @@ pub enum Error {
 
     #[error(transparent)]
     Bip32(#[from] kaspa_bip32::Error),
+
+    #[error("Missing external kaspad node binary")]
+    MissingExternalKaspadBinary,
+
+    #[error("Invalid URL: {0}")]
+    InvalidUrl(String),
 }
 
 impl Error {

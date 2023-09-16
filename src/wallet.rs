@@ -1,6 +1,7 @@
 use crate::imports::*;
 use crate::interop::Interop;
 // use crate::modules::HashMapModuleExtension;
+// use crate::modules::HashMapModuleExtension;
 use crate::sync::SyncStatus;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
@@ -20,8 +21,8 @@ pub struct Wallet {
     stack: VecDeque<TypeId>,
     // sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
     modules: HashMap<TypeId, Module>,
-    #[allow(dead_code)]
-    settings: Settings,
+    // #[allow(dead_code)]
+    pub settings: Settings,
 
     pub large_style: egui::Style,
     pub default_style: egui::Style,
@@ -102,18 +103,21 @@ impl Wallet {
         // modules.insert_typeid(modules::Export::new(interop.clone()));
 
         let modules = crate::modules::register_modules(&interop);
+        // modules.get_mut_with_typeid::<modules::Settings>().init(&settings);
+
+        // modules.get(&TypeId::of::<modules::Settings>()).unwrap().init(&settings);
 
         let channel = interop.application_events().clone();
         let wallet = interop.wallet().clone();
 
-        let this = Self {
+        let mut this = Self {
             interop,
             wallet,
             channel,
             module: TypeId::of::<modules::WalletOpen>(),
-            modules,
+            modules : modules.clone(),
             stack: VecDeque::new(),
-            settings,
+            settings : settings.clone(),
 
             default_style,
             large_style,
@@ -134,6 +138,10 @@ impl Wallet {
             // icons : Icons::default(),
         };
 
+        modules.values().for_each(|module| {
+            module.init(&mut this);
+        });
+        
         this.update_wallet_list();
 
         this

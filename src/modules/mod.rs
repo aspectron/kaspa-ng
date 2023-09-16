@@ -50,6 +50,9 @@ kaspa_egui_macros::register_modules!([
 // }
 
 pub trait ModuleT: Downcast {
+
+    fn init(&mut self, _wallet : &mut Wallet) { }
+
     fn render(
         &mut self,
         _wallet: &mut Wallet,
@@ -85,6 +88,10 @@ pub struct Module {
 }
 
 impl Module {
+    pub fn init(&self, wallet: &mut Wallet) {
+        self.inner.module.borrow_mut().init(wallet)
+    }
+
     pub fn render(
         &self,
         wallet: &mut Wallet,
@@ -130,6 +137,14 @@ pub trait HashMapModuleExtension<T> {
     fn insert_typeid(&mut self, value: T)
     where
         T: ModuleT + 'static;
+
+    // fn get_with_typeid<M>(&self) -> Ref<'_, M>
+    // where
+    //     M: ModuleT + 'static;
+
+    // fn get_mut_with_typeid<M>(&mut self) -> RefMut<'_, M>
+    // where
+    //     M: ModuleT + 'static;    
 }
 
 // impl<T> HashMapSectionExtension<T> for HashMap<TypeId, Rc<RefCell<dyn SectionT>>>
@@ -142,4 +157,29 @@ where
         // let name = type_name::<T>().to_string();
         self.insert(TypeId::of::<T>(), section.into());
     }
+
+
+    // fn get_with_typeid<M>(&self) -> Ref<'_, M>
+    // where
+    //     M: ModuleT + 'static,
+    // {
+    //     let cell = self.get(&TypeId::of::<M>()).unwrap();
+    //     Ref::map(cell.inner.module.borrow(), |r| {
+    //         (r).as_any()
+    //             .downcast_ref::<M>()
+    //             .expect("unable to downcast section")
+    //     })
+    // }
+
+    // fn get_mut_with_typeid<M>(&mut self) -> RefMut<'_, M>
+    // where
+    //     M: ModuleT + 'static,
+    // {
+    //     let cell = self.get_mut(&TypeId::of::<M>()).unwrap();
+    //     RefMut::map(cell.inner.module.borrow_mut(), |r| {
+    //         (r).as_any_mut()
+    //             .downcast_mut::<M>()
+    //             .expect("unable to downcast_mut module")
+    //     })
+    // }
 }

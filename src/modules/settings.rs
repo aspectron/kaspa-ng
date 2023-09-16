@@ -1,17 +1,31 @@
 use crate::imports::*;
 
+
+// pub struct Config {
+//     network: Network,
+// }
+
 pub struct Settings {
     #[allow(dead_code)]
     interop: Interop,
+    settings : crate::settings::Settings,
+    // pub kaspad: KaspadNodeKind,
+
 }
 
 impl Settings {
     pub fn new(interop: Interop) -> Self {
-        Self { interop }
+        Self { interop, settings : crate::settings::Settings::default() }
     }
+
 }
 
 impl ModuleT for Settings {
+
+    fn init(&mut self, wallet : &mut Wallet) {
+        self.settings = wallet.settings.clone();
+    }
+
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -44,15 +58,71 @@ impl ModuleT for Settings {
         // - pub perf_metrics: bool,
         // - pub perf_metrics_interval_sec: u64,
 
-        CollapsingHeader::new("Kaspa Node")
+        CollapsingHeader::new("Kaspa p2p Node & Connection")
             .default_open(false)
             .show(ui, |ui| {
-                ui.label("This is the settings page");
-            });
-        CollapsingHeader::new("RPC Protocol")
-            .default_open(false)
-            .show(ui, |ui| {
-                ui.label("This is the settings page");
+
+                CollapsingHeader::new("Kaspa Network")
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        // ui.label("This is the settings page");
+
+                        ui.horizontal_wrapped(|ui|{
+                            ui.radio_value(&mut self.settings.network, Network::Mainnet, "MAINNET");
+                            ui.radio_value(&mut self.settings.network, Network::Testnet10, "TESTNET-10");
+                            ui.radio_value(&mut self.settings.network, Network::Testnet11, "TESTNET-11");
+                        });
+
+
+                    });
+
+
+                CollapsingHeader::new("Kaspa Node")
+                    .default_open(true)
+                    .show(ui, |ui| {
+
+                    // ui.label
+
+                        ui.horizontal_wrapped(|ui|{
+
+                            ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::Remote, "Remote");
+                            cfg_if! {
+                                if #[cfg(not(target_arch = "wasm32"))] {
+                                    ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::InternalInProc, "Internal");
+                                    ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::InternalAsDaemon, "Internal Daemon");
+                                    ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::ExternalAsDaemon, "External Daemon");
+                                }
+                            }
+                        });
+
+                        // ui.label("")
+                            
+                        if self.settings.kaspad != wallet.settings.kaspad {
+                            if ui.button("Apply").clicked() {
+                                wallet.settings.kaspad = self.settings.kaspad;
+                                wallet.settings.store().unwrap();
+                            }
+                        }
+
+                        ui.label("This is the settings page");
+
+                    });
+
+                CollapsingHeader::new("RPC Protocol")
+                    .default_open(true)
+                    .show(ui, |ui| {
+
+                        ui.horizontal(|ui|{
+                            ui.label("URL: ");
+                            ui.add(TextEdit::singleline(&mut self.settings.wrpc_url));
+                        });
+                        ui.horizontal_wrapped(|_ui|{
+                            // ui.radio_value(&mut );
+                        });
+
+                        ui.label("This is the settings page");
+
+                    });
             });
     }
 }

@@ -75,6 +75,11 @@ impl ModuleT for AccountManager {
 
                     if let Some(context) = account.context() {
                         ui.label(format!("Address: {}", context.address()));
+
+                        if ui.button("Copy to clipboard").clicked() {
+                            ui.output_mut(|o| o.copied_text = context.address().to_string());
+                        }
+
                         // let balance = account.balance();
                         if let Some(balance) = account.balance() {
                             ui.label(format!(

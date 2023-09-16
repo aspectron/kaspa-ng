@@ -72,7 +72,7 @@ cfg_if! {
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();
             let web_options = eframe::WebOptions::default();
 
-            let settings = Settings::unwrap_or_else(|err| {
+            let settings = Settings::load().unwrap_or_else(|err| {
                 log_error!("Unable to load settings: {err}");
                 Settings::default()
             });

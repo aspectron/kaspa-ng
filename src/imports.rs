@@ -53,7 +53,7 @@ pub use crate::panel::Panel;
 pub use crate::primitives::Account;
 pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
-pub use crate::settings::{KaspadNodeKind, Settings};
+pub use crate::settings::{KaspadNodeKind, RpcConfig, Settings};
 pub use crate::theme::theme;
 pub use crate::utils::*;
 pub use crate::wallet::Wallet;
