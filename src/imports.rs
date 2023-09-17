@@ -38,7 +38,6 @@ pub use egui::epaint::{
     FontFamily, FontId,
 };
 pub use egui::*;
-pub use egui_extras::RetainedImage;
 
 pub use crate::egui::*;
 pub use crate::error::Error;

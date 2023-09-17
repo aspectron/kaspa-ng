@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::imports::*;
 
 #[allow(dead_code)]
@@ -100,9 +102,12 @@ impl ModuleT for AccountManager {
                         }
 
                         ui.vertical_centered(|ui| {
-                            context.qr().show(ui);
+                            ui.add(
+                                egui::Image::new(ImageSource::Bytes(Cow::Borrowed("bytes://qr.svg"), context.qr()))
+                                .fit_to_original_size(1.)
+                                // .shrink_to_fit()
+                            );
                         });
-                        // qr.0.show_size(ui, bevy_egui::egui::Vec2::new(smaller, smaller));
                     } else {
                         ui.label("Account is missing context");
                     }

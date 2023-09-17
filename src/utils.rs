@@ -1,18 +1,18 @@
-use egui_extras::{image, RetainedImage};
+use crate::imports::*;
 use qrcode::render::svg;
 use qrcode::*;
 
-pub fn render_qrcode(text: &str, width: usize, height: usize) -> RetainedImage {
+pub fn render_qrcode(text: &str, width: usize, height: usize) -> String {
     let code = QrCode::with_version(text, Version::Normal(4), EcLevel::L).unwrap();
 
     let _theme = crate::theme::theme();
 
-    let image = code
+    code
         .render::<svg::Color<'_>>()
         .min_dimensions(width as u32, height as u32)
         .dark_color(svg::Color("#ffffff"))
         .light_color(svg::Color("#00000000"))
-        .build();
+        .build()
+        .to_string()
 
-    RetainedImage::from_svg_bytes_with_size(text, image.as_bytes(), image::FitTo::Original).unwrap()
 }

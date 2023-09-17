@@ -76,6 +76,8 @@ impl Wallet {
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
 
+        egui_extras::install_image_loaders(&cc.egui_ctx);
+
         // cc.egui_ctx.set_style(style);
 
         // This is also where you can customize the look and feel of egui using

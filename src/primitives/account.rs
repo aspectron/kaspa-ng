@@ -1,7 +1,9 @@
 use crate::imports::*;
 
 pub struct Context {
-    qr: Arc<RetainedImage>,
+    // qr: Arc<RetainedImage>,
+    // qr: Arc<String>,
+    qr: load::Bytes,
     receive_address: String,
 }
 
@@ -9,9 +11,9 @@ impl Context {
     pub fn new(account: &Arc<dyn runtime::Account>) -> Option<Arc<Self>> {
         if account.wallet().network_id().is_ok() {
             let receive_address = account.receive_address().unwrap().to_string();
-            let qr = Arc::new(render_qrcode(&receive_address, 200, 200));
+            let qr = render_qrcode(&receive_address, 200, 200);
             Some(Arc::new(Self {
-                qr,
+                qr : qr.as_bytes().to_vec().into(),
                 receive_address,
             }))
         } else {
@@ -23,8 +25,8 @@ impl Context {
         self.receive_address.as_str()
     }
 
-    pub fn qr(&self) -> &RetainedImage {
-        &self.qr
+    pub fn qr(&self) -> load::Bytes {
+        self.qr.clone()
     }
 }
 

@@ -86,9 +86,21 @@ impl Default for Settings {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
                 let wrpc_url = "127.0.0.1";
+                // let wrpc_url = "ws://127.0.0.1:17210".to_string();
             } else {
                 use workflow_dom::utils::*;
-                let wrpc_url = "ws://127.0.0.1:17210".to_string();
+                
+                let location = window().location();
+                let protocol = location.protocol().expect("unable to get protocol");
+                let hostname = window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
+                log_warning!("protocol: {}", protocol);
+                log_warning!("hostname: {}", hostname);
+                let wrpc_url = if protocol == "chrome-extension:" {
+                    "ws://127.0.0.1".to_string()
+                } else {
+                    hostname.to_string()
+                };
+
                 //,Network::Testnet10.default_borsh_rpc_port()); // window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
             }
         }

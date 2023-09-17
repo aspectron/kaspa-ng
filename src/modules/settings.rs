@@ -59,7 +59,7 @@ impl ModuleT for Settings {
         // - pub perf_metrics_interval_sec: u64,
 
         CollapsingHeader::new("Kaspa p2p Node & Connection")
-            .default_open(false)
+            .default_open(true)
             .show(ui, |ui| {
 
                 CollapsingHeader::new("Kaspa Network")

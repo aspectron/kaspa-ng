@@ -2,21 +2,22 @@ html {
     /* Remove touch delay: */
     touch-action: manipulation;
 }
-#counter{
+ #counter{
     color: #fff;
     font-size:20px;
 }
 #sandbox-iframe{
     border:1px solid #b48282;
     box-sizing: border-box;
-}
+} 
 
 body {
     /* Light mode background color for what is not covered by the egui canvas,
     or where the egui canvas is translucent. */
-    background: #909090;
+    /* background: #909090; */
+    background: #000;
     min-width: 400px;
-    min-height:500px;
+    min-height:570px;
 }
 
 @media (prefers-color-scheme: dark) {
