@@ -131,5 +131,11 @@ impl ModuleT for Settings {
 
                     });
             });
+
+            if ui.button("Test Toast").clicked() {
+                self.interop.try_send(Events::Notify {
+                    notification : Notification::info("Test Toast")
+                }).unwrap();
+            }
     }
 }

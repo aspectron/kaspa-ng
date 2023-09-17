@@ -1,6 +1,9 @@
 use crate::imports::*;
 use kaspa_wallet_core::events as kaspa;
 
+// impl Notify {
+// }
+
 #[derive(Clone)]
 pub enum Events {
     Error(Box<String>),
@@ -18,6 +21,9 @@ pub enum Events {
     UnlockSuccess,
     UnlockFailure {
         message: String,
+    },
+    Notify {
+        notification: Notification,
     },
     Close,
     // Send,

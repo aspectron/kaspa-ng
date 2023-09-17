@@ -17,20 +17,16 @@ pub fn render_qrcode(text: &str, width: usize, height: usize) -> String {
 // #[macro_use]
 #[macro_export]
 macro_rules! spawn {
-    ($args: expr) => {
-        {
-            let id = concat!(file!(),":", line!());
-            println!("#### spawn ID: {}", id);
-            let payload = Payload::new(id);
-            if !payload.is_pending() {
-                println!("spawning...");
-                spawn_with_result(&payload,
-                    $args
-                );
-            }
-            payload.take()
+    ($args: expr) => {{
+        let id = concat!(file!(), ":", line!());
+        println!("#### spawn ID: {}", id);
+        let payload = Payload::new(id);
+        if !payload.is_pending() {
+            println!("spawning...");
+            spawn_with_result(&payload, $args);
         }
-    }
+        payload.take()
+    }};
 }
 
 pub use spawn;

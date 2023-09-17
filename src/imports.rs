@@ -28,6 +28,7 @@ pub use std::sync::{
     OnceLock,
 };
 pub use std::sync::{Arc, Mutex};
+pub use std::time::Duration;
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::extensions::is_not_empty::*;
 pub use workflow_log::*;
@@ -48,13 +49,14 @@ pub use crate::interop::{spawn, spawn_with_result, Interop, Payload};
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleT};
 pub use crate::network::Network;
+pub use crate::notifications::{Notification, Notify};
 pub use crate::panel::Panel;
 pub use crate::primitives::Account;
 pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
 pub use crate::settings::{KaspadNodeKind, RpcConfig, Settings};
 pub use crate::theme::theme;
-pub use crate::wallet::Wallet;
 pub use crate::utils::spawn;
+pub use crate::wallet::Wallet;
 // #[macro_use]
 pub use crate::utils::*;

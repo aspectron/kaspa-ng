@@ -3,6 +3,7 @@ use crate::interop::Interop;
 // use crate::modules::HashMapModuleExtension;
 // use crate::modules::HashMapModuleExtension;
 use crate::sync::SyncStatus;
+use egui_notify::Toasts;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
 
@@ -23,6 +24,8 @@ pub struct Wallet {
     modules: HashMap<TypeId, Module>,
     // #[allow(dead_code)]
     pub settings: Settings,
+
+    pub toasts: Toasts,
 
     pub large_style: egui::Style,
     pub default_style: egui::Style,
@@ -120,6 +123,7 @@ impl Wallet {
             modules: modules.clone(),
             stack: VecDeque::new(),
             settings: settings.clone(),
+            toasts: Toasts::default(),
 
             default_style,
             large_style,
@@ -245,6 +249,8 @@ impl eframe::App for Wallet {
                 log_error!("error processing wallet interop event: {}", err);
             }
         }
+
+        self.toasts.show(ctx);
 
         // let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
         // section.borrow_mut().render(self, ctx, frame, ui);
@@ -432,14 +438,15 @@ impl eframe::App for Wallet {
 
 impl Wallet {
     fn render_status(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui|{
+        ui.horizontal(|ui| {
             if !self.wallet().is_connected() {
                 ui.label("Not Connected");
             } else {
                 ui.horizontal(|ui| {
                     if self.wallet().is_synced() {
                         self.render_connected_state(ui);
-                    } else if let Some(status) = self.sync_state.as_ref().map(SyncStatus::try_from) {
+                    } else if let Some(status) = self.sync_state.as_ref().map(SyncStatus::try_from)
+                    {
                         if status.synced {
                             self.render_connected_state(ui);
                             ui.separator();
@@ -464,7 +471,11 @@ impl Wallet {
             }
             ui.add_space(ui.available_width() - 12.);
             // ui.separator();
-            if icons().settings.render_with_options(ui, &IconSize::new(Vec2::splat(16.)), true).clicked() {
+            if icons()
+                .sliders
+                .render_with_options(ui, &IconSize::new(Vec2::splat(16.)), true)
+                .clicked()
+            {
                 self.select::<modules::Settings>();
             }
             // ui.label(egui::RichText::new(egui_phosphor::light::GEAR_FINE).size(16.0));
@@ -503,6 +514,9 @@ impl Wallet {
             }
             Events::AccountList { account_list } => {
                 self.account_list = (*account_list).clone();
+            }
+            Events::Notify { notification } => {
+                notification.render(&mut self.toasts);
             }
             Events::Close { .. } => {}
             // Events::Send { .. } => { },

@@ -119,7 +119,12 @@ pub struct Icons {
     pub back: Icon,
     pub close: Icon,
     pub error: Icon,
-    pub settings: Icon,
+    pub gear: Icon,
+    pub list: Icon,
+    pub vertical_dots: Icon,
+    pub vertical_dots_outline: Icon,
+    pub faders: Icon,
+    pub sliders: Icon,
 }
 
 impl Default for Icons {
@@ -128,7 +133,12 @@ impl Default for Icons {
             back: phosphor!(ARROW_BEND_UP_LEFT),
             close: phosphor!(X),
             error: phosphor!(SEAL_WARNING),
-            settings: phosphor!(GEAR),
+            gear: phosphor!(GEAR),
+            list: phosphor!(LIST),
+            vertical_dots: phosphor!(DOTS_THREE_VERTICAL),
+            vertical_dots_outline: phosphor!(DOTS_THREE_OUTLINE_VERTICAL),
+            faders: phosphor!(FADERS),
+            sliders: phosphor!(SLIDERS_HORIZONTAL),
         }
     }
 }

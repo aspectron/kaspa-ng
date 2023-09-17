@@ -12,6 +12,7 @@ pub mod imports;
 pub mod interop;
 pub mod modules;
 pub mod network;
+pub mod notifications;
 pub mod panel;
 pub mod primitives;
 pub mod prompt;
