@@ -13,7 +13,7 @@ impl Context {
             let receive_address = account.receive_address().unwrap().to_string();
             let qr = render_qrcode(&receive_address, 200, 200);
             Some(Arc::new(Self {
-                qr : qr.as_bytes().to_vec().into(),
+                qr: qr.as_bytes().to_vec().into(),
                 receive_address,
             }))
         } else {

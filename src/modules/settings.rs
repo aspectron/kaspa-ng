@@ -97,11 +97,9 @@ impl ModuleT for Settings {
 
                         // ui.label("")
                             
-                        if self.settings.kaspad != wallet.settings.kaspad {
-                            if ui.button("Apply").clicked() {
-                                wallet.settings.kaspad = self.settings.kaspad;
-                                wallet.settings.store().unwrap();
-                            }
+                        if self.settings.kaspad != wallet.settings.kaspad && ui.button("Apply").clicked() {
+                            wallet.settings.kaspad = self.settings.kaspad;
+                            wallet.settings.store().unwrap();
                         }
 
                         ui.label("This is the settings page");

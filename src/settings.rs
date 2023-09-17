@@ -89,7 +89,7 @@ impl Default for Settings {
                 // let wrpc_url = "ws://127.0.0.1:17210".to_string();
             } else {
                 use workflow_dom::utils::*;
-                
+
                 let location = window().location();
                 let protocol = location.protocol().expect("unable to get protocol");
                 let hostname = window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");

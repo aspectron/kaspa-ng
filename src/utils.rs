@@ -7,12 +7,10 @@ pub fn render_qrcode(text: &str, width: usize, height: usize) -> String {
 
     let _theme = crate::theme::theme();
 
-    code
-        .render::<svg::Color<'_>>()
+    code.render::<svg::Color<'_>>()
         .min_dimensions(width as u32, height as u32)
         .dark_color(svg::Color("#ffffff"))
         .light_color(svg::Color("#00000000"))
         .build()
         .to_string()
-
 }

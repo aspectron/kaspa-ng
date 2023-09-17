@@ -108,7 +108,6 @@ impl KaspaService {
     pub fn create_rpc_client(config: &RpcConfig, network: Network) -> Result<Rpc> {
         match config {
             RpcConfig::Wrpc { url, encoding } => {
-
                 log_warning!("create_rpc_client - RPC URL: {}", url);
 
                 let url = KaspaRpcClient::parse_url(
