@@ -73,12 +73,21 @@ where
         self.inner.pending.store(true, Ordering::SeqCst);
     }
 
+    pub fn clear_pending(&self) {
+        self.inner.pending.store(false, Ordering::SeqCst);
+    }
+
     pub fn is_some(&self) -> bool {
         self.inner.payload.lock().unwrap().is_some()
     }
 
     pub fn take(&self) -> Option<T> {
-        self.inner.payload.lock().unwrap().take()
+        if let Some(result) = self.inner.payload.lock().unwrap().take() {
+            self.clear_pending();
+            Some(result)
+        } else {
+            None
+        }
     }
 
     pub fn inner_clone(&self) -> Option<T>

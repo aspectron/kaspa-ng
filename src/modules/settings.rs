@@ -73,6 +73,15 @@ impl ModuleT for Settings {
                             ui.radio_value(&mut self.settings.network, Network::Testnet11, "TESTNET-11");
                         });
 
+                        // if let Some(result) = spawn!(async move {
+
+                        //     println!("Spawn executing...");
+                        //     Ok(123)
+                        // }) {
+
+                        //     println!("Result {:?}", result);
+                        //     ui.label(format!("Result {:?}", result));
+                        // }
 
                     });
 

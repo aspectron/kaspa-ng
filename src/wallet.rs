@@ -431,36 +431,44 @@ impl eframe::App for Wallet {
 }
 
 impl Wallet {
-    fn render_status(&self, ui: &mut egui::Ui) {
-        if !self.wallet().is_connected() {
-            ui.label("Not Connected");
-        } else {
-            ui.horizontal(|ui| {
-                if self.wallet().is_synced() {
-                    self.render_connected_state(ui);
-                } else if let Some(status) = self.sync_state.as_ref().map(SyncStatus::try_from) {
-                    if status.synced {
+    fn render_status(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui|{
+            if !self.wallet().is_connected() {
+                ui.label("Not Connected");
+            } else {
+                ui.horizontal(|ui| {
+                    if self.wallet().is_synced() {
+                        self.render_connected_state(ui);
+                    } else if let Some(status) = self.sync_state.as_ref().map(SyncStatus::try_from) {
+                        if status.synced {
+                            self.render_connected_state(ui);
+                            ui.separator();
+                            ui.label("Ready...");
+                        } else {
+                            ui.vertical(|ui| {
+                                status.progress_bar().map(|bar| ui.add(bar));
+                                ui.horizontal(|ui| {
+                                    self.render_connected_state(ui);
+                                    status.render_text_state(ui);
+                                    // - TODO - NOT INFO ETC..
+                                });
+                            });
+                        }
+                    } else {
+                        // ui.label("Connected");
                         self.render_connected_state(ui);
                         ui.separator();
-                        ui.label("Ready...");
-                    } else {
-                        ui.vertical(|ui| {
-                            status.progress_bar().map(|bar| ui.add(bar));
-                            ui.horizontal(|ui| {
-                                self.render_connected_state(ui);
-                                status.render_text_state(ui);
-                                // - TODO - NOT INFO ETC..
-                            });
-                        });
+                        ui.label("Syncing...");
                     }
-                } else {
-                    // ui.label("Connected");
-                    self.render_connected_state(ui);
-                    ui.separator();
-                    ui.label("Syncing...");
-                }
-            });
-        }
+                });
+            }
+            ui.add_space(ui.available_width() - 12.);
+            // ui.separator();
+            if icons().settings.render_with_options(ui, &IconSize::new(Vec2::splat(16.)), true).clicked() {
+                self.select::<modules::Settings>();
+            }
+            // ui.label(egui::RichText::new(egui_phosphor::light::GEAR_FINE).size(16.0));
+        });
     }
 
     fn render_connected_state(&self, ui: &mut egui::Ui) {

@@ -119,6 +119,7 @@ pub struct Icons {
     pub back: Icon,
     pub close: Icon,
     pub error: Icon,
+    pub settings: Icon,
 }
 
 impl Default for Icons {
@@ -127,6 +128,7 @@ impl Default for Icons {
             back: phosphor!(ARROW_BEND_UP_LEFT),
             close: phosphor!(X),
             error: phosphor!(SEAL_WARNING),
+            settings: phosphor!(GEAR),
         }
     }
 }
