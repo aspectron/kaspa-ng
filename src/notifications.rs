@@ -16,6 +16,7 @@ pub struct Notification {
     pub message: String,
     pub duration: Option<Duration>,
     pub progress: bool,
+    pub closable : bool,
 }
 
 impl Default for Notification {
@@ -23,8 +24,9 @@ impl Default for Notification {
         Self {
             kind: Notify::Info,
             message: String::new(),
-            duration: Some(Duration::from_secs(3)),
+            duration: Some(Duration::from_millis(3500)),
             progress: true,
+            closable : false,
         }
     }
 }
@@ -64,31 +66,36 @@ impl Notification {
                 toasts
                     .info(self.message)
                     .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress);
+                    .set_show_progress_bar(self.progress)
+                    .set_closable(self.closable);
             }
             Notify::Success => {
                 toasts
                     .success(self.message)
                     .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress);
+                    .set_show_progress_bar(self.progress)
+                    .set_closable(self.closable);
             }
             Notify::Warning => {
                 toasts
                     .warning(self.message)
                     .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress);
+                    .set_show_progress_bar(self.progress)
+                    .set_closable(self.closable);
             }
             Notify::Error => {
                 toasts
                     .error(self.message)
                     .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress);
+                    .set_show_progress_bar(self.progress)
+                    .set_closable(self.closable);
             }
             Notify::Basic => {
                 toasts
                     .basic(self.message)
                     .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress);
+                    .set_show_progress_bar(self.progress)
+                    .set_closable(self.closable);
             }
         }
     }

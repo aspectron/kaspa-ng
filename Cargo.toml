@@ -57,6 +57,7 @@ wasm-bindgen = "0.2.87"
 # ] }
 # egui-phosphor = { version = "0.2.0", features = ["thin","light","regular","bold"] }
 # egui-notify = "0.9.0"
+# egui-toast = "0.9.0"
 
 egui = { path = "../egui/crates/egui" }
 egui_extras = { path = "../egui/crates/egui_extras", features = ["svg"] }
@@ -68,6 +69,7 @@ eframe = { path = "../egui/crates/eframe", default-features = false, features = 
 ] }
 egui-phosphor = { path = "../egui-phosphor", features = ["thin","light","regular","bold"] }
 egui-notify = { path = "../egui-notify" }
+# egui-toast = { path = "../egui-toast" }
 
 
 

@@ -250,7 +250,16 @@ impl eframe::App for Wallet {
             }
         }
 
+
+        // ctx.set_visuals(self.default_style.clone());
+        let current_visuals = ctx.style().visuals.clone(); //.widgets.noninteractive;
+        let mut visuals = current_visuals.clone();
+        // visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0, Color32::from_rgb(0, 0, 0));
+        visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(0, 0, 0);
+        // visuals.bg_fill = egui::Color32::from_rgb(0, 0, 0);
+        ctx.set_visuals(visuals);
         self.toasts.show(ctx);
+        ctx.set_visuals(current_visuals);
 
         // let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
         // section.borrow_mut().render(self, ctx, frame, ui);

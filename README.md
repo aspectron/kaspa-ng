@@ -25,4 +25,5 @@ Sibling folders:
 git -b kaspa clone git@github.com:aspectron/egui
 git clone git@github.com:aspectron/egui-phosphor
 git clone git@github.com:aspectron/egui-notify
+# git clone git@github.com:aspectron/egui-toast
 ```
