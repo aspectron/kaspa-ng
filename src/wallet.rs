@@ -57,6 +57,7 @@ impl Wallet {
     ) -> Self {
         let mut fonts = egui::FontDefinitions::default();
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+        egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
         cc.egui_ctx.set_fonts(fonts);
 
         let default_style = (*cc.egui_ctx.style()).clone();
@@ -249,7 +250,6 @@ impl eframe::App for Wallet {
                 log_error!("error processing wallet interop event: {}", err);
             }
         }
-
 
         // ctx.set_visuals(self.default_style.clone());
         let current_visuals = ctx.style().visuals.clone(); //.widgets.noninteractive;

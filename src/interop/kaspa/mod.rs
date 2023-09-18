@@ -22,16 +22,18 @@ cfg_if! {
             fn stop(&self) -> Result<()>;
         }
 
+        #[derive(Debug)]
         pub enum KaspadServiceEvents {
-            StartInternalInProc { config: Config },
-            StartInternalAsDaemon { config: Config },
-            StartExternalAsDaemon { path: PathBuf, config: Config },
+            StartInternalInProc { config: Config, network : Network },
+            StartInternalAsDaemon { config: Config, network : Network },
+            StartExternalAsDaemon { path: PathBuf, config: Config, network : Network },
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
             Exit,
         }
 
     } else {
 
+        #[derive(Debug)]
         pub enum KaspadServiceEvents {
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
             Exit,
@@ -59,7 +61,7 @@ impl KaspaService {
             panic!("Failed to open local store: {}", e);
         });
 
-        let wallet = runtime::Wallet::try_new(storage, Some(settings.network.into()))
+        let wallet = runtime::Wallet::try_new(storage, Some(settings.node.network.into()))
             .unwrap_or_else(|e| {
                 panic!("Failed to create wallet instance: {}", e);
             });
@@ -81,7 +83,7 @@ impl KaspaService {
 
         // enqueue startup event to the service channel to
         // start kaspad or initiate connection to remote kaspad
-        match KaspadServiceEvents::try_from(settings) {
+        match KaspadServiceEvents::try_from(&settings.node) {
             Ok(event) => {
                 service_events.sender.try_send(event).unwrap_or_else(|err| {
                     println!("KaspadService error: {}", err);
@@ -96,7 +98,7 @@ impl KaspaService {
             application_events,
             service_events,
             task_ctl: Channel::oneshot(),
-            network: Mutex::new(settings.network),
+            network: Mutex::new(settings.node.network),
             wallet: Arc::new(wallet),
             // rpc : Mutex::new(rpc),
             // wrpc,
@@ -136,7 +138,13 @@ impl KaspaService {
         &self.wallet
     }
 
-    pub async fn stop_kaspad_interface(&self) -> Result<()> {
+    // pub async fn stop_wallet(&self) -> Result<()> {
+    //     self.wallet().stop().await.expect("Unable to stop wallet");
+    //     self.wallet().bind_rpc(None).await?;
+    //     Ok(())
+    // }
+
+    pub async fn stop_all_services(&self) -> Result<()> {
         self.wallet().stop().await.expect("Unable to stop wallet");
         self.wallet().bind_rpc(None).await?;
 
@@ -146,9 +154,33 @@ impl KaspaService {
             if let Err(err) = kaspad.stop() {
                 println!("error stopping kaspad: {}", err);
             }
+            println!("*** KASPAD STOPPED ***");
         }
         Ok(())
     }
+
+    pub async fn start_wallet_service(&self, rpc : Rpc, network : Network) -> Result<()> {
+        self.wallet().set_network_id(network.into()).expect("Can not change network id while the wallet is connected");
+        self.wallet().bind_rpc(Some(rpc)).await.unwrap();
+        self.wallet().start().await.expect("Unable to stop wallet");
+        Ok(())
+    }
+
+    pub fn update_services(&self, node_settings : &NodeSettings) {
+        match KaspadServiceEvents::try_from(node_settings) {
+            Ok(event) => {
+                self.service_events.sender.try_send(event).unwrap_or_else(|err| {
+                    println!("KaspadService error: {}", err);
+                });
+            }
+            Err(err) => {
+                println!("KaspadServiceEvents::try_from() error: {}", err);
+            }
+        }
+
+    }
+
+    
 }
 
 #[async_trait]
@@ -182,12 +214,15 @@ impl Service for KaspaService {
                 msg = this.as_ref().service_events.receiver.recv().fuse() => {
 
                     if let Ok(event) = msg {
+
+                        println!("NODE EVENT: {:#?}", event);
+
                         match event {
 
                             #[cfg(not(target_arch = "wasm32"))]
-                            KaspadServiceEvents::StartInternalInProc { config } => {
+                            KaspadServiceEvents::StartInternalInProc { config, network } => {
 
-                                this.stop_kaspad_interface().await?;
+                                this.stop_all_services().await?;
 
                                 // this.wallet().stop().await.expect("Unable to stop wallet");
                                 // this.wallet().bind_rpc(None).await?;
@@ -198,6 +233,8 @@ impl Service for KaspaService {
                                 //         println!("error stopping kaspad: {}", err);
                                 //     }
                                 // }
+
+                                println!("*** STARTING NEW KASPAD ***");
 
                                 println!("*** STARTING NEW KASPAD ***");
                                 let kaspad = Arc::new(inproc::InProc::default());
@@ -214,31 +251,35 @@ impl Service for KaspaService {
                                 // - CONNECT NEVER REACHES BECAUSE WHEN IT IS BROADCASTED,
                                 // - MULTIPLEXER CLIENT DOES NOT YET EXISTS
 
-                                this.wallet().bind_rpc(Some(rpc)).await.unwrap();
-                                this.wallet().start().await.expect("Unable to stop wallet");
+                                // this.wallet().bind_rpc(Some(rpc)).await.unwrap();
+                                // this.wallet().start().await.expect("Unable to stop wallet");
 
+                                this.start_wallet_service(rpc, network).await?;
 
                                 rpc_ctl.try_signal_open().expect("Unable to signal `open` event to rpc ctl");
 
                             },
                             #[cfg(not(target_arch = "wasm32"))]
-                            KaspadServiceEvents::StartInternalAsDaemon { config:_ } => {
+                            KaspadServiceEvents::StartInternalAsDaemon { config:_, network:_ } => {
                                 todo!()
                             },
                             #[cfg(not(target_arch = "wasm32"))]
-                            KaspadServiceEvents::StartExternalAsDaemon { path:_, config:_ } => {
+                            KaspadServiceEvents::StartExternalAsDaemon { path:_, config:_, network:_ } => {
                                 todo!()
                             },
                             KaspadServiceEvents::StartRemoteConnection { rpc_config, network } => {
 
-                                self.stop_kaspad_interface().await?;
+                                self.stop_all_services().await?;
 
                                 let rpc = Self::create_rpc_client(&rpc_config, network).expect("Kaspad Service - unable to create wRPC client");
                                 // let rpc = Self::create_rpc_client(&settings.rpc).expect("Kaspad Service - unable to create wRPC client");
                                 let wrpc_client = rpc.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok();
 
-                                this.wallet().bind_rpc(Some(rpc)).await.unwrap();
-                                this.wallet().start().await.expect("Unable to stop wallet");
+                                // this.wallet().set_network_id(network.into()).expect("Can not change network id while the wallet is connected");
+                                // this.wallet().bind_rpc(Some(rpc)).await.unwrap();
+                                // this.wallet().start().await.expect("Unable to stop wallet");
+
+                                this.start_wallet_service(rpc, network).await?;
 
                                 // rpc.connect()
 
@@ -266,17 +307,20 @@ impl Service for KaspaService {
             }
         }
 
-        println!("stopping wallet from node manager...");
-        this.wallet().stop().await.expect("Unable to stop wallet");
-        this.wallet().bind_rpc(None).await?;
 
-        #[cfg(not(target_arch = "wasm32"))]
-        if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
-            println!("shutting down kaspad manager service...");
-            if let Err(err) = kaspad.stop() {
-                println!("error stopping kaspad: {}", err);
-            }
-        }
+        println!("shutting down node manager...");
+        this.stop_all_services().await?;
+
+        // this.wallet().stop().await.expect("Unable to stop wallet");
+        // this.wallet().bind_rpc(None).await?;
+
+        // #[cfg(not(target_arch = "wasm32"))]
+        // if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
+        //     println!("shutting down kaspad manager service...");
+        //     if let Err(err) = kaspad.stop() {
+        //         println!("error stopping kaspad: {}", err);
+        //     }
+        // }
 
         this.task_ctl.send(()).await.unwrap();
         // Ok(())
@@ -299,27 +343,27 @@ impl Service for KaspaService {
     }
 }
 
-impl TryFrom<&Settings> for KaspadServiceEvents {
+impl TryFrom<&NodeSettings> for KaspadServiceEvents {
     type Error = Error;
-    fn try_from(settings: &Settings) -> std::result::Result<Self, Self::Error> {
+    fn try_from(node_settings: &NodeSettings) -> std::result::Result<Self, Self::Error> {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
 
 
-                match &settings.kaspad {
-                    KaspadNodeKind::InternalInProc => {
+                match &node_settings.kaspad {
+                    KaspadNodeKind::IntegratedInProc => {
                         // let config = ;
-                        Ok(KaspadServiceEvents::StartInternalInProc { config : Config::from(settings.clone()) })
+                        Ok(KaspadServiceEvents::StartInternalInProc { config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
-                    KaspadNodeKind::InternalAsDaemon => {
-                        Ok(KaspadServiceEvents::StartInternalAsDaemon { config : Config::from(settings.clone()) })
+                    KaspadNodeKind::IntegratedAsDaemon => {
+                        Ok(KaspadServiceEvents::StartInternalAsDaemon { config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::ExternalAsDaemon => {
-                        let path = settings.kaspad_node_binary.clone().ok_or(Error::MissingExternalKaspadBinary)?;
-                        Ok(KaspadServiceEvents::StartExternalAsDaemon { path : PathBuf::from(path), config : Config::from(settings.clone()) })
+                        let path = node_settings.kaspad_node_binary.clone().ok_or(Error::MissingExternalKaspadBinary)?;
+                        Ok(KaspadServiceEvents::StartExternalAsDaemon { path : PathBuf::from(path), config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::Remote => {
-                        Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : settings.into(), network : settings.network })
+                        Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : node_settings.into(), network : node_settings.network })
                     }
                 }
 

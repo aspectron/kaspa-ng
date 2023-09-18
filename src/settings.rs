@@ -8,11 +8,29 @@ cfg_if! {
         #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
         #[serde(rename_all = "kebab-case")]
         pub enum KaspadNodeKind {
-            Remote,// { rpc_config : RpcConfig },
+            Remote,
             #[default]
-            InternalInProc,
-            InternalAsDaemon,
-            ExternalAsDaemon,// { path : String },
+            IntegratedInProc,
+            IntegratedAsDaemon,
+            ExternalAsDaemon,
+        }
+
+        const KASPAD_NODE_KINDS: [KaspadNodeKind; 4] = [
+            KaspadNodeKind::Remote,
+            KaspadNodeKind::IntegratedInProc,
+            KaspadNodeKind::IntegratedAsDaemon,
+            KaspadNodeKind::ExternalAsDaemon,
+        ];
+
+        impl std::fmt::Display for KaspadNodeKind {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    KaspadNodeKind::Remote => write!(f, "Remote"),
+                    KaspadNodeKind::IntegratedInProc => write!(f, "Integrated"),
+                    KaspadNodeKind::IntegratedAsDaemon => write!(f, "Integrated Daemon"),
+                    KaspadNodeKind::ExternalAsDaemon => write!(f, "External Daemon"),
+                }
+            }
         }
 
     } else {
@@ -24,15 +42,31 @@ cfg_if! {
 
         impl Default for KaspadNodeKind {
             fn default() -> Self {
-                // use workflow_dom::utils::*;
-                // let url = window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
-                KaspadNodeKind::Remote// { rpc_config : RpcConfig::default() }
+                KaspadNodeKind::Remote
+            }
+        }
+
+        const KASPAD_NODE_KINDS: [KaspadNodeKind; 4] = [
+            KaspadNodeKind::Remote,
+        ];
+
+        impl std::fmt::Display for KaspadNodeKind {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    KaspadNodeKind::Remote => write!(f, "Remote"),
+                }
             }
         }
     }
 }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+impl KaspadNodeKind {
+    pub fn iter() -> impl Iterator<Item = &'static KaspadNodeKind> {
+        KASPAD_NODE_KINDS.iter()
+    }
+}
+
+#[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub enum RpcKind {
     #[default]
     Wrpc,
@@ -68,20 +102,20 @@ pub enum RpcConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Settings {
-    // #[serde(rename = "rpc")]
+pub struct NodeSettings {
     pub rpc_kind: RpcKind,
     pub wrpc_url: String,
     pub wrpc_encoding: WrpcEncoding,
     pub grpc_url: String,
 
-    // pub rpc: RpcConfig,
     pub network: Network,
     pub kaspad: KaspadNodeKind,
     pub kaspad_node_binary: Option<String>,
+
 }
 
-impl Default for Settings {
+
+impl Default for NodeSettings {
     fn default() -> Self {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
@@ -123,6 +157,78 @@ impl Default for Settings {
     }
 }
 
+impl NodeSettings {
+    pub fn compare(&self, other: &NodeSettings) -> Option<bool> {
+        if self.network != other.network {
+            Some(true)
+        } else if self.kaspad != other.kaspad {
+            Some(true)
+        } else if self.rpc_kind != other.rpc_kind
+            || self.wrpc_url != other.wrpc_url
+            || self.wrpc_encoding != other.wrpc_encoding
+            || self.grpc_url != other.grpc_url
+        {
+            Some(self.kaspad != KaspadNodeKind::IntegratedInProc)
+        } else if self.kaspad_node_binary != other.kaspad_node_binary {
+            Some(self.kaspad == KaspadNodeKind::ExternalAsDaemon)
+        } else {
+            None
+        }
+    }
+}
+
+impl From<&NodeSettings> for RpcConfig {
+    fn from(settings: &NodeSettings) -> Self {
+        match settings.rpc_kind {
+            RpcKind::Wrpc => RpcConfig::Wrpc {
+                url: settings.wrpc_url.clone(),
+                encoding: settings.wrpc_encoding,
+            },
+            RpcKind::Grpc => RpcConfig::Grpc {
+                url: settings.grpc_url.clone(),
+            },
+        }
+    }
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct UxSettings {
+
+}
+
+impl Default for UxSettings {
+    fn default() -> Self {
+        Self {
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct Settings {
+    pub node : NodeSettings,
+    pub ux : UxSettings,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            node: NodeSettings::default(),
+            ux: UxSettings::default(),
+        }
+    }
+}
+
+impl Settings {
+    // Returns `Option<bool>` here `Option` indicates that 
+    // settings have changed and `bool` indicates if the change
+    // requires the node subsystem restart.
+ 
+}
+
+
 fn storage() -> Result<Storage> {
     Ok(Storage::try_new("kaspa-egui")?)
 }
@@ -153,16 +259,3 @@ impl Settings {
     }
 }
 
-impl From<&Settings> for RpcConfig {
-    fn from(settings: &Settings) -> Self {
-        match settings.rpc_kind {
-            RpcKind::Wrpc => RpcConfig::Wrpc {
-                url: settings.wrpc_url.clone(),
-                encoding: settings.wrpc_encoding,
-            },
-            RpcKind::Grpc => RpcConfig::Grpc {
-                url: settings.grpc_url.clone(),
-            },
-        }
-    }
-}

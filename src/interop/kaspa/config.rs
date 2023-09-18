@@ -4,13 +4,14 @@ use kaspa_wrpc_server::address::WrpcNetAddress;
 #[cfg(not(target_arch = "wasm32"))]
 pub use kaspad_lib::args::Args;
 
+#[derive(Debug)]
 pub struct Config {
     network: Network,
 }
 
-impl From<Settings> for Config {
-    fn from(settings: Settings) -> Self {
-        let network = settings.network;
+impl From<NodeSettings> for Config {
+    fn from(node_settings: NodeSettings) -> Self {
+        let network = node_settings.network;
         Self { network }
     }
 }
@@ -31,8 +32,11 @@ impl From<Config> for Args {
             }
         }
 
+        args.perf_metrics = true;
+        args.perf_metrics_interval_sec = 1;
+        args.yes = true;
         args.utxoindex = true;
-        args.rpclisten_borsh = Some(WrpcNetAddress::Default);
+        // args.rpclisten_borsh = Some(WrpcNetAddress::Default);
 
         args
     }

@@ -87,6 +87,10 @@ impl Interop {
         &self.inner.kaspa.wallet
     }
 
+    pub fn kaspa_service(&self) -> &Arc<KaspaService> {
+        &self.inner.kaspa
+    }
+
     pub fn application_events(&self) -> &Channel<Events> {
         &self.inner.application_events
     }

@@ -16,7 +16,7 @@ pub struct Notification {
     pub message: String,
     pub duration: Option<Duration>,
     pub progress: bool,
-    pub closable : bool,
+    pub closable: bool,
 }
 
 impl Default for Notification {
@@ -26,7 +26,7 @@ impl Default for Notification {
             message: String::new(),
             duration: Some(Duration::from_millis(3500)),
             progress: true,
-            closable : false,
+            closable: false,
         }
     }
 }

@@ -68,20 +68,16 @@ impl ModuleT for Settings {
                         // ui.label("This is the settings page");
 
                         ui.horizontal_wrapped(|ui|{
-                            ui.radio_value(&mut self.settings.network, Network::Mainnet, "MAINNET");
-                            ui.radio_value(&mut self.settings.network, Network::Testnet10, "TESTNET-10");
-                            ui.radio_value(&mut self.settings.network, Network::Testnet11, "TESTNET-11");
+
+                            Network::iter().for_each(|network| {
+                                ui.radio_value(&mut self.settings.node.network, *network, network.to_string());
+                            });
+
+                            // ui.radio_value(&mut self.settings.network, Network::Mainnet, "MAINNET");
+                            // ui.radio_value(&mut self.settings.network, Network::Testnet10, "TESTNET-10");
+                            // ui.radio_value(&mut self.settings.network, Network::Testnet11, "TESTNET-11");
                         });
 
-                        // if let Some(result) = spawn!(async move {
-
-                        //     println!("Spawn executing...");
-                        //     Ok(123)
-                        // }) {
-
-                        //     println!("Result {:?}", result);
-                        //     ui.label(format!("Result {:?}", result));
-                        // }
 
                     });
 
@@ -94,23 +90,21 @@ impl ModuleT for Settings {
 
                         ui.horizontal_wrapped(|ui|{
 
-                            ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::Remote, "Remote");
-                            cfg_if! {
-                                if #[cfg(not(target_arch = "wasm32"))] {
-                                    ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::InternalInProc, "Internal");
-                                    ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::InternalAsDaemon, "Internal Daemon");
-                                    ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::ExternalAsDaemon, "External Daemon");
-                                }
-                            }
+                            KaspadNodeKind::iter().for_each(|node_kind| {
+                                ui.radio_value(&mut self.settings.node.kaspad, *node_kind, node_kind.to_string());
+                            });
+                            // ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::Remote, "Remote");
+                            // cfg_if! {
+                            //     if #[cfg(not(target_arch = "wasm32"))] {
+                            //         ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::IntegratedInProc, "Internal");
+                            //         ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::IntegratedAsDaemon, "Internal Daemon");
+                            //         ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::ExternalAsDaemon, "External Daemon");
+                            //     }
+                            // }
                         });
 
                         // ui.label("")
                             
-                        if self.settings.kaspad != wallet.settings.kaspad && ui.button("Apply").clicked() {
-                            wallet.settings.kaspad = self.settings.kaspad;
-                            wallet.settings.store().unwrap();
-                        }
-
                         ui.label("This is the settings page");
 
                     });
@@ -121,7 +115,7 @@ impl ModuleT for Settings {
 
                         ui.horizontal(|ui|{
                             ui.label("URL: ");
-                            ui.add(TextEdit::singleline(&mut self.settings.wrpc_url));
+                            ui.add(TextEdit::singleline(&mut self.settings.node.wrpc_url));
                         });
                         ui.horizontal_wrapped(|_ui|{
                             // ui.radio_value(&mut );
@@ -130,6 +124,45 @@ impl ModuleT for Settings {
                         ui.label("This is the settings page");
 
                     });
+
+                if let Some(restart) = self.settings.node.compare(&wallet.settings.node) {
+
+                    if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
+                        match response {
+                            Confirm::Ack => {
+                                wallet.settings = self.settings.clone();
+                                wallet.settings.store().unwrap();
+                                if restart {
+                                    println!("NODE INTERFACE UPDATE: {:?}", self.settings.node);
+                                    self.interop.kaspa_service().update_services(&self.settings.node);
+                                    // println!("TODO - restart");
+                                }
+                            },
+                            Confirm::Nack => {
+                                self.settings = wallet.settings.clone();
+                            }
+                        }
+                    }
+                    // ui.separator();
+                    // ui.horizontal(|ui| {
+
+                    //     ui.add_space(ui.available_width() - 16. - (theme().medium_button_size.x + ui.spacing().item_spacing.x)*2.);
+
+                    //     if ui.medium_button("Apply").clicked() {
+                    //         wallet.settings = self.settings.clone();
+                    //         wallet.settings.store().unwrap();
+                    //         if restart {
+                    //             println!("TODO - restart");
+                    //         }
+                    //     }
+                        
+                    //     if ui.medium_button("Cancel").clicked() {
+                    //         self.settings = wallet.settings.clone();
+                    //     }
+                    // });
+                    ui.separator();
+                }
+
             });
 
             if ui.button("Test Toast").clicked() {
@@ -139,3 +172,13 @@ impl ModuleT for Settings {
             }
     }
 }
+
+// if let Some(result) = spawn!(async move {
+
+//     println!("Spawn executing...");
+//     Ok(123)
+// }) {
+
+//     println!("Result {:?}", result);
+//     ui.label(format!("Result {:?}", result));
+// }

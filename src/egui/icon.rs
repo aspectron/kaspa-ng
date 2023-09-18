@@ -86,11 +86,13 @@ impl Icon {
         match self.kind {
             Kind::Phosphor { symbol } => {
                 let color = if !active {
-                    ui.ctx().style().visuals.noninteractive().text_color()
+                    ui.ctx().style().visuals.widgets.noninteractive.text_color()
+                    // ui.ctx().style().visuals.noninteractive().text_color()
                 } else if self.hover.load(Ordering::Relaxed) {
-                    ui.ctx().style().visuals.strong_text_color()
+                    ui.ctx().style().visuals.widgets.hovered.text_color()
+                    // ui.ctx().style().visuals.strong_text_color()
                 } else {
-                    ui.ctx().style().visuals.text_color()
+                    ui.ctx().style().visuals.widgets.inactive.text_color()
                 };
                 let response = ui.add(
                     Label::new(egui::RichText::new(symbol).size(size.inner.y).color(color))
@@ -138,7 +140,8 @@ impl Default for Icons {
             vertical_dots: phosphor!(DOTS_THREE_VERTICAL),
             vertical_dots_outline: phosphor!(DOTS_THREE_OUTLINE_VERTICAL),
             faders: phosphor!(FADERS),
-            sliders: phosphor!(SLIDERS_HORIZONTAL),
+            // sliders: phosphor!(SLIDERS_HORIZONTAL),
+            sliders: phosphor!(SLIDERS),
         }
     }
 }

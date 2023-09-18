@@ -27,3 +27,11 @@ impl From<Network> for NetworkId {
         }
     }
 }
+
+const NETWORKS: [Network; 3] = [Network::Mainnet, Network::Testnet10, Network::Testnet11];
+
+impl Network {
+    pub fn iter() -> impl Iterator<Item = &'static Network> {
+        NETWORKS.iter()
+    }
+}
