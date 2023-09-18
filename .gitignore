@@ -6,3 +6,4 @@
 /dist-firefox
 .DS_Store
 datadir
+/ipc/target
