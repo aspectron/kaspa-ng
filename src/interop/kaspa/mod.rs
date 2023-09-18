@@ -61,7 +61,7 @@ impl KaspaService {
             panic!("Failed to open local store: {}", e);
         });
 
-        let wallet = runtime::Wallet::try_new(storage, Some(settings.node.network.into()))
+        let wallet = runtime::Wallet::try_with_rpc(None, storage, Some(settings.node.network.into()))
             .unwrap_or_else(|e| {
                 panic!("Failed to create wallet instance: {}", e);
             });
@@ -145,8 +145,10 @@ impl KaspaService {
     // }
 
     pub async fn stop_all_services(&self) -> Result<()> {
-        self.wallet().stop().await.expect("Unable to stop wallet");
-        self.wallet().bind_rpc(None).await?;
+        if self.wallet().has_rpc() {
+            self.wallet().stop().await.expect("Unable to stop wallet");
+            self.wallet().bind_rpc(None).await?;
+        }
 
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
@@ -189,10 +191,10 @@ impl Service for KaspaService {
         println!("kaspad manager service starting...");
         let this = self.clone();
 
-        println!("starting wallet...");
-        this.wallet.start().await.unwrap_or_else(|err| {
-            println!("Wallet start error: {:?}", err);
-        });
+        // println!("starting wallet...");
+        // this.wallet.start().await.unwrap_or_else(|err| {
+        //     println!("Wallet start error: {:?}", err);
+        // });
 
         let wallet_events = this.wallet.multiplexer().channel();
 
@@ -261,11 +263,13 @@ impl Service for KaspaService {
                             },
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::StartInternalAsDaemon { config:_, network:_ } => {
-                                todo!()
+                                self.stop_all_services().await?;
+                                // todo!()
                             },
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::StartExternalAsDaemon { path:_, config:_, network:_ } => {
-                                todo!()
+                                self.stop_all_services().await?;
+                                // todo!()
                             },
                             KaspadServiceEvents::StartRemoteConnection { rpc_config, network } => {
 

@@ -51,12 +51,14 @@ impl super::Kaspad for InProc {
         if let Some(mut inner) = self.inner.lock().unwrap().take() {
             let (core,thread) = {
                 println!("*** TAKING RPC CORE SERVICE...");
-                inner.rpc_core_service.take();
+                let rpc_core_service = inner.rpc_core_service.take();
+                drop(rpc_core_service);
                 println!("*** RPC CORE SERVICE TAKEN...");
                 (inner.core, inner.thread)
             };
             println!("*** SHUTTING DOWN CORE...");
             core.shutdown();
+            drop(core);
             println!("*** CORE SHUT DOWN...");
             println!("*** WAITING FOR THREAD TO JOIN...");
             thread
