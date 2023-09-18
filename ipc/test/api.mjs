@@ -1,5 +1,6 @@
-class runtime{
-    constructor(chrome){
+class RunTime{
+    constructor(chrome, id){
+        this.id = id;
         this.chrome = chrome;
         this.onMessage = {
             addListener: (callback)=>{
@@ -14,17 +15,16 @@ class runtime{
                 continue;
 
             for (let listener of chrome.onMessageListeners){
-                listener(msg, {id: this.chrome.id}, callback)
+                listener(msg, {id: this.id}, callback)
             }
         }
     }
 }
 const chromes = [];
 export class Chrome{
-    constructor(){
-        this.id = "xxxxxx";
+    constructor(id = "xxxxxx"){
         this.onMessageListeners = [];
-        this.runtime = new runtime(this);
+        this.runtime = new RunTime(this, id);
         chromes.push(this);
     }
     
