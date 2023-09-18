@@ -1,0 +1,19 @@
+[package]
+name = "ipc-test"
+description = "ipc-test"
+version = "1.0.0"
+
+# [features]
+# default = ["kaspa-egui/ipc"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+# kaspa-egui = {path =  "../"}
+js-sys = "0.3.64"
+wasm-bindgen = "0.2.87"
+workflow-log = { path = "../../workflow-rs/log" }
+workflow-core = { path = "../../workflow-rs/core", features = ["no-unsafe-eval"] }
+workflow-dom = { path = "../../workflow-rs/dom" }
+workflow-store = { path = "../../workflow-rs/store" }
