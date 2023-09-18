@@ -2,6 +2,7 @@
 name = "ipc-test"
 description = "ipc-test"
 version = "1.0.0"
+edition = "2021"
 
 # [features]
 # default = ["kaspa-egui/ipc"]
