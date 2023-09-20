@@ -66,7 +66,7 @@ impl ModuleT for Import {
                             // ui.add_space(64.);
                             ui.label("Importing word N/N");
 
-                            ui.horizontal_centered(|ui|{
+                            ui.horizontal(|ui|{
                             // ui.vertical_centered_justified(|ui|{
 
                                 // ui.label(this.mnemonic.last().unwrap_or(&String::new()));
