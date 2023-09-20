@@ -33,6 +33,9 @@ pub enum Error {
 
     #[error("Invalid URL: {0}")]
     InvalidUrl(String),
+
+    #[error(transparent)]
+    RpcError(#[from] kaspa_rpc_core::error::RpcError),
 }
 
 impl Error {
