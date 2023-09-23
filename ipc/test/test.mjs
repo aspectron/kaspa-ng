@@ -1,4 +1,4 @@
-import {TestApi} from "../nodejs/ipc/ipc.js";
+import {TestApi,test_send_message} from "../nodejs/ipc/ipc.js";
 console.log("TestApi", TestApi)
 import {Chrome} from "./api.mjs";
 
@@ -29,7 +29,7 @@ chrome2.runtime.onMessage.addListener((msg, sender, callback)=>{
         callback("got msg in chrome 2:"+msg)
     }
 })
-
+/*
 chrome1.runtime.sendMessage("without callback")
 
 chrome1.runtime.sendMessage("123", (relpy)=>{
@@ -47,6 +47,9 @@ chrome2.runtime.sendMessage("hello", (relpy)=>{
 
 
 api.sendMessage("from wasm");
+*/
+
+test_send_message();
 
 external_chrome.runtime.sendMessage("should not see this message");
 

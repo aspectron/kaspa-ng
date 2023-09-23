@@ -1482,7 +1482,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-core"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "async-channel",
  "async-std",
@@ -1510,7 +1510,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-core-macros"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "convert_case",
  "parse-variants",
@@ -1525,7 +1525,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-dom"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "futures",
  "js-sys",
@@ -1541,7 +1541,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-log"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "cfg-if 1.0.0",
  "console",
@@ -1555,7 +1555,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-macro-tools"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "convert_case",
  "parse-variants",
@@ -1566,7 +1566,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-node"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "borsh",
  "futures",
@@ -1585,7 +1585,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-panic-hook"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "cfg-if 1.0.0",
  "wasm-bindgen",
@@ -1594,7 +1594,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-store"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "async-std",
  "base64",
@@ -1617,7 +1617,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-task"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "futures",
  "thiserror",
@@ -1627,7 +1627,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-task-macros"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "convert_case",
  "parse-variants",
@@ -1641,7 +1641,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-wasm"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "cfg-if 1.0.0",
  "faster-hex",
@@ -1660,7 +1660,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-wasm-macros"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "js-sys",
  "proc-macro-error",

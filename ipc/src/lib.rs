@@ -68,7 +68,7 @@ impl TestApi{
             runtime_id: Some(runtime_id().unwrap()),
             closure: None
         };
-
+log_info!("runtime_id: {:?}", api.runtime_id);
         api.init();
 
         api
@@ -84,6 +84,7 @@ impl TestApi{
         let runtime_id = self.runtime_id.clone();
         let closure = Closure::new(move |msg, sender:Sender, callback|{
             if sender.id() != runtime_id{
+                log_info!("SAME RUNTIME ID!!!");
                 return
             }
             log_info!("[WASM] msg: {:?}, sender id:{:?}, {:?}", msg, sender.id(), callback);
@@ -92,3 +93,18 @@ impl TestApi{
         add_listener(self.closure.as_ref().unwrap());
     }
 }
+
+#[wasm_bindgen]
+pub fn test_send_message() -> Result<(),String> {
+
+    let o = Object::new();
+    // let id = runtime_id().unwrap();
+    // js_sys::Reflect::set(&o, &"id".into(), &JsValue::from(id)).unwrap();
+    js_sys::Reflect::set(&o, &"message".into(), &JsValue::from("abc123")).unwrap();
+
+    send_message(&o.into());
+    // send_message(&JsValue::from_str("test message from WASM"));
+
+    Ok(())
+}
+
