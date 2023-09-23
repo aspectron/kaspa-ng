@@ -18,12 +18,22 @@ impl std::fmt::Display for Network {
     }
 }
 
+impl From<Network> for NetworkType {
+    fn from(network: Network) -> Self {
+        match network {
+            Network::Mainnet => NetworkType::Mainnet,
+            Network::Testnet10 => NetworkType::Testnet,
+            Network::Testnet11 => NetworkType::Testnet,
+        }
+    }
+}
+
 impl From<Network> for NetworkId {
     fn from(network: Network) -> Self {
         match network {
-            Network::Mainnet => NetworkId::new(NetworkType::Mainnet),
-            Network::Testnet10 => NetworkId::with_suffix(NetworkType::Testnet, 10),
-            Network::Testnet11 => NetworkId::with_suffix(NetworkType::Testnet, 11),
+            Network::Mainnet => NetworkId::new(network.into()),
+            Network::Testnet10 => NetworkId::with_suffix(network.into(), 10),
+            Network::Testnet11 => NetworkId::with_suffix(network.into(), 11),
         }
     }
 }

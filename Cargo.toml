@@ -16,6 +16,7 @@ kaspa-egui-macros = { version = "0.1.0", path = "macros/" }
 # kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
 kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core", features=["no-unsafe-eval"] }
+kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
 kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
 kaspa-utils = { path = "../rusty-kaspa/utils" }
 kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }

@@ -145,10 +145,15 @@ impl KaspaService {
     // }
 
     pub async fn stop_all_services(&self) -> Result<()> {
-        if self.wallet().has_rpc() {
-            self.wallet().stop().await.expect("Unable to stop wallet");
-            self.wallet().bind_rpc(None).await?;
+
+        if let Ok(wrpc_client) = self.wallet().rpc_api().clone().downcast_arc::<KaspaRpcClient>() {
+            wrpc_client.disconnect().await?;
+        } else {
+            self.wallet().rpc_ctl().signal_close().await?;
         }
+
+        self.wallet().stop().await.expect("Unable to stop wallet");
+        self.wallet().bind_rpc(None).await?;
 
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(kaspad) = self.kaspad.lock().unwrap().take() {
@@ -258,7 +263,7 @@ impl Service for KaspaService {
 
                                 this.start_wallet_service(rpc, network).await?;
 
-                                rpc_ctl.try_signal_open().expect("Unable to signal `open` event to rpc ctl");
+                                rpc_ctl.signal_open().await?;//.expect("Unable to signal `open` event to rpc ctl");
 
                             },
                             #[cfg(not(target_arch = "wasm32"))]

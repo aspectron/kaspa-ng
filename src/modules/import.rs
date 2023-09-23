@@ -1,7 +1,9 @@
 use crate::imports::*;
+use kaspa_bip32::Language;
 
 #[derive(Clone)]
 pub enum State {
+    Words,
     Select,
     Unlock(Option<String>),
     Unlocking,
@@ -11,6 +13,10 @@ pub struct Import {
     #[allow(dead_code)]
     interop: Interop,
     secret: String,
+
+    word : String,
+    mnemonic : Vec<String>,
+
     pub state: State,
     pub message: Option<String>,
 
@@ -22,7 +28,11 @@ impl Import {
         Self {
             interop,
             secret: String::new(),
-            state: State::Select,
+
+            word : String::new(),
+            mnemonic : Vec::new(),
+
+            state: State::Words,
             message: None,
             selected_wallet: None,
         }
@@ -46,6 +56,66 @@ impl ModuleT for Import {
             let unlock_result = Payload::<Result<()>>::new("test");
 
             match self.state.clone() {
+                State::Words => {
+
+                    Panel::new(self)
+                        .with_caption("Mnemonic Import")
+                        .with_close_enabled(false, |_|{
+                        })
+                        .with_header(|this,ui| {
+                            // ui.add_space(64.);
+                            ui.label("Importing word N/N");
+
+                            ui.horizontal(|ui|{
+                            // ui.vertical_centered_justified(|ui|{
+
+                                // ui.label(this.mnemonic.last().unwrap_or(&String::new()));
+                                this.mnemonic.iter().for_each(|word| {
+                                    ui.label(" ");
+                                    
+                                    ui.label(egui::RichText::new(word).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
+                                    
+                                    
+                                });
+                            });
+                            // ui.label(" ");
+                            ui.separator();
+
+                            ui.add_sized(
+                                size,
+                                TextEdit::singleline(&mut this.word)
+                                    .hint_text(format!("Enter Word {}...", this.mnemonic.len()+1))
+                                    .horizontal_align(Align::Center)
+                                    // .vertical_align(Align::Center),
+                            );
+
+                            ui.label(" ");
+
+                            // ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
+                        })
+                        .with_body(|this, ui|{
+
+                            let filter = this.word.clone();
+                            let words = Language::English.wordlist();
+                            words.iter().filter(|w|w.starts_with(filter.as_str())).for_each(|word| {  
+                                if ui.large_button(word).clicked() {
+                                    // - TODO - CAPTURE WORD
+                                    this.mnemonic.push(word.to_string());
+                                    this.word.clear();
+                                }
+                            });
+
+                        })
+                        // .with_footer(|_this,ui| {
+                        //     // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
+                        //     let size = theme().large_button_size;
+                        //     if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                        //         // this.state = State::WalletName;
+                        //     }
+                        // })
+                        .render(ui);
+
+                }
                 State::Select => {
                     ui.heading("Select Wallet");
                     ui.label(" ");
