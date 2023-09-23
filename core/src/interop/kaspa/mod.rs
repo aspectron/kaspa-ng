@@ -146,6 +146,10 @@ impl KaspaService {
 
     pub async fn stop_all_services(&self) -> Result<()> {
 
+        if !self.wallet().has_rpc() {
+            return Ok(())
+        }
+
         if let Ok(wrpc_client) = self.wallet().rpc_api().clone().downcast_arc::<KaspaRpcClient>() {
             wrpc_client.disconnect().await?;
         } else {

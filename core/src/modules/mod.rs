@@ -27,7 +27,7 @@ use std::any::type_name;
 
 use crate::imports::*;
 
-kaspa_egui_macros::register_modules!([
+kaspa_ng_macros::register_modules!([
     account_manager,
     deposit,
     metrics,

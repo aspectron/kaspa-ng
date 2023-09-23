@@ -2,8 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use cfg_if::cfg_if;
-use kaspa_egui::interop;
-use kaspa_egui::settings::Settings;
+use kaspa_ng::interop;
+use kaspa_ng::settings::Settings;
 use workflow_log::*;
 
 cfg_if! {
@@ -39,7 +39,7 @@ cfg_if! {
                     interop::signals::Signals::bind(&interop);
                     interop.start();
 
-                    Box::new(kaspa_egui::Wallet::new(cc, interop, settings))
+                    Box::new(kaspa_ng::Wallet::new(cc, interop, settings))
                 }),
             )?;
             println!("exit initiated...");
@@ -88,7 +88,7 @@ cfg_if! {
                             let interop = interop::Interop::new(&cc.egui_ctx, &settings);
                             interop.start();
 
-                            let adaptor = kaspa_egui::adaptor::Adaptor::new(interop.clone());
+                            let adaptor = kaspa_ng::adaptor::Adaptor::new(interop.clone());
                             let window = web_sys::window().expect("no global `window` exists");
                             js_sys::Reflect::set(
                                 &window,
@@ -96,7 +96,7 @@ cfg_if! {
                                 &JsValue::from(adaptor),
                             ).expect("failed to set adaptor");
 
-                            Box::new(kaspa_egui::Wallet::new(cc, interop, settings))
+                            Box::new(kaspa_ng::Wallet::new(cc, interop, settings))
                         }),
                     )
                     .await

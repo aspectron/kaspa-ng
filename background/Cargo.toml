@@ -1,0 +1,6 @@
+[package]
+name = "kaspa-ng-background"
+version.workspace = true # = "0.1.0"
+edition.workspace = true # = "2021"
+
+[dependencies]
