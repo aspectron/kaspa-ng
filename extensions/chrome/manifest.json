@@ -1,9 +1,9 @@
 {
     "manifest_version": 3,
-    "version": "1.0",
-    "version_name": "1.0 beta",
-    "name": "Kaspa EGUI PWA",
-    "short_name": "kaspa-egui-pwa",
+    "version": "0.1.0",
+    "version_name": "0.1.0 beta",
+    "name": "Kaspa NG",
+    "short_name": "kaspa-ng",
     "permissions": [
         "scripting",
         "alarms",
@@ -28,7 +28,7 @@
             "48": "icons/icon-48.png",
             "128": "icons/icon-128.png"
         },
-        "default_popup": "index.html"
+        "default_popup": "popup.html"
     },
     "icons": {
         "16": "icons/icon-16.png",

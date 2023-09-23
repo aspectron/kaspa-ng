@@ -1,68 +1,51 @@
 [package]
-name = "kaspa-ng"
+name = "kaspa-ng-core"
 version.workspace = true
 edition.workspace = true # = "2021"
 
+[lib]
+crate-type = ["cdylib", "lib"]
 
 [features]
 browser-extension = []
+desktop-application = []
 default = []
 
 [dependencies]
 kaspa-ng-macros.workspace = true
-# // = { version = "0.1.0", path = "macros/" }
 
-# kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-consensus-core.workspace = true # = { path = "../rusty-kaspa/consensus/core" }
-kaspa-wallet-core.workspace = true # = { path = "../rusty-kaspa/wallet/core", features=["no-unsafe-eval"] }
-kaspa-rpc-core.workspace = true # = { path = "../rusty-kaspa/rpc/core" }
-kaspa-wrpc-client.workspace = true # = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
-kaspa-utils.workspace = true # = { path = "../rusty-kaspa/utils" }
-kaspa-bip32.workspace = true # = { path = "../rusty-kaspa/wallet/bip32" }
+kaspa-consensus-core.workspace = true
+kaspa-wallet-core.workspace = true
+kaspa-rpc-core.workspace = true
+kaspa-wrpc-client.workspace = true
+kaspa-utils.workspace = true
+kaspa-bip32.workspace = true
 
-# workflow-core = "0.6.0"
-# workflow-log = "0.6.0"
-# workflow-dom = "0.6.0"
-workflow-log.workspace = true # = { path = "../workflow-rs/log" }
-workflow-core.workspace = true # = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
-workflow-dom.workspace = true # = { path = "../workflow-rs/dom" }
-workflow-store.workspace = true # = { path = "../workflow-rs/store" }
+workflow-log.workspace = true
+workflow-core.workspace = true
+workflow-dom.workspace = true
+workflow-store.workspace = true
 
 
-cfg-if.workspace = true # = "1.0.0"
-log.workspace = true # = "0.4"
-serde.workspace = true # = { version = "1", features = ["derive"] }
-thiserror.workspace = true # = "1.0.47"
-derivative.workspace = true # = "2.2.0"
-downcast.workspace = true # = "0.11.0"
-downcast-rs.workspace = true # = "1.2.0"
-separator.workspace = true # = "0.4.1"
-futures.workspace = true # = { version = "0.3" }
-futures-util.workspace = true # = { version = "0.3", default-features = false, features = ["alloc"] }
-zeroize.workspace = true # = { version = "1", default-features = false, features = ["alloc"] }
-async-trait.workspace = true # = "0.1.73"
-slug.workspace = true # = "0.1.4"
-qrcode.workspace = true # = "0.12.0"
-js-sys.workspace = true # = "0.3.64"
-wasm-bindgen.workspace = true # = "0.2.87"
+cfg-if.workspace = true
+log.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+derivative.workspace = true
+downcast.workspace = true
+downcast-rs.workspace = true
+separator.workspace = true
+futures.workspace = true
+futures-util.workspace = true
+zeroize.workspace = true
+async-trait.workspace = true
+slug.workspace = true
+qrcode.workspace = true
+js-sys.workspace = true
+wasm-bindgen.workspace = true
 
-
-# egui = "0.22.0"
-# egui_extras = { version = "0.22.0", features = ["svg"] }
-# eframe = { version = "0.22.0", default-features = false, features = [
-#     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
-#     "default_fonts", # Embed the default egui fonts.
-#     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
-#     "persistence",   # Enable restoring app state when restarting the app.
-# ] }
-# egui-phosphor = { version = "0.2.0", features = ["thin","light","regular","bold"] }
-# egui-notify = "0.9.0"
-# egui-toast = "0.9.0"
-
-egui.workspace = true # = { path = "../egui/crates/egui" }
-egui_extras.workspace = true # = { path = "../egui/crates/egui_extras", features = ["svg"] }
+egui.workspace = true
+egui_extras.workspace = true
 eframe = { workspace = true, default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
@@ -70,13 +53,9 @@ eframe = { workspace = true, default-features = false, features = [
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
 egui-phosphor = { workspace = true, features = ["thin","light","regular","bold"] }
-egui-notify.workspace = true # = { path = "../egui-notify" }
-# egui-toast = { path = "../egui-toast" }
-
-
+egui-notify.workspace = true
 
 [dependencies.web-sys]
-version = "0.3.64"
 workspace = true
 features = [
     # 'console',
@@ -89,28 +68,20 @@ features = [
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-kaspad.workspace = true # = { path = "../rusty-kaspa/kaspad" }
-kaspa-rpc-service.workspace = true # = { path = "../rusty-kaspa/rpc/service" }
-kaspa-wrpc-server.workspace = true # = { path = "../rusty-kaspa/rpc/wrpc/server" }
-kaspa-core.workspace = true # = { path = "../rusty-kaspa/core" }
-tokio.workspace = true # = { version = "1", features = ["sync", "rt-multi-thread"] }
-ctrlc.workspace = true # = { version = "3.2", features = ["termination"] }
-env_logger.workspace = true # = "0.10"
-num_cpus.workspace = true # = "1.15.0"
+kaspad.workspace = true
+kaspa-rpc-service.workspace = true
+kaspa-wrpc-server.workspace = true
+kaspa-core.workspace = true
+tokio.workspace = true
+ctrlc.workspace = true
+env_logger.workspace = true
+num_cpus.workspace = true
 
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures.workspace = true # = "0.4"
+wasm-bindgen-futures.workspace = true
 
-[profile.release]
-opt-level = 2 # fast and small wasm
+# [profile.release]
+# opt-level = 2 # fast and small wasm
 
-# ----
-# If you want to use the bleeding edge version of egui and eframe:
-# egui = { git = "https://github.com/emilk/egui", branch = "master" }
-# eframe = { git = "https://github.com/emilk/egui", branch = "master" }
-
-# If you fork https://github.com/emilk/egui you can test with:
-# egui = { path = "../egui/crates/egui" }
-# eframe = { path = "../egui/crates/eframe" }

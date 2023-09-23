@@ -1,0 +1,15 @@
+[package]
+name = "chrome"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+kaspa-ng-core = { workspace = true, features = ["browser-extension"] }
+workflow-log.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true

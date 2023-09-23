@@ -1,5 +1,5 @@
 use crate::imports::*;
-use kaspa_wrpc_server::address::WrpcNetAddress;
+// use kaspa_wrpc_server::address::WrpcNetAddress;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use kaspad_lib::args::Args;

@@ -27,5 +27,15 @@ chrome.runtime.onMessage.addListener((message, sender, reply)=>{
     }
 })
 
-//import '/kaspa-egui.js';
-wasm_bindgen('/kaspa-egui_bg.wasm');
+// import init from '/kaspa-ng.js';
+// let kaspa_ng = init('/kaspa-egui_bg.wasm');
+import init from '/kaspa-ng.js';
+(async () => {
+    let kaspa_ng = await init('/kaspa-ng_bg.wasm');
+
+    // const wasm = await kaspa.default('./kaspa-wallet/kaspa-wallet_bg.wasm');
+    await kaspa_ng.kaspa_ng_main();
+})();
+
+
+// wasm_bindgen('/kaspa-ng_bg.wasm');

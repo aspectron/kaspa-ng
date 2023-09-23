@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- change this to your project name -->
+    <title>Kaspa Core</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <!-- Disable zooming: -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
+    <link data-trunk 
+        rel="rust" 
+        data-wasm-opt="2" 
+        data-type="worker" 
+        href="./Cargo.toml"
+    />
+        <!-- data-cargo-features="browser-extension"  -->
+        <!-- data-bin="kaspa-ng" -->
+    <!-- <link data-trunk rel="rust" data-type="worker" data-wasm-opt="2" data-cargo-features="browser-extension" href="../../core/Cargo.toml"/> -->
+    <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
+    <base data-trunk-public-url />
+    <link data-trunk rel="icon" href="../../resources/icons/favicon.ico">
+    <link data-trunk rel="copy-file" href="./pwa.js" />
+    <link data-trunk rel="copy-file" href="./style.css" />
+    <link data-trunk rel="copy-file" href="./manifest.json" />
+    <link data-trunk rel="copy-file" href="./background.js" />
+    <link data-trunk rel="copy-file" href="./app.js" />
+    <link data-trunk rel="copy-dir" href="../../resources/icons" />
+
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon_ios_touch_192.png">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#404040">
+</head>
+<body>
+    <canvas id="kaspa-ng"></canvas>
+    <!--Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality). -->
+    <!-- Force refresh (Ctrl + F5) to load the latest files instead of cached files  -->
+    <!-- <script>
+        // We disable caching during development so that we always view the latest version.
+        if ('serviceWorker' in navigator && window.location.hash !== "#dev") {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./pwa.js');
+            });
+        }
+    </script> -->
+    <!-- <script src="kaspa-ng.js"></script> -->
+    <script type="module" src="./popup.js"></script>
+    <div id="counter"></div>
+    <button id="btn">Test</button>
+</body>
+</html><!-- Powered by egui: https://github.com/emilk/egui/ -->

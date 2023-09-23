@@ -46,7 +46,7 @@ cfg_if! {
             }
         }
 
-        const KASPAD_NODE_KINDS: [KaspadNodeKind; 4] = [
+        const KASPAD_NODE_KINDS: [KaspadNodeKind; 1] = [
             KaspadNodeKind::Remote,
         ];
 
@@ -158,21 +158,42 @@ impl Default for NodeSettings {
 }
 
 impl NodeSettings {
-    pub fn compare(&self, other: &NodeSettings) -> Option<bool> {
-        if self.network != other.network {
-            Some(true)
-        } else if self.kaspad != other.kaspad {
-            Some(true)
-        } else if self.rpc_kind != other.rpc_kind
-            || self.wrpc_url != other.wrpc_url
-            || self.wrpc_encoding != other.wrpc_encoding
-            || self.grpc_url != other.grpc_url
-        {
-            Some(self.kaspad != KaspadNodeKind::IntegratedInProc)
-        } else if self.kaspad_node_binary != other.kaspad_node_binary {
-            Some(self.kaspad == KaspadNodeKind::ExternalAsDaemon)
+    cfg_if! {
+        if #[cfg(not(target_arch = "wasm32"))] {
+            pub fn compare(&self, other: &NodeSettings) -> Option<bool> {
+                if self.network != other.network {
+                    Some(true)
+                } else if self.kaspad != other.kaspad {
+                    Some(true)
+                } else if self.rpc_kind != other.rpc_kind
+                    || self.wrpc_url != other.wrpc_url
+                    || self.wrpc_encoding != other.wrpc_encoding
+                    || self.grpc_url != other.grpc_url
+                {
+                    Some(self.kaspad != KaspadNodeKind::IntegratedInProc)
+                } else if self.kaspad_node_binary != other.kaspad_node_binary {
+                    Some(self.kaspad == KaspadNodeKind::ExternalAsDaemon)
+                } else {
+                    None
+                }
+            }
         } else {
-            None
+            pub fn compare(&self, other: &NodeSettings) -> Option<bool> {
+                if self.network != other.network {
+                    Some(true)
+                } else if self.kaspad != other.kaspad {
+                    Some(true)
+                } else if self.rpc_kind != other.rpc_kind
+                    || self.wrpc_url != other.wrpc_url
+                    || self.wrpc_encoding != other.wrpc_encoding
+                    || self.grpc_url != other.grpc_url
+                {
+                    Some(true)
+                } else {
+                    None
+                }
+            }
+
         }
     }
 }

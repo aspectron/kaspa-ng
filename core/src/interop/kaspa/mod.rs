@@ -382,9 +382,9 @@ impl TryFrom<&NodeSettings> for KaspadServiceEvents {
 
             } else {
 
-                match &settings.kaspad {
+                match &node_settings.kaspad {
                     KaspadNodeKind::Remote => {
-                        Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : settings.into(), network : settings.network })
+                        Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : node_settings.into(), network : node_settings.network })
                     }
                 }
             }

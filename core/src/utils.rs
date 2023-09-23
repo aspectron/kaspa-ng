@@ -42,7 +42,7 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
     let text_color = ui.ctx().style().visuals.widgets.inactive.text_color();//.text_color();
     let text_size = ui.ctx().style().text_styles.get(&TextStyle::Button).unwrap().size;
 
-    let theme = theme();
+    let _theme = theme();
 
     let mut job = LayoutJob {
         halign: Align::Min,

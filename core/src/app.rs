@@ -1,17 +1,16 @@
-#![warn(clippy::all, rust_2018_idioms)]
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+// #![warn(clippy::all, rust_2018_idioms)]
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use cfg_if::cfg_if;
-use kaspa_ng::interop;
-use kaspa_ng::settings::Settings;
+use kaspa_ng_core::interop;
+use kaspa_ng_core::settings::Settings;
 use workflow_log::*;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
         // When compiling natively:
-        #[tokio::main]
-        async fn main() -> eframe::Result<()> {
+        pub async fn kaspa_ng_main() -> eframe::Result<()> {
             // use std::sync::Arc;
 
             use std::sync::{Arc, Mutex};
@@ -31,7 +30,7 @@ cfg_if! {
             println!("spawn done");
             let native_options = eframe::NativeOptions::default();
             eframe::run_native(
-                "DAG Wallet",
+                "Kaspa NG",
                 native_options,
                 Box::new(move |cc| {
                     let interop = interop::Interop::new(&cc.egui_ctx, &settings);
@@ -39,7 +38,7 @@ cfg_if! {
                     interop::signals::Signals::bind(&interop);
                     interop.start();
 
-                    Box::new(kaspa_ng::Wallet::new(cc, interop, settings))
+                    Box::new(kaspa_ng_core::Wallet::new(cc, interop, settings))
                 }),
             )?;
             println!("exit initiated...");
@@ -65,7 +64,7 @@ cfg_if! {
 
         // #[wasm_bindgen]
         // pub async fn start_app() {
-        fn main() {
+        pub async fn kaspa_ng_main() {
             use wasm_bindgen::prelude::*;
 
             // Redirect `log` message to `console.log` and friends:
@@ -77,18 +76,18 @@ cfg_if! {
                 Settings::default()
             });
 
-            wasm_bindgen_futures::spawn_local(async {
+            // wasm_bindgen_futures::spawn_local(async {
                 use workflow_log::*;
                 log_info!("starting");
                 eframe::WebRunner::new()
                     .start(
-                        "kaspa-wallet",
+                        "kaspa-ng",
                         web_options,
                         Box::new(move |cc| {
                             let interop = interop::Interop::new(&cc.egui_ctx, &settings);
                             interop.start();
 
-                            let adaptor = kaspa_ng::adaptor::Adaptor::new(interop.clone());
+                            let adaptor = kaspa_ng_core::adaptor::Adaptor::new(interop.clone());
                             let window = web_sys::window().expect("no global `window` exists");
                             js_sys::Reflect::set(
                                 &window,
@@ -96,14 +95,14 @@ cfg_if! {
                                 &JsValue::from(adaptor),
                             ).expect("failed to set adaptor");
 
-                            Box::new(kaspa_ng::Wallet::new(cc, interop, settings))
+                            Box::new(kaspa_ng_core::Wallet::new(cc, interop, settings))
                         }),
                     )
                     .await
                     .expect("failed to start eframe");
 
                 // log_info!("shutting down...");
-            });
+            // });
 
             // wasm_bindgen_futures::spawn_local(async {
             //     // interop.join();

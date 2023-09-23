@@ -1,5 +1,5 @@
 [build]
-target = "index.html"
+target = "tunk.html"
 # Build in release mode.
 release = false
 # The output dir for all final assets.
@@ -10,3 +10,8 @@ inject_scripts = false
 # DOCS:
 # https://github.com/thedodd/trunk/blob/master/Trunk.toml
 # https://trunkrs.dev/assets/#rust
+
+# [[hooks]]
+# stage = "post_build"
+# command = "wasm-pack" # build --target web --out-name wasm --out-dir ./pkg"
+# command_arguments = ["build", "--target", "web", "--out-name", "background", "--out-dir", "../../dist-chrome", "./extensions/chrome/"]

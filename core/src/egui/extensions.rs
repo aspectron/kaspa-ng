@@ -78,7 +78,7 @@ impl UiExtension for Ui {
     }
 
     fn confirm_medium_apply_cancel(&mut self, align : Align) -> Option<Confirm> {
-        let theme = theme();
+        let _theme = theme();
 
         self.confirm_medium(
             align,
