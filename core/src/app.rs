@@ -1,19 +1,17 @@
-// #![warn(clippy::all, rust_2018_idioms)]
-// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
-
 use cfg_if::cfg_if;
 use kaspa_ng_core::interop;
 use kaspa_ng_core::settings::Settings;
+use kaspa_wallet_core::runtime::api::WalletApi;
+use std::sync::Arc;
 use workflow_log::*;
+// use crate::result::Result;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
-        // When compiling natively:
-        pub async fn kaspa_ng_main() -> eframe::Result<()> {
-            // use std::sync::Arc;
+        pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> eframe::Result<()> {
 
-            use std::sync::{Arc, Mutex};
+            use std::sync::Mutex;
 
             interop::panic::init_panic_handler();
 
@@ -64,11 +62,9 @@ cfg_if! {
 
         // #[wasm_bindgen]
         // pub async fn start_app() {
+        use crate::result::Result;
 
-        use kaspa_wallet_core::runtime::api::WalletApi;
-        use std::sync::Arc;
-
-        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>) {
+        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
             use wasm_bindgen::prelude::*;
 
             // ------------------------------------------------------------
@@ -125,6 +121,8 @@ cfg_if! {
             //     // interop.join();
 
             // });
+
+            Ok(())
         }
     }
 }

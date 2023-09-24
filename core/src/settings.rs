@@ -34,16 +34,11 @@ cfg_if! {
         }
 
     } else {
-        #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+        #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
         #[serde(rename_all = "kebab-case")]
         pub enum KaspadNodeKind {
-            Remote,// { rpc_config : RpcConfig },
-        }
-
-        impl Default for KaspadNodeKind {
-            fn default() -> Self {
-                KaspadNodeKind::Remote
-            }
+            #[default]
+            Remote,
         }
 
         const KASPAD_NODE_KINDS: [KaspadNodeKind; 1] = [
@@ -220,21 +215,21 @@ impl Default for UxSettings {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
     pub node: NodeSettings,
     pub ux: UxSettings,
 }
 
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            node: NodeSettings::default(),
-            ux: UxSettings::default(),
-        }
-    }
-}
+// impl Default for Settings {
+//     fn default() -> Self {
+//         Self {
+//             node: NodeSettings::default(),
+//             ux: UxSettings::default(),
+//         }
+//     }
+// }
 
 impl Settings {
     // Returns `Option<bool>` here `Option` indicates that

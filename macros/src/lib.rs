@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
-mod register;
 mod mask;
+mod register;
 
 #[proc_macro]
 pub fn register_modules(input: TokenStream) -> TokenStream {
