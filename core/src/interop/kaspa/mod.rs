@@ -61,10 +61,11 @@ impl KaspaService {
             panic!("Failed to open local store: {}", e);
         });
 
-        let wallet = runtime::Wallet::try_with_rpc(None, storage, Some(settings.node.network.into()))
-            .unwrap_or_else(|e| {
-                panic!("Failed to create wallet instance: {}", e);
-            });
+        let wallet =
+            runtime::Wallet::try_with_rpc(None, storage, Some(settings.node.network.into()))
+                .unwrap_or_else(|e| {
+                    panic!("Failed to create wallet instance: {}", e);
+                });
         // --
         // let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
         //     WrpcEncoding::Borsh,
@@ -145,12 +146,16 @@ impl KaspaService {
     // }
 
     pub async fn stop_all_services(&self) -> Result<()> {
-
         if !self.wallet().has_rpc() {
-            return Ok(())
+            return Ok(());
         }
 
-        if let Ok(wrpc_client) = self.wallet().rpc_api().clone().downcast_arc::<KaspaRpcClient>() {
+        if let Ok(wrpc_client) = self
+            .wallet()
+            .rpc_api()
+            .clone()
+            .downcast_arc::<KaspaRpcClient>()
+        {
             wrpc_client.disconnect().await?;
         } else {
             self.wallet().rpc_ctl().signal_close().await?;
@@ -170,28 +175,30 @@ impl KaspaService {
         Ok(())
     }
 
-    pub async fn start_wallet_service(&self, rpc : Rpc, network : Network) -> Result<()> {
-        self.wallet().set_network_id(network.into()).expect("Can not change network id while the wallet is connected");
+    pub async fn start_wallet_service(&self, rpc: Rpc, network: Network) -> Result<()> {
+        self.wallet()
+            .set_network_id(network.into())
+            .expect("Can not change network id while the wallet is connected");
         self.wallet().bind_rpc(Some(rpc)).await.unwrap();
         self.wallet().start().await.expect("Unable to stop wallet");
         Ok(())
     }
 
-    pub fn update_services(&self, node_settings : &NodeSettings) {
+    pub fn update_services(&self, node_settings: &NodeSettings) {
         match KaspadServiceEvents::try_from(node_settings) {
             Ok(event) => {
-                self.service_events.sender.try_send(event).unwrap_or_else(|err| {
-                    println!("KaspadService error: {}", err);
-                });
+                self.service_events
+                    .sender
+                    .try_send(event)
+                    .unwrap_or_else(|err| {
+                        println!("KaspadService error: {}", err);
+                    });
             }
             Err(err) => {
                 println!("KaspadServiceEvents::try_from() error: {}", err);
             }
         }
-
     }
-
-    
 }
 
 #[async_trait]
@@ -319,7 +326,6 @@ impl Service for KaspaService {
                 }
             }
         }
-
 
         println!("shutting down node manager...");
         this.stop_all_services().await?;

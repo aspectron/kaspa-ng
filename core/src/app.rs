@@ -64,8 +64,25 @@ cfg_if! {
 
         // #[wasm_bindgen]
         // pub async fn start_app() {
-        pub async fn kaspa_ng_main() {
+
+        use kaspa_wallet_core::runtime::api::WalletApi;
+        use std::sync::Arc;
+
+        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>) {
             use wasm_bindgen::prelude::*;
+
+            // ------------------------------------------------------------
+            // ------------------------------------------------------------
+            // ------------------------------------------------------------
+            log_info!("Sending ping request...");
+            let wallet_api = wallet_api.expect("wallet_api is None");
+            let v = wallet_api.ping(1).await.expect("ping failed");
+            log_info!("Ping response received '{v}' (should be 2) ...");
+
+            // ------------------------------------------------------------
+            // ------------------------------------------------------------
+            // ------------------------------------------------------------
+
 
             // Redirect `log` message to `console.log` and friends:
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();

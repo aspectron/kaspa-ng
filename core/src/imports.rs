@@ -8,7 +8,7 @@ pub use kaspa_wallet_core::secret::Secret;
 pub use kaspa_wallet_core::storage::{PrvKeyDataId, WalletDescriptor};
 pub use kaspa_wallet_core::utils::*;
 pub use kaspa_wallet_core::Address;
-pub use kaspa_wrpc_client::{KaspaRpcClient,WrpcEncoding};
+pub use kaspa_wrpc_client::{KaspaRpcClient, WrpcEncoding};
 
 pub use cfg_if::cfg_if;
 pub use downcast_rs::{impl_downcast, Downcast, DowncastSync};
@@ -40,12 +40,12 @@ pub use egui::epaint::{
 };
 pub use egui::*;
 
+pub use crate::egui::extensions::*;
+pub use crate::egui::icon::{icons, Icon, IconSize, Icons};
+pub use crate::egui::theme::theme;
 pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::Events;
-pub use crate::egui::icon::{icons, Icon, IconSize, Icons};
-pub use crate::egui::theme::theme;
-pub use crate::egui::extensions::*;
 pub use crate::interop;
 pub use crate::interop::{spawn, spawn_with_result, Interop, Payload};
 pub use crate::modules;
@@ -56,7 +56,7 @@ pub use crate::panel::Panel;
 pub use crate::primitives::Account;
 pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
-pub use crate::settings::{KaspadNodeKind, RpcConfig, Settings, NodeSettings, UxSettings};
+pub use crate::settings::{KaspadNodeKind, NodeSettings, RpcConfig, Settings, UxSettings};
 pub use crate::utils::spawn;
 pub use crate::wallet::Wallet;
 // #[macro_use]

@@ -42,14 +42,14 @@ impl super::Kaspad for InProc {
         self.inner.lock().unwrap().replace(Inner {
             thread,
             core,
-            rpc_core_service : Some(rpc_core_service),
+            rpc_core_service: Some(rpc_core_service),
         });
         Ok(())
     }
 
     fn stop(&self) -> Result<()> {
         if let Some(mut inner) = self.inner.lock().unwrap().take() {
-            let (core,thread) = {
+            let (core, thread) = {
                 println!("*** TAKING RPC CORE SERVICE...");
                 let rpc_core_service = inner.rpc_core_service.take();
                 drop(rpc_core_service);

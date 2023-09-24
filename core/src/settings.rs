@@ -111,9 +111,7 @@ pub struct NodeSettings {
     pub network: Network,
     pub kaspad: KaspadNodeKind,
     pub kaspad_node_binary: Option<String>,
-
 }
-
 
 impl Default for NodeSettings {
     fn default() -> Self {
@@ -212,25 +210,21 @@ impl From<&NodeSettings> for RpcConfig {
     }
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct UxSettings {
-
-}
+pub struct UxSettings {}
 
 impl Default for UxSettings {
     fn default() -> Self {
-        Self {
-        }
+        Self {}
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
-    pub node : NodeSettings,
-    pub ux : UxSettings,
+    pub node: NodeSettings,
+    pub ux: UxSettings,
 }
 
 impl Default for Settings {
@@ -243,12 +237,10 @@ impl Default for Settings {
 }
 
 impl Settings {
-    // Returns `Option<bool>` here `Option` indicates that 
+    // Returns `Option<bool>` here `Option` indicates that
     // settings have changed and `bool` indicates if the change
     // requires the node subsystem restart.
- 
 }
-
 
 fn storage() -> Result<Storage> {
     Ok(Storage::try_new("kaspa-egui")?)
@@ -279,4 +271,3 @@ impl Settings {
         }
     }
 }
-

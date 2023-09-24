@@ -58,6 +58,7 @@ slug = "0.1.4"
 qrcode = "0.12.0"
 js-sys = "0.3.64"
 wasm-bindgen = "0.2.87"
+rand = "0.8"
 
 
 # egui = "0.22.0"

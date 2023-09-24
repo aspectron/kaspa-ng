@@ -5,7 +5,6 @@ pub enum Confirm {
     Nack,
 }
 
-
 pub trait ResponseExtension {
     fn text_edit_submit(&self, ui: &mut Ui) -> bool;
 }
@@ -25,8 +24,13 @@ pub trait UiExtension {
         self.large_button_enabled(true, text)
     }
     fn large_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response;
-    fn confirm_medium(&mut self, align : Align, ack : impl Into<WidgetText>, nack : impl Into<WidgetText>) -> Option<Confirm>;
-    fn confirm_medium_apply_cancel(&mut self, align : Align) -> Option<Confirm>;
+    fn confirm_medium(
+        &mut self,
+        align: Align,
+        ack: impl Into<WidgetText>,
+        nack: impl Into<WidgetText>,
+    ) -> Option<Confirm>;
+    fn confirm_medium_apply_cancel(&mut self, align: Align) -> Option<Confirm>;
     //  {
     //     self.confirm_medium(
     //         align,
@@ -56,28 +60,35 @@ impl UiExtension for Ui {
         )
     }
 
-    fn confirm_medium(&mut self, align : Align, ack : impl Into<WidgetText>, nack : impl Into<WidgetText>) -> Option<Confirm> {
+    fn confirm_medium(
+        &mut self,
+        align: Align,
+        ack: impl Into<WidgetText>,
+        nack: impl Into<WidgetText>,
+    ) -> Option<Confirm> {
         let mut resp: Option<Confirm> = None;
         self.horizontal(|ui| {
-
-            if matches!(align,Align::Max) {
-                ui.add_space(ui.available_width() - 16. - (theme().medium_button_size.x + ui.spacing().item_spacing.x)*2.);
+            if matches!(align, Align::Max) {
+                ui.add_space(
+                    ui.available_width()
+                        - 16.
+                        - (theme().medium_button_size.x + ui.spacing().item_spacing.x) * 2.,
+                );
             }
 
             if ui.medium_button(ack).clicked() {
                 resp.replace(Confirm::Ack);
             }
-            
+
             if ui.medium_button(nack).clicked() {
                 resp.replace(Confirm::Nack);
             }
-
         });
 
         resp
     }
 
-    fn confirm_medium_apply_cancel(&mut self, align : Align) -> Option<Confirm> {
+    fn confirm_medium_apply_cancel(&mut self, align: Align) -> Option<Confirm> {
         let _theme = theme();
 
         self.confirm_medium(
@@ -88,5 +99,4 @@ impl UiExtension for Ui {
             // icon_with_text(self, egui_phosphor::light::X,theme.nack_color, "Cancel")
         )
     }
-
 }

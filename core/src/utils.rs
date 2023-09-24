@@ -39,8 +39,14 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
     // });
 
     // let size = ui.ctx().style().text_styles.entry(TextStyle::Button).or_default().size;
-    let text_color = ui.ctx().style().visuals.widgets.inactive.text_color();//.text_color();
-    let text_size = ui.ctx().style().text_styles.get(&TextStyle::Button).unwrap().size;
+    let text_color = ui.ctx().style().visuals.widgets.inactive.text_color(); //.text_color();
+    let text_size = ui
+        .ctx()
+        .style()
+        .text_styles
+        .get(&TextStyle::Button)
+        .unwrap()
+        .size;
 
     let _theme = theme();
 
@@ -81,5 +87,4 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
     // );
 
     job
-
 }
