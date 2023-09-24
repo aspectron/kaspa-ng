@@ -41,16 +41,18 @@ impl BorshTransport for ClientTransport {
         // let data = request.to_hex();
         // let request = Request::serialize(op,data);
         // let data = data.to_vec();
-        let (tx,rx) = oneshot::<Result<Response>>();
+        let (tx,rx) = oneshot::<Result<Vec<u8>>>();
         
         spawn_local(async move {
             
-            let request = Request::new(op,data);
+            // let request = Request::new(op,data);
             // let request = Request::to_jsv(op,&data);
-            match send_message(&request.into()).await {
-                Ok(response) => {
-                    let response = Response::try_from(response).unwrap();
-                    tx.send(Ok(response)).await.unwrap();
+            // match send_message(&request.into()).await {
+            match send_message(&req_to_jsv(op,&data)).await {
+                Ok(jsv) => {
+                    let resp = jsv_to_resp(&jsv);
+                    // let response = Response::try_from(response).unwrap();
+                    tx.send(resp).await.unwrap();
                     
                 },
                 Err(err) => {
@@ -61,8 +63,8 @@ impl BorshTransport for ClientTransport {
 
         });
 
-        let response : Result<Response> = rx.recv().await.map_err(|_|Error::custom("Client transport receive channel error"))?;
-        response?.into()
+        let response : Result<Vec<u8>> = rx.recv().await.map_err(|_|Error::custom("Client transport receive channel error"))?;
+        response //?.into()
 
     }
 

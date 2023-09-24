@@ -74,8 +74,9 @@ impl Server {
                 Err(err) => {
                     log_error!("message handling error: {:?}", err);
                     
-                    let response = Response::new(Err(err));
-                    if let Err(err) = callback.call1(&JsValue::UNDEFINED,&response.into()) {
+                    // let response = Response::new(Err(err));
+                    let resp = resp_to_jsv(Err(err));
+                    if let Err(err) = callback.call1(&JsValue::UNDEFINED,&resp) {
                         log_error!("onMessage callback error in error handler: {:?}", err);
                     }
                     JsValue::from(false)
@@ -110,7 +111,9 @@ log_info!("######## RUNTIME ID: {id}");
         );
 
 
-        let Request { op, data } = Request::try_from(msg)?;
+        // let Request { op, data } = Request::try_from(msg)?;
+
+        let (op,data) = jsv_to_req(msg)?;
 
         // let op = js_sys::Reflect::get(&msg, &"op".into()).unwrap();
         // let data = js_sys::Reflect::get(&msg, &"data".into()).unwrap();
@@ -121,8 +124,9 @@ log_info!("######## RUNTIME ID: {id}");
 
         spawn_local(async move {
 
-            let response = Response::new(self.wallet_server.call_with_borsh(op, &data).await);
-            if let Err(err) = callback.call1(&JsValue::UNDEFINED,&response.into()) {
+            // let response = Response::new(self.wallet_server.call_with_borsh(op, &data).await);
+            let resp = resp_to_jsv(self.wallet_server.call_with_borsh(op, &data).await);
+            if let Err(err) = callback.call1(&JsValue::UNDEFINED,&resp) {
                 log_error!("onMessage callback error: {:?}", err);
             }
             // match  {

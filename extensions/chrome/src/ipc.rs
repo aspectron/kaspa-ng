@@ -61,13 +61,13 @@ fn mask_data() -> &'static [u8; 128] {
     }
 }
 
-fn mask(data : &mut [u8], src : &[u8], mut index : usize, mask : &[u8]) {
+fn mask(data : &mut [u8], src : &[u8], index : &mut usize, mask : &[u8]) {
     // let mask = mask_data();
     for i in 0..src.len() {
-        data[i] = src[i] ^ mask[index];
-        index += 1;
-        if index == mask.len() {
-            index = 0;
+        data[i] = src[i] ^ mask[*index];
+        *index += 1;
+        if *index == mask.len() {
+            *index = 0;
         }
     }
 }
@@ -106,143 +106,226 @@ fn mask(data : &mut [u8], src : &[u8], mut index : usize, mask : &[u8]) {
 //     Ok((op,data))
 // }
 
+pub fn req_to_jsv(op: u32, src: &[u8]) -> JsValue {
 
+    let mask_data = mask_data();
 
-pub struct Request {
-    pub op: u32,
-    pub data: Vec<u8>,
+    let mut index = rand::thread_rng().gen::<usize>() % mask_data.len();
+    let mut data = vec![0;src.len()+5];
+    data[0] = index as u8;
+    mask(&mut data[1..5], op.to_le_bytes().as_ref(), &mut index, mask_data);
+    // data[1..5].copy_from_slice(op.to_le_bytes().as_ref());
+    mask(&mut data[5..], src, &mut index, mask_data);
+    JsValue::from(data.to_hex())
 }
 
-impl Request {
-
-    pub fn new(op: u32, data: Vec<u8>) -> Self {
-        Self {
-            op,
-            data
-            //: data.to_vec()
-        }
-    }
-
-    pub fn to_jsv(op: u32, src: &[u8]) -> JsValue {
-
-        let mask_data = mask_data();
-
-        let index = rand::thread_rng().gen::<usize>() % mask_data.len();
-        let mut data = vec![0;src.len()+5];
-        data[0..4].copy_from_slice(op.to_le_bytes().as_ref());
-        data[4] = index as u8;
-        mask(&mut data[5..], src, index, mask_data);
-        JsValue::from(data.to_hex())
-    }
-
-    pub fn from_jsv(src : JsValue) -> Result<Self> {
-        let src = Vec::<u8>::from_hex(src.as_string().ok_or(Error::custom("expecting string"))?.as_str())?;
-        if src.len() < 5 {
-            return Err(Error::custom("invalid message length"));
-        }    
-        let mask_data = mask_data();
-        let op = u32::from_le_bytes(src[0..4].try_into().unwrap());
-        let index = src[4] as usize;
-        let mut data = vec![0;src.len()-5];
-        mask(&mut data, &src[5..], index, mask_data);
-        Ok(Self { op, data })
-    }
+pub fn jsv_to_req(src : JsValue) -> Result<(u32,Vec<u8>)> {
+    let src = Vec::<u8>::from_hex(src.as_string().ok_or(Error::custom("expecting string"))?.as_str())?;
+    if src.len() < 5 {
+        return Err(Error::custom("invalid message length"));
+    }    
+    let mask_data = mask_data();
+    let mut index = src[0] as usize;
+    let mut data = vec![0;src.len()-1];
+    mask(&mut data, &src[1..], &mut index, mask_data);
+    let op = u32::from_le_bytes(data[0..4].try_into().unwrap());
+    Ok((op, data[4..].to_vec()))
 }
 
-impl From<Request> for JsValue {
-    fn from(request: Request) -> Self {
-        Request::to_jsv(request.op, &request.data)
-    }
-}
+// pub struct Request {
+//     pub op: u32,
+//     pub data: Vec<u8>,
+// }
 
-impl TryFrom<JsValue> for Request {
-    type Error = Error;
+// impl Request {
 
-    fn try_from(src: JsValue) -> Result<Self, Self::Error> {
-        Request::from_jsv(src)
-    }
-}
+//     pub fn new(op: u32, data: Vec<u8>) -> Self {
+//         Self {
+//             op,
+//             data
+//             //: data.to_vec()
+//         }
+//     }
+
+//     pub fn to_jsv(op: u32, src: &[u8]) -> JsValue {
+
+//         let mask_data = mask_data();
+
+//         let index = rand::thread_rng().gen::<usize>() % mask_data.len();
+//         let mut data = vec![0;src.len()+5];
+//         data[0..4].copy_from_slice(op.to_le_bytes().as_ref());
+//         data[4] = index as u8;
+//         mask(&mut data[5..], src, index, mask_data);
+//         JsValue::from(data.to_hex())
+//     }
+
+//     pub fn from_jsv(src : JsValue) -> Result<Self> {
+//         let src = Vec::<u8>::from_hex(src.as_string().ok_or(Error::custom("expecting string"))?.as_str())?;
+//         if src.len() < 5 {
+//             return Err(Error::custom("invalid message length"));
+//         }    
+//         let mask_data = mask_data();
+//         let op = u32::from_le_bytes(src[0..4].try_into().unwrap());
+//         let index = src[4] as usize;
+//         let mut data = vec![0;src.len()-5];
+//         mask(&mut data, &src[5..], index, mask_data);
+//         Ok(Self { op, data })
+//     }
+// }
+
+// impl From<Request> for JsValue {
+//     fn from(request: Request) -> Self {
+//         Request::to_jsv(request.op, &request.data)
+//     }
+// }
+
+// impl TryFrom<JsValue> for Request {
+//     type Error = Error;
+
+//     fn try_from(src: JsValue) -> Result<Self, Self::Error> {
+//         Request::from_jsv(src)
+//     }
+// }
 
 
-pub struct Response {
-    pub result : Result<Vec<u8>>
-}
+// pub struct Response {
+//     pub result : Result<Vec<u8>>
+// }
 
-impl Response {
-    pub fn new(result : Result<Vec<u8>>) -> Self {
-        Self {
-            result
-        }
-    }
+// impl Response {
+//     pub fn new(result : Result<Vec<u8>>) -> Self {
+//         Self {
+//             result
+//         }
+//     }
 
-    // fn to_jsv()
+//     // fn to_jsv()
 
-    fn data_to_jsv(src : &[u8]) -> JsValue {
-        let mask_data = mask_data();
+//     fn data_to_jsv(src : &[u8]) -> JsValue {
+//         let mask_data = mask_data();
 
-        let index = rand::thread_rng().gen::<usize>() % mask_data.len();
-        let mut data = vec![0;src.len()+1];
-        data[0] = index as u8;
-        mask(&mut data[1..], src, index, mask_data);
+//         let index = rand::thread_rng().gen::<usize>() % mask_data.len();
+//         let mut data = vec![0;src.len()+1];
+//         data[0] = index as u8;
+//         mask(&mut data[1..], src, index, mask_data);
     
-        JsValue::from(data.to_hex())
-    }
+//         JsValue::from(data.to_hex())
+//     }
 
-    fn str_to_data(src : &str) -> Result<Vec<u8>> {
+//     fn str_to_data(src : &str) -> Result<Vec<u8>> {
 
-        let src = Vec::<u8>::from_hex(src)?; 
-        if src.len() < 1 {
-            return Err(Error::custom("invalid message length"));
-        }    
-        let mask_data = mask_data();
-        let index = src[0] as usize;
-        let mut data = vec![0;src.len()-1];
-        mask(&mut data, &src[1..], index, mask_data);
-        Ok(data)
-    }
-}
+//         let src = Vec::<u8>::from_hex(src)?; 
+//         if src.len() < 1 {
+//             return Err(Error::custom("invalid message length"));
+//         }    
+//         let mask_data = mask_data();
+//         let index = src[0] as usize;
+//         let mut data = vec![0;src.len()-1];
+//         mask(&mut data, &src[1..], index, mask_data);
+//         Ok(data)
+//     }
+// }
 
-impl From<Response> for Result<Vec<u8>> {
-    fn from(response: Response) -> Self {
-        response.result
-    }
-}
+// impl From<Response> for Result<Vec<u8>> {
+//     fn from(response: Response) -> Self {
+//         response.result
+//     }
+// }
 
-impl From<Response> for JsValue {
-    fn from(response: Response) -> Self {
+// impl From<Response> for JsValue {
+//     fn from(response: Response) -> Self {
         
-        match response.result {
-            Ok(data) => {
-                Response::data_to_jsv(&data)
-            }
-            Err(error) => {
-                let msg = Object::new();
-                js_sys::Reflect::set(&msg, &"error".into(), &JsValue::from(error.to_string())).unwrap();
-                msg.into()
-            }
+//         match response.result {
+//             Ok(data) => {
+//                 Response::data_to_jsv(&data)
+//             }
+//             Err(error) => {
+//                 let msg = Object::new();
+//                 js_sys::Reflect::set(&msg, &"error".into(), &JsValue::from(error.to_string())).unwrap();
+//                 msg.into()
+//             }
+//         }
+//     }
+// }
+
+// impl TryFrom<JsValue> for Response {
+//     type Error = Error;
+
+//     fn try_from(msg: JsValue) -> Result<Self, Self::Error> {
+
+//         if let Some(hex) = msg.as_string() {
+//             Ok(Self { result : Response::str_to_data(hex.as_str()) })
+//         } else {
+//             let error = js_sys::Reflect::get(&msg, &"error".into()).unwrap();
+//             if let Some(error) = error.as_string() {
+//                 Err(Error::custom(error))
+//             } else {
+//                 Err(Error::custom("invalid response message: no data or error property"))
+//             }
+//         }
+//     }
+// }
+
+const SUCCESS: u8 = 0;
+const ERROR: u8 = 1;
+
+
+pub fn resp_to_jsv(response : Result<Vec<u8>>) -> JsValue {
+    let mask_data = mask_data();
+    let mut index = rand::thread_rng().gen::<usize>() % (mask_data.len()-1);
+
+    match response {
+        Ok(src) => {
+            let mut data = vec![0;src.len()+2];
+            data[0] = index as u8;
+            data[1] = SUCCESS ^ mask_data[index];
+            index += 1;
+            mask(&mut data[2..], &src, &mut index, mask_data);
+            JsValue::from(data.to_hex())
+        },
+        Err(error) => {
+            let error = error.to_string();
+            let src = error.as_bytes();
+            let mut data = vec![0;src.len()+2];
+            data[0] = index as u8;
+            data[1] = ERROR ^ mask_data[index];
+            index += 1;
+            mask(&mut data[2..], &src, &mut index, mask_data);
+            JsValue::from(data.to_hex())
         }
     }
 }
 
-impl TryFrom<JsValue> for Response {
-    type Error = Error;
+pub fn jsv_to_resp(jsv : &JsValue) -> Result<Vec<u8>> {
 
-    fn try_from(msg: JsValue) -> Result<Self, Self::Error> {
+    let src = Vec::<u8>::from_hex(jsv.as_string().ok_or(Error::custom("expecting string"))?.as_str())?;
+    // let src = Vec::<u8>::from_hex(src)?; 
+    if src.len() < 2 {
+        return Err(Error::custom("invalid message length"));
+    }    
+    let mask_data = mask_data();
+    let mut index = src[0] as usize;
+    let mut data = vec![0;src.len()-1];
+    mask(&mut data, &src[1..], &mut index, mask_data);
 
-        if let Some(hex) = msg.as_string() {
-            Ok(Self { result : Response::str_to_data(hex.as_str()) })
-        } else {
-            let error = js_sys::Reflect::get(&msg, &"error".into()).unwrap();
-            if let Some(error) = error.as_string() {
-                Err(Error::custom(error))
-            } else {
-                Err(Error::custom("invalid response message: no data or error property"))
-            }
+    let code = data[0]; //src[1] ^ mask_data[index];
+    match code {
+        SUCCESS => {
+            // let mut data = vec![0;src.len()-2];
+            // mask(&mut data, &src[2..], index+1, mask_data);
+            Ok(data[1..].to_vec())
+        }
+        ERROR => {
+            // let mut data = vec![0;src.len()-2];
+            // mask(&mut data, &src[2..], index+1, mask_data);
+            let error = String::from_utf8(data[1..].to_vec())?;
+            Err(Error::custom(error))
+        }
+        _ => {
+            Err(Error::custom("invalid response code"))
         }
     }
 }
-
-
 
 
 // ------

@@ -264,7 +264,7 @@ impl Settings {
             match read_json_sync::<Self>(storage.filename()) {
                 Ok(settings) => Ok(settings),
                 Err(err) => {
-                    log_error!("Settings::load: {}", err);
+                    log_warning!("Settings::load: {}", err);
                     Ok(Self::default())
                 }
             }
