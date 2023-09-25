@@ -9,12 +9,8 @@ cfg_if! {
     }
 }
 
-pub mod service;
-use futures_util::future::join_all;
-pub use service::Service;
-
-pub mod kaspa;
-pub use kaspa::KaspaService;
+use crate::runtime::Runtime;
+use crate::runtime::KaspaService;
 
 pub mod channel;
 pub use channel::Channel;
@@ -25,7 +21,7 @@ pub use payload::Payload;
 pub struct Inner {
     application_events: channel::Channel<Events>,
     kaspa: Arc<KaspaService>,
-    services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
+    runtime : Runtime,
 }
 
 #[derive(Clone)]
@@ -38,49 +34,60 @@ impl Interop {
         let application_events = channel::Channel::unbounded(egui_ctx.clone());
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
 
-        let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![kaspa.clone()];
+        // let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![kaspa.clone()];
+
+        let runtime = Runtime::default();
+        runtime.register_service(kaspa.clone());
 
         let interop = Self {
             inner: Arc::new(Inner {
                 application_events,
                 kaspa,
-                services: Mutex::new(services),
+                runtime,
+                // services: Mutex::new(services),
             }),
         };
 
-        register(Some(interop.clone()));
+        register_global(Some(interop.clone()));
 
         interop
     }
 
-    pub fn start(&self) {
-        let services = self.services();
-        for service in services {
-            spawn(async move { service.spawn().await });
-        }
+    pub fn runtime(&self) -> &Runtime {
+        &self.inner.runtime
     }
 
-    pub fn services(&self) -> Vec<Arc<dyn Service + Send + Sync + 'static>> {
-        self.inner.services.lock().unwrap().clone()
+    pub fn start(&self) {
+        self.runtime().start();
+        // let services = self.services();
+        // for service in services {
+        //     spawn(async move { service.spawn().await });
+        // }
     }
+
+    // pub fn services(&self) -> Vec<Arc<dyn Service + Send + Sync + 'static>> {
+    //     self.inner.services.lock().unwrap().clone()
+    // }
 
     pub fn shutdown(&self) {
-        self.services()
-            .into_iter()
-            .for_each(|service| service.terminate());
+        self.runtime().shutdown();
+        // self.services()
+        //     .into_iter()
+        //     .for_each(|service| service.terminate());
     }
 
     pub async fn join(&self) {
-        let futures = self
-            .services()
-            .into_iter()
-            .map(|service| service.join())
-            .collect::<Vec<_>>();
-        join_all(futures).await;
+        self.runtime().join().await;
+        // let futures = self
+        //     .services()
+        //     .into_iter()
+        //     .map(|service| service.join())
+        //     .collect::<Vec<_>>();
+        // join_all(futures).await;
     }
 
     pub fn drop(&self) {
-        register(None);
+        register_global(None);
     }
 
     pub fn wallet(&self) -> &Arc<runtime::Wallet> {
@@ -156,7 +163,7 @@ fn interop() -> &'static Interop {
     }
 }
 
-fn register(interop: Option<Interop>) {
+fn register_global(interop: Option<Interop>) {
     unsafe {
         INTEROP = interop;
     }

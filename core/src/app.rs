@@ -8,12 +8,13 @@ use workflow_log::*;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
+        use kaspa_ng_core::runtime;
 
         pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> eframe::Result<()> {
 
             use std::sync::Mutex;
 
-            interop::panic::init_panic_handler();
+            runtime::panic::init_panic_handler();
 
             // Log to stderr (if you run with `RUST_LOG=debug`).
             env_logger::init();

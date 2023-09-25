@@ -3,17 +3,15 @@
 
 use cfg_if::cfg_if;
 use kaspa_ng_core::app::kaspa_ng_main;
+use workflow_log::*;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
         #[tokio::main]
         async fn main() {
-            match kaspa_ng_main().await {
-                Ok(_) => {},
-                Err(err) => {
-                    workflow_log::log_error!("Error: {err}");
-                }
+            if let Err(err) = kaspa_ng_main(None).await {
+                log_error!("Error: {err}");
             }
         }
 
@@ -22,7 +20,9 @@ cfg_if! {
         fn main() {
 
             wasm_bindgen_futures::spawn_local(async {
-                kaspa_ng_main(None).await;
+                if let Err(err) = kaspa_ng_main(None).await {
+                    log_error!("Error: {err}");
+                }
             });
 
         }

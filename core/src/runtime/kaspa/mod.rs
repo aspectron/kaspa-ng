@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::imports::*;
-use crate::interop::Service;
+use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};

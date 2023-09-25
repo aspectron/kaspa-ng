@@ -7,8 +7,46 @@ use kaspa_wallet_core::result::Result;
 use rand::Rng;
 use wasm_bindgen::prelude::*;
 
-const SUCCESS: u8 = 0;
-const ERROR: u8 = 1;
+// const SUCCESS: u8 = 0;
+// const ERROR: u8 = 1;
+
+#[repr(u8)]
+pub enum Target {
+    Wallet = 0,
+    Interop = 1,
+}
+
+impl TryFrom<u8> for Target {
+    type Error = Error;
+
+    fn try_from(value: u8) -> Result<Self> {
+        match value {
+            0 => Ok(Target::Wallet),
+            1 => Ok(Target::Interop),
+            _ => Err(Error::custom("invalid message target")),
+        }
+    }
+}
+
+#[repr(u8)]
+enum ServerMessageKind {
+    Success = 0,
+    Error = 1,
+    Notification = 2,
+}
+
+impl TryFrom<u8> for ServerMessageKind {
+    type Error = Error;
+
+    fn try_from(value: u8) -> Result<Self> {
+        match value {
+            0 => Ok(ServerMessageKind::Success),
+            1 => Ok(ServerMessageKind::Error),
+            2 => Ok(ServerMessageKind::Notification),
+            _ => Err(Error::custom("invalid server message kind")),
+        }
+    }
+}
 
 #[wasm_bindgen]
 extern "C" {
@@ -71,36 +109,40 @@ fn mask(data: &mut [u8], src: &[u8], index: &mut usize, mask: &[u8]) {
     }
 }
 
-pub fn req_to_jsv(op: u32, src: &[u8]) -> JsValue {
+pub fn req_to_jsv(target : Target, op: u32, src: &[u8]) -> JsValue {
     let mask_data = mask_data();
     let mut index = rand::thread_rng().gen::<usize>() % mask_data.len();
     let mut data = vec![0; src.len() + 5];
     data[0] = index as u8;
+    data[1] = target as u8 ^ mask_data[index];
+    index += 1;
+    // mask(&mut data[1..1], &[target as u8], &mut index, mask_data);
     mask(
-        &mut data[1..5],
+        &mut data[2..6],
         op.to_le_bytes().as_ref(),
         &mut index,
         mask_data,
     );
-    mask(&mut data[5..], src, &mut index, mask_data);
+    mask(&mut data[6..], src, &mut index, mask_data);
     JsValue::from(data.to_hex())
 }
 
-pub fn jsv_to_req(src: JsValue) -> Result<(u32, Vec<u8>)> {
+pub fn jsv_to_req(src: JsValue) -> Result<(Target, u32, Vec<u8>)> {
     let src = Vec::<u8>::from_hex(
         src.as_string()
             .ok_or(Error::custom("expecting string"))?
             .as_str(),
     )?;
-    if src.len() < 5 {
+    if src.len() < 6 {
         return Err(Error::custom("invalid message length"));
     }
     let mask_data = mask_data();
     let mut index = src[0] as usize;
     let mut data = vec![0; src.len() - 1];
     mask(&mut data, &src[1..], &mut index, mask_data);
-    let op = u32::from_le_bytes(data[0..4].try_into().unwrap());
-    Ok((op, data[4..].to_vec()))
+    let target = Target::try_from(data[0])?;
+    let op = u32::from_le_bytes(data[1..5].try_into().unwrap());
+    Ok((target, op, data[5..].to_vec()))
 }
 
 pub fn resp_to_jsv(response: Result<Vec<u8>>) -> JsValue {
@@ -111,7 +153,7 @@ pub fn resp_to_jsv(response: Result<Vec<u8>>) -> JsValue {
         Ok(src) => {
             let mut data = vec![0; src.len() + 2];
             data[0] = index as u8;
-            data[1] = SUCCESS ^ mask_data[index];
+            data[1] = ServerMessageKind::Success as u8 ^ mask_data[index];
             index += 1;
             mask(&mut data[2..], &src, &mut index, mask_data);
             JsValue::from(data.to_hex())
@@ -121,7 +163,7 @@ pub fn resp_to_jsv(response: Result<Vec<u8>>) -> JsValue {
             let src = error.as_bytes();
             let mut data = vec![0; src.len() + 2];
             data[0] = index as u8;
-            data[1] = ERROR ^ mask_data[index];
+            data[1] = ServerMessageKind::Error as u8 ^ mask_data[index];
             index += 1;
             mask(&mut data[2..], src, &mut index, mask_data);
             JsValue::from(data.to_hex())
@@ -144,13 +186,49 @@ pub fn jsv_to_resp(jsv: &JsValue) -> Result<Vec<u8>> {
     let mut data = vec![0; src.len() - 1];
     mask(&mut data, &src[1..], &mut index, mask_data);
 
-    let code = data[0];
-    match code {
-        SUCCESS => Ok(data[1..].to_vec()),
-        ERROR => {
+    let kind = ServerMessageKind::try_from(data[0])?;
+    match kind {
+        ServerMessageKind::Success => Ok(data[1..].to_vec()),
+        ServerMessageKind::Error => {
             let error = String::from_utf8(data[1..].to_vec())?;
             Err(Error::custom(error))
         }
         _ => Err(Error::custom("invalid response code")),
     }
 }
+
+// ----
+
+
+pub fn notify_to_jsv(op: u32, src: &[u8]) -> JsValue {
+    let mask_data = mask_data();
+    let mut index = rand::thread_rng().gen::<usize>() % mask_data.len();
+    let mut data = vec![0; src.len() + 5];
+    data[0] = index as u8;
+    mask(
+        &mut data[1..5],
+        op.to_le_bytes().as_ref(),
+        &mut index,
+        mask_data,
+    );
+    mask(&mut data[5..], src, &mut index, mask_data);
+    JsValue::from(data.to_hex())
+}
+
+pub fn jsv_to_notify(src: JsValue) -> Result<(u32, Vec<u8>)> {
+    let src = Vec::<u8>::from_hex(
+        src.as_string()
+            .ok_or(Error::custom("expecting string"))?
+            .as_str(),
+    )?;
+    if src.len() < 5 {
+        return Err(Error::custom("invalid message length"));
+    }
+    let mask_data = mask_data();
+    let mut index = src[0] as usize;
+    let mut data = vec![0; src.len() - 1];
+    mask(&mut data, &src[1..], &mut index, mask_data);
+    let op = u32::from_le_bytes(data[0..4].try_into().unwrap());
+    Ok((op, data[4..].to_vec()))
+}
+

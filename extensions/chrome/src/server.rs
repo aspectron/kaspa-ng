@@ -96,15 +96,33 @@ impl Server {
             callback
         );
 
-        let (op, data) = jsv_to_req(msg)?;
+        let (target, op, data) = jsv_to_req(msg)?;
 
+        match target {
+            Target::Wallet => {
+                spawn_local(async move {
+                    let resp = resp_to_jsv(self.wallet_server.call_with_borsh(op, &data).await);
+                    if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
+                        log_error!("onMessage callback error: {:?}", err);
+                    }
+                });
+            }
+            Target::Interop => {
+                todo!()
+            }
+        }
+
+        Ok(())
+    }
+
+    fn post_notify(&self, data : Vec<u8>) -> Result<()> {
         spawn_local(async move {
-            let resp = resp_to_jsv(self.wallet_server.call_with_borsh(op, &data).await);
-            if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
-                log_error!("onMessage callback error: {:?}", err);
+            if let Err(err) = send_message(&notify_to_jsv(0x0, &data)).await {
+                log_warning!("Unable to post notification: {:?}", err);
             }
         });
 
         Ok(())
     }
 }
+

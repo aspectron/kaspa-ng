@@ -9,7 +9,6 @@ pub mod adaptor;
 pub mod egui;
 pub mod error;
 pub mod events;
-// pub mod icons;
 pub mod imports;
 pub mod interop;
 pub mod modules;
@@ -21,8 +20,6 @@ pub mod prompt;
 pub mod result;
 pub mod settings;
 pub mod sync;
-// pub mod theme;
 pub mod utils;
-
-// #[cfg(any(feature = "browser-extension", feature="desktop-application"))]
 pub mod app;
+pub mod runtime;
