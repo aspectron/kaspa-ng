@@ -10,17 +10,19 @@ use wasm_bindgen::prelude::*;
 use workflow_log::*;
 
 static mut SERVER: Option<Arc<Server>> = None;
+// background script
 #[wasm_bindgen]
 pub async fn kaspa_ng_background() {
     log_info!("kaspa_ng_background called successfully in the background!");
 
     let server = Arc::new(Server::new());
-    server.init();
     unsafe {
         SERVER = Some(server.clone());
     }
+    server.start();
 }
 
+// extension popup
 #[wasm_bindgen]
 pub async fn kaspa_ng_main() {
     log_info!("kaspa_ng_main called successfully in the popup!");

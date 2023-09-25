@@ -21,7 +21,7 @@ impl ClientTransport {
 
 #[async_trait]
 impl BorshTransport for ClientTransport {
-    async fn call(&self, op: u32, data: Vec<u8>) -> Result<Vec<u8>> {
+    async fn call(&self, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
         let (tx, rx) = oneshot::<Result<Vec<u8>>>();
         spawn_local(async move {
             match send_message(&req_to_jsv(Target::Wallet, op, &data)).await {

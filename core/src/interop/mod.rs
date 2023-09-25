@@ -9,8 +9,8 @@ cfg_if! {
     }
 }
 
-use crate::runtime::Runtime;
 use crate::runtime::KaspaService;
+use crate::runtime::Runtime;
 
 // pub mod channel;
 // use crate::channel::Channel;
@@ -21,7 +21,7 @@ pub use payload::Payload;
 pub struct Inner {
     application_events: ApplicationEventsChannel,
     kaspa: Arc<KaspaService>,
-    runtime : Runtime,
+    runtime: Runtime,
 }
 
 #[derive(Clone)]

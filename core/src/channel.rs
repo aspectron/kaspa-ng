@@ -10,10 +10,7 @@ pub struct Sender<T> {
 
 impl<T> Sender<T> {
     pub fn new(ctx: Option<egui::Context>, sender: ChannelSender<T>) -> Self {
-        Self {
-            ctx,
-            sender,
-        }
+        Self { ctx, sender }
     }
 
     pub async fn send(&self, msg: T) -> Result<(), SendError<T>> {

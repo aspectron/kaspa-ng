@@ -109,7 +109,7 @@ fn mask(data: &mut [u8], src: &[u8], index: &mut usize, mask: &[u8]) {
     }
 }
 
-pub fn req_to_jsv(target : Target, op: u32, src: &[u8]) -> JsValue {
+pub fn req_to_jsv(target: Target, op: u64, src: &[u8]) -> JsValue {
     let mask_data = mask_data();
     let mut index = rand::thread_rng().gen::<usize>() % mask_data.len();
     let mut data = vec![0; src.len() + 5];
@@ -118,22 +118,22 @@ pub fn req_to_jsv(target : Target, op: u32, src: &[u8]) -> JsValue {
     index += 1;
     // mask(&mut data[1..1], &[target as u8], &mut index, mask_data);
     mask(
-        &mut data[2..6],
+        &mut data[2..10],
         op.to_le_bytes().as_ref(),
         &mut index,
         mask_data,
     );
-    mask(&mut data[6..], src, &mut index, mask_data);
+    mask(&mut data[10..], src, &mut index, mask_data);
     JsValue::from(data.to_hex())
 }
 
-pub fn jsv_to_req(src: JsValue) -> Result<(Target, u32, Vec<u8>)> {
+pub fn jsv_to_req(src: JsValue) -> Result<(Target, u64, Vec<u8>)> {
     let src = Vec::<u8>::from_hex(
         src.as_string()
             .ok_or(Error::custom("expecting string"))?
             .as_str(),
     )?;
-    if src.len() < 6 {
+    if src.len() < 10 {
         return Err(Error::custom("invalid message length"));
     }
     let mask_data = mask_data();
@@ -141,8 +141,8 @@ pub fn jsv_to_req(src: JsValue) -> Result<(Target, u32, Vec<u8>)> {
     let mut data = vec![0; src.len() - 1];
     mask(&mut data, &src[1..], &mut index, mask_data);
     let target = Target::try_from(data[0])?;
-    let op = u32::from_le_bytes(data[1..5].try_into().unwrap());
-    Ok((target, op, data[5..].to_vec()))
+    let op = u64::from_le_bytes(data[1..9].try_into().unwrap());
+    Ok((target, op, data[9..].to_vec()))
 }
 
 pub fn resp_to_jsv(response: Result<Vec<u8>>) -> JsValue {
@@ -199,36 +199,34 @@ pub fn jsv_to_resp(jsv: &JsValue) -> Result<Vec<u8>> {
 
 // ----
 
-
-pub fn notify_to_jsv(op: u32, src: &[u8]) -> JsValue {
+pub fn notify_to_jsv(op: u64, src: &[u8]) -> JsValue {
     let mask_data = mask_data();
     let mut index = rand::thread_rng().gen::<usize>() % mask_data.len();
     let mut data = vec![0; src.len() + 5];
     data[0] = index as u8;
     mask(
-        &mut data[1..5],
+        &mut data[1..9],
         op.to_le_bytes().as_ref(),
         &mut index,
         mask_data,
     );
-    mask(&mut data[5..], src, &mut index, mask_data);
+    mask(&mut data[9..], src, &mut index, mask_data);
     JsValue::from(data.to_hex())
 }
 
-pub fn jsv_to_notify(src: JsValue) -> Result<(u32, Vec<u8>)> {
+pub fn jsv_to_notify(src: JsValue) -> Result<(u64, Vec<u8>)> {
     let src = Vec::<u8>::from_hex(
         src.as_string()
             .ok_or(Error::custom("expecting string"))?
             .as_str(),
     )?;
-    if src.len() < 5 {
+    if src.len() < 9 {
         return Err(Error::custom("invalid message length"));
     }
     let mask_data = mask_data();
     let mut index = src[0] as usize;
     let mut data = vec![0; src.len() - 1];
     mask(&mut data, &src[1..], &mut index, mask_data);
-    let op = u32::from_le_bytes(data[0..4].try_into().unwrap());
-    Ok((op, data[4..].to_vec()))
+    let op = u64::from_le_bytes(data[0..8].try_into().unwrap());
+    Ok((op, data[8..].to_vec()))
 }
-

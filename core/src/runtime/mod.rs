@@ -55,12 +55,10 @@ impl Default for Runtime {
 }
 
 impl Runtime {
-
-    pub fn new(services : &[Arc<dyn Service + Send + Sync + 'static>]) -> Self {
+    pub fn new(services: &[Arc<dyn Service + Send + Sync + 'static>]) -> Self {
         // let runtime = Self::default();
         // services.iter().for_each(|service| runtime.register_service(service.clone()));
         // runtime
-
 
         // let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![];
 
@@ -110,7 +108,6 @@ impl Runtime {
     pub fn drop(&self) {
         register_global(None);
     }
-
 }
 
 static mut RUNTIME: Option<Runtime> = None;

@@ -45,7 +45,7 @@ pub use crate::egui::icon::{icons, Icon, IconSize, Icons};
 pub use crate::egui::theme::theme;
 pub use crate::egui::*;
 pub use crate::error::Error;
-pub use crate::events::{Events,ApplicationEventsChannel};
+pub use crate::events::{ApplicationEventsChannel, Events};
 // pub use crate::channel::Channel;
 pub use crate::interop;
 pub use crate::interop::{spawn, spawn_with_result, Interop, Payload};

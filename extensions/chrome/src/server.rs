@@ -1,5 +1,9 @@
 use crate::ipc::*;
 use js_sys::Function;
+use kaspa_ng_core::events::ApplicationEventsChannel;
+use kaspa_ng_core::runtime::kaspa::KaspaService;
+use kaspa_ng_core::runtime::Runtime;
+use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::error::Error;
 use kaspa_wallet_core::result::Result;
 use kaspa_wallet_core::runtime;
@@ -9,20 +13,15 @@ use std::sync::{Arc, Mutex};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use workflow_log::*;
-use kaspa_ng_core::events::ApplicationEventsChannel;
-use kaspa_ng_core::settings::Settings;
-use kaspa_ng_core::runtime::kaspa::KaspaService;
-use kaspa_ng_core::runtime::Runtime;
 
 type ListenerClosure = Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>;
 
 pub struct Server {
-    wallet : Arc<runtime::Wallet>,
+    wallet: Arc<runtime::Wallet>,
     wallet_server: Arc<WalletServer>,
-    // closure: Mutex<Option<Rc<Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>>>>,
     closure: Mutex<Option<Rc<ListenerClosure>>>,
-    runtime : Runtime,
-    extension_id: String,
+    runtime: Runtime,
+    chrome_extension_id: String,
 }
 
 unsafe impl Send for Server {}
@@ -36,20 +35,20 @@ impl Default for Server {
 
 impl Server {
     pub fn new() -> Self {
-
         let settings = Settings::load().unwrap_or_else(|err| {
             log_error!("Unable to load settings: {err}");
             Settings::default()
         });
 
-
         let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
 
-        let wallet = Arc::new(runtime::Wallet::try_with_rpc(None, storage, None).unwrap_or_else(|e| {
-            panic!("Failed to create wallet instance: {}", e);
-        }));
+        let wallet = Arc::new(
+            runtime::Wallet::try_with_rpc(None, storage, None).unwrap_or_else(|e| {
+                panic!("Failed to create wallet instance: {}", e);
+            }),
+        );
 
         let wallet_server = Arc::new(WalletServer::new(wallet.clone()));
 
@@ -58,7 +57,7 @@ impl Server {
         let runtime = Runtime::new(&[kaspa.clone()]);
 
         Self {
-            extension_id: runtime_id().unwrap(),
+            chrome_extension_id: runtime_id().unwrap(),
             closure: Mutex::new(None),
             wallet,
             wallet_server,
@@ -66,7 +65,12 @@ impl Server {
         }
     }
 
-    pub fn init(self: &Arc<Self>) {
+    pub fn start(self: &Arc<Self>) {
+        self.runtime.start();
+        self.register_listener();
+    }
+
+    fn register_listener(self: &Arc<Self>) {
         let this = self.clone();
 
         let closure = Rc::new(Closure::new(
@@ -99,7 +103,7 @@ impl Server {
         callback: Function,
     ) -> Result<()> {
         if let Some(id) = sender.id() {
-            if id != self.extension_id {
+            if id != self.chrome_extension_id {
                 return Err(Error::custom(
                     "Unknown sender id - foreign requests are forbidden",
                 ));
@@ -134,9 +138,10 @@ impl Server {
         Ok(())
     }
 
-    fn post_notify(&self, data : Vec<u8>) -> Result<()> {
+    // TODO - implement
+    fn _post_notify(&self, op: u64, data: Vec<u8>) -> Result<()> {
         spawn_local(async move {
-            if let Err(err) = send_message(&notify_to_jsv(0x0, &data)).await {
+            if let Err(err) = send_message(&notify_to_jsv(op, &data)).await {
                 log_warning!("Unable to post notification: {:?}", err);
             }
         });
@@ -144,4 +149,3 @@ impl Server {
         Ok(())
     }
 }
-
