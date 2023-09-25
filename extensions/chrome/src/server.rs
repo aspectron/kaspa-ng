@@ -20,7 +20,7 @@ pub struct Server {
     wallet: Arc<runtime::Wallet>,
     wallet_server: Arc<WalletServer>,
     closure: Mutex<Option<Rc<ListenerClosure>>>,
-    runtime: Runtime,
+    // runtime: Runtime,
     chrome_extension_id: String,
 }
 
@@ -35,10 +35,11 @@ impl Default for Server {
 
 impl Server {
     pub fn new() -> Self {
-        let settings = Settings::load().unwrap_or_else(|err| {
-            log_error!("Unable to load settings: {err}");
-            Settings::default()
-        });
+        // TODO @surinder
+        // let settings = Settings::load().unwrap_or_else(|err| {
+        //     log_error!("Unable to load settings: {err}");
+        //     Settings::default()
+        // });
 
         let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
@@ -53,20 +54,22 @@ impl Server {
         let wallet_server = Arc::new(WalletServer::new(wallet.clone()));
 
         let application_events = ApplicationEventsChannel::unbounded(None);
-        let kaspa = Arc::new(KaspaService::new(application_events.clone(), &settings));
-        let runtime = Runtime::new(&[kaspa.clone()]);
+        // TODO @surinder
+        // let kaspa = Arc::new(KaspaService::new(application_events.clone(), &settings));
+        // TODO @surinder
+        // let runtime = Runtime::new(&[kaspa.clone()]);
 
         Self {
             chrome_extension_id: runtime_id().unwrap(),
             closure: Mutex::new(None),
             wallet,
             wallet_server,
-            runtime,
+            // runtime,
         }
     }
 
     pub fn start(self: &Arc<Self>) {
-        self.runtime.start();
+        // self.runtime.start();
         self.register_listener();
     }
 
