@@ -17,7 +17,7 @@ pub enum Exception {
 pub struct Wallet {
     interop: Interop,
     wallet: Arc<runtime::Wallet>,
-    channel: interop::Channel<Events>,
+    channel: ApplicationEventsChannel,
     module: TypeId,
     stack: VecDeque<TypeId>,
     // sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
@@ -182,7 +182,7 @@ impl Wallet {
     //     self.section = type_id;
     // }
 
-    pub fn sender(&self) -> interop::channel::Sender<Events> {
+    pub fn sender(&self) -> crate::channel::Sender<Events> {
         self.channel.sender.clone()
     }
 

@@ -43,7 +43,7 @@ cfg_if! {
 }
 
 pub struct KaspaService {
-    pub application_events: interop::Channel<Events>,
+    pub application_events: ApplicationEventsChannel,
     pub service_events: Channel<KaspadServiceEvents>,
     pub task_ctl: Channel<()>,
     pub network: Mutex<Network>,
@@ -54,7 +54,7 @@ pub struct KaspaService {
 }
 
 impl KaspaService {
-    pub fn new(application_events: interop::Channel<Events>, settings: &Settings) -> Self {
+    pub fn new(application_events: ApplicationEventsChannel, settings: &Settings) -> Self {
         // --
         // create wallet instance
         let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {

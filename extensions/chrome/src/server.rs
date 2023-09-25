@@ -9,14 +9,20 @@ use std::sync::{Arc, Mutex};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use workflow_log::*;
+use kaspa_ng_core::events::ApplicationEventsChannel;
+use kaspa_ng_core::settings::Settings;
+use kaspa_ng_core::runtime::kaspa::KaspaService;
+use kaspa_ng_core::runtime::Runtime;
 
 type ListenerClosure = Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>;
 
 pub struct Server {
+    wallet : Arc<runtime::Wallet>,
     wallet_server: Arc<WalletServer>,
     // closure: Mutex<Option<Rc<Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>>>>,
     closure: Mutex<Option<Rc<ListenerClosure>>>,
-    runtime_id: String,
+    runtime : Runtime,
+    extension_id: String,
 }
 
 unsafe impl Send for Server {}
@@ -30,20 +36,33 @@ impl Default for Server {
 
 impl Server {
     pub fn new() -> Self {
+
+        let settings = Settings::load().unwrap_or_else(|err| {
+            log_error!("Unable to load settings: {err}");
+            Settings::default()
+        });
+
+
         let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
 
-        let wallet = runtime::Wallet::try_with_rpc(None, storage, None).unwrap_or_else(|e| {
+        let wallet = Arc::new(runtime::Wallet::try_with_rpc(None, storage, None).unwrap_or_else(|e| {
             panic!("Failed to create wallet instance: {}", e);
-        });
+        }));
 
-        let wallet_server = Arc::new(WalletServer::new(Arc::new(wallet)));
+        let wallet_server = Arc::new(WalletServer::new(wallet.clone()));
+
+        let application_events = ApplicationEventsChannel::unbounded(None);
+        let kaspa = Arc::new(KaspaService::new(application_events.clone(), &settings));
+        let runtime = Runtime::new(&[kaspa.clone()]);
 
         Self {
-            runtime_id: runtime_id().unwrap(),
+            extension_id: runtime_id().unwrap(),
             closure: Mutex::new(None),
-            wallet_server: wallet_server.clone(),
+            wallet,
+            wallet_server,
+            runtime,
         }
     }
 
@@ -80,7 +99,7 @@ impl Server {
         callback: Function,
     ) -> Result<()> {
         if let Some(id) = sender.id() {
-            if id != self.runtime_id {
+            if id != self.extension_id {
                 return Err(Error::custom(
                     "Unknown sender id - foreign requests are forbidden",
                 ));

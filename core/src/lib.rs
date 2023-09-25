@@ -23,3 +23,4 @@ pub mod sync;
 pub mod utils;
 pub mod app;
 pub mod runtime;
+pub mod channel;

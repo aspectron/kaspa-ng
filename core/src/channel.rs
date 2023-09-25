@@ -1,25 +1,26 @@
-use std::sync::Arc;
 use workflow_core::channel::{
     unbounded, Receiver, RecvError, SendError, Sender as ChannelSender, TryRecvError, TrySendError,
 };
 
 #[derive(Debug, Clone)]
 pub struct Sender<T> {
-    ctx: Arc<egui::Context>,
+    ctx: Option<egui::Context>,
     sender: ChannelSender<T>,
 }
 
 impl<T> Sender<T> {
-    pub fn new(ctx: egui::Context, sender: ChannelSender<T>) -> Self {
+    pub fn new(ctx: Option<egui::Context>, sender: ChannelSender<T>) -> Self {
         Self {
-            ctx: Arc::new(ctx),
+            ctx,
             sender,
         }
     }
 
     pub async fn send(&self, msg: T) -> Result<(), SendError<T>> {
         self.sender.send(msg).await?;
-        self.ctx.request_repaint();
+        if let Some(ctx) = &self.ctx {
+            ctx.request_repaint();
+        }
         Ok(())
     }
 
@@ -27,7 +28,9 @@ impl<T> Sender<T> {
         println!("channel try_send");
         self.sender.try_send(msg)?;
         println!("request repaint");
-        self.ctx.request_repaint();
+        if let Some(ctx) = &self.ctx {
+            ctx.request_repaint();
+        }
         println!("request repaint finished");
         Ok(())
     }
@@ -48,7 +51,7 @@ pub struct Channel<T = ()> {
 }
 
 impl<T> Channel<T> {
-    pub fn unbounded(ctx: egui::Context) -> Self {
+    pub fn unbounded(ctx: Option<egui::Context>) -> Self {
         let (sender, receiver) = unbounded();
         Self {
             sender: Sender::new(ctx, sender),

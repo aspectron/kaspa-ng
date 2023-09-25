@@ -12,14 +12,14 @@ cfg_if! {
 use crate::runtime::Runtime;
 use crate::runtime::KaspaService;
 
-pub mod channel;
-pub use channel::Channel;
+// pub mod channel;
+// use crate::channel::Channel;
 
 pub mod payload;
 pub use payload::Payload;
 
 pub struct Inner {
-    application_events: channel::Channel<Events>,
+    application_events: ApplicationEventsChannel,
     kaspa: Arc<KaspaService>,
     runtime : Runtime,
 }
@@ -31,13 +31,11 @@ pub struct Interop {
 
 impl Interop {
     pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
-        let application_events = channel::Channel::unbounded(egui_ctx.clone());
+        let application_events = ApplicationEventsChannel::unbounded(Some(egui_ctx.clone()));
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
 
-        // let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![kaspa.clone()];
-
-        let runtime = Runtime::default();
-        runtime.register_service(kaspa.clone());
+        let runtime = Runtime::new(&[kaspa.clone()]);
+        // runtime.register_service(kaspa.clone());
 
         let interop = Self {
             inner: Arc::new(Inner {
@@ -98,7 +96,7 @@ impl Interop {
         &self.inner.kaspa
     }
 
-    pub fn application_events(&self) -> &Channel<Events> {
+    pub fn application_events(&self) -> &ApplicationEventsChannel {
         &self.inner.application_events
     }
 

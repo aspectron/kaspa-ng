@@ -37,13 +37,38 @@ pub struct Runtime {
 
 impl Default for Runtime {
     fn default() -> Self {
-        let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![];
+        Runtime::new(&[])
+        // let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![];
+
+        // let runtime = Self {
+        //     inner: Arc::new(Inner {
+        //         // application_events,
+        //         // kaspa,
+        //         services: Mutex::new(services),
+        //     }),
+        // };
+
+        // register_global(Some(runtime.clone()));
+
+        // runtime
+    }
+}
+
+impl Runtime {
+
+    pub fn new(services : &[Arc<dyn Service + Send + Sync + 'static>]) -> Self {
+        // let runtime = Self::default();
+        // services.iter().for_each(|service| runtime.register_service(service.clone()));
+        // runtime
+
+
+        // let services: Vec<Arc<dyn Service + Send + Sync + 'static>> = vec![];
 
         let runtime = Self {
             inner: Arc::new(Inner {
                 // application_events,
                 // kaspa,
-                services: Mutex::new(services),
+                services: Mutex::new(services.to_vec()),
             }),
         };
 
@@ -51,11 +76,6 @@ impl Default for Runtime {
 
         runtime
     }
-}
-
-impl Runtime {
-
-
 
     pub fn register_service(&self, service: Arc<dyn Service + Send + Sync + 'static>) {
         self.inner.services.lock().unwrap().push(service);

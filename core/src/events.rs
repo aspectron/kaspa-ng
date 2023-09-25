@@ -1,6 +1,8 @@
 use crate::imports::*;
 use kaspa_wallet_core::events as kaspa;
 
+pub type ApplicationEventsChannel = crate::channel::Channel<Events>;
+
 // impl Notify {
 // }
 
