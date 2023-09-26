@@ -8,3 +8,5 @@
 datadir
 /ipc/target
 /discard
+analyzer-target
+.vscode/launch.json
