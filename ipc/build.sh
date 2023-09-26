@@ -1,1 +1,0 @@
-wasm-pack build --target nodejs --out-name ipc --out-dir nodejs/ipc --dev
