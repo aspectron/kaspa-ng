@@ -20,3 +20,4 @@ async-trait.workspace = true
 kaspa-utils.workspace = true
 kaspa-ng-macros.workspace = true
 rand.workspace = true
+chrome-sys.workspace = true

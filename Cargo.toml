@@ -73,6 +73,7 @@ rand = "0.8"
 # egui-notify = "0.9.0"
 # egui-toast = "0.9.0"
 
+chrome-sys = {path = "../chrome-sys"}
 egui = { path = "../egui/crates/egui" }
 egui_extras = { path = "../egui/crates/egui_extras", features = ["svg"] }
 eframe = { path = "../egui/crates/eframe", default-features = false, features = [

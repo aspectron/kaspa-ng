@@ -1,4 +1,4 @@
-use js_sys::Object;
+pub use chrome_sys::prelude::*;
 use kaspa_ng_macros::*;
 use kaspa_utils::hex::*;
 use kaspa_wallet_core::encryption::sha256_hash;
@@ -46,37 +46,6 @@ impl TryFrom<u8> for ServerMessageKind {
             _ => Err(Error::custom("invalid server message kind")),
         }
     }
-}
-
-#[wasm_bindgen]
-extern "C" {
-
-    #[wasm_bindgen(extends = Object)]
-    #[derive(Debug)]
-    pub type Sender;
-
-    #[wasm_bindgen(method, getter)]
-    pub fn id(this: &Sender) -> Option<String>;
-
-    #[wasm_bindgen(catch, js_namespace = ["chrome", "runtime"], js_name="sendMessage")]
-    pub async fn send_message(s: &JsValue) -> std::result::Result<JsValue, JsValue>;
-
-    #[wasm_bindgen(js_namespace = ["chrome", "runtime", "onMessage"], js_name="addListener")]
-    pub fn add_listener(closure: &Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>);
-}
-
-fn chrome() -> std::result::Result<JsValue, JsValue> {
-    js_sys::Reflect::get(&js_sys::global(), &"chrome".into())
-}
-
-fn runtime() -> std::result::Result<JsValue, JsValue> {
-    js_sys::Reflect::get(&chrome()?, &"runtime".into())
-}
-
-pub fn runtime_id() -> std::result::Result<String, JsValue> {
-    Ok(js_sys::Reflect::get(&runtime()?, &"id".into())?
-        .as_string()
-        .unwrap())
 }
 
 fn mask_data() -> &'static [u8; 128] {
