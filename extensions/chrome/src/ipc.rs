@@ -81,7 +81,7 @@ fn mask(data: &mut [u8], src: &[u8], index: &mut usize, mask: &[u8]) {
 pub fn req_to_jsv(target: Target, op: u64, src: &[u8]) -> JsValue {
     let mask_data = mask_data();
     let mut index = rand::thread_rng().gen::<usize>() % mask_data.len();
-    let mut data = vec![0; src.len() + 5];
+    let mut data = vec![0; src.len() + 2 + 8];
     data[0] = index as u8;
     data[1] = target as u8 ^ mask_data[index];
     index += 1;
