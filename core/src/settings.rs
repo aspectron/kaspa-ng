@@ -1,7 +1,6 @@
 use crate::imports::*;
 use kaspa_wallet_core::storage::local::storage::Storage;
 use kaspa_wrpc_client::WrpcEncoding;
-// use workflow_core::
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -116,15 +115,15 @@ impl Default for NodeSettings {
                 // let wrpc_url = "ws://127.0.0.1:17210".to_string();
             } else {
                 use workflow_dom::utils::*;
-
-                let location = window().location();
-                let protocol = location.protocol().expect("unable to get protocol");
-                let hostname = window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
-                log_warning!("protocol: {}", protocol);
-                log_warning!("hostname: {}", hostname);
-                let wrpc_url = if protocol == "chrome-extension:" {
+                use workflow_core::runtime;
+                let wrpc_url = if runtime::is_chrome_extension() {
                     "ws://127.0.0.1".to_string()
                 } else {
+                    let location = location().unwrap();
+                    //let protocol = location.protocol().expect("unable to get protocol");
+                    let hostname = location.hostname().expect("KaspadNodeKind: Unable to get hostname");
+                    //log_warning!("protocol: {}", protocol);
+                    //log_warning!("hostname: {}", hostname);
                     hostname.to_string()
                 };
 
@@ -242,21 +241,29 @@ fn storage() -> Result<Storage> {
 }
 
 impl Settings {
-    pub fn store(&self) -> Result<()> {
+    pub async fn store(&self) -> Result<()> {
+        workflow_log::log_info!("AAAA SSSSS");
+        let storage = storage()?;
+        storage.ensure_dir().await?;
+        workflow_store::fs::write_json(storage.filename(), self).await?;
+        Ok(())
+    }
+
+    pub fn store_sync(&self) -> Result<()> {
         let storage = storage()?;
         storage.ensure_dir_sync()?;
         workflow_store::fs::write_json_sync(storage.filename(), self)?;
         Ok(())
     }
 
-    pub fn load() -> Result<Self> {
-        use workflow_store::fs::read_json_sync;
+    pub async fn load() -> Result<Self> {
+        use workflow_store::fs::read_json;
 
         let storage = storage()?;
-        if storage.exists_sync().unwrap_or(false) {
+        if storage.exists().await.unwrap_or(false) {
             Ok(Self::default())
         } else {
-            match read_json_sync::<Self>(storage.filename()) {
+            match read_json::<Self>(storage.filename()).await {
                 Ok(settings) => Ok(settings),
                 Err(err) => {
                     log_warning!("Settings::load: {}", err);

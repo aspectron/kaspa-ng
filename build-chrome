@@ -13,7 +13,7 @@ cp ./extensions/chrome/popup.html ./dist-chrome/
 cp ./extensions/chrome/popup.js ./dist-chrome/
 cp ./extensions/chrome/background.js ./dist-chrome/
 
-wasm-pack build --target web --out-name kaspa-ng --out-dir ../../dist-chrome ./extensions/chrome/
+wasm-pack build --dev --target web --out-name kaspa-ng --out-dir ../../dist-chrome ./extensions/chrome/
 
 # wasm-pack build --target web --out-name background --out-dir ../../dist-chrome ./extensions/chrome/
 

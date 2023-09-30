@@ -13,6 +13,7 @@ kaspa-ng-core = { workspace = true, features = ["browser-extension"] }
 kaspa-wallet-core.workspace = true
 workflow-log.workspace = true
 workflow-core.workspace = true
+workflow-store.workspace = true
 wasm-bindgen.workspace = true
 wasm-bindgen-futures.workspace = true
 js-sys.workspace = true

@@ -19,7 +19,7 @@ cfg_if! {
             // Log to stderr (if you run with `RUST_LOG=debug`).
             env_logger::init();
 
-            let settings = Settings::load().unwrap_or_else(|err| {
+            let settings = Settings::load().await.unwrap_or_else(|err| {
                 log_error!("Unable to load settings: {err}");
                 Settings::default()
             });
@@ -85,7 +85,7 @@ cfg_if! {
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();
             let web_options = eframe::WebOptions::default();
 
-            let settings = Settings::load().unwrap_or_else(|err| {
+            let settings = Settings::load().await.unwrap_or_else(|err| {
                 log_error!("Unable to load settings: {err}");
                 Settings::default()
             });

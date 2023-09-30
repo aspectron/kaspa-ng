@@ -15,7 +15,7 @@ static mut SERVER: Option<Arc<Server>> = None;
 pub async fn kaspa_ng_background() {
     log_info!("kaspa_ng_background called successfully in the background!");
 
-    let server = Arc::new(Server::new());
+    let server = Arc::new(Server::new().await);
     unsafe {
         SERVER = Some(server.clone());
     }

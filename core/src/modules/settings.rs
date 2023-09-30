@@ -131,7 +131,7 @@ impl ModuleT for Settings {
                         match response {
                             Confirm::Ack => {
                                 wallet.settings = self.settings.clone();
-                                wallet.settings.store().unwrap();
+                                wallet.settings.store_sync().unwrap();
                                 if restart {
                                     println!("NODE INTERFACE UPDATE: {:?}", self.settings.node);
                                     self.interop.kaspa_service().update_services(&self.settings.node);

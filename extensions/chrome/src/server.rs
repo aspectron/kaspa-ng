@@ -1,8 +1,8 @@
 use crate::ipc::*;
 use js_sys::Function;
 use kaspa_ng_core::events::ApplicationEventsChannel;
-use kaspa_ng_core::runtime::kaspa::KaspaService;
-use kaspa_ng_core::runtime::Runtime;
+// use kaspa_ng_core::runtime::kaspa::KaspaService;
+// use kaspa_ng_core::runtime::Runtime;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::error::Error;
 use kaspa_wallet_core::result::Result;
@@ -27,23 +27,28 @@ pub struct Server {
 unsafe impl Send for Server {}
 unsafe impl Sync for Server {}
 
-impl Default for Server {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// impl Default for Server {
+//     fn default() -> Self {
+//         Self::new()
+//     }
+// }
 
 impl Server {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         // TODO @surinder
-        // let settings = Settings::load().unwrap_or_else(|err| {
+        // let settings = Settings::load().await.unwrap_or_else(|err| {
         //     log_error!("Unable to load settings: {err}");
         //     Settings::default()
         // });
 
+        // let r = settings.store().await;
+        workflow_store::fs::__chrome_storage_unit_test().await;
+
         let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
+
+        log_info!("storage storage: {:?}", storage.descriptor());
 
         let wallet = Arc::new(
             runtime::Wallet::try_with_rpc(None, storage, None).unwrap_or_else(|e| {
@@ -53,7 +58,7 @@ impl Server {
 
         let wallet_server = Arc::new(WalletServer::new(wallet.clone()));
 
-        let application_events = ApplicationEventsChannel::unbounded(None);
+        let _application_events = ApplicationEventsChannel::unbounded(None);
         // TODO @surinder
         // let kaspa = Arc::new(KaspaService::new(application_events.clone(), &settings));
         // TODO @surinder
