@@ -36,18 +36,21 @@ unsafe impl Sync for Server {}
 impl Server {
     pub async fn new() -> Self {
         // TODO @surinder
-        // let settings = Settings::load().await.unwrap_or_else(|err| {
-        //     log_error!("Unable to load settings: {err}");
-        //     Settings::default()
-        // });
+        let settings = Settings::load().await.unwrap_or_else(|err| {
+            log_error!("Unable to load settings: {err}");
+            Settings::default()
+        });
 
-        // let r = settings.store().await;
+        let _r = settings.store().await.unwrap();
         workflow_store::fs::__chrome_storage_unit_test().await;
 
         let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
 
+        let list = storage.wallet_list().await.unwrap();
+
+        log_info!("wallet_list: {:?}", list);
         log_info!("storage storage: {:?}", storage.descriptor());
 
         let wallet = Arc::new(
