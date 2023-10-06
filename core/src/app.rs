@@ -1,10 +1,12 @@
 use cfg_if::cfg_if;
 use kaspa_ng_core::interop;
 use kaspa_ng_core::settings::Settings;
-use kaspa_wallet_core::runtime::api::WalletApi;
+//use kaspa_wallet_core::runtime::api::WalletApi;
 use std::sync::Arc;
 use workflow_log::*;
 // use crate::result::Result;
+
+pub trait WalletApi{}
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -65,16 +67,16 @@ cfg_if! {
         // pub async fn start_app() {
         use crate::result::Result;
 
-        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
+        pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
             use wasm_bindgen::prelude::*;
 
             // ------------------------------------------------------------
             // ------------------------------------------------------------
             // ------------------------------------------------------------
-            log_info!("Sending ping request...");
-            let wallet_api = wallet_api.expect("wallet_api is None");
-            let v = wallet_api.ping(1).await.expect("ping failed");
-            log_info!("Ping response received '{v}' (should be 2) ...");
+            // log_info!("Sending ping request...");
+            // let wallet_api = wallet_api.expect("wallet_api is None");
+            // let v = wallet_api.ping(1).await.expect("ping failed");
+            // log_info!("Ping response received '{v}' (should be 2) ...");
 
             // ------------------------------------------------------------
             // ------------------------------------------------------------

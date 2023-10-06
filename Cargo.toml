@@ -75,7 +75,7 @@ rand = "0.8"
 
 chrome-sys = {path = "../chrome-sys"}
 egui = { path = "../egui/crates/egui" }
-egui_extras = { path = "../egui/crates/egui_extras", features = ["svg"] }
+egui_extras = { path = "../egui/crates/egui_extras", features = ["svg", "image"] }
 eframe = { path = "../egui/crates/eframe", default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.

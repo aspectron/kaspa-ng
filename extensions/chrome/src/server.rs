@@ -7,7 +7,7 @@ use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::error::Error;
 use kaspa_wallet_core::result::Result;
 use kaspa_wallet_core::runtime;
-use kaspa_wallet_core::runtime::api::transport::*;
+//use kaspa_wallet_core::runtime::api::transport::*;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use wasm_bindgen::prelude::*;
@@ -17,8 +17,9 @@ use workflow_log::*;
 type ListenerClosure = Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>;
 
 pub struct Server {
+    #[allow(dead_code)]
     wallet: Arc<runtime::Wallet>,
-    wallet_server: Arc<WalletServer>,
+    //wallet_server: Arc<WalletServer>,
     closure: Mutex<Option<Rc<ListenerClosure>>>,
     // runtime: Runtime,
     chrome_extension_id: String,
@@ -59,7 +60,7 @@ impl Server {
             }),
         );
 
-        let wallet_server = Arc::new(WalletServer::new(wallet.clone()));
+        //let wallet_server = Arc::new(WalletServer::new(wallet.clone()));
 
         let _application_events = ApplicationEventsChannel::unbounded(None);
         // TODO @surinder
@@ -71,7 +72,7 @@ impl Server {
             chrome_extension_id: runtime_id().unwrap(),
             closure: Mutex::new(None),
             wallet,
-            wallet_server,
+            //wallet_server,
             // runtime,
         }
     }
@@ -135,10 +136,10 @@ impl Server {
         match target {
             Target::Wallet => {
                 spawn_local(async move {
-                    let resp = resp_to_jsv(self.wallet_server.call_with_borsh(op, &data).await);
-                    if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
-                        log_error!("onMessage callback error: {:?}", err);
-                    }
+                    // let resp = resp_to_jsv(self.wallet_server.call_with_borsh(op, &data).await);
+                    // if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
+                    //     log_error!("onMessage callback error: {:?}", err);
+                    // }
                 });
             }
             Target::Interop => {
