@@ -103,7 +103,7 @@ impl ModuleT for AccountManager {
 
                         ui.vertical_centered(|ui| {
                             ui.add(
-                                egui::Image::new(ImageSource::Bytes(Cow::Borrowed("bytes://qr.svg"), context.qr()))
+                                egui::Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://qr.svg"), bytes: context.qr() })
                                 .fit_to_original_size(1.)
                                 // .shrink_to_fit()
                             );
