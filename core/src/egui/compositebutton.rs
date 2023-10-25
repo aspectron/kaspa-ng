@@ -1,6 +1,5 @@
-use egui::*;
 use egui::load::{TextureLoadResult, TexturePoll};
-
+use egui::*;
 
 /// Clickable button with text.
 ///
@@ -45,11 +44,11 @@ impl<'a> CompositeButton<'a> {
     pub fn new(text: impl Into<WidgetText>, secondary_text: impl Into<WidgetText>) -> Self {
         Self::opt_image_and_text(None, Some(text.into()), Some(secondary_text.into()))
     }
-    pub fn secondary_text(mut self, text: impl Into<WidgetText>)-> Self {
+    pub fn secondary_text(mut self, text: impl Into<WidgetText>) -> Self {
         self.secondary_text = Some(text.into());
         self
     }
-    pub fn text(mut self, text: impl Into<WidgetText>)-> Self {
+    pub fn text(mut self, text: impl Into<WidgetText>) -> Self {
         self.text = Some(text.into());
         self
     }
@@ -62,11 +61,23 @@ impl<'a> CompositeButton<'a> {
 
     /// Creates a button with an image to the left of the text. The size of the image as displayed is defined by the provided size.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn image_and_text(image: impl Into<Image<'a>>, text: impl Into<WidgetText>, secondary_text: impl Into<WidgetText>) -> Self {
-        Self::opt_image_and_text(Some(image.into()), Some(text.into()), Some(secondary_text.into()))
+    pub fn image_and_text(
+        image: impl Into<Image<'a>>,
+        text: impl Into<WidgetText>,
+        secondary_text: impl Into<WidgetText>,
+    ) -> Self {
+        Self::opt_image_and_text(
+            Some(image.into()),
+            Some(text.into()),
+            Some(secondary_text.into()),
+        )
     }
 
-    pub fn opt_image_and_text(image: Option<Image<'a>>, text: Option<WidgetText>, secondary_text: Option<WidgetText>) -> Self {
+    pub fn opt_image_and_text(
+        image: Option<Image<'a>>,
+        text: Option<WidgetText>,
+        secondary_text: Option<WidgetText>,
+    ) -> Self {
         Self {
             text,
             image,
@@ -235,12 +246,13 @@ impl Widget for CompositeButton<'_> {
         }
 
         let mut secondary_text_style = TextStyle::Name("CompositeButtonSub".into());
-        if !ui.style().text_styles.contains_key(&secondary_text_style){
+        if !ui.style().text_styles.contains_key(&secondary_text_style) {
             secondary_text_style = TextStyle::Body;
         }
-        
+
         let text = text.map(|text| text.into_galley(ui, wrap, text_wrap_width, TextStyle::Button));
-        let secondary_text = secondary_text.map(|text| text.into_galley(ui, wrap, text_wrap_width, secondary_text_style));
+        let secondary_text = secondary_text
+            .map(|text| text.into_galley(ui, wrap, text_wrap_width, secondary_text_style));
         let shortcut_text = (!shortcut_text.is_empty())
             .then(|| shortcut_text.into_galley(ui, Some(false), f32::INFINITY, TextStyle::Button));
 
@@ -251,7 +263,7 @@ impl Widget for CompositeButton<'_> {
             img_plus_spacing_width += image_size.x;
             desired_size.y = desired_size.y.max(image_size.y);
 
-            if text.is_some() || secondary_text.is_some(){
+            if text.is_some() || secondary_text.is_some() {
                 desired_size.x += ui.spacing().icon_spacing;
                 img_plus_spacing_width += ui.spacing().icon_spacing;
             }
@@ -263,10 +275,13 @@ impl Widget for CompositeButton<'_> {
             desired_size.y = desired_size.y.max(text.size().y);
         }
         if let Some(secondary_text) = &secondary_text {
-            desired_size.x = (img_plus_spacing_width+text_width).max(img_plus_spacing_width+secondary_text.size().x);
-            if text.is_some(){
-                desired_size.y = desired_size.y.max(desired_size.y + ui.spacing().item_spacing.y + secondary_text.size().y);
-            }else{
+            desired_size.x = (img_plus_spacing_width + text_width)
+                .max(img_plus_spacing_width + secondary_text.size().x);
+            if text.is_some() {
+                desired_size.y = desired_size
+                    .y
+                    .max(desired_size.y + ui.spacing().item_spacing.y + secondary_text.size().y);
+            } else {
                 desired_size.y = desired_size.y.max(secondary_text.size().y);
             }
         }
@@ -274,7 +289,7 @@ impl Widget for CompositeButton<'_> {
             desired_size.x += ui.spacing().item_spacing.x + shortcut_text.size().x;
             desired_size.y = desired_size.y.max(shortcut_text.size().y);
         }
-        
+
         desired_size += 2.0 * button_padding;
         if !small {
             desired_size.y = desired_size.y.at_least(ui.spacing().interact_size.y);
@@ -338,7 +353,7 @@ impl Widget for CompositeButton<'_> {
                     show_loading_spinner,
                     image.image_options(),
                 );
-                
+
                 response = texture_load_result_response(image.source(), &tlr, response);
             }
 
@@ -348,36 +363,31 @@ impl Widget for CompositeButton<'_> {
 
             let mut text_max_y = None;
             if let Some(text) = text {
-                let text_pos = if image.is_some() || shortcut_text.is_some() || secondary_text.is_some() {
-                    if secondary_text.is_some(){
-                        let h = text.size().y + ui.spacing().item_spacing.y;
-                        let height = h + secondary_text.as_ref().unwrap().size().y;
-                        let y = rect.center().y - 0.5 * height;
-                        text_max_y = Some(y + h);
-                        pos2(cursor_x, y)
-                    }else{
-                        pos2(cursor_x, rect.center().y - 0.5 * text.size().y)
-                    }
-                } else {
-                    // Make sure button text is centered if within a centered layout
-                    ui.layout()
-                        .align_size_within_rect(text.size(), rect.shrink2(button_padding))
-                        .min
-                };
+                let text_pos =
+                    if image.is_some() || shortcut_text.is_some() || secondary_text.is_some() {
+                        if secondary_text.is_some() {
+                            let h = text.size().y + ui.spacing().item_spacing.y;
+                            let height = h + secondary_text.as_ref().unwrap().size().y;
+                            let y = rect.center().y - 0.5 * height;
+                            text_max_y = Some(y + h);
+                            pos2(cursor_x, y)
+                        } else {
+                            pos2(cursor_x, rect.center().y - 0.5 * text.size().y)
+                        }
+                    } else {
+                        // Make sure button text is centered if within a centered layout
+                        ui.layout()
+                            .align_size_within_rect(text.size(), rect.shrink2(button_padding))
+                            .min
+                    };
                 text.paint_with_visuals(ui.painter(), text_pos, visuals);
             }
 
             if let Some(secondary_text) = secondary_text {
-                let y = text_max_y.unwrap_or_else(||rect.center().y - 0.5 * secondary_text.size().y);
-                let secondary_text_pos = pos2(
-                    cursor_x,
-                    y
-                );
-                secondary_text.paint_with_visuals(
-                    ui.painter(),
-                    secondary_text_pos,
-                    visuals,
-                );
+                let y =
+                    text_max_y.unwrap_or_else(|| rect.center().y - 0.5 * secondary_text.size().y);
+                let secondary_text_pos = pos2(cursor_x, y);
+                secondary_text.paint_with_visuals(ui.painter(), secondary_text_pos, visuals);
             }
 
             if let Some(shortcut_text) = shortcut_text {
@@ -402,7 +412,6 @@ impl Widget for CompositeButton<'_> {
         response
     }
 }
-
 
 fn font_height(text: &WidgetText, fonts: &epaint::Fonts, style: &Style) -> f32 {
     match text {

@@ -6,7 +6,7 @@ use std::sync::Arc;
 use workflow_log::*;
 // use crate::result::Result;
 
-pub trait WalletApi{}
+pub trait WalletApi {}
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
