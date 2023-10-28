@@ -43,7 +43,7 @@ impl Server {
         });
 
         let _r = settings.store().await.unwrap();
-        workflow_store::fs::__chrome_storage_unit_test().await;
+        workflow_chrome::storage::__chrome_storage_unit_test().await;
 
         let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
