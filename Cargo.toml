@@ -60,8 +60,9 @@ qrcode = "0.12.0"
 js-sys = "0.3.64"
 wasm-bindgen = "0.2.87"
 rand = "0.8"
-chrome-sys = {path = "../chrome-sys"}
+chrome-sys = "0.1.0"
 
+# chrome-sys = {path = "../chrome-sys"}
 
 egui = "0.23.0"
 egui_extras = { version = "0.23.0", features = ["svg"] }
