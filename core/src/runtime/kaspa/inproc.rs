@@ -2,6 +2,7 @@ use crate::imports::*;
 use kaspa_core::core::Core;
 use kaspa_core::signals::Shutdown;
 // use kaspa_rpc_service::service::RpcCoreService;
+use kaspa_utils::fd_budget;
 use kaspa_wallet_core::rpc::DynRpcApi;
 use kaspad_lib::args::Args;
 use kaspad_lib::daemon::{create_core_with_runtime, Runtime as KaspadRuntime};
@@ -31,8 +32,13 @@ impl super::Kaspad for InProc {
     fn start(&self, args: Args) -> Result<()> {
         println!("ARGS: {:#?}", args);
 
+        let fd_total_budget = fd_budget::limit()
+            - args.rpc_max_clients as i32
+            - args.inbound_limit as i32
+            - args.outbound_target as i32;
+
         let runtime = KaspadRuntime::default();
-        let (core, rpc_core_service) = create_core_with_runtime(&runtime, &args);
+        let (core, rpc_core_service) = create_core_with_runtime(&runtime, &args, fd_total_budget);
         let core_ = core.clone();
         let thread = std::thread::Builder::new()
             .name("kaspad".to_string())
