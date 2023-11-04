@@ -9,12 +9,12 @@ use egui::*;
 /// # egui::__run_test_ui(|ui| {
 /// # fn do_stuff() {}
 ///
-/// if ui.add(CompositeButton::new("Click me", Some("Secondary text"))).clicked() {
+/// if ui.add(CompositeButton::new("Click me", "Secondary text")).clicked() {
 ///     do_stuff();
 /// }
 ///
 /// // A greyed-out and non-interactive button:
-/// if ui.add_enabled(false, CompositeButton::new("Can't click this", None)).clicked() {
+/// if ui.add_enabled(false, CompositeButton::new("Can't click this", "Secondary text")).clicked() {
 ///     unreachable!();
 /// }
 /// # });
