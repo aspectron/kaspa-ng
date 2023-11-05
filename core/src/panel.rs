@@ -131,11 +131,16 @@ impl<'panel, Context> Panel<'panel, Context> {
         ui.horizontal(|ui| {
             match self.back {
                 Some(back) if self.back_enabled => {
-                    if icons()
-                        .back
-                        .render_with_options(ui, icon_size, self.back_active)
-                        .clicked()
-                    {
+                    // if icons()
+                    //     .back
+                    //     .render_with_options(ui, icon_size, self.back_active)
+                    //     .clicked()
+                    // {
+                    //     back(self.this);
+                    // }
+
+                    let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);//.text("Back");
+                    if ui.add_enabled(self.back_active, icon).clicked(){
                         back(self.this);
                     }
                 }
@@ -156,11 +161,16 @@ impl<'panel, Context> Panel<'panel, Context> {
 
             match self.close {
                 Some(close) if self.close_enabled => {
-                    if icons()
-                        .close
-                        .render_with_options(ui, icon_size, self.close_active)
-                        .clicked()
-                    {
+                    // if icons()
+                    //     .close
+                    //     .render_with_options(ui, icon_size, self.close_active)
+                    //     .clicked()
+                    // {
+                    //     close(self.this);
+                    // }
+
+                    let icon = CompositeIcon::new(egui_phosphor::bold::X);//.text("Close");
+                    if ui.add_enabled(self.close_active, icon).clicked(){
                         close(self.this);
                     }
                 }
