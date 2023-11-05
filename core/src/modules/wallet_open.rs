@@ -55,12 +55,31 @@ impl ModuleT for WalletOpen {
             let size = egui::Vec2::new(200_f32, 40_f32);
             let unlock_result = Payload::<Result<()>>::new("test");
 
+            let mut text: &str = "Select a wallet to unlock";
+            let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            if ui.add(icon).clicked(){
+                text = "icon clicked";
+            }
+
+            let icon = CompositeIcon::opt_icon_and_text(egui_phosphor::bold::ARROW_BEND_UP_LEFT, Some("Hello"), Some("Secondary text"));
+            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            if ui.add(icon).clicked(){
+                text = "icon clicked";
+            }
+
+            let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA).size(100.0).color(Color32::RED)).text("Hello");
+            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            if ui.add(icon).clicked(){
+                text = "icon clicked";
+            }
+
             let btn = CompositeButton::image_and_text(
                 Image::new(egui::include_image!("../images/icon.svg")).fit_to_exact_size(Vec2 { x: 50.0, y: 50.0 }),
                 "We’ve taken Lorem Ipsum to the next level with our HTML-Ipsum tool",
             "Secondary text,It’s perfect for showcasing design work as it should look"
             );
-            let mut text: &str = "Select a wallet to unlock";
+            
             if ui.add(btn).clicked(){
                 text = "clicked";
             }
