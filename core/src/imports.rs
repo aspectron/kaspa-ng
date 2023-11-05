@@ -2,6 +2,8 @@ pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
 pub use kaspa_utils::hashmap::GroupExtension;
 pub use kaspa_wallet_core::events::SyncState;
 pub use kaspa_wallet_core::rpc::DynRpcApi;
+pub use kaspa_wallet_core::api;
+pub use kaspa_wallet_core::api::WalletApi;
 pub use kaspa_wallet_core::runtime;
 pub use kaspa_wallet_core::runtime::Balance;
 pub use kaspa_wallet_core::secret::Secret;

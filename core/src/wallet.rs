@@ -16,7 +16,7 @@ pub enum Exception {
 
 pub struct Wallet {
     interop: Interop,
-    wallet: Arc<runtime::Wallet>,
+    wallet: Arc<dyn WalletApi>,
     channel: ApplicationEventsChannel,
     module: TypeId,
     stack: VecDeque<TypeId>,
@@ -186,21 +186,25 @@ impl Wallet {
         self.channel.sender.clone()
     }
 
-    pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+    pub fn wallet(&self) -> &Arc<dyn WalletApi> {
         &self.wallet
     }
 
-    pub fn rpc_api(&self) -> Arc<DynRpcApi> {
-        self.wallet().rpc_api()
-    }
+    // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+    //     &self.wallet
+    // }
 
-    pub fn rpc_client(&self) -> Option<Arc<KaspaRpcClient>> {
-        self.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok()
-    }
+    // pub fn rpc_api(&self) -> Arc<DynRpcApi> {
+    //     self.wallet().rpc_api()
+    // }
 
-    pub fn network_id(&self) -> Result<NetworkId> {
-        Ok(self.wallet().network_id()?)
-    }
+    // pub fn rpc_client(&self) -> Option<Arc<KaspaRpcClient>> {
+    //     self.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok()
+    // }
+
+    // pub fn network_id(&self) -> Result<NetworkId> {
+    //     Ok(self.wallet().network_id()?)
+    // }
 
     pub fn wallet_list(&self) -> &Vec<WalletDescriptor> {
         &self.wallet_list
@@ -343,7 +347,7 @@ impl eframe::App for Wallet {
             ui.style_mut().text_styles = self.large_style.text_styles.clone();
 
             // if false && !self.wallet().is_open() {
-            if FORCE_WALLET_OPEN && !self.wallet().is_open() {
+            if FORCE_WALLET_OPEN && !self.is_open { //self.wallet().is_open() {
                 let module = if self.module == TypeId::of::<modules::WalletOpen>()
                     || self.module == TypeId::of::<modules::WalletCreate>()
                 {

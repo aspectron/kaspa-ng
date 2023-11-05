@@ -135,9 +135,13 @@ impl KaspaService {
         }
     }
 
-    pub fn wallet(&self) -> &Arc<runtime::Wallet> {
-        &self.wallet
+    pub fn wallet(&self) -> Arc<dyn WalletApi> {
+        self.wallet.clone()
     }
+
+    // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+    //     &self.wallet
+    // }
 
     // pub async fn stop_wallet(&self) -> Result<()> {
     //     self.wallet().stop().await.expect("Unable to stop wallet");

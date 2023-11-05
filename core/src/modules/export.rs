@@ -115,11 +115,11 @@ impl ModuleT for Export {
                                     self.secret.as_bytes().to_vec(),
                                 );
                                 self.secret.zeroize();
-                                let wallet = self.interop.wallet().clone();
+                                let wallet = self.interop.wallet();//.clone();
                                 let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {
-                                    wallet.load(secret, wallet_name).await?;
+                                    wallet.wallet_open(secret, wallet_name).await?;
                                     Ok(())
                                 });
 
