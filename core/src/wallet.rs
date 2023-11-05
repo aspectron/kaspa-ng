@@ -16,8 +16,8 @@ pub enum Exception {
 
 #[derive(Default)]
 pub struct State {
-    is_open: Option<bool>,
-    is_connected: Option<bool>,
+    is_open: bool,
+    is_connected: bool,
     is_synced: Option<bool>,
     sync_state: Option<SyncState>,
     server_version: Option<String>,
@@ -43,11 +43,11 @@ pub struct State {
 
 impl State {
     pub fn is_open(&self) -> bool {
-        self.is_open.unwrap_or(false)
+        self.is_open
     }
 
     pub fn is_connected(&self) -> bool {
-        self.is_connected.unwrap_or(false)
+        self.is_connected
     }
 
     pub fn is_synced(&self) -> bool {
@@ -654,11 +654,13 @@ impl Wallet {
                         self.discard_hint = false;
                     }
                     CoreWallet::WalletOpen | CoreWallet::WalletReload => {
+                        self.state.is_open = true;
                         self.update_account_list();
                     }
                     CoreWallet::WalletError { message: _ } => {}
                     CoreWallet::WalletClose => {
                         self.hint = None;
+                        self.state.is_open = false;
                     }
                     CoreWallet::AccountSelection { id: _ } => {
                         // self.selected_account = self.wallet().account().ok();
