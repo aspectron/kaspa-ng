@@ -135,7 +135,7 @@ impl KaspaService {
         }
     }
 
-    pub fn wallet(&self) -> Arc<dyn WalletApi> {
+    pub fn wallet(&self) -> Arc<runtime::Wallet> {
         self.wallet.clone()
     }
 

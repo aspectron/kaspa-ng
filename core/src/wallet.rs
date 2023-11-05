@@ -14,6 +14,67 @@ pub enum Exception {
     UtxoIndexNotEnabled { url: Option<String> },
 }
 
+#[derive(Default)]
+pub struct State {
+    is_open: Option<bool>,
+    is_connected: Option<bool>,
+    is_synced: Option<bool>,
+    sync_state: Option<SyncState>,
+    server_version: Option<String>,
+    url: Option<String>,
+    network_id: Option<NetworkId>,
+    current_daa_score: Option<u64>,
+}
+
+// impl Default for State {
+//     fn default() -> Self {
+//         State {
+//             is_open: None,
+//             is_connected: None,
+//             is_synced: None,
+//             sync_state: None,
+//             server_version: None,
+//             url: None,
+//             network_id: None,
+//             current_daa_score: None,
+//         }
+//     }
+// }
+
+impl State {
+    pub fn is_open(&self) -> bool {
+        self.is_open.unwrap_or(false)
+    }
+
+    pub fn is_connected(&self) -> bool {
+        self.is_connected.unwrap_or(false)
+    }
+
+    pub fn is_synced(&self) -> bool {
+        self.is_synced.unwrap_or(false)
+    }
+
+    pub fn sync_state(&self) -> &Option<SyncState> {
+        &self.sync_state
+    }
+
+    pub fn server_version(&self) -> &Option<String> {
+        &self.server_version
+    }
+
+    pub fn url(&self) -> &Option<String> {
+        &self.url
+    }
+
+    pub fn network_id(&self) -> &Option<NetworkId> {
+        &self.network_id
+    }
+
+    pub fn current_daa_score(&self) -> Option<u64> {
+        self.current_daa_score
+    }
+}
+
 pub struct Wallet {
     interop: Interop,
     wallet: Arc<dyn WalletApi>,
@@ -30,12 +91,7 @@ pub struct Wallet {
     pub large_style: egui::Style,
     pub default_style: egui::Style,
 
-    is_synced: Option<bool>,
-    sync_state: Option<SyncState>,
-    server_version: Option<String>,
-    url: Option<String>,
-    network_id: Option<NetworkId>,
-    current_daa_score: Option<u64>,
+    state: State,
     hint: Option<Hint>,
     discard_hint: bool,
     exception: Option<Exception>,
@@ -133,14 +189,11 @@ impl Wallet {
             account_list: Vec::new(),
             selected_account: None,
 
-            sync_state: None,
-            is_synced: None,
-            server_version: None,
-            url: None,
-            network_id: None,
+            state: Default::default(),
+            // sync_state: None,
+            // is_synced: None,
             hint: None,
             discard_hint: false,
-            current_daa_score: None,
             exception: None,
             // icons : Icons::default(),
         };
@@ -188,6 +241,10 @@ impl Wallet {
 
     pub fn wallet(&self) -> &Arc<dyn WalletApi> {
         &self.wallet
+    }
+
+    pub fn state(&self) -> &State {
+        &self.state
     }
 
     // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
@@ -347,7 +404,8 @@ impl eframe::App for Wallet {
             ui.style_mut().text_styles = self.large_style.text_styles.clone();
 
             // if false && !self.wallet().is_open() {
-            if FORCE_WALLET_OPEN && !self.is_open { //self.wallet().is_open() {
+            if FORCE_WALLET_OPEN && !self.state.is_open() {
+                //self.wallet().is_open() {
                 let module = if self.module == TypeId::of::<modules::WalletOpen>()
                     || self.module == TypeId::of::<modules::WalletCreate>()
                 {
@@ -452,13 +510,14 @@ impl eframe::App for Wallet {
 impl Wallet {
     fn render_status(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            if !self.wallet().is_connected() {
+            if !self.state().is_connected() {
                 ui.label("Not Connected");
             } else {
                 ui.horizontal(|ui| {
-                    if self.wallet().is_synced() {
+                    if self.state().is_synced() {
                         self.render_connected_state(ui);
-                    } else if let Some(status) = self.sync_state.as_ref().map(SyncStatus::try_from)
+                    } else if let Some(status) =
+                        self.state().sync_state.as_ref().map(SyncStatus::try_from)
                     {
                         if status.synced {
                             self.render_connected_state(ui);
@@ -558,26 +617,26 @@ impl Wallet {
                     #[allow(unused_variables)]
                     CoreWallet::Connect { url, network_id } => {
                         // log_info!("Connected to {url}");
-                        self.url = url;
-                        self.network_id = Some(network_id);
+                        self.state.url = url;
+                        self.state.network_id = Some(network_id);
                     }
                     #[allow(unused_variables)]
                     CoreWallet::Disconnect {
                         url: _,
                         network_id: _,
                     } => {
-                        self.sync_state = None;
-                        self.is_synced = None;
-                        self.server_version = None;
-                        self.url = None;
-                        self.network_id = None;
-                        self.current_daa_score = None;
+                        self.state.sync_state = None;
+                        self.state.is_synced = None;
+                        self.state.server_version = None;
+                        self.state.url = None;
+                        self.state.network_id = None;
+                        self.state.current_daa_score = None;
                     }
                     CoreWallet::UtxoIndexNotEnabled { url } => {
                         self.exception = Some(Exception::UtxoIndexNotEnabled { url });
                     }
                     CoreWallet::SyncState { sync_state } => {
-                        self.sync_state = Some(sync_state);
+                        self.state.sync_state = Some(sync_state);
                     }
                     CoreWallet::ServerStatus {
                         is_synced,
@@ -585,10 +644,10 @@ impl Wallet {
                         url,
                         network_id,
                     } => {
-                        self.is_synced = Some(is_synced);
-                        self.server_version = Some(server_version);
-                        self.url = url;
-                        self.network_id = Some(network_id);
+                        self.state.is_synced = Some(is_synced);
+                        self.state.server_version = Some(server_version);
+                        self.state.url = url;
+                        self.state.network_id = Some(network_id);
                     }
                     CoreWallet::WalletHint { hint } => {
                         self.hint = hint;
@@ -605,7 +664,7 @@ impl Wallet {
                         // self.selected_account = self.wallet().account().ok();
                     }
                     CoreWallet::DAAScoreChange { current_daa_score } => {
-                        self.current_daa_score = Some(current_daa_score);
+                        self.state.current_daa_score = Some(current_daa_score);
                     }
                     CoreWallet::Reorg { record: _ } => {}
                     CoreWallet::External { record: _ } => {}
@@ -634,7 +693,7 @@ impl Wallet {
     pub fn update_wallet_list(&self) {
         let interop = self.interop.clone();
         spawn(async move {
-            let wallet_list = interop.wallet().store().wallet_list().await?;
+            let wallet_list = interop.wallet().wallet_enumerate().await?;
             interop
                 .send(Events::WalletList {
                     wallet_list: Arc::new(wallet_list),
@@ -648,7 +707,7 @@ impl Wallet {
         let interop = self.interop.clone();
         spawn(async move {
             // let account_map = HashMap::group_from(account_list.into_iter().map(|account| (account.prv_key_data_id().unwrap(), account)));
-            let account_list = interop.wallet().activate_all_stored_accounts().await?;
+            let account_list = interop.wallet().account_enumerate().await?; //activate_all_stored_accounts().await?;
             let account_list = account_list
                 .into_iter()
                 .map(Account::from)
