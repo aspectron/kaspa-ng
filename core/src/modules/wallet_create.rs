@@ -2,6 +2,7 @@
 
 use crate::imports::*;
 use kaspa_bip32::Mnemonic;
+use kaspa_wallet_core::api::WalletCreateResponse;
 use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
 use kaspa_wallet_core::storage::interface::AccessContext;
 use kaspa_wallet_core::storage::{AccessContextT, AccountKind};
@@ -17,8 +18,8 @@ pub enum State {
     PaymentSecret,
     CreateWallet,
     WalletError(Arc<Error>),
-    PresentMnemonic(Arc<Mnemonic>),
-    ConfirmMnemonic(Arc<Mnemonic>),
+    PresentMnemonic(Arc<String>),
+    ConfirmMnemonic(Arc<String>),
     Finish,
 }
 
@@ -111,7 +112,8 @@ impl ModuleT for WalletCreate {
                             ui.add_space(64.);
                             ui.label("The following will guide you through the process of creating a new wallet");
                             ui.label(" ");
-                            ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
+                            ui.label("A wallet is stored in a file on your computer.");
+                            ui.label("You can create multiple wallets, but only one can be loaded at a time.");
                         })
                         // .with_footer(|this,ui| {
                         //     // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
@@ -384,7 +386,8 @@ impl ModuleT for WalletCreate {
                     .render(ui);
 
                     let args = self.args.clone();
-                    let wallet_create_result = Payload::<Result<(Arc<Mnemonic>,Arc<dyn runtime::Account>)>>::new("wallet_create_result");
+                    // let wallet_create_result = Payload::<Result<(Arc<String>,AccountDescriptor)>>::new("wallet_create_result");
+                    let wallet_create_result = Payload::<Result<(Arc<String>,AccountDescriptor)>>::new("wallet_create_result");
                     if !wallet_create_result.is_pending() {
 
                         // TODO CREATE WALLET !
@@ -408,7 +411,7 @@ impl ModuleT for WalletCreate {
                             println!("### B");
 
                             // suspend commits for multiple operations
-                            wallet.store().batch().await?;
+                            // wallet.store().batch().await?;
 
                             let account_kind = AccountKind::Bip32;
                             let wallet_args = WalletCreateArgs::new(
@@ -430,20 +433,22 @@ impl ModuleT for WalletCreate {
                                 wallet_secret.clone(),
                                 payment_secret.clone(),
                             );
-                            let _descriptor = wallet.create_wallet(wallet_args).await?;
-                            let (prv_key_data_id, mnemonic) = wallet.create_prv_key_data(prv_key_data_args).await?;
-                            let account = wallet.create_bip32_account(prv_key_data_id, account_args).await?;
 
-                            println!("### C");
+                            let WalletCreateResponse { mnemonic, wallet_descriptor: _, account_descriptor } = wallet.wallet_create(wallet_args, prv_key_data_args, account_args).await?;
+                            // let _descriptor = wallet.create_wallet(wallet_args).await?;
+                            // let (prv_key_data_id, mnemonic) = wallet.create_prv_key_data(prv_key_data_args).await?;
+                            // let account = wallet.create_bip32_account(prv_key_data_id, account_args).await?;
 
-                            // flush data to storage
-                            let access_ctx: Arc<dyn AccessContextT> = Arc::new(AccessContext::new(wallet_secret));
-                            wallet.store().flush(&access_ctx).await?;
+                            // println!("### C");
 
-                            println!("### D");
+                            // // flush data to storage
+                            // let access_ctx: Arc<dyn AccessContextT> = Arc::new(AccessContext::new(wallet_secret));
+                            // wallet.store().flush(&access_ctx).await?;
+
+                            // println!("### D");
 
 
-                            Ok((Arc::new(mnemonic), account))
+                            Ok((Arc::new(mnemonic), account_descriptor))
                         });
                     }
 
@@ -483,7 +488,8 @@ impl ModuleT for WalletCreate {
                 }
 
                 State::PresentMnemonic(mnemonic) => {
-                    let mut phrase = mnemonic.phrase().to_string();
+                    // let mut phrase = mnemonic.phrase().to_string();
+                    let mut phrase = (*mnemonic).clone();
 
                     Panel::new(self)
                         .with_caption("Private Key Mnemonic")
@@ -524,7 +530,7 @@ impl ModuleT for WalletCreate {
                                 });
                             }
 
-                            phrase.zeroize();
+                            phrase.zeroize();     
 
                             // ui.label(egui::RichText::new(text).family(FontFamily::Monospace).color(egui::Color32::WHITE));
                             // ui.label(egui::RichText::new(mnemonic.phrase()).family(FontFamily::Monospace).color(egui::Color32::WHITE));

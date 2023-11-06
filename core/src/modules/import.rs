@@ -12,7 +12,7 @@ pub enum State {
 pub struct Import {
     #[allow(dead_code)]
     interop: Interop,
-    secret: String,
+    wallet_secret: String,
 
     word : String,
     mnemonic : Vec<String>,
@@ -27,7 +27,7 @@ impl Import {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
-            secret: String::new(),
+            wallet_secret: String::new(),
 
             word : String::new(),
             mnemonic : Vec::new(),
@@ -174,22 +174,24 @@ impl ModuleT for Import {
 
                             ui.add_sized(
                                 size,
-                                TextEdit::singleline(&mut self.secret)
+                                TextEdit::singleline(&mut self.wallet_secret)
                                     .hint_text("Enter Password...")
                                     .password(true)
                                     .vertical_align(Align::Center),
                             );
 
                             if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
-                                let secret = kaspa_wallet_core::secret::Secret::new(
-                                    self.secret.as_bytes().to_vec(),
+                                let wallet_secret = kaspa_wallet_core::secret::Secret::new(
+                                    self.wallet_secret.as_bytes().to_vec()
                                 );
-                                self.secret.zeroize();
+                                self.wallet_secret.zeroize();
                                 let wallet = self.interop.wallet().clone();
                                 let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {
-                                    wallet.load(secret, wallet_name).await?;
+
+                                    wallet.wallet_open(wallet_secret, wallet_name).await?;
+                                    // wallet.load(secret, wallet_name).await?;
                                     Ok(())
                                 });
 

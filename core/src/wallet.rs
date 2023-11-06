@@ -1,7 +1,5 @@
 use crate::imports::*;
 use crate::interop::Interop;
-// use crate::modules::HashMapModuleExtension;
-// use crate::modules::HashMapModuleExtension;
 use crate::sync::SyncStatus;
 use egui_notify::Toasts;
 use kaspa_wallet_core::events::Events as CoreWallet;
@@ -14,13 +12,58 @@ pub enum Exception {
     UtxoIndexNotEnabled { url: Option<String> },
 }
 
+#[derive(Default)]
+pub struct State {
+    is_open: bool,
+    is_connected: bool,
+    is_synced: Option<bool>,
+    sync_state: Option<SyncState>,
+    server_version: Option<String>,
+    url: Option<String>,
+    network_id: Option<NetworkId>,
+    current_daa_score: Option<u64>,
+}
+
+impl State {
+    pub fn is_open(&self) -> bool {
+        self.is_open
+    }
+
+    pub fn is_connected(&self) -> bool {
+        self.is_connected
+    }
+
+    pub fn is_synced(&self) -> bool {
+        self.is_synced.unwrap_or(false)
+    }
+
+    pub fn sync_state(&self) -> &Option<SyncState> {
+        &self.sync_state
+    }
+
+    pub fn server_version(&self) -> &Option<String> {
+        &self.server_version
+    }
+
+    pub fn url(&self) -> &Option<String> {
+        &self.url
+    }
+
+    pub fn network_id(&self) -> &Option<NetworkId> {
+        &self.network_id
+    }
+
+    pub fn current_daa_score(&self) -> Option<u64> {
+        self.current_daa_score
+    }
+}
+
 pub struct Wallet {
     interop: Interop,
-    wallet: Arc<runtime::Wallet>,
+    wallet: Arc<dyn WalletApi>,
     channel: ApplicationEventsChannel,
     module: TypeId,
     stack: VecDeque<TypeId>,
-    // sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
     modules: HashMap<TypeId, Module>,
     // #[allow(dead_code)]
     pub settings: Settings,
@@ -30,22 +73,14 @@ pub struct Wallet {
     pub large_style: egui::Style,
     pub default_style: egui::Style,
 
-    is_synced: Option<bool>,
-    sync_state: Option<SyncState>,
-    server_version: Option<String>,
-    url: Option<String>,
-    network_id: Option<NetworkId>,
-    current_daa_score: Option<u64>,
+    state: State,
     hint: Option<Hint>,
     discard_hint: bool,
     exception: Option<Exception>,
 
     pub wallet_list: Vec<WalletDescriptor>,
-    // pub account_list: Vec<Arc<dyn runtime::Account>>,
     pub account_list: Vec<Account>,
-    // pub selected_account: Option<Arc<dyn runtime::Account>>,
     pub selected_account: Option<Account>,
-    // pub icons : Icons,
 }
 
 impl Wallet {
@@ -60,8 +95,26 @@ impl Wallet {
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
         cc.egui_ctx.set_fonts(fonts);
 
-        let default_style = (*cc.egui_ctx.style()).clone();
+        let mut default_style = (*cc.egui_ctx.style()).clone();
+
+        default_style.text_styles.insert(
+            TextStyle::Name("CompositeButtonSubtext".into()),
+            FontId {
+                size: 10.0,
+                family: FontFamily::Proportional,
+            },
+        );
+
         let mut large_style = (*cc.egui_ctx.style()).clone();
+
+        large_style.text_styles.insert(
+            TextStyle::Name("CompositeButtonSubtext".into()),
+            FontId {
+                size: 12.0,
+                family: FontFamily::Proportional,
+            },
+        );
+
         // println!("style: {:?}", style.text_styles);
         large_style.text_styles.insert(
             egui::TextStyle::Heading,
@@ -93,21 +146,6 @@ impl Wallet {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        // let mut sections = HashMap::<TypeId, Rc<RefCell<dyn SectionT>>>::new();
-        // let mut modules = HashMap::<TypeId, Module>::new();
-        // modules.insert_typeid(modules::Accounts::new(interop.clone()));
-        // modules.insert_typeid(modules::Deposit::new(interop.clone()));
-        // modules.insert_typeid(modules::Request::new(interop.clone()));
-        // modules.insert_typeid(modules::Send::new(interop.clone()));
-        // modules.insert_typeid(modules::Settings::new(interop.clone()));
-        // modules.insert_typeid(modules::Metrics::new(interop.clone()));
-        // modules.insert_typeid(modules::Transactions::new(interop.clone()));
-        // modules.insert_typeid(modules::OpenWallet::new(interop.clone()));
-        // modules.insert_typeid(modules::CreateWallet::new(interop.clone()));
-        // modules.insert_typeid(modules::CreateAccount::new(interop.clone()));
-        // modules.insert_typeid(modules::Import::new(interop.clone()));
-        // modules.insert_typeid(modules::Export::new(interop.clone()));
-
         let modules = crate::modules::register_modules(&interop);
         // modules.get_mut_with_typeid::<modules::Settings>().init(&settings);
 
@@ -120,7 +158,8 @@ impl Wallet {
             interop,
             wallet,
             channel,
-            module: TypeId::of::<modules::WalletOpen>(),
+            // module: TypeId::of::<modules::WalletOpen>(),
+            module: TypeId::of::<modules::Testing>(),
             modules: modules.clone(),
             stack: VecDeque::new(),
             settings: settings.clone(),
@@ -133,16 +172,10 @@ impl Wallet {
             account_list: Vec::new(),
             selected_account: None,
 
-            sync_state: None,
-            is_synced: None,
-            server_version: None,
-            url: None,
-            network_id: None,
+            state: Default::default(),
             hint: None,
             discard_hint: false,
-            current_daa_score: None,
             exception: None,
-            // icons : Icons::default(),
         };
 
         modules.values().for_each(|module| {
@@ -186,21 +219,29 @@ impl Wallet {
         self.channel.sender.clone()
     }
 
-    pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+    pub fn wallet(&self) -> &Arc<dyn WalletApi> {
         &self.wallet
     }
 
-    pub fn rpc_api(&self) -> Arc<DynRpcApi> {
-        self.wallet().rpc_api()
+    pub fn state(&self) -> &State {
+        &self.state
     }
 
-    pub fn rpc_client(&self) -> Option<Arc<KaspaRpcClient>> {
-        self.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok()
-    }
+    // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+    //     &self.wallet
+    // }
 
-    pub fn network_id(&self) -> Result<NetworkId> {
-        Ok(self.wallet().network_id()?)
-    }
+    // pub fn rpc_api(&self) -> Arc<DynRpcApi> {
+    //     self.wallet().rpc_api()
+    // }
+
+    // pub fn rpc_client(&self) -> Option<Arc<KaspaRpcClient>> {
+    //     self.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok()
+    // }
+
+    // pub fn network_id(&self) -> Result<NetworkId> {
+    //     Ok(self.wallet().network_id()?)
+    // }
 
     pub fn wallet_list(&self) -> &Vec<WalletDescriptor> {
         &self.wallet_list
@@ -256,6 +297,13 @@ impl eframe::App for Wallet {
         let mut visuals = current_visuals.clone();
         // visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0, Color32::from_rgb(0, 0, 0));
         visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(0, 0, 0);
+
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                visuals.interact_cursor = Some(CursorIcon::PointingHand);
+            }
+        }
+
         // visuals.bg_fill = egui::Color32::from_rgb(0, 0, 0);
         ctx.set_visuals(visuals);
         self.toasts.show(ctx);
@@ -306,12 +354,29 @@ impl eframe::App for Wallet {
                     ui.label(" ~ Debug Modules ~");
                     ui.label(" ");
 
-                    let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
+                    // let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
+
+                    let (tests, mut modules): (Vec<_>, Vec<_>) = self
+                        .modules
+                        .values()
+                        .cloned()
+                        .partition(|module| module.name().starts_with('~'));
+
+                    tests.into_iter().for_each(|module| {
+                        if ui.button(module.name()).clicked() {
+                            self.module = module.type_id();
+                            ui.close_menu();
+                        }
+                    });
+
+                    ui.label(" ");
+
                     modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
                     modules.into_iter().for_each(|module| {
                         // let SectionInner { name,type_id, .. } = section.inner;
                         if ui.button(module.name()).clicked() {
                             self.module = module.type_id();
+                            ui.close_menu();
                         }
                     });
                 });
@@ -343,7 +408,8 @@ impl eframe::App for Wallet {
             ui.style_mut().text_styles = self.large_style.text_styles.clone();
 
             // if false && !self.wallet().is_open() {
-            if FORCE_WALLET_OPEN && !self.wallet().is_open() {
+            if FORCE_WALLET_OPEN && !self.state.is_open() {
+                //self.wallet().is_open() {
                 let module = if self.module == TypeId::of::<modules::WalletOpen>()
                     || self.module == TypeId::of::<modules::WalletCreate>()
                 {
@@ -448,13 +514,14 @@ impl eframe::App for Wallet {
 impl Wallet {
     fn render_status(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            if !self.wallet().is_connected() {
+            if !self.state().is_connected() {
                 ui.label("Not Connected");
             } else {
                 ui.horizontal(|ui| {
-                    if self.wallet().is_synced() {
+                    if self.state().is_synced() {
                         self.render_connected_state(ui);
-                    } else if let Some(status) = self.sync_state.as_ref().map(SyncStatus::try_from)
+                    } else if let Some(status) =
+                        self.state().sync_state.as_ref().map(SyncStatus::try_from)
                     {
                         if status.synced {
                             self.render_connected_state(ui);
@@ -554,26 +621,26 @@ impl Wallet {
                     #[allow(unused_variables)]
                     CoreWallet::Connect { url, network_id } => {
                         // log_info!("Connected to {url}");
-                        self.url = url;
-                        self.network_id = Some(network_id);
+                        self.state.url = url;
+                        self.state.network_id = Some(network_id);
                     }
                     #[allow(unused_variables)]
                     CoreWallet::Disconnect {
                         url: _,
                         network_id: _,
                     } => {
-                        self.sync_state = None;
-                        self.is_synced = None;
-                        self.server_version = None;
-                        self.url = None;
-                        self.network_id = None;
-                        self.current_daa_score = None;
+                        self.state.sync_state = None;
+                        self.state.is_synced = None;
+                        self.state.server_version = None;
+                        self.state.url = None;
+                        self.state.network_id = None;
+                        self.state.current_daa_score = None;
                     }
                     CoreWallet::UtxoIndexNotEnabled { url } => {
                         self.exception = Some(Exception::UtxoIndexNotEnabled { url });
                     }
                     CoreWallet::SyncState { sync_state } => {
-                        self.sync_state = Some(sync_state);
+                        self.state.sync_state = Some(sync_state);
                     }
                     CoreWallet::ServerStatus {
                         is_synced,
@@ -581,27 +648,29 @@ impl Wallet {
                         url,
                         network_id,
                     } => {
-                        self.is_synced = Some(is_synced);
-                        self.server_version = Some(server_version);
-                        self.url = url;
-                        self.network_id = Some(network_id);
+                        self.state.is_synced = Some(is_synced);
+                        self.state.server_version = Some(server_version);
+                        self.state.url = url;
+                        self.state.network_id = Some(network_id);
                     }
                     CoreWallet::WalletHint { hint } => {
                         self.hint = hint;
                         self.discard_hint = false;
                     }
                     CoreWallet::WalletOpen | CoreWallet::WalletReload => {
+                        self.state.is_open = true;
                         self.update_account_list();
                     }
                     CoreWallet::WalletError { message: _ } => {}
                     CoreWallet::WalletClose => {
                         self.hint = None;
+                        self.state.is_open = false;
                     }
                     CoreWallet::AccountSelection { id: _ } => {
                         // self.selected_account = self.wallet().account().ok();
                     }
                     CoreWallet::DAAScoreChange { current_daa_score } => {
-                        self.current_daa_score = Some(current_daa_score);
+                        self.state.current_daa_score = Some(current_daa_score);
                     }
                     CoreWallet::Reorg { record: _ } => {}
                     CoreWallet::External { record: _ } => {}
@@ -630,7 +699,7 @@ impl Wallet {
     pub fn update_wallet_list(&self) {
         let interop = self.interop.clone();
         spawn(async move {
-            let wallet_list = interop.wallet().store().wallet_list().await?;
+            let wallet_list = interop.wallet().wallet_enumerate().await?;
             interop
                 .send(Events::WalletList {
                     wallet_list: Arc::new(wallet_list),
@@ -644,7 +713,7 @@ impl Wallet {
         let interop = self.interop.clone();
         spawn(async move {
             // let account_map = HashMap::group_from(account_list.into_iter().map(|account| (account.prv_key_data_id().unwrap(), account)));
-            let account_list = interop.wallet().activate_all_stored_accounts().await?;
+            let account_list = interop.wallet().account_enumerate().await?; //activate_all_stored_accounts().await?;
             let account_list = account_list
                 .into_iter()
                 .map(Account::from)

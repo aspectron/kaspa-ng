@@ -40,6 +40,9 @@ impl ModuleT for AccountManager {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
+
+        let wallet_state = wallet.state();
+
         match &self.state {
             State::Select => {
                 let accounts = wallet.account_list();
@@ -72,7 +75,7 @@ impl ModuleT for AccountManager {
                 ui.label(format!("Account: {}", account.name_or_id()));
                 ui.label(" ");
 
-                if let Ok(network_id) = wallet.network_id() {
+                if let Some(network_id) = wallet_state.network_id() {
                     let network_type = network_id.network_type();
 
                     if let Some(context) = account.context() {

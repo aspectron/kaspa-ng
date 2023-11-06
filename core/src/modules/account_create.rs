@@ -388,7 +388,9 @@ impl ModuleT for AccountCreate {
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 this.state = State::Start;
 
-                                let account = Account::from(account);
+                                // TODO - add account to wallet ^^^
+                                let descriptor = account.descriptor().unwrap();
+                                let account = Account::from(descriptor);
                                 wallet.account_list.push(account.clone());
 
                                 wallet.select::<modules::AccountManager>();

@@ -8,9 +8,10 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(account: &Arc<dyn runtime::Account>) -> Option<Arc<Self>> {
-        if account.wallet().network_id().is_ok() {
-            let receive_address = account.receive_address().unwrap().to_string();
+    pub fn new(descriptor: &AccountDescriptor) -> Option<Arc<Self>> {
+        // if account.wallet().network_id().is_ok() {
+        if let Some(receive_address) = descriptor.receive_address().map(String::from) {
+            // let receive_address = account.receive_address().unwrap().to_string();
             let qr = render_qrcode(&receive_address, 200, 200);
             Some(Arc::new(Self {
                 qr: qr.as_bytes().to_vec().into(),
@@ -31,17 +32,26 @@ impl Context {
 }
 
 struct Inner {
-    runtime: Arc<dyn runtime::Account>,
+    // runtime: Arc<dyn runtime::Account>,
+    id: AccountId,
+    balance: Mutex<Option<Balance>>,
+    descriptor: Mutex<AccountDescriptor>,
     context: Mutex<Option<Arc<Context>>>,
 }
 
 impl Inner {
-    fn new(runtime: Arc<dyn runtime::Account>) -> Self {
-        let context = Context::new(&runtime);
+    fn new(descriptor: AccountDescriptor) -> Self {
+        let context = Context::new(&descriptor);
         Self {
-            runtime,
+            id: *descriptor.account_id(),
+            balance: Mutex::new(None),
+            descriptor: Mutex::new(descriptor),
             context: Mutex::new(context),
         }
+    }
+
+    fn descriptor(&self) -> MutexGuard<'_, AccountDescriptor> {
+        self.descriptor.lock().unwrap()
     }
 }
 
@@ -50,25 +60,33 @@ pub struct Account {
     inner: Arc<Inner>,
 }
 
-impl From<Arc<dyn runtime::Account>> for Account {
-    fn from(runtime: Arc<dyn runtime::Account>) -> Self {
+impl From<AccountDescriptor> for Account {
+    fn from(descriptor: AccountDescriptor) -> Self {
         Self {
-            inner: Arc::new(Inner::new(runtime)),
+            inner: Arc::new(Inner::new(descriptor)),
         }
     }
 }
 
 impl Account {
-    pub fn runtime(&self) -> Arc<dyn runtime::Account> {
-        self.inner.runtime.clone()
+    // pub fn runtime(&self) -> Arc<dyn runtime::Account> {
+    //     self.inner.runtime.clone()
+    // }
+
+    pub fn descriptor(&self) -> MutexGuard<'_, AccountDescriptor> {
+        self.inner.descriptor()
+    }
+
+    pub fn id(&self) -> AccountId {
+        self.inner.id
     }
 
     pub fn name_or_id(&self) -> String {
-        self.inner.runtime.name_or_id()
+        self.descriptor().name_or_id()
     }
 
     pub fn balance(&self) -> Option<Balance> {
-        self.inner.runtime.balance()
+        self.inner.balance.lock().unwrap().clone()
     }
 
     // pub fn address(&self) -> Result<String> {
@@ -80,9 +98,9 @@ impl Account {
         self.inner.context.lock().unwrap().clone()
     }
 
-    pub fn update(&self) -> Result<()> {
-        let context = Context::new(&self.inner.runtime);
-        *self.inner.context.lock().unwrap() = context;
+    pub fn update(&self, descriptor: AccountDescriptor) -> Result<()> {
+        *self.inner.context.lock().unwrap() = Context::new(&descriptor);
+        *self.inner.descriptor.lock().unwrap() = descriptor;
 
         Ok(())
     }

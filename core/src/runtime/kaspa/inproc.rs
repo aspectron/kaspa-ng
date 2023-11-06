@@ -2,6 +2,7 @@ use crate::imports::*;
 use kaspa_core::core::Core;
 use kaspa_core::signals::Shutdown;
 // use kaspa_rpc_service::service::RpcCoreService;
+use crate::runtime::kaspa::Config;
 use kaspa_utils::fd_budget;
 use kaspa_wallet_core::rpc::DynRpcApi;
 use kaspad_lib::args::Args;
@@ -28,8 +29,10 @@ impl InProc {
     }
 }
 
+#[async_trait]
 impl super::Kaspad for InProc {
-    fn start(&self, args: Args) -> Result<()> {
+    async fn start(&self, config: Config) -> Result<()> {
+        let args = Args::from(config);
         println!("ARGS: {:#?}", args);
 
         let fd_total_budget = fd_budget::limit()
@@ -53,7 +56,7 @@ impl super::Kaspad for InProc {
         Ok(())
     }
 
-    fn stop(&self) -> Result<()> {
+    async fn stop(&self) -> Result<()> {
         if let Some(mut inner) = self.inner.lock().unwrap().take() {
             let (core, thread) = {
                 println!("*** TAKING RPC CORE SERVICE...");

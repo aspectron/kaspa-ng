@@ -1,9 +1,11 @@
 pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
 pub use kaspa_utils::hashmap::GroupExtension;
+pub use kaspa_wallet_core::api;
+pub use kaspa_wallet_core::api::WalletApi;
 pub use kaspa_wallet_core::events::SyncState;
 pub use kaspa_wallet_core::rpc::DynRpcApi;
 pub use kaspa_wallet_core::runtime;
-pub use kaspa_wallet_core::runtime::Balance;
+pub use kaspa_wallet_core::runtime::{AccountDescriptor, AccountId, Balance};
 pub use kaspa_wallet_core::secret::Secret;
 pub use kaspa_wallet_core::storage::{PrvKeyDataId, WalletDescriptor};
 pub use kaspa_wallet_core::utils::*;
@@ -27,7 +29,7 @@ pub use std::sync::{
     atomic::{AtomicBool, Ordering},
     OnceLock,
 };
-pub use std::sync::{Arc, Mutex};
+pub use std::sync::{Arc, Mutex, MutexGuard};
 pub use std::time::Duration;
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::extensions::is_not_empty::*;

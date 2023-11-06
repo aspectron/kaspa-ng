@@ -88,8 +88,11 @@ impl Interop {
         register_global(None);
     }
 
-    pub fn wallet(&self) -> &Arc<runtime::Wallet> {
-        &self.inner.kaspa.wallet
+    // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
+    //     &self.inner.kaspa.wallet
+    // }
+    pub fn wallet(&self) -> Arc<dyn WalletApi> {
+        self.inner.kaspa.wallet()
     }
 
     pub fn kaspa_service(&self) -> &Arc<KaspaService> {

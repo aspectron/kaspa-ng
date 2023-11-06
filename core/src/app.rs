@@ -1,16 +1,47 @@
 use cfg_if::cfg_if;
 use kaspa_ng_core::interop;
 use kaspa_ng_core::settings::Settings;
-//use kaspa_wallet_core::runtime::api::WalletApi;
+use kaspa_wallet_core::api::WalletApi;
 use std::sync::Arc;
 use workflow_log::*;
-// use crate::result::Result;
-
-pub trait WalletApi {}
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
+        use kaspad_lib::daemon::create_core;
+        use kaspad_lib::args::Args as NodeArgs;
+        use kaspad_lib::args::parse_args as parse_kaspad_args;
+        use kaspa_utils::fd_budget;
+        use kaspa_core::signals::Signals;
+        // use log::info;
         use kaspa_ng_core::runtime;
+
+        struct KngArgs {
+            // is_node: bool,
+        }
+
+        enum Args {
+            Kng(KngArgs),
+            Kaspad(Box<NodeArgs>),
+        }
+
+        fn parse_args() -> Args {
+            #[allow(unused)]
+            use clap::{arg, command, Arg, Command};
+
+            if std::env::var("KASPA_NG_NODE").is_ok() {
+                Args::Kaspad(Box::new(parse_kaspad_args()))
+            } else {
+                let cmd = Command::new("kaspa-ng")
+                    // .about(format!("{} (rusty-kaspa) v{}", env!("CARGO_PKG_DESCRIPTION"), version()))
+                    .version(env!("CARGO_PKG_VERSION"));
+                    // .arg(arg!(--node "Run as a kaspad p2p node."));
+
+                    let _matches = cmd.get_matches();
+                    // let is_node = matches.get_one::<bool>("node").cloned().unwrap_or(false);
+
+                    Args::Kng(KngArgs { })
+            }
+        }
 
         pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> eframe::Result<()> {
 
@@ -18,39 +49,53 @@ cfg_if! {
 
             runtime::panic::init_panic_handler();
 
-            // Log to stderr (if you run with `RUST_LOG=debug`).
-            env_logger::init();
+            match parse_args() {
+                Args::Kaspad(args) => {
+                    let fd_total_budget = fd_budget::limit() - args.rpc_max_clients as i32 - args.inbound_limit as i32 - args.outbound_target as i32;
+                    let (core, _) = create_core(*args, fd_total_budget);
+                    Arc::new(Signals::new(&core)).init();
+                    core.run();
+                }
 
-            let settings = Settings::load().await.unwrap_or_else(|err| {
-                log_error!("Unable to load settings: {err}");
-                Settings::default()
-            });
+                Args::Kng(_args) => {
 
-            let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
-            let delegate = interop.clone();
-            println!("spawn done");
-            let native_options = eframe::NativeOptions::default();
-            eframe::run_native(
-                "Kaspa NG",
-                native_options,
-                Box::new(move |cc| {
-                    let interop = interop::Interop::new(&cc.egui_ctx, &settings);
-                    delegate.lock().unwrap().replace(interop.clone());
-                    interop::signals::Signals::bind(&interop);
-                    interop.start();
+                    // Log to stderr (if you run with `RUST_LOG=debug`).
+                    env_logger::init();
 
-                    Box::new(kaspa_ng_core::Wallet::new(cc, interop, settings))
-                }),
-            )?;
-            println!("exit initiated...");
+                    let settings = Settings::load().await.unwrap_or_else(|err| {
+                        log_error!("Unable to load settings: {err}");
+                        Settings::default()
+                    });
 
-            let interop = interop.lock().unwrap().take().unwrap();
-            println!("wallet shutdown");
-            interop.shutdown();
-            println!("worker join");
-            interop.join().await;
-            println!("exit");
-            interop.drop();
+                    let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
+                    let delegate = interop.clone();
+                    println!("spawn done");
+                    let native_options = eframe::NativeOptions::default();
+                    eframe::run_native(
+                        "Kaspa NG",
+                        native_options,
+                        Box::new(move |cc| {
+                            let interop = interop::Interop::new(&cc.egui_ctx, &settings);
+                            delegate.lock().unwrap().replace(interop.clone());
+                            interop::signals::Signals::bind(&interop);
+                            interop.start();
+
+                            Box::new(kaspa_ng_core::Wallet::new(cc, interop, settings))
+                        }),
+                    )?;
+                    println!("exit initiated...");
+
+                    let interop = interop.lock().unwrap().take().unwrap();
+                    println!("wallet shutdown");
+                    interop.shutdown();
+                    println!("worker join");
+                    interop.join().await;
+                    println!("exit");
+                    interop.drop();
+
+                }
+            }
+
             Ok(())
         }
     } else {

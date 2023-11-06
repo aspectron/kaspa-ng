@@ -76,7 +76,7 @@ tokio.workspace = true
 ctrlc.workspace = true
 env_logger.workspace = true
 num_cpus.workspace = true
-
+clap.workspace = true
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]

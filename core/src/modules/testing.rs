@@ -9,33 +9,42 @@ pub enum State {
     Unlocking,
 }
 
-pub struct WalletOpen {
+pub struct Testing {
     #[allow(dead_code)]
     interop: Interop,
-    wallet_secret: String,
-    pub state: State,
-    pub message: Option<String>,
-    selected_wallet: Option<String>,
+    // pub state: State,
+    // pub message: Option<String>,
+
+    text : String,
 }
 
-impl WalletOpen {
+impl Testing {
     pub fn new(interop: Interop) -> Self {
         Self {
             interop,
-            wallet_secret: String::new(),
-            state: State::Select,
-            message: None,
-            selected_wallet: None,
+            // state: State::Select,
+            // message: None,
+
+            text : "...".to_string(),
         }
     }
 
-    pub fn lock(&mut self) {
-        // Go to unlock page
-        self.state = State::Unlock(None);
+    // pub fn lock(&mut self) {
+    //     // Go to unlock page
+    //     self.state = State::Unlock(None);
+    // }
+
+    fn text(&mut self, text : &str) {
+        self.text = text.to_string();
     }
 }
 
-impl ModuleT for WalletOpen {
+impl ModuleT for Testing {
+
+    fn name(&self) -> Option<&'static str> {
+        Some("~ Testing")
+    }
+
     fn render(
         &mut self,
         wallet: &mut Wallet,
@@ -43,13 +52,69 @@ impl ModuleT for WalletOpen {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
+        // @surinder - not needed because it is done by Wallet in the main rendering loop
+        // egui_extras::install_image_loaders(_ctx);
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                ui.visuals_mut().interact_cursor = Some(CursorIcon::PointingHand);
+            }
+        }
 
+        // @surinder - moved to Wallet::new()
+        // ui.style_mut().text_styles.insert(TextStyle::Name("CompositeButtonSubtext".into()), FontId { size: 12.0, family: FontFamily::Proportional });
+        
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-            let size = egui::Vec2::new(200_f32, 40_f32);
-            let unlock_result = Payload::<Result<()>>::new("test");
+            // let size = egui::Vec2::new(200_f32, 40_f32);
+            // let unlock_result = Payload::<Result<()>>::new("test");
 
-            let text: &str = "Select a wallet to unlock";
+            if ui.button("Go to Wallet ...").clicked() {
+                wallet.select::<modules::WalletOpen>();
+            }
 
+
+            ui.add_space(64.);
+            ui.label("Interaction tests (click on controls below)");
+            ui.label(self.text.clone());
+
+            let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            if ui.add(icon).clicked(){
+                self.text("icon 1 clicked");
+            }
+
+            let icon = CompositeIcon::opt_icon_and_text(egui_phosphor::bold::ARROW_BEND_UP_LEFT, Some("Hello"), Some("Secondary text"));
+            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            if ui.add(icon).clicked(){
+                self.text("icon 2 clicked");
+            }
+
+            let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA).size(100.0).color(Color32::RED)).text("Hello");
+            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            if ui.add(icon).clicked(){
+                self.text("icon 3 clicked");
+            }
+
+            let btn = CompositeButton::image_and_text(
+                Image::new(egui::include_image!("../images/icon.svg")).fit_to_exact_size(Vec2 { x: 50.0, y: 50.0 }),
+                "We’ve taken Lorem Ipsum to the next level with our HTML-Ipsum tool",
+            "Secondary text,It’s perfect for showcasing design work as it should look"
+            );
+            
+            if ui.add(btn).clicked(){
+                self.text("button 1 clicked");
+            }
+
+            let btn = CompositeButton::image(
+                Image::new(egui::include_image!("../images/icon.svg")).fit_to_exact_size(Vec2 { x: 70.0, y: 70.0 })
+            ).secondary_text(
+                "Secondary text, It’s perfect for showcasing design work as it should look"
+            ).padding(Some(Vec2 { x: 10.0, y: 10.0 }));
+            if ui.add(btn).clicked() {
+                self.text("button 2 clicked");
+            }
+            
+
+            /*
             match self.state.clone() {
                 State::Select => {
                     Panel::new(self)
@@ -214,6 +279,7 @@ impl ModuleT for WalletOpen {
                     }
                 }
             }
+            */
         });
     }
 }

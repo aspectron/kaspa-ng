@@ -73,8 +73,13 @@ pub enum RpcConfig {
     // #[default]
     // Wrpc,
     // Grpc,
-    Wrpc { url: String, encoding: WrpcEncoding },
-    Grpc { url: String },
+    Wrpc {
+        url: Option<String>,
+        encoding: WrpcEncoding,
+    },
+    Grpc {
+        url: Option<String>,
+    },
 }
 
 // impl Default for RpcConfig {
@@ -152,6 +157,7 @@ impl Default for NodeSettings {
 impl NodeSettings {
     cfg_if! {
         if #[cfg(not(target_arch = "wasm32"))] {
+            #[allow(clippy::if_same_then_else)]
             pub fn compare(&self, other: &NodeSettings) -> Option<bool> {
                 if self.network != other.network {
                     Some(true)
@@ -170,6 +176,7 @@ impl NodeSettings {
                 }
             }
         } else {
+            #[allow(clippy::if_same_then_else)]
             pub fn compare(&self, other: &NodeSettings) -> Option<bool> {
                 if self.network != other.network {
                     Some(true)
@@ -194,25 +201,25 @@ impl From<&NodeSettings> for RpcConfig {
     fn from(settings: &NodeSettings) -> Self {
         match settings.rpc_kind {
             RpcKind::Wrpc => RpcConfig::Wrpc {
-                url: settings.wrpc_url.clone(),
+                url: Some(settings.wrpc_url.clone()),
                 encoding: settings.wrpc_encoding,
             },
             RpcKind::Grpc => RpcConfig::Grpc {
-                url: settings.grpc_url.clone(),
+                url: Some(settings.grpc_url.clone()),
             },
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct UxSettings {}
 
-impl Default for UxSettings {
-    fn default() -> Self {
-        Self {}
-    }
-}
+// impl Default for UxSettings {
+//     fn default() -> Self {
+//         Self {}
+//     }
+// }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]

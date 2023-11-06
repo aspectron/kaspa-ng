@@ -36,6 +36,12 @@ pub enum Error {
 
     #[error(transparent)]
     RpcError(#[from] kaspa_rpc_core::error::RpcError),
+
+    #[error("Node startup error: {0}")]
+    NodeStartupError(std::io::Error),
+
+    #[error("Unable to acquire node stdout handle")]
+    NodeStdoutHandleError,
 }
 
 impl Error {
