@@ -1,7 +1,7 @@
 use egui::load::{TextureLoadResult, TexturePoll};
 use egui::widget_text::WidgetTextGalley;
 use egui::*;
-use workflow_log::log_info;
+// use workflow_log::log_info;
 
 /// Clickable button with text.
 ///
@@ -170,7 +170,7 @@ impl CompositeIcon {
 
         let mut text_size = Vec2::ZERO;
         let mut text_wrap_width = ui.available_width() - 2.0 * button_padding.x;
-        let mut secondary_text_style = TextStyle::Name("CompositeButtonSub".into());
+        let mut secondary_text_style = TextStyle::Name("CompositeButtonSubtext".into());
         if !ui.style().text_styles.contains_key(&secondary_text_style) {
             secondary_text_style = TextStyle::Body;
         }

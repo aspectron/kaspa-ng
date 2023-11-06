@@ -1,7 +1,5 @@
 use crate::imports::*;
 use crate::interop::Interop;
-// use crate::modules::HashMapModuleExtension;
-// use crate::modules::HashMapModuleExtension;
 use crate::sync::SyncStatus;
 use egui_notify::Toasts;
 use kaspa_wallet_core::events::Events as CoreWallet;
@@ -25,21 +23,6 @@ pub struct State {
     network_id: Option<NetworkId>,
     current_daa_score: Option<u64>,
 }
-
-// impl Default for State {
-//     fn default() -> Self {
-//         State {
-//             is_open: None,
-//             is_connected: None,
-//             is_synced: None,
-//             sync_state: None,
-//             server_version: None,
-//             url: None,
-//             network_id: None,
-//             current_daa_score: None,
-//         }
-//     }
-// }
 
 impl State {
     pub fn is_open(&self) -> bool {
@@ -81,7 +64,6 @@ pub struct Wallet {
     channel: ApplicationEventsChannel,
     module: TypeId,
     stack: VecDeque<TypeId>,
-    // sections: HashMap<TypeId, Rc<RefCell<dyn SectionT>>>,
     modules: HashMap<TypeId, Module>,
     // #[allow(dead_code)]
     pub settings: Settings,
@@ -97,11 +79,8 @@ pub struct Wallet {
     exception: Option<Exception>,
 
     pub wallet_list: Vec<WalletDescriptor>,
-    // pub account_list: Vec<Arc<dyn runtime::Account>>,
     pub account_list: Vec<Account>,
-    // pub selected_account: Option<Arc<dyn runtime::Account>>,
     pub selected_account: Option<Account>,
-    // pub icons : Icons,
 }
 
 impl Wallet {
@@ -116,8 +95,26 @@ impl Wallet {
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
         cc.egui_ctx.set_fonts(fonts);
 
-        let default_style = (*cc.egui_ctx.style()).clone();
+        let mut default_style = (*cc.egui_ctx.style()).clone();
+
+        default_style.text_styles.insert(
+            TextStyle::Name("CompositeButtonSubtext".into()),
+            FontId {
+                size: 10.0,
+                family: FontFamily::Proportional,
+            },
+        );
+
         let mut large_style = (*cc.egui_ctx.style()).clone();
+
+        large_style.text_styles.insert(
+            TextStyle::Name("CompositeButtonSubtext".into()),
+            FontId {
+                size: 12.0,
+                family: FontFamily::Proportional,
+            },
+        );
+
         // println!("style: {:?}", style.text_styles);
         large_style.text_styles.insert(
             egui::TextStyle::Heading,
@@ -149,21 +146,6 @@ impl Wallet {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        // let mut sections = HashMap::<TypeId, Rc<RefCell<dyn SectionT>>>::new();
-        // let mut modules = HashMap::<TypeId, Module>::new();
-        // modules.insert_typeid(modules::Accounts::new(interop.clone()));
-        // modules.insert_typeid(modules::Deposit::new(interop.clone()));
-        // modules.insert_typeid(modules::Request::new(interop.clone()));
-        // modules.insert_typeid(modules::Send::new(interop.clone()));
-        // modules.insert_typeid(modules::Settings::new(interop.clone()));
-        // modules.insert_typeid(modules::Metrics::new(interop.clone()));
-        // modules.insert_typeid(modules::Transactions::new(interop.clone()));
-        // modules.insert_typeid(modules::OpenWallet::new(interop.clone()));
-        // modules.insert_typeid(modules::CreateWallet::new(interop.clone()));
-        // modules.insert_typeid(modules::CreateAccount::new(interop.clone()));
-        // modules.insert_typeid(modules::Import::new(interop.clone()));
-        // modules.insert_typeid(modules::Export::new(interop.clone()));
-
         let modules = crate::modules::register_modules(&interop);
         // modules.get_mut_with_typeid::<modules::Settings>().init(&settings);
 
@@ -176,7 +158,8 @@ impl Wallet {
             interop,
             wallet,
             channel,
-            module: TypeId::of::<modules::WalletOpen>(),
+            // module: TypeId::of::<modules::WalletOpen>(),
+            module: TypeId::of::<modules::Testing>(),
             modules: modules.clone(),
             stack: VecDeque::new(),
             settings: settings.clone(),
@@ -190,12 +173,9 @@ impl Wallet {
             selected_account: None,
 
             state: Default::default(),
-            // sync_state: None,
-            // is_synced: None,
             hint: None,
             discard_hint: false,
             exception: None,
-            // icons : Icons::default(),
         };
 
         modules.values().for_each(|module| {
@@ -317,6 +297,13 @@ impl eframe::App for Wallet {
         let mut visuals = current_visuals.clone();
         // visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0, Color32::from_rgb(0, 0, 0));
         visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(0, 0, 0);
+
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                visuals.interact_cursor = Some(CursorIcon::PointingHand);
+            }
+        }
+
         // visuals.bg_fill = egui::Color32::from_rgb(0, 0, 0);
         ctx.set_visuals(visuals);
         self.toasts.show(ctx);
@@ -367,12 +354,29 @@ impl eframe::App for Wallet {
                     ui.label(" ~ Debug Modules ~");
                     ui.label(" ");
 
-                    let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
+                    // let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
+
+                    let (tests, mut modules): (Vec<_>, Vec<_>) = self
+                        .modules
+                        .values()
+                        .cloned()
+                        .partition(|module| module.name().starts_with('~'));
+
+                    tests.into_iter().for_each(|module| {
+                        if ui.button(module.name()).clicked() {
+                            self.module = module.type_id();
+                            ui.close_menu();
+                        }
+                    });
+
+                    ui.label(" ");
+
                     modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
                     modules.into_iter().for_each(|module| {
                         // let SectionInner { name,type_id, .. } = section.inner;
                         if ui.button(module.name()).clicked() {
                             self.module = module.type_id();
+                            ui.close_menu();
                         }
                     });
                 });

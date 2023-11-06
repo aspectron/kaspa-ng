@@ -1,29 +1,4 @@
-// pub mod accounts;
-// // pub mod deposit;
-// pub mod metrics;
-// pub mod open_wallet;
-// pub mod request;
-// pub mod send;
-// pub mod settings;
-// pub mod tools;
-// pub mod transactions;
-// pub mod wizards;
-
 use std::any::type_name;
-
-// pub use accounts::Accounts;
-// // pub use deposit::Deposit;
-// pub use metrics::Metrics;
-// pub use open::OpenWallet;
-// pub use request::Request;
-// pub use send::Send;
-// pub use settings::Settings;
-// pub use transactions::Transactions;
-
-// // pub use wizards::create_account::CreateAccount;
-// pub use wizards::export::Export;
-// pub use wizards::import::Import;
-// pub use wizards::create_wallet::CreateWallet;
 
 use crate::imports::*;
 
@@ -40,6 +15,7 @@ kaspa_ng_macros::register_modules!([
     wallet_create,
     export,
     import,
+    testing,
 ]);
 
 // pub enum SectionCaps {
@@ -50,6 +26,10 @@ kaspa_ng_macros::register_modules!([
 // }
 
 pub trait ModuleT: Downcast {
+    fn name(&self) -> Option<&'static str> {
+        None
+    }
+
     fn init(&mut self, _wallet: &mut Wallet) {}
 
     fn render(
@@ -105,7 +85,12 @@ impl Module {
     }
 
     pub fn name(&self) -> &str {
-        self.inner.name.as_str()
+        self.inner
+            .module
+            .borrow_mut()
+            .name()
+            .unwrap_or_else(|| self.inner.name.as_str())
+        // self.inner.name.as_str()
     }
 
     pub fn type_id(&self) -> TypeId {

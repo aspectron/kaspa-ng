@@ -112,7 +112,8 @@ impl ModuleT for WalletCreate {
                             ui.add_space(64.);
                             ui.label("The following will guide you through the process of creating a new wallet");
                             ui.label(" ");
-                            ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
+                            ui.label("A wallet is stored in a file on your computer.");
+                            ui.label("You can create multiple wallets, but only one can be loaded at a time.");
                         })
                         // .with_footer(|this,ui| {
                         //     // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
