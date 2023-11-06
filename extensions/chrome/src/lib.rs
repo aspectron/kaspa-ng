@@ -4,8 +4,9 @@ pub mod server;
 
 use crate::server::Server;
 use kaspa_ng_core::app;
-//use kaspa_wallet_core::rpc::Rpc;
-//use kaspa_wallet_core::runtime::api::transport::{Transport, WalletClient};
+use kaspa_wallet_core::api::WalletApi;
+// use kaspa_wallet_core::rpc::Rpc;
+use kaspa_wallet_core::api::transport::{Transport, WalletClient};
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use workflow_log::*;
@@ -28,10 +29,10 @@ pub async fn kaspa_ng_background() {
 pub async fn kaspa_ng_main() {
     log_info!("kaspa_ng_main called successfully in the popup!");
 
-    // let transport = Transport::Borsh(Arc::new(client::ClientTransport::default()));
-    // let wallet_client = Arc::new(WalletClient::new(transport));
+    let transport = Transport::Borsh(Arc::new(client::ClientTransport::default()));
+    let wallet_client: Arc<dyn WalletApi> = Arc::new(WalletClient::new(transport));
 
-    if let Err(err) = app::kaspa_ng_main(None).await {
+    if let Err(err) = app::kaspa_ng_main(Some(wallet_client)).await {
         log_error!("Error: {err}");
     }
 }

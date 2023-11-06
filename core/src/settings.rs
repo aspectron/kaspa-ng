@@ -73,8 +73,13 @@ pub enum RpcConfig {
     // #[default]
     // Wrpc,
     // Grpc,
-    Wrpc { url: String, encoding: WrpcEncoding },
-    Grpc { url: String },
+    Wrpc {
+        url: Option<String>,
+        encoding: WrpcEncoding,
+    },
+    Grpc {
+        url: Option<String>,
+    },
 }
 
 // impl Default for RpcConfig {
@@ -196,11 +201,11 @@ impl From<&NodeSettings> for RpcConfig {
     fn from(settings: &NodeSettings) -> Self {
         match settings.rpc_kind {
             RpcKind::Wrpc => RpcConfig::Wrpc {
-                url: settings.wrpc_url.clone(),
+                url: Some(settings.wrpc_url.clone()),
                 encoding: settings.wrpc_encoding,
             },
             RpcKind::Grpc => RpcConfig::Grpc {
-                url: settings.grpc_url.clone(),
+                url: Some(settings.grpc_url.clone()),
             },
         }
     }
