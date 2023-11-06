@@ -43,17 +43,7 @@ impl ModuleT for WalletOpen {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        // @surinder - not needed because it is done by Wallet in the main rendering loop
-        // egui_extras::install_image_loaders(_ctx);
-        // cfg_if! {
-        //     if #[cfg(target_arch = "wasm32")] {
-                ui.visuals_mut().interact_cursor = Some(CursorIcon::PointingHand);
-        //     }
-        // }
 
-        // @surinder - moved to Wallet::new()
-        // ui.style_mut().text_styles.insert(TextStyle::Name("CompositeButtonSubtext".into()), FontId { size: 12.0, family: FontFamily::Proportional });
-        
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
             let size = egui::Vec2::new(200_f32, 40_f32);
             let unlock_result = Payload::<Result<()>>::new("test");
