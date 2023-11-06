@@ -36,6 +36,12 @@ cfg_if! {
             Exit,
         }
 
+        // pub static UPDATE_LOGS_UX : Arc<AtomicBool> = Arc::new(AtomicBool::new(true));
+        pub fn update_logs_flag() -> &'static Arc<AtomicBool> {
+            static UPDATE_LOGS: OnceLock<Arc<AtomicBool>> = OnceLock::new();
+            UPDATE_LOGS.get_or_init(||Arc::new(AtomicBool::new(true)))
+        }
+
     } else {
 
         #[derive(Debug)]
@@ -201,11 +207,14 @@ impl KaspaService {
             }
             logs.push_back(line.as_str().into());
         }
-        self.application_events
-            .sender
-            .send(crate::events::Events::UpdateLogs)
-            .await
-            .unwrap();
+
+        if update_logs_flag().load(Ordering::SeqCst) {
+            self.application_events
+                .sender
+                .send(crate::events::Events::UpdateLogs)
+                .await
+                .unwrap();
+        }
     }
 
     // pub fn wallet(&self) -> &Arc<runtime::Wallet> {

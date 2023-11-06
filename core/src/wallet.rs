@@ -198,6 +198,12 @@ impl Wallet {
         if self.modules.get(&self.module).is_none() {
             panic!("Unknown module type {:?}", self.module);
         }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        crate::runtime::kaspa::update_logs_flag().store(
+            self.module == TypeId::of::<modules::Logs>(),
+            Ordering::Relaxed,
+        );
     }
 
     pub fn has_stack(&self) -> bool {

@@ -22,7 +22,7 @@ impl ModuleT for Init {
         _wallet: &mut Wallet,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
-        ui: &mut egui::Ui,
+        _ui: &mut egui::Ui,
     ) {
 
 
