@@ -24,9 +24,10 @@ pub use std::any::{Any, TypeId};
 pub use std::cell::{Ref, RefCell, RefMut};
 pub use std::collections::HashMap;
 pub use std::collections::VecDeque;
+pub use std::path::{Path, PathBuf};
 pub use std::rc::Rc;
 pub use std::sync::{
-    atomic::{AtomicBool, Ordering},
+    atomic::{AtomicBool, AtomicU32, Ordering},
     OnceLock,
 };
 pub use std::sync::{Arc, Mutex, MutexGuard};
@@ -52,7 +53,7 @@ pub use crate::events::{ApplicationEventsChannel, Events};
 pub use crate::interop;
 pub use crate::interop::{spawn, spawn_with_result, Interop, Payload};
 pub use crate::modules;
-pub use crate::modules::{Module, ModuleT};
+pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
 pub use crate::network::Network;
 pub use crate::notifications::{Notification, Notify};
 pub use crate::panel::Panel;

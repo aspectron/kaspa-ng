@@ -1,67 +1,49 @@
-use std::path::PathBuf;
-
 use crate::imports::*;
-// use kaspa_core::core::Core;
-// use kaspa_core::signals::Shutdown;
-// use kaspa_rpc_service::service::RpcCoreService;
-// use kaspa_utils::fd_budget;
-// use kaspa_wallet_core::rpc::DynRpcApi;
-// use kaspad_lib::args::Args;
-use crate::runtime::kaspa::Config;
-// use kaspad_lib::daemon::{create_core_with_runtime, Runtime as KaspadRuntime};
-
-// use std::future::Future;
+use crate::runtime::kaspa::{Config, KaspadServiceEvents};
+// use alloc::task;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
+use workflow_core::prelude::DuplexChannel;
 
-#[derive(Default)]
 struct Inner {
     path: Option<PathBuf>,
-    // child: Option<tokio::process::Child>,
-    pid: Option<u32>,
+    is_running: Arc<AtomicBool>,
+    pid: Mutex<Option<u32>>,
+    service_events: Channel<KaspadServiceEvents>,
+    task_ctl: DuplexChannel,
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Daemon {
-    inner: Arc<Mutex<Inner>>,
+    inner: Arc<Inner>,
 }
 
 impl Daemon {
-    pub fn new(path: PathBuf) -> Self {
+    pub fn new(path: Option<PathBuf>, service_events: &Channel<KaspadServiceEvents>) -> Self {
         Self {
-            inner: Arc::new(Mutex::new(Inner {
-                path: Some(path),
-                // child: None,
-                pid: None,
-            })),
+            inner: Arc::new(Inner {
+                path,
+                is_running: Arc::new(AtomicBool::new(false)),
+                pid: Mutex::new(None),
+                service_events: (*service_events).clone(),
+                task_ctl: DuplexChannel::oneshot(),
+            }),
         }
     }
 
-    fn inner(&self) -> MutexGuard<'_, Inner> {
-        self.inner.lock().unwrap()
+    fn inner(&self) -> &Inner {
+        &self.inner
     }
-    // pub fn rpc_core_services(&self) -> Option<Arc<DynRpcApi>> {
-    //     if let Some(inner) = self.inner.lock().unwrap().as_ref() {
-    //         inner.rpc_core_service.clone()
-    //     } else {
-    //         None
-    //     }
-    // }
 
-    // create_args(args : Args) -> Vec<String> {
-    //     let mut list = Vec::new();
-
-    // }
+    fn is_running(&self) -> bool {
+        self.inner().is_running.load(Ordering::SeqCst)
+    }
 }
 
 #[async_trait]
 impl super::Kaspad for Daemon {
     async fn start(&self, config: Config) -> Result<()> {
-        // println!("ARGS: {:#?}", args);
-
-        // let mut cmd_args: Vec<String> = Vec::new();
-
         let mut cmd = if let Some(path) = self.inner().path.clone() {
             Command::new(path)
         } else {
@@ -69,31 +51,35 @@ impl super::Kaspad for Daemon {
             Command::new(path)
         };
 
-        cmd.env("KASPA_NG_NODE", "1")
+        let cmd = cmd
             .args(config)
+            .env("KASPA_NG_NODE", "1")
             .stdout(Stdio::piped());
 
+        let is_running = self.inner().is_running.clone();
+        is_running.store(true, Ordering::SeqCst);
         let mut child = cmd.spawn().map_err(Error::NodeStartupError)?;
-        // .expect("failed to spawn command");
-
         let stdout = child.stdout.take().ok_or(Error::NodeStdoutHandleError)?;
-
-        self.inner.lock().unwrap().pid = child.id();
+        *self.inner.pid.lock().unwrap() = child.id();
 
         let mut reader = BufReader::new(stdout).lines();
-
+        let stdout_relay_sender = self.inner.service_events.sender.clone();
+        let task_ctl = self.inner.task_ctl.clone();
+        // let task_ctl_resop = self.inner.task_ctl.request.clone();
         tokio::spawn(async move {
-            // let child = this.inner.lock().unwrap().child.clone().unwrap();
-            let status = child
-                .wait()
-                .await
-                .expect("child process encountered an error");
-
-            println!("child status was: {}", status);
-
             loop {
-                println!("loop...");
+                // println!("loop...");
                 select! {
+                    _ = task_ctl.request.recv().fuse() => {
+                        println!("task_ctl.recv()...");
+                        println!("********************************************************* DAEMON TERMINATION");
+
+                        if let Err(err) = child.start_kill() {
+                            println!("child start_kill error: {:?}", err);
+                        }
+
+                        // break;
+                    }
                     status = child.wait().fuse() => {
                         match status {
                             Ok(status) => {
@@ -103,45 +89,43 @@ impl super::Kaspad for Daemon {
                                 println!("child error was: {:?}", err);
                             }
                         }
+                        println!("********************************************************* DAEMON CHILD STATUS");
+
+                        is_running.store(false,Ordering::SeqCst);
+
                         break;
                     }
 
                     line = reader.next_line().fuse() => {
-                        if let Ok(Some(line)) = line {
-                            println!("Line: {}", line);
+                        match line {
+                            Ok(Some(line)) => {
+                                // println!("Child Daemon Stdout: {}", text);
+                                stdout_relay_sender.send(KaspadServiceEvents::Stdout { line }).await.unwrap();
+                            },
+                            v => {
+                                println!("Node daemon stdout error: {:?}", v);
+                                // break;
+                            }
                         }
-
-                        // match line {
-                        //     Ok(Some(line)) => {
-                        //         println!("Line: {}", line);
-                        //     }
-                        //     Err(err) => {
-                        //         println!("Line error: {:?}", err);
-                        //     }
-                        // }
                     }
                 }
             }
+
+            task_ctl.response.send(()).await.unwrap();
         });
-
-        // while let Some(line) = reader.next_line().await? {
-        //     println!("Line: {}", line);
-        // }
-
-        // self.inner.lock().unwrap().replace(Inner {
-        //     path : None,
-        // });
-
-        println!("***");
 
         Ok(())
     }
 
     async fn stop(&self) -> Result<()> {
-        // if let Some(mut inner) = self.inner.lock().unwrap().take() {
-
-        //     println!("***");
-        // }
+        println!("********************************************************* DAEMON STOP [1]");
+        if self.is_running() {
+            println!("********************************************************* DAEMON SIGNALING STOP [2]");
+            self.inner.task_ctl.signal(()).await?;
+        }
+        println!(
+            "********************************************************* DAEMON SIGNALING STOP [3]"
+        );
         Ok(())
     }
 }

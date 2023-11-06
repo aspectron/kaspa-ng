@@ -4,15 +4,20 @@ use crate::imports::*;
 #[cfg(not(target_arch = "wasm32"))]
 pub use kaspad_lib::args::Args;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Config {
     network: Network,
+    enable_upnp: bool,
 }
 
 impl From<NodeSettings> for Config {
     fn from(node_settings: NodeSettings) -> Self {
         let network = node_settings.network;
-        Self { network }
+        let enable_upnp = node_settings.enable_upnp;
+        Self {
+            network,
+            enable_upnp,
+        }
     }
 }
 
@@ -38,6 +43,7 @@ cfg_if! {
                 args.perf_metrics_interval_sec = 1;
                 args.yes = true;
                 args.utxoindex = true;
+                args.disable_upnp = !config.enable_upnp;
                 // args.rpclisten_borsh = Some(WrpcNetAddress::Default);
 
                 args
@@ -52,11 +58,11 @@ cfg_if! {
                     Network::Mainnet => {}
                     Network::Testnet10 => {
                         args.push("--testnet");
-                        args.push("--testnet-suffix=10");
+                        args.push("--netsuffix=10");
                     }
                     Network::Testnet11 => {
                         args.push("--testnet");
-                        args.push("--testnet-suffix=11");
+                        args.push("--netsuffix=11");
                     }
                 }
 
@@ -64,6 +70,15 @@ cfg_if! {
                 args.push("--perf-metrics-interval-sec=1");
                 args.push("--yes");
                 args.push("--utxoindex");
+
+
+                if !config.enable_upnp {
+                    args.push("--disable-upnp");
+                }
+
+                // ---
+
+                args.push("--rpclisten-borsh=default");
 
                 args.into_iter().map(String::from).collect()
             }
@@ -75,6 +90,7 @@ cfg_if! {
 
             fn into_iter(self) -> Self::IntoIter {
                 let args: Vec<String> = self.into();
+                println!("CONFIG ARGS: {:?}", args);
                 args.into_iter()
             }
         }

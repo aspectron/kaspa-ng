@@ -1,6 +1,6 @@
 use thiserror::Error;
 use wasm_bindgen::JsValue;
-use workflow_core::channel::{SendError, TrySendError};
+use workflow_core::channel::{ChannelError, SendError, TrySendError};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -24,6 +24,9 @@ pub enum Error {
 
     #[error(transparent)]
     WorkflowStorage(#[from] workflow_store::error::Error),
+
+    #[error("Channel error: {0}")]
+    ChannelError(String),
 
     #[error(transparent)]
     Bip32(#[from] kaspa_bip32::Error),
@@ -65,6 +68,12 @@ impl<T> From<SendError<T>> for Error {
 impl<T> From<TrySendError<T>> for Error {
     fn from(_: TrySendError<T>) -> Self {
         Error::TrySendError
+    }
+}
+
+impl<T> From<ChannelError<T>> for Error {
+    fn from(err: ChannelError<T>) -> Self {
+        Error::ChannelError(err.to_string())
     }
 }
 

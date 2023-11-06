@@ -16,6 +16,9 @@ kaspa_ng_macros::register_modules!([
     export,
     import,
     testing,
+    logs,
+    changelog,
+    init,
 ]);
 
 // pub enum SectionCaps {
@@ -25,9 +28,25 @@ kaspa_ng_macros::register_modules!([
 //     Web,
 // }
 
+pub enum ModuleStyle {
+    Large,
+    Default,
+}
+
+pub enum ModuleCaps {
+    Desktop,
+    Mobile,
+    WebApp,
+    Extension,
+}
+
 pub trait ModuleT: Downcast {
     fn name(&self) -> Option<&'static str> {
         None
+    }
+
+    fn style(&self) -> ModuleStyle {
+        ModuleStyle::Large
     }
 
     fn init(&mut self, _wallet: &mut Wallet) {}
@@ -78,10 +97,26 @@ impl Module {
         frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        self.inner
-            .module
-            .borrow_mut()
-            .render(wallet, ctx, frame, ui)
+        let mut module = self.inner.module.borrow_mut();
+
+        match module.style() {
+            ModuleStyle::Large => {
+                println!("SELECTING LARGE STYLE");
+                println!("SELECTING LARGE STYLE");
+                println!("SELECTING LARGE STYLE");
+                println!("SELECTING LARGE STYLE");
+                ui.style_mut().text_styles = wallet.large_style.text_styles.clone();
+            }
+            ModuleStyle::Default => {
+                println!("SELECTING DEFAULT STYLE");
+                println!("SELECTING DEFAULT STYLE");
+                println!("SELECTING DEFAULT STYLE");
+                println!("SELECTING DEFAULT STYLE");
+                ui.style_mut().text_styles = wallet.default_style.text_styles.clone();
+            }
+        }
+
+        module.render(wallet, ctx, frame, ui)
     }
 
     pub fn name(&self) -> &str {

@@ -8,6 +8,7 @@ pub type ApplicationEventsChannel = crate::channel::Channel<Events>;
 
 #[derive(Clone)]
 pub enum Events {
+    UpdateLogs,
     Error(Box<String>),
     WalletList {
         wallet_list: Arc<Vec<WalletDescriptor>>,

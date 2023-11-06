@@ -286,7 +286,6 @@ impl eframe::App for Wallet {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // println!("update...");
         for event in self.channel.iter() {
-            println!("processing wallet event..");
             if let Err(err) = self.handle_events(event.clone(), ctx, frame) {
                 log_error!("error processing wallet interop event: {}", err);
             }
@@ -405,7 +404,7 @@ impl eframe::App for Wallet {
         */
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.style_mut().text_styles = self.large_style.text_styles.clone();
+            // ui.style_mut().text_styles = self.large_style.text_styles.clone();
 
             // if false && !self.wallet().is_open() {
             if FORCE_WALLET_OPEN && !self.state.is_open() {
@@ -436,20 +435,26 @@ impl eframe::App for Wallet {
                     .render(self, ctx, frame, ui);
             } else if ENABLE_DUAL_PANE && size.x > 500. {
                 ui.columns(2, |uis| {
-                    let module = self
-                        .modules
+                    self.modules
                         .get(&TypeId::of::<modules::AccountManager>())
                         .unwrap()
-                        .inner
-                        .module
-                        .clone();
-                    module.borrow_mut().render(self, ctx, frame, &mut uis[0]);
-                    let module = self.modules.get(&self.module).unwrap().inner.module.clone();
-                    module.borrow_mut().render(self, ctx, frame, &mut uis[1]);
+                        .clone()
+                        .render(self, ctx, frame, &mut uis[0]);
+                    self.modules.get(&self.module).unwrap().clone().render(
+                        self,
+                        ctx,
+                        frame,
+                        &mut uis[1],
+                    );
                 });
             } else {
-                let module = self.modules.get(&self.module).unwrap().inner.module.clone();
-                module.borrow_mut().render(self, ctx, frame, ui);
+                // println!("*#*#*#*#*#*#*#*#*#*#*#*# RENDER ...");
+
+                self.modules
+                    .get(&self.module)
+                    .unwrap()
+                    .clone()
+                    .render(self, ctx, frame, ui);
             }
         });
 
@@ -514,6 +519,8 @@ impl eframe::App for Wallet {
 impl Wallet {
     fn render_status(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
+            let status_area_width = ui.available_width() - 24.;
+
             if !self.state().is_connected() {
                 ui.label("Not Connected");
             } else {
@@ -529,12 +536,14 @@ impl Wallet {
                             ui.label("Ready...");
                         } else {
                             ui.vertical(|ui| {
-                                status.progress_bar().map(|bar| ui.add(bar));
                                 ui.horizontal(|ui| {
                                     self.render_connected_state(ui);
                                     status.render_text_state(ui);
                                     // - TODO - NOT INFO ETC..
                                 });
+                                status
+                                    .progress_bar()
+                                    .map(|bar| ui.add(bar.desired_width(status_area_width)));
                             });
                         }
                     } else {
@@ -545,11 +554,11 @@ impl Wallet {
                     }
                 });
             }
-            ui.add_space(ui.available_width() - 12.);
+            ui.add_space(ui.available_width() - 20.);
             // ui.separator();
             if icons()
                 .sliders
-                .render_with_options(ui, &IconSize::new(Vec2::splat(16.)), true)
+                .render_with_options(ui, &IconSize::new(Vec2::splat(24.)), true)
                 .clicked()
             {
                 self.select::<modules::Settings>();
@@ -568,8 +577,9 @@ impl Wallet {
         event: Events,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         match event {
+            Events::UpdateLogs => return Ok(self.module == TypeId::of::<modules::Logs>()),
             Events::Exit => {
                 println!("Exit...");
                 cfg_if! {
@@ -621,6 +631,7 @@ impl Wallet {
                     #[allow(unused_variables)]
                     CoreWallet::Connect { url, network_id } => {
                         // log_info!("Connected to {url}");
+                        self.state.is_connected = true;
                         self.state.url = url;
                         self.state.network_id = Some(network_id);
                     }
@@ -629,6 +640,7 @@ impl Wallet {
                         url: _,
                         network_id: _,
                     } => {
+                        self.state.is_connected = false;
                         self.state.sync_state = None;
                         self.state.is_synced = None;
                         self.state.server_version = None;
@@ -661,7 +673,9 @@ impl Wallet {
                         self.state.is_open = true;
                         self.update_account_list();
                     }
-                    CoreWallet::WalletError { message: _ } => {}
+                    CoreWallet::WalletError { message: _ } => {
+                        // self.state.is_open = false;
+                    }
                     CoreWallet::WalletClose => {
                         self.hint = None;
                         self.state.is_open = false;
@@ -693,7 +707,7 @@ impl Wallet {
             } // _ => unimplemented!()
         }
 
-        Ok(())
+        Ok(true)
     }
 
     pub fn update_wallet_list(&self) {
