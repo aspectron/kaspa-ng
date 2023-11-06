@@ -77,19 +77,21 @@ impl ModuleT for Testing {
             ui.label(self.text.clone());
 
             let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
-            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
             if ui.add(icon).clicked(){
                 self.text("icon 1 clicked");
             }
 
             let icon = CompositeIcon::opt_icon_and_text(egui_phosphor::bold::ARROW_BEND_UP_LEFT, Some("Hello"), Some("Secondary text"));
-            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
             if ui.add(icon).clicked(){
                 self.text("icon 2 clicked");
             }
 
-            let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA).size(100.0).color(Color32::RED)).text("Hello");
-            //let icon = Label::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA).size(100.0).color(Color32::RED)).text("Hello").padding(Some((10.0, 10.0).into()));
+            if ui.add(icon).clicked(){
+                self.text("icon 3 clicked");
+            }
+
+            let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA)).text("Hello").sense(Sense::hover());
             if ui.add(icon).clicked(){
                 self.text("icon 3 clicked");
             }

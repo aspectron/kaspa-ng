@@ -34,6 +34,7 @@ pub struct CompositeIcon {
     rounding: Option<Rounding>,
     padding: Option<Vec2>,
     selected: bool,
+    with_frame: bool,
 }
 
 impl CompositeIcon {
@@ -67,6 +68,7 @@ impl CompositeIcon {
             rounding: None,
             padding: None,
             selected: false,
+            with_frame: false,
         }
     }
 
@@ -124,6 +126,13 @@ impl CompositeIcon {
         self.selected = selected;
         self
     }
+    /// If `true`, mark this icon as "frame button".
+    pub fn with_frame(mut self, frame: bool) -> Self {
+        self.with_frame = frame;
+        self
+    }
+
+    
 
     fn _padding(&self, ui: &Ui) -> Vec2 {
         let frame = self.frame.unwrap_or_else(|| ui.visuals().button_frame);
@@ -361,21 +370,24 @@ impl Widget for CompositeIcon {
                 Default::default()
             };
 
-            let frame_rounding = self.rounding.unwrap_or(frame_rounding);
-            let frame_fill = self.fill.unwrap_or(frame_fill);
-            let frame_stroke = self.stroke.unwrap_or(frame_stroke);
-            ui.painter().rect(
-                rect.expand2(frame_expansion),
-                frame_rounding,
-                frame_fill,
-                frame_stroke,
-            );
+            if self.with_frame{
+                let frame_rounding = self.rounding.unwrap_or(frame_rounding);
+                let frame_fill = self.fill.unwrap_or(frame_fill);
+                let frame_stroke = self.stroke.unwrap_or(frame_stroke);
+                ui.painter().rect(
+                    rect.expand2(frame_expansion),
+                    frame_rounding,
+                    frame_fill,
+                    frame_stroke,
+                );
+            }
 
             let override_text_color = if icon_text.galley_has_color {
                 None
             } else {
-                Some(ui.style().interact(&response).text_color())
+                Some(ui.style().interact_selectable(&response, self.selected).text_color())
             };
+
             let button_padding = self._padding(ui);
             //pos.x -= button_padding.x;
             ui.painter().add(epaint::TextShape {
