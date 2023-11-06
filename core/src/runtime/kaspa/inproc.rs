@@ -1,7 +1,6 @@
 use crate::imports::*;
 use kaspa_core::core::Core;
 use kaspa_core::signals::Shutdown;
-// use kaspa_rpc_service::service::RpcCoreService;
 use crate::runtime::kaspa::Config;
 use kaspa_utils::fd_budget;
 use kaspa_wallet_core::rpc::DynRpcApi;

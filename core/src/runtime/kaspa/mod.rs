@@ -16,6 +16,8 @@ cfg_if! {
         pub use config::Config;
         pub mod daemon;
         pub mod inproc;
+        pub mod logs;
+        use logs::Log;
         pub use kaspad_lib::args::Args;
 
         #[async_trait]
@@ -24,12 +26,13 @@ cfg_if! {
             async fn stop(&self) -> Result<()>;
         }
 
-        #[derive(Debug)]
+        #[derive(Debug, Clone)]
         pub enum KaspadServiceEvents {
             StartInternalInProc { config: Config, network : Network },
             StartInternalAsDaemon { config: Config, network : Network },
             StartExternalAsDaemon { path: PathBuf, config: Config, network : Network },
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
+            Stdout { line : String },
             Exit,
         }
 
@@ -50,6 +53,7 @@ pub struct KaspaService {
     pub task_ctl: Channel<()>,
     pub network: Mutex<Network>,
     pub wallet: Arc<runtime::Wallet>,
+    pub logs: Mutex<VecDeque<Log>>,
     // pub rpc : Mutex<Rpc>,
     #[cfg(not(target_arch = "wasm32"))]
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
@@ -103,6 +107,7 @@ impl KaspaService {
             task_ctl: Channel::oneshot(),
             network: Mutex::new(settings.node.network),
             wallet: Arc::new(wallet),
+            logs: Mutex::new(VecDeque::new()),
             // rpc : Mutex::new(rpc),
             // wrpc,
             #[cfg(not(target_arch = "wasm32"))]
@@ -115,12 +120,19 @@ impl KaspaService {
             RpcConfig::Wrpc { url, encoding } => {
                 log_warning!("create_rpc_client - RPC URL: {:?}", url);
 
+                // let url = if let Some(url)
+
                 let url = KaspaRpcClient::parse_url(
-                    url.clone(), //Some(url.clone()),
+                    // url.as_ref().unwrap_or("127.0.0.1"), //Some(url.clone()),
+                    url.clone().or(Some("127.0.0.1".to_string())),
                     *encoding,
                     NetworkId::from(network).into(),
                 )?
-                .ok_or(Error::InvalidUrl(url.clone().unwrap()))?;
+                .expect("Unable to parse RPC URL");
+
+                // let url = url.unwrap_or("ws://127.0.0.1:17210".to_string());
+
+                // .ok_or_else(||Error::InvalidUrl(url.clone().unwrap()))?;
 
                 let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
                     *encoding,
@@ -169,6 +181,31 @@ impl KaspaService {
 
     pub fn wallet(&self) -> Arc<runtime::Wallet> {
         self.wallet.clone()
+    }
+
+    // pub fn logs(&self) -> String {
+    //     self.logs.lock().unwrap().iter().cloned().collect::<Vec<String>>().join("\n")
+    // }
+    pub fn logs(&self) -> MutexGuard<'_, VecDeque<Log>> {
+        self.logs.lock().unwrap()
+    }
+
+    // pub fn sanitize_log_line<'s>(line : &str) -> Log {
+
+    // }
+    pub async fn update_logs(&self, line: String) {
+        {
+            let mut logs = self.logs.lock().unwrap();
+            while logs.len() > 4096 {
+                logs.pop_front();
+            }
+            logs.push_back(line.as_str().into());
+        }
+        self.application_events
+            .sender
+            .send(crate::events::Events::UpdateLogs)
+            .await
+            .unwrap();
     }
 
     // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
@@ -276,7 +313,7 @@ impl Service for KaspaService {
         let _application_events_sender = self.application_events.sender.clone();
         // spawn(async move {
         loop {
-            println!("loop...");
+            // println!("loop...");
             select! {
 
                 msg = wallet_events.recv().fuse() => {
@@ -292,9 +329,28 @@ impl Service for KaspaService {
 
                     if let Ok(event) = msg {
 
-                        println!("NODE EVENT: {:#?}", event);
+                        // println!("NODE EVENT: {:#?}", event);
 
                         match event {
+
+                            #[cfg(not(target_arch = "wasm32"))]
+                            KaspadServiceEvents::Stdout { line } => {
+
+                                if !this.wallet().utxo_processor().is_synced() {
+                                    this.wallet().utxo_processor().sync_proc().handle_stdout(&line).await?;
+                                }
+
+                                this.update_logs(line).await;
+                                // {
+                                //     let mut logs = this.logs.lock().unwrap();
+                                //     while logs.len() > 4096 {
+                                //         logs.pop_front();
+                                //     }
+                                //     logs.push_back(line);
+                                // }
+
+                                // this.application_events.sender.send(crate::events::Events::UpdateLogs).await.unwrap();
+                            }
 
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::StartInternalInProc { config, network } => {
@@ -343,7 +399,7 @@ impl Service for KaspaService {
                                 self.stop_all_services().await?;
 
                                 println!("*** STARTING NEW INTERNAL KASPAD ***");
-                                let kaspad = Arc::new(daemon::Daemon::default());
+                                let kaspad = Arc::new(daemon::Daemon::new(None, &this.service_events));
                                 this.kaspad.lock().unwrap().replace(kaspad.clone());
                                 kaspad.start(config).await.unwrap();
 
@@ -361,7 +417,7 @@ impl Service for KaspaService {
                                 self.stop_all_services().await?;
 
                                 println!("*** STARTING NEW EXTERNAL KASPAD ***");
-                                let kaspad = Arc::new(daemon::Daemon::new(path));
+                                let kaspad = Arc::new(daemon::Daemon::new(Some(path), &this.service_events));
                                 this.kaspad.lock().unwrap().replace(kaspad.clone());
                                 kaspad.start(config).await.unwrap();
 
@@ -379,22 +435,8 @@ impl Service for KaspaService {
                                 self.stop_all_services().await?;
 
                                 let rpc = Self::create_rpc_client(&rpc_config, network).expect("Kaspad Service - unable to create wRPC client");
-                                // let wrpc_client = rpc.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok();
                                 this.start_wallet_service(rpc, network).await?;
                                 this.connect_rpc_client().await?;
-
-                                // rpc.connect()
-
-                                // if let Some(wrpc_client) = wrpc_client {
-                                //     let options = ConnectOptions {
-                                //         block_async_connect: false,
-                                //         strategy: ConnectStrategy::Retry,
-                                //         url : None,
-                                //         connect_timeout: None,
-                                //         retry_interval: Some(Duration::from_millis(3000)),
-                                //     };
-                                //     wrpc_client.connect(options).await?;
-                                // }
 
                             },
 
@@ -422,8 +464,10 @@ impl Service for KaspaService {
         //         println!("error stopping kaspad: {}", err);
         //     }
         // }
+        println!("------------------------ SENDING KASPA SERVICE END CONFIRMATION");
 
         this.task_ctl.send(()).await.unwrap();
+        println!("------------------------ KASPA SERVICE END CONFIRMATION SENT");
         // Ok(())
         // });
 
@@ -439,7 +483,10 @@ impl Service for KaspaService {
     }
 
     async fn join(self: Arc<Self>) -> Result<()> {
+        println!("+++++++++++++++++++++++++++++ KASPA SERVICE JOIN START");
+
         self.task_ctl.recv().await.unwrap();
+        println!("+++++++++++++++++++++++++++++ KASPA SERVICE JOIN STOP");
         Ok(())
     }
 }

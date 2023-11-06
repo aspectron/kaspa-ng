@@ -106,6 +106,7 @@ pub struct NodeSettings {
     pub wrpc_url: String,
     pub wrpc_encoding: WrpcEncoding,
     pub grpc_url: String,
+    pub enable_upnp: bool,
 
     pub network: Network,
     pub kaspad: KaspadNodeKind,
@@ -141,6 +142,7 @@ impl Default for NodeSettings {
             wrpc_encoding: WrpcEncoding::Borsh,
             grpc_url: "127.0.0.1".to_string(),
             rpc_kind: RpcKind::Wrpc,
+            enable_upnp: true,
             // rpc: RpcConfig::default(),
             // network: Network::Mainnet,
             network: Network::Testnet10,
