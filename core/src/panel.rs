@@ -124,10 +124,22 @@ impl<'panel, Context> Panel<'panel, Context> {
         let theme = theme();
 
         let icon_size = theme.panel_icon_size();
+        let icon_padding = (icon_size.outer - icon_size.inner) / 2.0;
         let panel_margin_size = theme.panel_margin_size();
         let panel_width = ui.available_width();
         let inner_panel_width = panel_width - panel_margin_size * 2.;
-
+        // ui.add(|ui: &mut Ui|{
+        //     //let rect = Rect::from_min_max((0.0, 0.0).into(), (panel_width, 10.0).into());
+        //     let res = ui.allocate_response((panel_width, 10.0).into(), Sense::click());
+        //     ui.painter().rect(
+        //         res.rect,
+        //         Rounding::default(),
+        //         Color32::RED,
+        //         Stroke::default(),
+        //     );
+            
+        //     res
+        // });
         ui.horizontal(|ui| {
             match self.back {
                 Some(back) if self.back_enabled => {
@@ -139,7 +151,7 @@ impl<'panel, Context> Panel<'panel, Context> {
                     //     back(self.this);
                     // }
 
-                    let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);//.text("Back");
+                    let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT).icon_size(icon_size.inner.x).padding(Some(icon_padding));
                     if ui.add_enabled(self.back_active, icon).clicked(){
                         back(self.this);
                     }
@@ -150,11 +162,13 @@ impl<'panel, Context> Panel<'panel, Context> {
             }
 
             if let Some(caption) = self.caption {
+                let max_size = Vec2::new(
+                    panel_width - (icon_size.outer_width() + ui.spacing().item_spacing.x) * 2.,
+                    icon_size.outer_height(),
+                );
+
                 ui.add_sized(
-                    Vec2::new(
-                        panel_width - icon_size.outer_width() * 2.,
-                        icon_size.outer_height(),
-                    ),
+                    max_size,
                     Label::new(WidgetText::from(caption).heading()),
                 );
             }
@@ -169,7 +183,7 @@ impl<'panel, Context> Panel<'panel, Context> {
                     //     close(self.this);
                     // }
 
-                    let icon = CompositeIcon::new(egui_phosphor::bold::X);//.text("Close");
+                    let icon = CompositeIcon::new(egui_phosphor::bold::X).icon_size(icon_size.inner.x).padding(Some(icon_padding));
                     if ui.add_enabled(self.close_active, icon).clicked(){
                         close(self.this);
                     }
@@ -224,27 +238,27 @@ impl<'panel, Context> Panel<'panel, Context> {
     }
 }
 
-macro_rules! phosphor {
-    ($symbol:ident) => {
-        Icon::new(egui_phosphor::regular::$symbol)
-    };
-}
+// macro_rules! phosphor {
+//     ($symbol:ident) => {
+//         Icon::new(egui_phosphor::regular::$symbol)
+//     };
+// }
 
-struct Icons {
-    pub back: Icon,
-    pub close: Icon,
-}
+// struct Icons {
+//     pub back: Icon,
+//     pub close: Icon,
+// }
 
-impl Default for Icons {
-    fn default() -> Self {
-        Self {
-            back: phosphor!(ARROW_BEND_UP_LEFT),
-            close: phosphor!(X),
-        }
-    }
-}
+// impl Default for Icons {
+//     fn default() -> Self {
+//         Self {
+//             back: phosphor!(ARROW_BEND_UP_LEFT),
+//             close: phosphor!(X),
+//         }
+//     }
+// }
 
-fn icons() -> &'static Icons {
-    static ICONS: OnceLock<Icons> = OnceLock::new();
-    ICONS.get_or_init(Icons::default)
-}
+// fn icons() -> &'static Icons {
+//     static ICONS: OnceLock<Icons> = OnceLock::new();
+//     ICONS.get_or_init(Icons::default)
+// }

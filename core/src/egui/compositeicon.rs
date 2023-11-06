@@ -21,7 +21,7 @@ use egui::*;
 /// ```
 #[must_use = "You should put this widget in an ui with `ui.add(widget);`"]
 pub struct CompositeIcon {
-    icon: WidgetText,
+    icon: RichText,
     text: Option<WidgetText>,
     secondary_text: Option<WidgetText>,
 
@@ -35,10 +35,11 @@ pub struct CompositeIcon {
     padding: Option<Vec2>,
     selected: bool,
     with_frame: bool,
+    icon_size: f32,
 }
 
 impl CompositeIcon {
-    pub fn new(icon: impl Into<WidgetText>) -> Self {
+    pub fn new(icon: impl Into<RichText>) -> Self {
         Self::opt_icon_and_text(icon, Option::<String>::None, Option::<String>::None)
     }
     pub fn secondary_text(mut self, text: impl Into<WidgetText>) -> Self {
@@ -51,7 +52,7 @@ impl CompositeIcon {
     }
 
     pub fn opt_icon_and_text(
-        icon: impl Into<WidgetText>,
+        icon: impl Into<RichText>,
         text: Option<impl Into<WidgetText>>,
         secondary_text: Option<impl Into<WidgetText>>,
     ) -> Self {
@@ -69,6 +70,7 @@ impl CompositeIcon {
             padding: None,
             selected: false,
             with_frame: false,
+            icon_size: 30.0
         }
     }
 
@@ -132,12 +134,15 @@ impl CompositeIcon {
         self
     }
 
-    
+    pub fn icon_size(mut self, icon_size: f32) -> Self {
+        self.icon_size = icon_size;
+        self
+    }
 
     fn _padding(&self, ui: &Ui) -> Vec2 {
         let frame = self.frame.unwrap_or_else(|| ui.visuals().button_frame);
 
-        let mut button_padding = self.padding.unwrap_or(if frame {
+        let mut button_padding = self.padding.unwrap_or(if frame && self.with_frame {
             ui.spacing().button_padding
         } else {
             Vec2::ZERO
@@ -163,7 +168,7 @@ impl CompositeIcon {
         Option<WidgetTextGalley>,
     ) {
         let sense = {
-            // We only want to focus labels if the screen reader is on.
+            // We only want to focus icon if the screen reader is on.
             if ui.memory(|mem| mem.options.screen_reader) {
                 Sense::focusable_noninteractive()
             } else {
@@ -220,30 +225,32 @@ impl CompositeIcon {
             (pos, text_pos, response, text_galley, text, secondary_text)
         };
 
-        if let WidgetText::Galley(galley) = self.icon.clone() {
-            // If the user said "use this specific galley", then just use it:
-            let mut size = galley.size();
-            let icon_size = size;
-            size.x = text_size.x.max(size.x) + padding.x * 2.0;
-            size.y += text_size.y + padding.y * 2.0;
+        // if let WidgetText::Galley(galley) = self.icon.clone() {
+        //     // If the user said "use this specific galley", then just use it:
+        //     let mut size = galley.size();
+        //     let icon_size = size;
+        //     size.x = text_size.x.max(size.x) + padding.x * 2.0;
+        //     size.y += text_size.y + padding.y * 2.0;
 
-            let (rect, response) = ui.allocate_exact_size(size, sense);
-            let pos = match galley.job.halign {
-                Align::LEFT => rect.left_top(),
-                Align::Center => rect.center_top(),
-                Align::RIGHT => rect.right_top(),
-            };
-            let text_galley = WidgetTextGalley {
-                galley,
-                galley_has_color: true,
-            };
-            return create_result(pos, icon_size, response, text_galley, text, secondary_text);
-        }
+        //     let (rect, response) = ui.allocate_exact_size(size, sense);
+        //     let pos = match galley.job.halign {
+        //         Align::LEFT => rect.left_top(),
+        //         Align::Center => rect.center_top(),
+        //         Align::RIGHT => rect.right_top(),
+        //     };
+        //     let text_galley = WidgetTextGalley {
+        //         galley,
+        //         galley_has_color: true,
+        //     };
+        //     return create_result(pos, icon_size, response, text_galley, text, secondary_text);
+        // }
 
         let valign = ui.layout().vertical_align();
         let mut text_job =
-            self.icon
+            WidgetText::from(self.icon
                 .clone()
+                .size(self.icon_size)
+            )
                 .into_text_job(ui.style(), FontSelection::Default, valign);
 
         let truncate = true; //self.truncate;
@@ -370,7 +377,7 @@ impl Widget for CompositeIcon {
                 Default::default()
             };
 
-            if self.with_frame{
+            if self.with_frame {
                 let frame_rounding = self.rounding.unwrap_or(frame_rounding);
                 let frame_fill = self.fill.unwrap_or(frame_fill);
                 let frame_stroke = self.stroke.unwrap_or(frame_stroke);
