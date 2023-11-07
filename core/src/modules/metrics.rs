@@ -30,43 +30,51 @@ impl ModuleT for Metrics {
         ui.heading("Metrics");
         ui.separator();
 
-        CollapsingHeader::new("Kaspa Node")
-            .default_open(true)
+        egui::ScrollArea::vertical()
+            .auto_shrink([false; 2])
+
             .show(ui, |ui| {
-                // ui.label("This is the settings page");
 
-                if let Some(metrics) = wallet.metrics.as_ref() {
 
-                    ui.vertical(|ui| {
+                CollapsingHeader::new("Kaspa Node")
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        // ui.label("This is the settings page");
 
-                        for metric in Metric::list().into_iter() {
-                            
-                            let value = metrics.get(&metric);
-                            let caption = metrics.format(&metric, true);
-                            
-                            ui.horizontal(|ui| {
-                                ui.label(caption);
-                                ui.label(format!(" ... ({})", value));
+                        if let Some(metrics) = wallet.metrics.as_ref() {
+
+                            ui.vertical(|ui| {
+
+                                for metric in Metric::list().into_iter() {
+                                    
+                                    let value = metrics.get(&metric);
+                                    let caption = metrics.format(&metric, true);
+                                    
+                                    ui.horizontal(|ui| {
+                                        ui.label(caption);
+                                        ui.label(format!(" ... ({})", value));
+                                    });
+
+                                    // mutex!
+                                    let metrics_data = self.interop.kaspa_service().metrics_data();
+                                    let data = metrics_data.get(&metric).unwrap();
+                                    // test code
+                                    let len = 5;
+                                    let last = data.len();
+                                    let first = if last < len { 0 } else { last - len };
+                                    let samples = &data[first..last];
+                                    let text = samples.iter().map(|sample| format!("{}", sample)).collect::<Vec<_>>().join(", ");
+                                    ui.label(format!("[{text}]"));
+                                    ui.label(" ");
+                                }
                             });
-
-                            // mutex!
-                            let metrics_data = self.interop.kaspa_service().metrics_data();
-                            let data = metrics_data.get(&metric).unwrap();
-                            // test code
-                            let len = 5;
-                            let last = data.len();
-                            let first = if last < len { 0 } else { last - len };
-                            let samples = &data[first..last];
-                            let text = samples.iter().map(|sample| format!("{}", sample)).collect::<Vec<_>>().join(", ");
-                            ui.label(format!("[{text}]"));
-                            ui.label(" ");
                         }
+
+
+
                     });
-                }
-
-
-
-            });
+                });
+            
 
         // CollapsingHeader::new("RPC Protocol")
         //     .default_open(false)
