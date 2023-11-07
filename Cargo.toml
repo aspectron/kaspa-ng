@@ -39,11 +39,13 @@ workflow-log = "0.8.1"
 workflow-dom = "0.8.1"
 workflow-store = "0.8.1"
 workflow-chrome = "0.8.1"
+# workflow-i18n = "0.8.1"
 # workflow-log = { path = "../workflow-rs/log" }
 # workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
 # workflow-dom = { path = "../workflow-rs/dom" }
 # workflow-store = { path = "../workflow-rs/store" }
 # workflow-chrome = { path = "../workflow-rs/chrome" }
+workflow-i18n = { path = "../workflow-rs/i18n" }
 
 
 cfg-if = "1.0.0"

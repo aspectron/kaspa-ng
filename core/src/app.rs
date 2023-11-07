@@ -3,6 +3,7 @@ use kaspa_ng_core::interop;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::api::WalletApi;
 use std::sync::Arc;
+use workflow_i18n::*;
 use workflow_log::*;
 
 cfg_if! {
@@ -66,6 +67,8 @@ cfg_if! {
                         log_error!("Unable to load settings: {err}");
                         Settings::default()
                     });
+
+                    init_i18n(settings.language.as_str()).expect("failed to init i18n");
 
                     let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
                     let delegate = interop.clone();
@@ -136,6 +139,8 @@ cfg_if! {
                 log_error!("Unable to load settings: {err}");
                 Settings::default()
             });
+
+            init_i18n(settings.language.as_str()).expect("failed to init i18n");
 
             // wasm_bindgen_futures::spawn_local(async {
                 use workflow_log::*;

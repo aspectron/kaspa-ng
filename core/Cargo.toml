@@ -25,7 +25,7 @@ workflow-log.workspace = true
 workflow-core.workspace = true
 workflow-dom.workspace = true
 workflow-store.workspace = true
-
+workflow-i18n.workspace = true
 
 cfg-if.workspace = true
 log.workspace = true

@@ -5,6 +5,7 @@ use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
+use workflow_i18n::*;
 
 const FORCE_WALLET_OPEN: bool = false;
 const ENABLE_DUAL_PANE: bool = false;
@@ -360,59 +361,108 @@ impl eframe::App for Wallet {
             // The top panel is often a good place for a menu bar:
             // #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
             egui::menu::bar(_ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    if ui.button("Quit").clicked() {
-                        frame.close();
-                    }
-                    ui.separator();
-                    ui.label(" ~ Debug Modules ~");
-                    ui.label(" ");
+                ui.columns(2, |cols| {
+                    cols[0].horizontal(|ui| {
+                        ui.menu_button("File", |ui| {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            if ui.button("Quit").clicked() {
+                                frame.close();
+                            }
+                            ui.separator();
+                            ui.label(" ~ Debug Modules ~");
+                            ui.label(" ");
 
-                    // let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
+                            // let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
 
-                    let (tests, mut modules): (Vec<_>, Vec<_>) = self
-                        .modules
-                        .values()
-                        .cloned()
-                        .partition(|module| module.name().starts_with('~'));
+                            let (tests, mut modules): (Vec<_>, Vec<_>) = self
+                                .modules
+                                .values()
+                                .cloned()
+                                .partition(|module| module.name().starts_with('~'));
 
-                    tests.into_iter().for_each(|module| {
-                        if ui.button(module.name()).clicked() {
-                            self.module = module.type_id();
-                            ui.close_menu();
+                            tests.into_iter().for_each(|module| {
+                                if ui.button(module.name()).clicked() {
+                                    self.module = module.type_id();
+                                    ui.close_menu();
+                                }
+                            });
+
+                            ui.label(" ");
+
+                            modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
+                            modules.into_iter().for_each(|module| {
+                                // let SectionInner { name,type_id, .. } = section.inner;
+                                if ui.button(module.name()).clicked() {
+                                    self.module = module.type_id();
+                                    ui.close_menu();
+                                }
+                            });
+                        });
+
+                        ui.separator();
+                        if ui.button("Overview").clicked() {
+                            self.select::<modules::Overview>();
                         }
+                        ui.separator();
+                        if ui.button("Wallet").clicked() {
+                            if self.state().is_open() {
+                                self.select::<modules::AccountManager>();
+                            } else {
+                                self.select::<modules::WalletOpen>();
+                            }
+                        }
+                        ui.separator();
+                        if ui.button("Settings").clicked() {
+                            self.select::<modules::Settings>();
+                        }
+                        ui.separator();
+                        if ui.button("Metrics").clicked() {
+                            self.select::<modules::Metrics>();
+                        }
+                        ui.separator();
+                        if ui.button("Logs").clicked() {
+                            self.select::<modules::Logs>();
+                        }
+                        ui.separator();
                     });
 
-                    ui.label(" ");
+                    cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let dict = dict();
+                        let language_code = self.settings.language.clone();
+                        let language = dict.language(language_code.as_str()).unwrap().unwrap();
+                        #[allow(clippy::useless_format)]
+                        ui.menu_button(format!("{language}"), |ui| {
+                            ["en", "pt", "ru", "zh_HANS", "it"].iter().for_each(|lang| {
+                                if ui.button(dict.language(lang).unwrap().unwrap()).clicked() {
+                                    self.settings.language = lang.to_string();
+                                    // self.settings.save();
+                                    ui.close_menu();
+                                }
+                            });
+                        });
 
-                    modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
-                    modules.into_iter().for_each(|module| {
-                        // let SectionInner { name,type_id, .. } = section.inner;
-                        if ui.button(module.name()).clicked() {
-                            self.module = module.type_id();
-                            ui.close_menu();
+                        ui.separator();
+
+                        // let theme = theme();
+
+                        // let icon_size = theme.panel_icon_size();
+                        let icon = CompositeIcon::new(egui_phosphor::bold::MOON).icon_size(18.);
+                        // .padding(Some(icon_padding));
+                        // if ui.add_enabled(true, icon).clicked() {
+                        if ui.add(icon).clicked() {
+                            // close(self.this);
                         }
+
+                        // if ui.button("Theme").clicked() {
+                        //     self.select::<modules::Logs>();
+                        // }
+                        ui.separator();
                     });
                 });
-
-                if ui.button("Overview").clicked() {
-                    self.select::<modules::Overview>();
-                }
-                if ui.button("Wallet").clicked() {
-                    self.select::<modules::WalletOpen>();
-                }
-                if ui.button("Settings").clicked() {
-                    self.select::<modules::Settings>();
-                }
-                if ui.button("Logs").clicked() {
-                    self.select::<modules::Logs>();
-                }
-                if ui.button("Metrics").clicked() {
-                    self.select::<modules::Metrics>();
-                }
             });
+            // ui.spacing()
         });
+        // });
 
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             self.render_status(ui);

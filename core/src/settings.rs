@@ -223,21 +223,23 @@ pub struct UxSettings {}
 //     }
 // }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
     pub node: NodeSettings,
     pub ux: UxSettings,
+    pub language: String,
 }
 
-// impl Default for Settings {
-//     fn default() -> Self {
-//         Self {
-//             node: NodeSettings::default(),
-//             ux: UxSettings::default(),
-//         }
-//     }
-// }
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            node: NodeSettings::default(),
+            ux: UxSettings::default(),
+            language: "en".to_string(),
+        }
+    }
+}
 
 impl Settings {
     // Returns `Option<bool>` here `Option` indicates that
