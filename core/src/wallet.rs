@@ -203,10 +203,17 @@ impl Wallet {
         }
 
         #[cfg(not(target_arch = "wasm32"))]
-        crate::runtime::kaspa::update_logs_flag().store(
-            self.module == TypeId::of::<modules::Logs>(),
-            Ordering::Relaxed,
-        );
+        {
+            crate::runtime::kaspa::update_logs_flag().store(
+                self.module == TypeId::of::<modules::Logs>(),
+                Ordering::Relaxed,
+            );
+            crate::runtime::kaspa::update_metrics_flag().store(
+                self.module == TypeId::of::<modules::Overview>()
+                    || self.module == TypeId::of::<modules::Metrics>(),
+                Ordering::Relaxed,
+            );
+        }
     }
 
     pub fn has_stack(&self) -> bool {
@@ -388,6 +395,22 @@ impl eframe::App for Wallet {
                         }
                     });
                 });
+
+                if ui.button("Overview").clicked() {
+                    self.select::<modules::Overview>();
+                }
+                if ui.button("Wallet").clicked() {
+                    self.select::<modules::WalletOpen>();
+                }
+                if ui.button("Settings").clicked() {
+                    self.select::<modules::Settings>();
+                }
+                if ui.button("Logs").clicked() {
+                    self.select::<modules::Logs>();
+                }
+                if ui.button("Metrics").clicked() {
+                    self.select::<modules::Metrics>();
+                }
             });
         });
 

@@ -43,8 +43,13 @@ cfg_if! {
 
         // pub static UPDATE_LOGS_UX : Arc<AtomicBool> = Arc::new(AtomicBool::new(true));
         pub fn update_logs_flag() -> &'static Arc<AtomicBool> {
-            static UPDATE_LOGS: OnceLock<Arc<AtomicBool>> = OnceLock::new();
-            UPDATE_LOGS.get_or_init(||Arc::new(AtomicBool::new(true)))
+            static FLAG: OnceLock<Arc<AtomicBool>> = OnceLock::new();
+            FLAG.get_or_init(||Arc::new(AtomicBool::new(false)))
+        }
+
+        pub fn update_metrics_flag() -> &'static Arc<AtomicBool> {
+            static FLAG: OnceLock<Arc<AtomicBool>> = OnceLock::new();
+            FLAG.get_or_init(||Arc::new(AtomicBool::new(true)))
         }
 
     } else {
@@ -358,10 +363,12 @@ impl KaspaService {
             dest.push(snapshot.get(&metric));
         }
 
-        self.application_events
-            .sender
-            .try_send(crate::events::Events::Metrics { snapshot })
-            .unwrap();
+        if update_metrics_flag().load(Ordering::SeqCst) {
+            self.application_events
+                .sender
+                .try_send(crate::events::Events::Metrics { snapshot })
+                .unwrap();
+        }
 
         Ok(())
     }

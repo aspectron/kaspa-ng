@@ -19,6 +19,7 @@ kaspa_ng_macros::register_modules!([
     logs,
     changelog,
     init,
+    overview,
 ]);
 
 // pub enum SectionCaps {
