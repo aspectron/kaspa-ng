@@ -58,7 +58,7 @@ impl ModuleT for Testing {
 
     fn render(
         &mut self,
-        wallet: &mut Wallet,
+        _wallet: &mut Wallet,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -78,9 +78,21 @@ impl ModuleT for Testing {
             // let size = egui::Vec2::new(200_f32, 40_f32);
             // let unlock_result = Payload::<Result<()>>::new("test");
 
-            if ui.button("Go to Wallet ...").clicked() {
-                wallet.select::<modules::WalletOpen>();
-            }
+            // ui.horizontal(|ui| {
+
+            //     if ui.button("Wallet").clicked() {
+            //         wallet.select::<modules::WalletOpen>();
+            //     }
+            //     if ui.button("Settings").clicked() {
+            //         wallet.select::<modules::Settings>();
+            //     }
+            //     if ui.button("Logs").clicked() {
+            //         wallet.select::<modules::Logs>();
+            //     }
+            //     if ui.button("Metrics").clicked() {
+            //         wallet.select::<modules::Metrics>();
+            //     }
+            // });
 
 
             ui.add_space(64.);

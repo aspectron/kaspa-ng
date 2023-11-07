@@ -45,6 +45,9 @@ pub enum Error {
 
     #[error("Unable to acquire node stdout handle")]
     NodeStdoutHandleError,
+
+    #[error("Metrics: {0}")]
+    Metrics(#[from] kaspa_metrics::error::Error),
 }
 
 impl Error {

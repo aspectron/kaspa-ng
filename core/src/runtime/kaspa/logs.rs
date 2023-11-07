@@ -42,8 +42,8 @@ impl From<&Log> for RichText {
     fn from(log: &Log) -> Self {
         let text = match log {
             Log::Info(text) => RichText::from(text).color(egui::Color32::WHITE),
-            Log::Error(text) => RichText::from(text).color(egui::Color32::RED),
-            Log::Warning(text) => RichText::from(text).color(egui::Color32::YELLOW),
+            Log::Error(text) => RichText::from(text).color(egui::Color32::LIGHT_RED),
+            Log::Warning(text) => RichText::from(text).color(egui::Color32::LIGHT_YELLOW),
             Log::Debug(text) => RichText::from(text).color(egui::Color32::LIGHT_BLUE),
             Log::Trace(text) => RichText::from(text).color(egui::Color32::LIGHT_GRAY),
             Log::Processed(text) => RichText::from(text).color(egui::Color32::LIGHT_GREEN),

@@ -19,6 +19,7 @@ kaspa_ng_macros::register_modules!([
     logs,
     changelog,
     init,
+    overview,
 ]);
 
 // pub enum SectionCaps {
@@ -101,17 +102,9 @@ impl Module {
 
         match module.style() {
             ModuleStyle::Large => {
-                println!("SELECTING LARGE STYLE");
-                println!("SELECTING LARGE STYLE");
-                println!("SELECTING LARGE STYLE");
-                println!("SELECTING LARGE STYLE");
                 ui.style_mut().text_styles = wallet.large_style.text_styles.clone();
             }
             ModuleStyle::Default => {
-                println!("SELECTING DEFAULT STYLE");
-                println!("SELECTING DEFAULT STYLE");
-                println!("SELECTING DEFAULT STYLE");
-                println!("SELECTING DEFAULT STYLE");
                 ui.style_mut().text_styles = wallet.default_style.text_styles.clone();
             }
         }

@@ -137,7 +137,7 @@ impl<'panel, Context> Panel<'panel, Context> {
         //         Color32::RED,
         //         Stroke::default(),
         //     );
-            
+
         //     res
         // });
         ui.horizontal(|ui| {
@@ -151,8 +151,10 @@ impl<'panel, Context> Panel<'panel, Context> {
                     //     back(self.this);
                     // }
 
-                    let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT).icon_size(icon_size.inner.x).padding(Some(icon_padding));
-                    if ui.add_enabled(self.back_active, icon).clicked(){
+                    let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT)
+                        .icon_size(icon_size.inner.x)
+                        .padding(Some(icon_padding));
+                    if ui.add_enabled(self.back_active, icon).clicked() {
                         back(self.this);
                     }
                 }
@@ -167,10 +169,7 @@ impl<'panel, Context> Panel<'panel, Context> {
                     icon_size.outer_height(),
                 );
 
-                ui.add_sized(
-                    max_size,
-                    Label::new(WidgetText::from(caption).heading()),
-                );
+                ui.add_sized(max_size, Label::new(WidgetText::from(caption).heading()));
             }
 
             match self.close {
@@ -183,8 +182,10 @@ impl<'panel, Context> Panel<'panel, Context> {
                     //     close(self.this);
                     // }
 
-                    let icon = CompositeIcon::new(egui_phosphor::bold::X).icon_size(icon_size.inner.x).padding(Some(icon_padding));
-                    if ui.add_enabled(self.close_active, icon).clicked(){
+                    let icon = CompositeIcon::new(egui_phosphor::bold::X)
+                        .icon_size(icon_size.inner.x)
+                        .padding(Some(icon_padding));
+                    if ui.add_enabled(self.close_active, icon).clicked() {
                         close(self.this);
                     }
                 }

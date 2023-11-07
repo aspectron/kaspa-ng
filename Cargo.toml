@@ -32,6 +32,7 @@ kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
 kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
 kaspa-utils = { path = "../rusty-kaspa/utils" }
 kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
+kaspa-metrics = { path = "../rusty-kaspa/metrics/metrics" }
 
 workflow-core = "0.8.1"
 workflow-log = "0.8.1"

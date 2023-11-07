@@ -16,13 +16,13 @@ impl Overview {
     }
 }
 
-impl SectionT for Overview {
+impl ModuleT for Overview {
     fn render(
         &mut self,
         _wallet: &mut Wallet,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
-        ui: &mut egui::Ui,
+        _ui: &mut egui::Ui,
     ) {
 
 
