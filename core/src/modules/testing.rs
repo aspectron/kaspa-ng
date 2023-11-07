@@ -1,4 +1,5 @@
 use crate::imports::*;
+use egui_plot::PlotPoint;
 
 
 #[derive(Clone, Default)]
@@ -16,15 +17,25 @@ pub struct Testing {
     // pub message: Option<String>,
 
     text : String,
+    graph_data: Vec<PlotPoint>,
 }
 
 impl Testing {
     pub fn new(interop: Interop) -> Self {
+        let now = workflow_core::time::unixtime_as_millis_f64();
+        let graph_data = vec![
+            PlotPoint::new(now + 1000.0, 1.5),
+            PlotPoint::new(now + 2000.0, 10.3),
+            PlotPoint::new(now + 4000.0, 4.5),
+            PlotPoint::new(now + 10000.0, 3.0),
+            PlotPoint::new(now + 16000.0, 2.5),
+            PlotPoint::new(now + 20000.0, 5.0),
+        ];
         Self {
             interop,
             // state: State::Select,
             // message: None,
-
+            graph_data,
             text : "...".to_string(),
         }
     }
@@ -81,20 +92,27 @@ impl ModuleT for Testing {
                 self.text("icon 1 clicked");
             }
 
-            let icon = CompositeIcon::opt_icon_and_text(egui_phosphor::bold::ARROW_BEND_UP_LEFT, Some("Hello"), Some("Secondary text"));
-            if ui.add(icon).clicked(){
-                self.text("icon 2 clicked");
+            let graph = CompositeGraph::new(&self.graph_data);
+            if ui.add(graph).clicked(){
+                self.text("graph clicked");
             }
 
-            let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA).size(100.0).color(Color32::RED)).text("Hello").padding(Some((10.0, 10.0).into()));
-            if ui.add(icon).clicked(){
-                self.text("icon 3 clicked");
-            }
 
-            let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA)).text("Hello").sense(Sense::hover());
-            if ui.add(icon).clicked(){
-                self.text("icon 3 clicked");
-            }
+
+            // let icon = CompositeIcon::opt_icon_and_text(egui_phosphor::bold::ARROW_BEND_UP_LEFT, Some("Hello"), Some("Secondary text"));
+            // if ui.add(icon).clicked(){
+            //     self.text("icon 2 clicked");
+            // }
+
+            // let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA).size(100.0).color(Color32::RED)).text("Hello").padding(Some((10.0, 10.0).into()));
+            // if ui.add(icon).clicked(){
+            //     self.text("icon 3 clicked");
+            // }
+
+            // let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA)).text("Hello").sense(Sense::hover());
+            // if ui.add(icon).clicked(){
+            //     self.text("icon 3 clicked");
+            // }
 
             let btn = CompositeButton::image_and_text(
                 Image::new(egui::include_image!("../images/icon.svg")).fit_to_exact_size(Vec2 { x: 50.0, y: 50.0 }),

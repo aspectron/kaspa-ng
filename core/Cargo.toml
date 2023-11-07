@@ -45,7 +45,9 @@ js-sys.workspace = true
 wasm-bindgen.workspace = true
 
 egui.workspace = true
+egui_plot.workspace = true
 egui_extras.workspace = true
+chrono.workspace = true
 eframe = { workspace = true, default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.

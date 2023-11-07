@@ -66,7 +66,9 @@ chrome-sys = "0.1.0"
 
 # chrome-sys = {path = "../chrome-sys"}
 
+chrono = "0.4.31"
 egui = "0.23.0"
+egui_plot = "0.23.0"
 egui_extras = { version = "0.23.0", features = ["svg"] }
 eframe = { version = "0.23.0", default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
