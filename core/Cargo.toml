@@ -72,6 +72,7 @@ kaspad.workspace = true
 kaspa-rpc-service.workspace = true
 kaspa-wrpc-server.workspace = true
 kaspa-core.workspace = true
+kaspa-metrics.workspace = true
 tokio.workspace = true
 ctrlc.workspace = true
 env_logger.workspace = true

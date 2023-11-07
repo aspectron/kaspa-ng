@@ -70,7 +70,7 @@ impl CompositeIcon {
             padding: None,
             selected: false,
             with_frame: false,
-            icon_size: 30.0
+            icon_size: 30.0,
         }
     }
 
@@ -246,12 +246,11 @@ impl CompositeIcon {
         // }
 
         let valign = ui.layout().vertical_align();
-        let mut text_job =
-            WidgetText::from(self.icon
-                .clone()
-                .size(self.icon_size)
-            )
-                .into_text_job(ui.style(), FontSelection::Default, valign);
+        let mut text_job = WidgetText::from(self.icon.clone().size(self.icon_size)).into_text_job(
+            ui.style(),
+            FontSelection::Default,
+            valign,
+        );
 
         let truncate = true; //self.truncate;
         let wrap = !truncate && ui.wrap_text(); //None.unwrap_or_else(|| ui.wrap_text());
@@ -392,7 +391,11 @@ impl Widget for CompositeIcon {
             let override_text_color = if icon_text.galley_has_color {
                 None
             } else {
-                Some(ui.style().interact_selectable(&response, self.selected).text_color())
+                Some(
+                    ui.style()
+                        .interact_selectable(&response, self.selected)
+                        .text_color(),
+                )
             };
 
             let button_padding = self._padding(ui);

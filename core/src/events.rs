@@ -1,4 +1,5 @@
 use crate::imports::*;
+use kaspa_metrics::MetricsSnapshot;
 use kaspa_wallet_core::events as kaspa;
 
 pub type ApplicationEventsChannel = crate::channel::Channel<Events>;
@@ -9,6 +10,9 @@ pub type ApplicationEventsChannel = crate::channel::Channel<Events>;
 #[derive(Clone)]
 pub enum Events {
     UpdateLogs,
+    Metrics {
+        snapshot: Box<MetricsSnapshot>,
+    },
     Error(Box<String>),
     WalletList {
         wallet_list: Arc<Vec<WalletDescriptor>>,

@@ -2,6 +2,7 @@ use crate::imports::*;
 use crate::interop::Interop;
 use crate::sync::SyncStatus;
 use egui_notify::Toasts;
+use kaspa_metrics::MetricsSnapshot;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::Hint;
 
@@ -73,6 +74,7 @@ pub struct Wallet {
     pub large_style: egui::Style,
     pub default_style: egui::Style,
 
+    pub metrics: Option<Box<MetricsSnapshot>>,
     state: State,
     hint: Option<Hint>,
     discard_hint: bool,
@@ -172,6 +174,7 @@ impl Wallet {
             account_list: Vec::new(),
             selected_account: None,
 
+            metrics: None,
             state: Default::default(),
             hint: None,
             discard_hint: false,
@@ -583,9 +586,12 @@ impl Wallet {
         event: Events,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
-    ) -> Result<bool> {
+    ) -> Result<()> {
         match event {
-            Events::UpdateLogs => return Ok(self.module == TypeId::of::<modules::Logs>()),
+            Events::UpdateLogs => {}
+            Events::Metrics { snapshot } => {
+                self.metrics = Some(snapshot);
+            }
             Events::Exit => {
                 println!("Exit...");
                 cfg_if! {
@@ -713,7 +719,7 @@ impl Wallet {
             } // _ => unimplemented!()
         }
 
-        Ok(true)
+        Ok(())
     }
 
     pub fn update_wallet_list(&self) {
