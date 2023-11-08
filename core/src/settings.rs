@@ -261,7 +261,7 @@ impl Default for Settings {
 impl Settings {}
 
 fn storage() -> Result<Storage> {
-    Ok(Storage::try_new("kaspa-ng")?)
+    Ok(Storage::try_new("kaspa-ng.settings")?)
 }
 
 impl Settings {
@@ -285,8 +285,7 @@ impl Settings {
 
         let storage = storage()?;
         if storage.exists().await.unwrap_or(false) {
-            Ok(Self::default())
-        } else {
+            // println!("Settings::load: file exists: {}", storage.filename());
             match read_json::<Self>(storage.filename()).await {
                 Ok(settings) => Ok(settings),
                 Err(err) => {
@@ -294,6 +293,8 @@ impl Settings {
                     Ok(Self::default())
                 }
             }
+        } else {
+            Ok(Self::default())
         }
     }
 }

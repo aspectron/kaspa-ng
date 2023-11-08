@@ -10,6 +10,18 @@ use workflow_i18n::*;
 const FORCE_WALLET_OPEN: bool = false;
 const ENABLE_DUAL_PANE: bool = false;
 
+enum Status {
+    Connected { 
+        current_daa_score : Option<u64>, 
+        peers : Option<usize> 
+    },
+    Disconnected,
+    Syncing { 
+        sync_status : Option<SyncStatus>,
+        peers : Option<usize> 
+    },
+}
+
 pub enum Exception {
     UtxoIndexNotEnabled { url: Option<String> },
 }
@@ -36,7 +48,7 @@ impl State {
     }
 
     pub fn is_synced(&self) -> bool {
-        self.is_synced.unwrap_or(false)
+        self.is_synced.unwrap_or(false) || matches!(self.sync_state,Some(SyncState::Synced))
     }
 
     pub fn sync_state(&self) -> &Option<SyncState> {
@@ -96,6 +108,7 @@ impl Core {
         settings: Settings,
     ) -> Self {
         let mut fonts = egui::FontDefinitions::default();
+        egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Bold);
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
         cc.egui_ctx.set_fonts(fonts);
@@ -202,26 +215,29 @@ impl Core {
     where
         T: 'static,
     {
-        self.stack.push_back(self.module.clone());
-
-        self.module = self
+        let module = self
             .modules
             .get(&TypeId::of::<T>())
-            .expect("Unknown module")
-            .clone();
+            .expect("Unknown module");
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let type_id = self.module.type_id();
+        if self.module.type_id() != module.type_id() {
 
-            crate::runtime::kaspa::update_logs_flag()
-                .store(type_id == TypeId::of::<modules::Logs>(), Ordering::Relaxed);
-            crate::runtime::kaspa::update_metrics_flag().store(
-                type_id == TypeId::of::<modules::Overview>()
-                    || type_id == TypeId::of::<modules::Metrics>()
-                    || type_id == TypeId::of::<modules::Node>(),
-                Ordering::Relaxed,
-            );
+            self.stack.push_back(self.module.clone());
+            self.module = module.clone();
+
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let type_id = self.module.type_id();
+
+                crate::runtime::kaspa::update_logs_flag()
+                    .store(type_id == TypeId::of::<modules::Logs>(), Ordering::Relaxed);
+                crate::runtime::kaspa::update_metrics_flag().store(
+                    type_id == TypeId::of::<modules::Overview>()
+                        || type_id == TypeId::of::<modules::Metrics>()
+                        || type_id == TypeId::of::<modules::Node>(),
+                    Ordering::Relaxed,
+                );
+            }
         }
     }
 
@@ -632,60 +648,102 @@ impl eframe::App for Core {
 impl Core {
     fn render_status(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            let status_area_width = ui.available_width() - 24.;
 
             if !self.state().is_connected() {
-                ui.label("Not Connected");
+                self.render_connected_state(ui,Status::Disconnected);
             } else {
+                let peers = self.interop.kaspa_service().metrics().connected_peer_info().map(|peers|peers.len());
                 ui.horizontal(|ui| {
                     if self.state().is_synced() {
-                        self.render_connected_state(ui);
-                    } else if let Some(status) =
-                        self.state().sync_state.as_ref().map(SyncStatus::try_from)
-                    {
-                        if status.synced {
-                            self.render_connected_state(ui);
-                            ui.separator();
-                            ui.label("Ready...");
-                        } else {
-                            ui.vertical(|ui| {
-                                ui.horizontal(|ui| {
-                                    self.render_connected_state(ui);
-                                    status.render_text_state(ui);
-                                    // - TODO - NOT INFO ETC..
-                                });
-                                status
-                                    .progress_bar()
-                                    .map(|bar| ui.add(bar.desired_width(status_area_width)));
-                            });
-                        }
+                        self.render_connected_state(ui,Status::Connected {
+                            current_daa_score : self.state().current_daa_score(),
+                            peers,
+                        });
                     } else {
-                        // ui.label("Connected");
-                        self.render_connected_state(ui);
-                        ui.separator();
-                        ui.label("Syncing...");
+                        self.render_connected_state(ui,Status::Syncing { sync_status : self.state().sync_state.as_ref().map(SyncStatus::try_from), peers });
                     }
                 });
             }
             ui.add_space(ui.available_width() - 20.);
-            // ui.separator();
             if icons()
                 .sliders
-                .render_with_options(ui, &IconSize::new(Vec2::splat(24.)), true)
+                .render_with_options(ui, &IconSize::new(Vec2::splat(20.)), true)
                 .clicked()
             {
                 self.select::<modules::Settings>();
             }
-            // ui.label(egui::RichText::new(egui_phosphor::light::GEAR_FINE).size(16.0));
         });
     }
 
-    fn render_connected_state(&self, ui: &mut egui::Ui) {
-        // ui.label(format!("CONNECTED {}", self.rpc_client().url()));
-        ui.label("CONNECTED");
+
+    fn render_peers(&self, ui: &mut egui::Ui, peers : Option<usize>) {
+        let status_icon_size = theme().status_icon_size;
         ui.separator();
-        ui.label(self.settings.node.network.to_string());
-        ui.separator();
+        if let Some(peers) = peers {
+            ui.label(format!("{} peers", peers));
+        } else {
+            ui.label(RichText::new(egui_phosphor::light::CLOUD_SLASH).size(status_icon_size).color(Color32::LIGHT_RED));
+            ui.label(RichText::new("No peers").color(Color32::LIGHT_RED));
+        }
+
+    }
+
+    fn render_connected_state(&self, ui: &mut egui::Ui, state : Status) { //connected : bool, icon: &str, color : Color32) {
+        let status_area_width = ui.available_width() - 24.;
+        let status_icon_size = theme().status_icon_size;
+
+        match state {
+            Status::Connected {
+                current_daa_score,
+                peers
+            } => {
+                ui.add_space(4.);
+                ui.label(RichText::new(egui_phosphor::light::CPU).size(status_icon_size).color(Color32::LIGHT_GREEN));
+                ui.separator();
+                ui.label("CONNECTED");
+                ui.separator();
+                ui.label(self.settings.node.network.to_string());
+                if let Some(current_daa_score) = current_daa_score {
+                    ui.separator();
+                    ui.label(format!("DAA {}", current_daa_score.separated_string()));
+                }
+                self.render_peers(ui, peers);
+            }
+            Status::Disconnected => {
+                ui.add_space(4.);
+                ui.label(RichText::new(egui_phosphor::light::PLUGS).size(status_icon_size).color(Color32::LIGHT_RED));
+                ui.separator();
+                ui.label("Not Connected");
+        
+            }
+            Status::Syncing { sync_status, peers } => {
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.add_space(4.);
+                        ui.label(RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN).size(status_icon_size).color(Color32::YELLOW));
+                        ui.separator();
+                        ui.label("CONNECTED");
+                        ui.separator();
+                        ui.label(self.settings.node.network.to_string());
+                        self.render_peers(ui, peers);
+                        if let Some(status) = sync_status.as_ref() {
+                            if !status.synced {
+                                ui.separator();
+                                status.render_text_state(ui);
+                            }
+                        }        
+                    });
+
+                    if let Some(status) = sync_status.as_ref() {
+                        if !status.synced {
+                            status
+                                .progress_bar()
+                                .map(|bar| ui.add(bar.desired_width(status_area_width)));
+                        }
+                    }
+                });
+            }
+        }
     }
 
     pub fn handle_events(
@@ -709,7 +767,7 @@ impl Core {
             }
             Events::Error(_error) => {}
             Events::WalletList { wallet_list } => {
-                println!("getting wallet list!, {:?}", wallet_list);
+                // println!("getting wallet list!, {:?}", wallet_list);
                 self.wallet_list = (*wallet_list).clone();
                 self.wallet_list.sort();
                 // self.wallet_list.sort_by(|a, b| {

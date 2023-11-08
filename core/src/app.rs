@@ -38,9 +38,9 @@ cfg_if! {
                 Args::Kaspad { args : Box::new(parse_kaspad_args()) }
             } else {
                 let cmd = Command::new("kaspa-ng")
-                    .about(format!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_DESCRIPTION"), kaspa_wallet_core::version()))
+                    .about(format!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version()))
                     // .version(env!("CARGO_PKG_VERSION"))
-                    .arg(arg!(--disable "Disable node services."))
+                    .arg(arg!(--disable "Disable node services when starting."))
                     .arg(
                         Arg::new("reset-settings")
                         .long("reset-settings")
@@ -72,10 +72,13 @@ cfg_if! {
 
                 Args::Kng { reset_settings, disable } => {
 
+                    println!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version());
+
                     // Log to stderr (if you run with `RUST_LOG=debug`).
                     env_logger::init();
 
                     let mut settings = if reset_settings {
+                        println!("Resetting kaspa-ng settings on user request...");
                         Settings::default().store_sync()?.clone()
                     } else {
                         Settings::load().await.unwrap_or_else(|err| {
@@ -83,6 +86,8 @@ cfg_if! {
                             Settings::default()
                         })
                     };
+
+                    println!("SETTINGS: {:#?}", settings);
 
                     if disable {
                         settings.node.node_kind = kaspa_ng_core::settings::KaspadNodeKind::Disable;

@@ -112,6 +112,7 @@ impl ModuleT for Welcome {
                         let mut settings = self.settings.clone();
                         settings.initialized = true;
                         settings.store_sync().expect("Unable to store settings");
+                        self.interop.kaspa_service().update_services(&self.settings.node);
                         core.settings = settings.clone();
                         core.get_mut::<modules::Settings>().load(settings);
                         core.select::<modules::Overview>();

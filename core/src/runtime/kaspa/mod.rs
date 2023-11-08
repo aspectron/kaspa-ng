@@ -110,14 +110,17 @@ impl KaspaService {
 
         // enqueue startup event to the service channel to
         // start kaspad or initiate connection to remote kaspad
-        match KaspadServiceEvents::try_from(&settings.node) {
-            Ok(event) => {
-                service_events.sender.try_send(event).unwrap_or_else(|err| {
-                    println!("KaspadService error: {}", err);
-                });
-            }
-            Err(err) => {
-                println!("KaspadServiceEvents::try_from() error: {}", err);
+        if settings.initialized {
+
+            match KaspadServiceEvents::try_from(&settings.node) {
+                Ok(event) => {
+                    service_events.sender.try_send(event).unwrap_or_else(|err| {
+                        println!("KaspadService error: {}", err);
+                    });
+                }
+                Err(err) => {
+                    println!("KaspadServiceEvents::try_from() error: {}", err);
+                }
             }
         }
 
@@ -387,7 +390,7 @@ impl KaspaService {
 #[async_trait]
 impl Service for KaspaService {
     async fn spawn(self: Arc<Self>) -> Result<()> {
-        println!("kaspad manager service starting...");
+        // println!("kaspad manager service starting...");
         let this = self.clone();
 
         // println!("starting wallet...");
