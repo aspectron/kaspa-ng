@@ -45,27 +45,33 @@ impl ModuleT for AccountManager {
 
         match &self.state {
             State::Select => {
-                let accounts = core.account_list();
-
-                if accounts.len() == 1 {
-                    self.state = State::Overview {
-                        account: accounts[0].clone(),
-                    };
-                } else {
-                    ui.heading("Select Account");
-                    ui.separator();
-
-                    for account in accounts {
-                        if ui
-                            .button(format!("Select {}", account.name_or_id()))
-                            .clicked()
-                        {
-                            self.state = State::Overview {
-                                account: account.clone(),
-                            };
+                if let Some(account_list) = core.account_list() {
+                    if account_list.is_empty() {
+                        ui.label("Please create an account");
+                    } else if account_list.len() == 1 {
+                        self.state = State::Overview {
+                            account: account_list[0].clone(),
+                        };
+                    } else {
+                        ui.heading("Select Account");
+                        ui.separator();
+    
+                        for account in account_list {
+                            if ui
+                                .button(format!("Select {}", account.name_or_id()))
+                                .clicked()
+                            {
+                                self.state = State::Overview {
+                                    account: account.clone(),
+                                };
+                            }
                         }
                     }
+
+                } else {
+                    ui.label("Unable to access account list");
                 }
+
             }
 
             State::Overview { account } => {

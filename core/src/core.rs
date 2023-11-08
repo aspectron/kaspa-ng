@@ -84,7 +84,7 @@ pub struct Core {
     exception: Option<Exception>,
 
     pub wallet_list: Vec<WalletDescriptor>,
-    pub account_list: Vec<Account>,
+    pub account_list: Option<Vec<Account>>,
     pub selected_account: Option<Account>,
 }
 
@@ -179,7 +179,7 @@ impl Core {
             large_style,
 
             wallet_list: Vec::new(),
-            account_list: Vec::new(),
+            account_list: None,
             selected_account: None,
 
             metrics: None,
@@ -208,12 +208,7 @@ impl Core {
             .modules
             .get(&TypeId::of::<T>())
             .expect("Unknown module")
-            .clone(); //.type_id();
-                      // self.module = TypeId::of::<T>();
-                      // println!("selecting module: {:?}", self.module);
-                      // if self.modules.get(&self.module).is_none() {
-                      //     panic!("Unknown module type {:?}", self.module);
-                      // }
+            .clone();
 
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -277,7 +272,7 @@ impl Core {
         &self.wallet_list
     }
 
-    pub fn account_list(&self) -> &Vec<Account> {
+    pub fn account_list(&self) -> &Option<Vec<Account>> {
         &self.account_list
     }
 
@@ -720,7 +715,7 @@ impl Core {
                 // });
             }
             Events::AccountList { account_list } => {
-                self.account_list = (*account_list).clone();
+                self.account_list = Some((*account_list).clone());
             }
             Events::Notify { notification } => {
                 notification.render(&mut self.toasts);
@@ -800,6 +795,7 @@ impl Core {
                     CoreWallet::WalletClose => {
                         self.hint = None;
                         self.state.is_open = false;
+                        self.account_list = None;
                     }
                     CoreWallet::AccountSelection { id: _ } => {
                         // self.selected_account = self.wallet().account().ok();
