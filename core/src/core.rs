@@ -681,8 +681,11 @@ impl Core {
     }
 
     fn render_connected_state(&self, ui: &mut egui::Ui) {
-        // ui.label(format!("Connected to {}", self.rpc_client().url()));
-        ui.label("CONNECTED".to_string());
+        // ui.label(format!("CONNECTED {}", self.rpc_client().url()));
+        ui.label("CONNECTED");
+        ui.separator();
+        ui.label(self.settings.node.network.to_string());
+        ui.separator();
     }
 
     pub fn handle_events(
