@@ -60,7 +60,7 @@ impl State {
     }
 }
 
-pub struct Wallet {
+pub struct Core {
     interop: Interop,
     wallet: Arc<dyn WalletApi>,
     channel: ApplicationEventsChannel,
@@ -86,7 +86,7 @@ pub struct Wallet {
     pub selected_account: Option<Account>,
 }
 
-impl Wallet {
+impl Core {
     /// Called once before the first frame.
     pub fn new(
         cc: &eframe::CreationContext<'_>,
@@ -298,7 +298,7 @@ impl Wallet {
     }
 }
 
-impl eframe::App for Wallet {
+impl eframe::App for Core {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
@@ -619,7 +619,7 @@ impl eframe::App for Wallet {
     }
 }
 
-impl Wallet {
+impl Core {
     fn render_status(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             let status_area_width = ui.available_width() - 24.;

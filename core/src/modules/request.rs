@@ -14,7 +14,7 @@ impl Request {
 impl ModuleT for Request {
     fn render(
         &mut self,
-        _wallet: &mut Wallet,
+        _wallet: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,

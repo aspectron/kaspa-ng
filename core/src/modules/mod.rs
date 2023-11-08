@@ -44,11 +44,11 @@ pub trait ModuleT: Downcast {
         ModuleStyle::Large
     }
 
-    fn init(&mut self, _wallet: &mut Wallet) {}
+    fn init(&mut self, _wallet: &mut Core) {}
 
     fn render(
         &mut self,
-        _wallet: &mut Wallet,
+        _wallet: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         _ui: &mut egui::Ui,
@@ -81,13 +81,13 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn init(&self, wallet: &mut Wallet) {
+    pub fn init(&self, wallet: &mut Core) {
         self.inner.module.borrow_mut().init(wallet)
     }
 
     pub fn render(
         &self,
-        wallet: &mut Wallet,
+        wallet: &mut Core,
         ctx: &egui::Context,
         frame: &mut eframe::Frame,
         ui: &mut egui::Ui,

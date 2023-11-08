@@ -19,7 +19,7 @@ impl Overview {
 impl ModuleT for Overview {
     fn render(
         &mut self,
-        _wallet: &mut Wallet,
+        _wallet: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         _ui: &mut egui::Ui,

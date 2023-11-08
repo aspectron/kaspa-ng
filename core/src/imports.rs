@@ -63,6 +63,6 @@ pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
 pub use crate::settings::{KaspadNodeKind, NodeSettings, RpcConfig, Settings, UxSettings};
 pub use crate::utils::spawn;
-pub use crate::wallet::Wallet;
+pub use crate::wallet::Core;
 // #[macro_use]
 pub use crate::utils::*;

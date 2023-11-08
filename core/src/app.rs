@@ -107,7 +107,7 @@ cfg_if! {
                             interop::signals::Signals::bind(&interop);
                             interop.start();
 
-                            Box::new(kaspa_ng_core::Wallet::new(cc, interop, settings))
+                            Box::new(kaspa_ng_core::Core::new(cc, interop, settings))
                         }),
                     )?;
                     println!("exit initiated...");
@@ -175,7 +175,7 @@ cfg_if! {
                                 &JsValue::from(adaptor),
                             ).expect("failed to set adaptor");
 
-                            Box::new(kaspa_ng_core::Wallet::new(cc, interop, settings))
+                            Box::new(kaspa_ng_core::Core::new(cc, interop, settings))
                         }),
                     )
                     .await

@@ -25,7 +25,7 @@ impl Settings {
 
 impl ModuleT for Settings {
 
-    fn init(&mut self, wallet : &mut Wallet) {
+    fn init(&mut self, wallet : &mut Core) {
         self.settings = wallet.settings.clone();
     }
 
@@ -36,7 +36,7 @@ impl ModuleT for Settings {
 
     fn render(
         &mut self,
-        wallet: &mut Wallet,
+        wallet: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,

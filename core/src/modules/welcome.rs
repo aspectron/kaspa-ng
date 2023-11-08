@@ -23,7 +23,7 @@ impl ModuleT for Welcome {
 
     fn render(
         &mut self,
-        wallet: &mut Wallet,
+        wallet: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
