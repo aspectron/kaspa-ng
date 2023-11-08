@@ -64,8 +64,10 @@ pub struct Core {
     interop: Interop,
     wallet: Arc<dyn WalletApi>,
     channel: ApplicationEventsChannel,
-    module: TypeId,
-    stack: VecDeque<TypeId>,
+    // module: TypeId,
+    module: Module,
+    // stack: VecDeque<TypeId>,
+    stack: VecDeque<Module>,
     modules: HashMap<TypeId, Module>,
     // #[allow(dead_code)]
     pub settings: Settings,
@@ -150,6 +152,11 @@ impl Core {
         // }
 
         let modules = crate::modules::register_modules(&interop);
+
+        let module = modules
+            .get(&TypeId::of::<modules::Testing>())
+            .unwrap()
+            .clone();
         // modules.get_mut_with_typeid::<modules::Settings>().init(&settings);
 
         // modules.get(&TypeId::of::<modules::Settings>()).unwrap().init(&settings);
@@ -162,7 +169,7 @@ impl Core {
             wallet,
             channel,
             // module: TypeId::of::<modules::WalletOpen>(),
-            module: TypeId::of::<modules::Testing>(),
+            module, //: TypeId::of::<modules::Testing>(),
             modules: modules.clone(),
             stack: VecDeque::new(),
             settings: settings.clone(),
@@ -195,24 +202,29 @@ impl Core {
     where
         T: 'static,
     {
-        self.stack.push_back(self.module);
+        self.stack.push_back(self.module.clone());
 
-        self.module = TypeId::of::<T>();
-        println!("selecting module: {:?}", self.module);
-        if self.modules.get(&self.module).is_none() {
-            panic!("Unknown module type {:?}", self.module);
-        }
+        self.module = self
+            .modules
+            .get(&TypeId::of::<T>())
+            .expect("Unknown module")
+            .clone(); //.type_id();
+                      // self.module = TypeId::of::<T>();
+                      // println!("selecting module: {:?}", self.module);
+                      // if self.modules.get(&self.module).is_none() {
+                      //     panic!("Unknown module type {:?}", self.module);
+                      // }
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            crate::runtime::kaspa::update_logs_flag().store(
-                self.module == TypeId::of::<modules::Logs>(),
-                Ordering::Relaxed,
-            );
+            let type_id = self.module.type_id();
+
+            crate::runtime::kaspa::update_logs_flag()
+                .store(type_id == TypeId::of::<modules::Logs>(), Ordering::Relaxed);
             crate::runtime::kaspa::update_metrics_flag().store(
-                self.module == TypeId::of::<modules::Overview>()
-                    || self.module == TypeId::of::<modules::Metrics>()
-                    || self.module == TypeId::of::<modules::Node>(),
+                type_id == TypeId::of::<modules::Overview>()
+                    || type_id == TypeId::of::<modules::Metrics>()
+                    || type_id == TypeId::of::<modules::Node>(),
                 Ordering::Relaxed,
             );
         }
@@ -399,7 +411,7 @@ impl eframe::App for Core {
 
                             tests.into_iter().for_each(|module| {
                                 if ui.button(module.name()).clicked() {
-                                    self.module = module.type_id();
+                                    self.module = module; //.type_id();
                                     ui.close_menu();
                                 }
                             });
@@ -410,7 +422,7 @@ impl eframe::App for Core {
                             modules.into_iter().for_each(|module| {
                                 // let SectionInner { name,type_id, .. } = section.inner;
                                 if ui.button(module.name()).clicked() {
-                                    self.module = module.type_id();
+                                    self.module = module; //.type_id();
                                     ui.close_menu();
                                 }
                             });
@@ -512,12 +524,17 @@ impl eframe::App for Core {
             // if false && !self.wallet().is_open() {
             if FORCE_WALLET_OPEN && !self.state.is_open() {
                 //self.wallet().is_open() {
-                let module = if self.module == TypeId::of::<modules::WalletOpen>()
-                    || self.module == TypeId::of::<modules::WalletCreate>()
+                let module = if self.module.type_id() == TypeId::of::<modules::WalletOpen>()
+                    || self.module.type_id() == TypeId::of::<modules::WalletCreate>()
                 {
-                    self.module
+                    self.module.clone()
                 } else {
-                    TypeId::of::<modules::WalletOpen>()
+                    self.modules
+                        .get(&TypeId::of::<modules::WalletOpen>())
+                        .unwrap()
+                        .clone()
+                    // self.modules.get::<modules::WalletOpen>().unwrap().clone()
+                    // TypeId::of::<modules::WalletOpen>()
                 };
 
                 // let section = match self.section {
@@ -531,31 +548,31 @@ impl eframe::App for Core {
 
                 // let section = self.sections.get(&section).unwrap().section.clone();
                 // section.borrow_mut().render(self, ctx, frame, ui);
-                self.modules
-                    .get(&module)
-                    .unwrap()
-                    .clone()
-                    .render(self, ctx, frame, ui);
+                // self.modules
+                //     .get(&module)
+                //     .unwrap()
+                //     .clone()
+                module.render(self, ctx, frame, ui);
             } else if ENABLE_DUAL_PANE && size.x > 500. {
-                ui.columns(2, |uis| {
-                    self.modules
-                        .get(&TypeId::of::<modules::AccountManager>())
-                        .unwrap()
-                        .clone()
-                        .render(self, ctx, frame, &mut uis[0]);
-                    self.modules.get(&self.module).unwrap().clone().render(
-                        self,
-                        ctx,
-                        frame,
-                        &mut uis[1],
-                    );
-                });
+                // ui.columns(2, |uis| {
+                //     self.modules
+                //         .get(&TypeId::of::<modules::AccountManager>())
+                //         .unwrap()
+                //         .clone()
+                //         .render(self, ctx, frame, &mut uis[0]);
+                //     self.modules.get(&self.module).unwrap().clone().render(
+                //         self,
+                //         ctx,
+                //         frame,
+                //         &mut uis[1],
+                //     );
+                // });
             } else {
-                self.modules
-                    .get(&self.module)
-                    .unwrap()
-                    .clone()
-                    .render(self, ctx, frame, ui);
+                // self.modules
+                //     .get(&self.module)
+                //     .unwrap()
+                //     .clone()
+                self.module.clone().render(self, ctx, frame, ui);
             }
         });
 
