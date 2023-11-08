@@ -1,7 +1,11 @@
 use crate::imports::*;
 
-// #[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Theme {
+    pub kaspa_color: Color32,
+    pub hyperlink_color: Color32,
+    pub node_data_color: Color32,
     pub panel_icon_size: IconSize,
     pub panel_margin_size: f32,
     pub error_icon_size: IconSize,
@@ -21,6 +25,11 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         Self {
+            kaspa_color: Color32::from_rgb(58, 221, 190),
+            hyperlink_color: Color32::from_rgb(58, 221, 190),
+            // node_data_color : Color32::from_rgb(217, 233,230),
+            node_data_color: Color32::WHITE,
+            // node_data_color : Color32::from_rgb(151, 209, 198),
             // panel_icon_size : IconSize::new(26.,36.),
             panel_icon_size: IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6., 0.)),
             error_icon_size: IconSize::new(Vec2::splat(64.)).with_padding(Vec2::new(6., 6.)),
@@ -30,7 +39,7 @@ impl Default for Theme {
             panel_margin_size: 24_f32,
             // panel_error_icon_size : IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6.,0.)),
             error_color: Color32::from_rgb(255, 136, 136), //Color32::from_rgb(255, 0, 0),
-            warning_color: Color32::from_rgb(255, 255, 0),
+            warning_color: egui::Color32::from_rgb(255, 255, 136),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
             // panel_icon_size : IconSize::new(Vec2::splat(26.),Vec2::new(36.,26.)),
@@ -58,9 +67,15 @@ impl Theme {
     // pub fn panel_icon_padding(&self) -> f32 {
     //     self.panel_icon_padding
     // }
+
+    pub fn apply(&self, visuals: &mut Visuals) {
+        // let visuals = ui.visuals_mut();
+        visuals.hyperlink_color = self.hyperlink_color;
+    }
 }
 
 static mut THEME: Option<Theme> = None;
+#[inline(always)]
 pub fn theme() -> &'static Theme {
     unsafe {
         THEME.get_or_insert_with(Theme::default)

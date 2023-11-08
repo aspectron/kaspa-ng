@@ -36,8 +36,8 @@ cfg_if! {
             StartInternalAsDaemon { config: Config, network : Network },
             StartExternalAsDaemon { path: PathBuf, config: Config, network : Network },
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
+            Stop,
             Stdout { line : String },
-            // Metrics { snapshot : MetricsSnapshot },
             Exit,
         }
 
@@ -49,7 +49,7 @@ cfg_if! {
 
         pub fn update_metrics_flag() -> &'static Arc<AtomicBool> {
             static FLAG: OnceLock<Arc<AtomicBool>> = OnceLock::new();
-            FLAG.get_or_init(||Arc::new(AtomicBool::new(true)))
+            FLAG.get_or_init(||Arc::new(AtomicBool::new(false)))
         }
 
     } else {
@@ -72,6 +72,7 @@ pub struct KaspaService {
     pub logs: Mutex<VecDeque<Log>>,
     pub metrics: Arc<Metrics>,
     pub metrics_data: Mutex<HashMap<Metric, Vec<f64>>>,
+    // pub peer_info: Mutex<Option<Vec<RpcPeerInfo>>>,
     // pub metrics_data
     // pub rpc : Mutex<Rpc>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -135,6 +136,7 @@ impl KaspaService {
             logs: Mutex::new(VecDeque::new()),
             metrics,
             metrics_data: Mutex::new(metrics_data),
+            // peer_info : Mutex::new(None),
             // rpc : Mutex::new(rpc),
             // wrpc,
             #[cfg(not(target_arch = "wasm32"))]
@@ -353,6 +355,14 @@ impl KaspaService {
         self.metrics_data.lock().unwrap()
     }
 
+    pub fn metrics(&self) -> &Arc<Metrics> {
+        &self.metrics
+    }
+
+    // pub fn connected_peer_info(&self) -> Option<Arc<Vec<RpcPeerInfo>>> {
+    //     self.metrics.connected_peer_info()
+    // }
+
     pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
         let mut metrics_data = self.metrics_data.lock().unwrap();
         for metric in Metric::list().into_iter() {
@@ -409,6 +419,11 @@ impl Service for KaspaService {
                         // println!("NODE EVENT: {:#?}", event);
 
                         match event {
+
+                            // #[cfg(not(target_arch = "wasm32"))]
+                            // KaspadServiceEvents::Stdout { line } => {
+
+                            // }
 
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::Stdout { line } => {
@@ -517,6 +532,10 @@ impl Service for KaspaService {
 
                             },
 
+                            KaspadServiceEvents::Stop => {
+                                self.stop_all_services().await?;
+                            }
+
                             KaspadServiceEvents::Exit => {
                                 break;
                             }
@@ -575,7 +594,10 @@ impl TryFrom<&NodeSettings> for KaspadServiceEvents {
             if #[cfg(not(target_arch = "wasm32"))] {
 
 
-                match &node_settings.kaspad {
+                match &node_settings.node_kind {
+                    KaspadNodeKind::Disable => {
+                        Ok(KaspadServiceEvents::Stop)
+                    }
                     KaspadNodeKind::IntegratedInProc => {
                         // let config = ;
                         Ok(KaspadServiceEvents::StartInternalInProc { config : Config::from(node_settings.clone()), network : node_settings.network })
@@ -584,7 +606,7 @@ impl TryFrom<&NodeSettings> for KaspadServiceEvents {
                         Ok(KaspadServiceEvents::StartInternalAsDaemon { config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::ExternalAsDaemon => {
-                        let path = node_settings.kaspad_node_binary.clone().ok_or(Error::MissingExternalKaspadBinary)?;
+                        let path = node_settings.kaspad_daemon_binary.clone().ok_or(Error::MissingExternalKaspadBinary)?;
                         Ok(KaspadServiceEvents::StartExternalAsDaemon { path : PathBuf::from(path), config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::Remote => {

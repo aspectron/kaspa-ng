@@ -7,8 +7,8 @@ pub struct Logs {
 
 impl Logs {
     pub fn new(interop: Interop) -> Self {
-        Self { interop,
-        
+        Self {
+            interop,
         }
     }
 }
@@ -28,6 +28,7 @@ impl ModuleT for Logs {
     ) {
 
         egui::ScrollArea::vertical()
+            .id_source("node_logs")
             .auto_shrink([false; 2])
             .stick_to_bottom(true)
             .show(ui, |ui| {

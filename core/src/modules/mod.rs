@@ -18,16 +18,10 @@ kaspa_ng_macros::register_modules!([
     testing,
     logs,
     changelog,
-    init,
+    welcome,
     overview,
+    node,
 ]);
-
-// pub enum SectionCaps {
-//     Large,
-//     Small,
-//     Mobile,
-//     Web,
-// }
 
 pub enum ModuleStyle {
     Large,
@@ -123,6 +117,28 @@ impl Module {
 
     pub fn type_id(&self) -> TypeId {
         self.inner.type_id
+    }
+
+    pub fn get<M>(&self) -> Ref<'_, M>
+    where
+        M: ModuleT + 'static,
+    {
+        Ref::map(self.inner.module.borrow(), |r| {
+            (r).as_any()
+                .downcast_ref::<M>()
+                .expect("unable to downcast section")
+        })
+    }
+
+    pub fn get_mut<M>(&mut self) -> RefMut<'_, M>
+    where
+        M: ModuleT + 'static,
+    {
+        RefMut::map(self.inner.module.borrow_mut(), |r| {
+            (r).as_any_mut()
+                .downcast_mut::<M>()
+                .expect("unable to downcast_mut module")
+        })
     }
 }
 

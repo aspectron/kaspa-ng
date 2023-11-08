@@ -6,6 +6,7 @@ pub enum Kind {
     Phosphor { symbol: &'static str },
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IconSize {
     pub inner: Vec2,
     pub outer: Vec2,

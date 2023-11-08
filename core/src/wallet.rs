@@ -211,7 +211,8 @@ impl Wallet {
             );
             crate::runtime::kaspa::update_metrics_flag().store(
                 self.module == TypeId::of::<modules::Overview>()
-                    || self.module == TypeId::of::<modules::Metrics>(),
+                    || self.module == TypeId::of::<modules::Metrics>()
+                    || self.module == TypeId::of::<modules::Node>(),
                 Ordering::Relaxed,
             );
         }
@@ -309,7 +310,7 @@ impl eframe::App for Wallet {
         }
 
         // ctx.set_visuals(self.default_style.clone());
-        let current_visuals = ctx.style().visuals.clone(); //.widgets.noninteractive;
+        let mut current_visuals = ctx.style().visuals.clone(); //.widgets.noninteractive;
         let mut visuals = current_visuals.clone();
         // visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0, Color32::from_rgb(0, 0, 0));
         visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(0, 0, 0);
@@ -323,7 +324,23 @@ impl eframe::App for Wallet {
         // visuals.bg_fill = egui::Color32::from_rgb(0, 0, 0);
         ctx.set_visuals(visuals);
         self.toasts.show(ctx);
+
+        theme().apply(&mut current_visuals);
+
         ctx.set_visuals(current_visuals);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        if !self.settings.initialized {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.modules
+                    .get(&TypeId::of::<modules::Welcome>())
+                    .unwrap()
+                    .clone()
+                    .render(self, ctx, frame, ui);
+            });
+
+            return;
+        }
 
         // let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
         // section.borrow_mut().render(self, ctx, frame, ui);
@@ -416,6 +433,10 @@ impl eframe::App for Wallet {
                             self.select::<modules::Settings>();
                         }
                         ui.separator();
+                        if ui.button("Node").clicked() {
+                            self.select::<modules::Node>();
+                        }
+                        ui.separator();
                         if ui.button("Metrics").clicked() {
                             self.select::<modules::Metrics>();
                         }
@@ -428,13 +449,13 @@ impl eframe::App for Wallet {
 
                     cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         let dict = dict();
-                        let language_code = self.settings.language.clone();
+                        let language_code = self.settings.language_code.clone();
                         let language = dict.language(language_code.as_str()).unwrap().unwrap();
                         #[allow(clippy::useless_format)]
                         ui.menu_button(format!("{language}"), |ui| {
                             ["en", "pt", "ru", "zh_HANS", "it"].iter().for_each(|lang| {
                                 if ui.button(dict.language(lang).unwrap().unwrap()).clicked() {
-                                    self.settings.language = lang.to_string();
+                                    self.settings.language_code = lang.to_string();
                                     // self.settings.save();
                                     ui.close_menu();
                                 }

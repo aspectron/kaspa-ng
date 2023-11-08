@@ -7,14 +7,16 @@ cfg_if! {
         #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
         #[serde(rename_all = "kebab-case")]
         pub enum KaspadNodeKind {
+            Disable,
             Remote,
-            #[default]
             IntegratedInProc,
+            #[default]
             IntegratedAsDaemon,
             ExternalAsDaemon,
         }
 
-        const KASPAD_NODE_KINDS: [KaspadNodeKind; 4] = [
+        const KASPAD_NODE_KINDS: [KaspadNodeKind; 5] = [
+            KaspadNodeKind::Disable,
             KaspadNodeKind::Remote,
             KaspadNodeKind::IntegratedInProc,
             KaspadNodeKind::IntegratedAsDaemon,
@@ -24,6 +26,7 @@ cfg_if! {
         impl std::fmt::Display for KaspadNodeKind {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 match self {
+                    KaspadNodeKind::Disable => write!(f, "Disabled"),
                     KaspadNodeKind::Remote => write!(f, "Remote"),
                     KaspadNodeKind::IntegratedInProc => write!(f, "Integrated"),
                     KaspadNodeKind::IntegratedAsDaemon => write!(f, "Integrated Daemon"),
@@ -57,6 +60,16 @@ cfg_if! {
 impl KaspadNodeKind {
     pub fn iter() -> impl Iterator<Item = &'static KaspadNodeKind> {
         KASPAD_NODE_KINDS.iter()
+    }
+
+    pub fn describe(&self) -> String {
+        match self {
+            KaspadNodeKind::Disable => i18n("Disable"),
+            KaspadNodeKind::Remote => i18n("Connect to Remote RPC"),
+            KaspadNodeKind::IntegratedInProc => i18n("Integrated Node"),
+            KaspadNodeKind::IntegratedAsDaemon => i18n("Integrated Daemon"),
+            KaspadNodeKind::ExternalAsDaemon => i18n("External Daemon"),
+        }
     }
 }
 
@@ -109,8 +122,8 @@ pub struct NodeSettings {
     pub enable_upnp: bool,
 
     pub network: Network,
-    pub kaspad: KaspadNodeKind,
-    pub kaspad_node_binary: Option<String>,
+    pub node_kind: KaspadNodeKind,
+    pub kaspad_daemon_binary: Option<String>,
 }
 
 impl Default for NodeSettings {
@@ -145,10 +158,10 @@ impl Default for NodeSettings {
             enable_upnp: true,
             // rpc: RpcConfig::default(),
             // network: Network::Mainnet,
-            network: Network::Testnet10,
+            network: Network::default(),
             // kaspad_node: KaspadNodeKind::InternalInProc,
-            kaspad: KaspadNodeKind::Remote,
-            kaspad_node_binary: None,
+            node_kind: KaspadNodeKind::default(),
+            kaspad_daemon_binary: None,
             //  {
             //     url: "".to_string(),
             // },
@@ -163,16 +176,16 @@ impl NodeSettings {
             pub fn compare(&self, other: &NodeSettings) -> Option<bool> {
                 if self.network != other.network {
                     Some(true)
-                } else if self.kaspad != other.kaspad {
+                } else if self.node_kind != other.node_kind {
                     Some(true)
                 } else if self.rpc_kind != other.rpc_kind
                     || self.wrpc_url != other.wrpc_url
                     || self.wrpc_encoding != other.wrpc_encoding
                     || self.grpc_url != other.grpc_url
                 {
-                    Some(self.kaspad != KaspadNodeKind::IntegratedInProc)
-                } else if self.kaspad_node_binary != other.kaspad_node_binary {
-                    Some(self.kaspad == KaspadNodeKind::ExternalAsDaemon)
+                    Some(self.node_kind != KaspadNodeKind::IntegratedInProc)
+                } else if self.kaspad_daemon_binary != other.kaspad_daemon_binary {
+                    Some(self.node_kind == KaspadNodeKind::ExternalAsDaemon)
                 } else {
                     None
                 }
@@ -226,29 +239,29 @@ pub struct UxSettings {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
+    pub initialized: bool,
     pub node: NodeSettings,
     pub ux: UxSettings,
-    pub language: String,
+    pub language_code: String,
+    pub theme: String,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            initialized: false,
             node: NodeSettings::default(),
             ux: UxSettings::default(),
-            language: "en".to_string(),
+            language_code: "en".to_string(),
+            theme: "Dark".to_string(),
         }
     }
 }
 
-impl Settings {
-    // Returns `Option<bool>` here `Option` indicates that
-    // settings have changed and `bool` indicates if the change
-    // requires the node subsystem restart.
-}
+impl Settings {}
 
 fn storage() -> Result<Storage> {
-    Ok(Storage::try_new("kaspa-egui")?)
+    Ok(Storage::try_new("kaspa-ng")?)
 }
 
 impl Settings {
@@ -260,11 +273,11 @@ impl Settings {
         Ok(())
     }
 
-    pub fn store_sync(&self) -> Result<()> {
+    pub fn store_sync(&self) -> Result<&Self> {
         let storage = storage()?;
         storage.ensure_dir_sync()?;
         workflow_store::fs::write_json_sync(storage.filename(), self)?;
-        Ok(())
+        Ok(self)
     }
 
     pub async fn load() -> Result<Self> {

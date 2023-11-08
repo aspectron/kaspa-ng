@@ -1,3 +1,4 @@
+use crate::result::Result;
 use cfg_if::cfg_if;
 use kaspa_ng_core::interop;
 use kaspa_ng_core::settings::Settings;
@@ -6,6 +7,9 @@ use std::sync::Arc;
 use workflow_i18n::*;
 use workflow_log::*;
 
+#[allow(unused)]
+pub const KASPA_NG_ICON_256X256: &[u8] = include_bytes!("../../resources/icons/icon-256.png");
+
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
         use kaspad_lib::daemon::create_core;
@@ -13,16 +17,17 @@ cfg_if! {
         use kaspad_lib::args::parse_args as parse_kaspad_args;
         use kaspa_utils::fd_budget;
         use kaspa_core::signals::Signals;
-        // use log::info;
         use kaspa_ng_core::runtime;
-
-        struct KngArgs {
-            // is_node: bool,
-        }
+        use clap::ArgAction;
+        use eframe::IconData;
+        // use log::info;
 
         enum Args {
-            Kng(KngArgs),
-            Kaspad(Box<NodeArgs>),
+            Kng {
+                reset_settings : bool,
+                disable : bool,
+            },
+            Kaspad { args : Box<NodeArgs> },
         }
 
         fn parse_args() -> Args {
@@ -30,50 +35,69 @@ cfg_if! {
             use clap::{arg, command, Arg, Command};
 
             if std::env::var("KASPA_NG_NODE").is_ok() {
-                Args::Kaspad(Box::new(parse_kaspad_args()))
+                Args::Kaspad { args : Box::new(parse_kaspad_args()) }
             } else {
                 let cmd = Command::new("kaspa-ng")
-                    // .about(format!("{} (rusty-kaspa) v{}", env!("CARGO_PKG_DESCRIPTION"), version()))
-                    .version(env!("CARGO_PKG_VERSION"));
-                    // .arg(arg!(--node "Run as a kaspad p2p node."));
+                    .about(format!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_DESCRIPTION"), kaspa_wallet_core::version()))
+                    // .version(env!("CARGO_PKG_VERSION"))
+                    .arg(arg!(--disable "Disable node services."))
+                    .arg(
+                        Arg::new("reset-settings")
+                        .long("reset-settings")
+                        .action(ArgAction::SetTrue)
+                        .help("Reset KaspaNG settings.")
+                    );
 
-                    let _matches = cmd.get_matches();
-                    // let is_node = matches.get_one::<bool>("node").cloned().unwrap_or(false);
+                    let matches = cmd.get_matches();
+                    let reset_settings = matches.get_one::<bool>("reset-settings").cloned().unwrap_or(false);
+                    let disable = matches.get_one::<bool>("disable").cloned().unwrap_or(false);
 
-                    Args::Kng(KngArgs { })
+                    Args::Kng { reset_settings, disable }
             }
         }
 
-        pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> eframe::Result<()> {
+        pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
 
             use std::sync::Mutex;
 
             runtime::panic::init_panic_handler();
 
             match parse_args() {
-                Args::Kaspad(args) => {
+                Args::Kaspad{ args } => {
                     let fd_total_budget = fd_budget::limit() - args.rpc_max_clients as i32 - args.inbound_limit as i32 - args.outbound_target as i32;
                     let (core, _) = create_core(*args, fd_total_budget);
                     Arc::new(Signals::new(&core)).init();
                     core.run();
                 }
 
-                Args::Kng(_args) => {
+                Args::Kng { reset_settings, disable } => {
 
                     // Log to stderr (if you run with `RUST_LOG=debug`).
                     env_logger::init();
 
-                    let settings = Settings::load().await.unwrap_or_else(|err| {
-                        log_error!("Unable to load settings: {err}");
-                        Settings::default()
-                    });
+                    let mut settings = if reset_settings {
+                        Settings::default().store_sync()?.clone()
+                    } else {
+                        Settings::load().await.unwrap_or_else(|err| {
+                            log_error!("Unable to load settings: {err}");
+                            Settings::default()
+                        })
+                    };
 
-                    init_i18n(settings.language.as_str()).expect("failed to init i18n");
+                    if disable {
+                        settings.node.node_kind = kaspa_ng_core::settings::KaspadNodeKind::Disable;
+                    }
+
+                    init_i18n(settings.language_code.as_str()).expect("failed to init i18n");
 
                     let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
                     let delegate = interop.clone();
                     println!("spawn done");
-                    let native_options = eframe::NativeOptions::default();
+                    let native_options = eframe::NativeOptions {
+                        icon_data : IconData::try_from_png_bytes(KASPA_NG_ICON_256X256).ok(),
+                        persist_window : true,
+                        ..Default::default()
+                    };
                     eframe::run_native(
                         "Kaspa NG",
                         native_options,
@@ -103,16 +127,6 @@ cfg_if! {
         }
     } else {
 
-        // use wasm_bindgen::prelude::*;
-
-        // When compiling to web using trunk:
-        // #[cfg(target_arch = "wasm32")]
-        // #[wasm_bindgen]
-        // fn main() {
-        // }
-
-        // #[wasm_bindgen]
-        // pub async fn start_app() {
         use crate::result::Result;
 
         pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
@@ -168,11 +182,6 @@ cfg_if! {
                     .expect("failed to start eframe");
 
                 // log_info!("shutting down...");
-            // });
-
-            // wasm_bindgen_futures::spawn_local(async {
-            //     // interop.join();
-
             // });
 
             Ok(())

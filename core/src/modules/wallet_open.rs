@@ -73,7 +73,7 @@ impl ModuleT for WalletOpen {
                             ui.separator();
                             ui.label(" ");
                             if ui
-                                .add_sized(size, egui::Button::new("Create new wallet"))
+                                .large_button("Create new wallet")
                                 .clicked()
                             {
                                 // wallet.get::<section::CreateWallet>().

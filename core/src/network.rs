@@ -1,8 +1,9 @@
 use crate::imports::*;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "kebab-case")]
 pub enum Network {
+    #[default]
     Mainnet,
     Testnet10,
     Testnet11,
@@ -43,5 +44,13 @@ const NETWORKS: [Network; 3] = [Network::Mainnet, Network::Testnet10, Network::T
 impl Network {
     pub fn iter() -> impl Iterator<Item = &'static Network> {
         NETWORKS.iter()
+    }
+
+    pub fn describe(&self) -> String {
+        match self {
+            Network::Mainnet => i18n("Mainnet (Main Kaspa network)"),
+            Network::Testnet10 => i18n("Testnet-10 (1 BPS)"),
+            Network::Testnet11 => i18n("Testnet-11 (10 BPS)"),
+        }
     }
 }

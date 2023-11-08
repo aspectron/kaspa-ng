@@ -31,10 +31,9 @@ impl ModuleT for Metrics {
         ui.separator();
 
         egui::ScrollArea::vertical()
+            .id_source("node_metrics")
             .auto_shrink([false; 2])
-
             .show(ui, |ui| {
-
 
                 CollapsingHeader::new("Kaspa Node")
                     .default_open(true)

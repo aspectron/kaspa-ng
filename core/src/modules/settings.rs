@@ -18,6 +18,9 @@ impl Settings {
         Self { interop, settings : crate::settings::Settings::default() }
     }
 
+    pub fn load(&mut self, settings : crate::settings::Settings) {
+        self.settings = settings;
+    }
 }
 
 impl ModuleT for Settings {
@@ -25,6 +28,11 @@ impl ModuleT for Settings {
     fn init(&mut self, wallet : &mut Wallet) {
         self.settings = wallet.settings.clone();
     }
+
+    fn style(&self) -> ModuleStyle {
+        ModuleStyle::Default
+    }
+
 
     fn render(
         &mut self,
@@ -35,7 +43,7 @@ impl ModuleT for Settings {
     ) {
         // wallet.style()
 
-        ui.style_mut().text_styles = wallet.default_style.text_styles.clone();
+        // ui.style_mut().text_styles = wallet.default_style.text_styles.clone();
 
         // ui.heading("Settings");
         // ui.separator();
@@ -58,7 +66,7 @@ impl ModuleT for Settings {
         // - pub perf_metrics: bool,
         // - pub perf_metrics_interval_sec: u64,
 
-        CollapsingHeader::new("Kaspa p2p Node & Connection")
+        CollapsingHeader::new("Kaspa p2p Network & Node Connection")
             .default_open(true)
             .show(ui, |ui| {
 
@@ -91,7 +99,7 @@ impl ModuleT for Settings {
                         ui.horizontal_wrapped(|ui|{
 
                             KaspadNodeKind::iter().for_each(|node_kind| {
-                                ui.radio_value(&mut self.settings.node.kaspad, *node_kind, node_kind.to_string());
+                                ui.radio_value(&mut self.settings.node.node_kind, *node_kind, node_kind.to_string());
                             });
                             // ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::Remote, "Remote");
                             // cfg_if! {

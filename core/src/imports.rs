@@ -34,6 +34,7 @@ pub use std::sync::{Arc, Mutex, MutexGuard};
 pub use std::time::Duration;
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::extensions::is_not_empty::*;
+pub use workflow_i18n::*;
 pub use workflow_log::*;
 pub use zeroize::Zeroize;
 

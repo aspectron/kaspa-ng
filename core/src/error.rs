@@ -7,6 +7,9 @@ pub enum Error {
     #[error("{0}")]
     Custom(String),
 
+    #[error("{0}")]
+    Eframe(String),
+
     #[error(transparent)]
     WalletError(#[from] kaspa_wallet_core::error::Error),
 
@@ -53,6 +56,12 @@ pub enum Error {
 impl Error {
     pub fn custom<T: Into<String>>(msg: T) -> Self {
         Error::Custom(msg.into())
+    }
+}
+
+impl From<eframe::Error> for Error {
+    fn from(err: eframe::Error) -> Self {
+        Error::Eframe(err.to_string())
     }
 }
 

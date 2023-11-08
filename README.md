@@ -1,12 +1,14 @@
-# kaspa-egui
+# kaspa-ng
+
+## Destop p2p node and wallet for Kaspa built on top of [Rusty Kaspa](https://github.com/kaspanet/rusty-kaspa) core framework
 
 ## Building
 
-To build, please follow Rusty Kaspa [build instructions](https://github.com/kaspanet/rusty-kaspa#getting-started)
+For prerequisites, please follow the Rusty Kaspa [build instructions](https://github.com/kaspanet/rusty-kaspa#getting-started).
 
 ## Running Native
 ```
-cargo run
+cargo run --release
 ```
 
 ## Running Web
@@ -16,14 +18,9 @@ trunk serve
 ```
 Access via [https://localhost:8080](https://localhost:8080)
 
----
+## Browser Extension
 
-### Development builds (WIP)
-
-Sibling folders:
-```bash
-git -b kaspa clone git@github.com:aspectron/egui
-git clone git@github.com:aspectron/egui-phosphor
-git clone git@github.com:aspectron/egui-notify
-# git clone git@github.com:aspectron/egui-toast
+This project currently supports Chrome browser extension target, but this component of the project is under heavy development and is not ready for use.
+```
+./build-chrome
 ```
