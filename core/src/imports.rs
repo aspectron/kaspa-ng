@@ -51,6 +51,7 @@ pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};
 // pub use crate::channel::Channel;
+pub use crate::core::Core;
 pub use crate::interop;
 pub use crate::interop::{spawn, spawn_with_result, Interop, Payload};
 pub use crate::modules;
@@ -63,6 +64,5 @@ pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
 pub use crate::settings::{KaspadNodeKind, NodeSettings, RpcConfig, Settings, UxSettings};
 pub use crate::utils::spawn;
-pub use crate::wallet::Core;
 // #[macro_use]
 pub use crate::utils::*;

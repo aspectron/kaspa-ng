@@ -2,8 +2,8 @@
 
 extern crate self as kaspa_ng_core;
 
-mod wallet;
-pub use wallet::Core;
+mod core;
+pub use core::Core;
 
 pub mod adaptor;
 pub mod app;
