@@ -29,7 +29,7 @@ impl Tools {
 impl ModuleT for Tools {
     fn render(
         &mut self,
-        wallet: &mut Wallet,
+        core: &mut Wallet,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,

@@ -92,7 +92,7 @@ cfg_if! {
 
                     let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
                     let delegate = interop.clone();
-                    println!("spawn done");
+                    // println!("spawn done");
                     let native_options = eframe::NativeOptions {
                         icon_data : IconData::try_from_png_bytes(KASPA_NG_ICON_256X256).ok(),
                         persist_window : true,
@@ -110,12 +110,12 @@ cfg_if! {
                             Box::new(kaspa_ng_core::Core::new(cc, interop, settings))
                         }),
                     )?;
-                    println!("exit initiated...");
+                    // println!("exit initiated...");
 
                     let interop = interop.lock().unwrap().take().unwrap();
-                    println!("wallet shutdown");
+                    // println!("wallet shutdown");
                     interop.shutdown();
-                    println!("worker join");
+                    // println!("worker join");
                     interop.join().await;
                     println!("exit");
                     interop.drop();

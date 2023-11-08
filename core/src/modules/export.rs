@@ -36,7 +36,7 @@ impl Export {
 impl ModuleT for Export {
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -58,7 +58,7 @@ impl ModuleT for Export {
                         .show(ui, |ui| {
                             ui.set_width(ui.available_width());
 
-                            for wallet in wallet.wallet_list.iter() {
+                            for wallet in core.wallet_list.iter() {
                                 if ui
                                     .add_sized(size, egui::Button::new(wallet.filename.clone()))
                                     .clicked()
@@ -150,7 +150,7 @@ impl ModuleT for Export {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<modules::AccountManager>();
+                                core.select::<modules::AccountManager>();
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);

@@ -21,7 +21,7 @@ impl ModuleT for Logs {
 
     fn render(
         &mut self,
-        _wallet: &mut Core,
+        _core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,

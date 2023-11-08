@@ -38,7 +38,7 @@ impl WalletOpen {
 impl ModuleT for WalletOpen {
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -59,7 +59,7 @@ impl ModuleT for WalletOpen {
                             ui.label(text);
                         })
                         .with_body(|this, ui| {
-                            for wallet in wallet.wallet_list.iter() {
+                            for wallet in core.wallet_list.iter() {
                                 // let text = render_wallet_descriptor(wallet, ui);
                                 let text = wallet.filename.clone();
 
@@ -78,7 +78,7 @@ impl ModuleT for WalletOpen {
                             {
                                 // wallet.get::<section::CreateWallet>().
                                 // wallet.select::<section::CreateWallet>(TypeId::of::<section::OpenWallet>());
-                                wallet.select::<modules::WalletCreate>();
+                                core.select::<modules::WalletCreate>();
                             }
 
                             ui.label(" ");
@@ -198,7 +198,7 @@ impl ModuleT for WalletOpen {
                             Ok(_) => {
                                 println!("Unlock success");
                                 // self.state = State::Unlock;
-                                wallet.select::<modules::AccountManager>();
+                                core.select::<modules::AccountManager>();
                                 self.state = Default::default();
                             }
                             Err(err) => {

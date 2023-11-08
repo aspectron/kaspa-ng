@@ -22,7 +22,7 @@ impl ModuleT for Node {
 
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -31,7 +31,7 @@ impl ModuleT for Node {
         ui.heading(i18n("Node Status"));
         ui.separator();
         
-        if !wallet.state().is_connected() {
+        if !core.state().is_connected() {
             ui.label(i18n("Not connected"));
             return;
         }

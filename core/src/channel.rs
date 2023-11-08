@@ -22,13 +22,10 @@ impl<T> Sender<T> {
     }
 
     pub fn try_send(&self, msg: T) -> Result<(), TrySendError<T>> {
-        println!("channel try_send");
         self.sender.try_send(msg)?;
-        println!("request repaint");
         if let Some(ctx) = &self.ctx {
             ctx.request_repaint();
         }
-        println!("request repaint finished");
         Ok(())
     }
 

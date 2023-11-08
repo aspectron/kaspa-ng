@@ -78,7 +78,7 @@ impl AccountCreate {
 impl ModuleT for AccountCreate {
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -391,10 +391,10 @@ impl ModuleT for AccountCreate {
                                 // TODO - add account to wallet ^^^
                                 let descriptor = account.descriptor().unwrap();
                                 let account = Account::from(descriptor);
-                                wallet.account_list.push(account.clone());
+                                core.account_list.push(account.clone());
 
-                                wallet.select::<modules::AccountManager>();
-                                wallet.get_mut::<modules::AccountManager>().select(Some(account));
+                                core.select::<modules::AccountManager>();
+                                core.get_mut::<modules::AccountManager>().select(Some(account));
                             }
                         })
                         .render(ui);

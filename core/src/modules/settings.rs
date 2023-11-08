@@ -36,7 +36,7 @@ impl ModuleT for Settings {
 
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -133,13 +133,13 @@ impl ModuleT for Settings {
 
                     });
 
-                if let Some(restart) = self.settings.node.compare(&wallet.settings.node) {
+                if let Some(restart) = self.settings.node.compare(&core.settings.node) {
 
                     if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
                         match response {
                             Confirm::Ack => {
-                                wallet.settings = self.settings.clone();
-                                wallet.settings.store_sync().unwrap();
+                                core.settings = self.settings.clone();
+                                core.settings.store_sync().unwrap();
                                 if restart {
                                     println!("NODE INTERFACE UPDATE: {:?}", self.settings.node);
                                     self.interop.kaspa_service().update_services(&self.settings.node);
@@ -147,7 +147,7 @@ impl ModuleT for Settings {
                                 }
                             },
                             Confirm::Nack => {
-                                self.settings = wallet.settings.clone();
+                                self.settings = core.settings.clone();
                             }
                         }
                     }

@@ -21,7 +21,7 @@ impl ModuleT for Metrics {
 
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -40,7 +40,7 @@ impl ModuleT for Metrics {
                     .show(ui, |ui| {
                         // ui.label("This is the settings page");
 
-                        if let Some(metrics) = wallet.metrics.as_ref() {
+                        if let Some(metrics) = core.metrics.as_ref() {
 
                             ui.vertical(|ui| {
 

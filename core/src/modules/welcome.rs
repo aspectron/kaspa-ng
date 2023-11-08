@@ -23,7 +23,7 @@ impl ModuleT for Welcome {
 
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -74,7 +74,7 @@ impl ModuleT for Welcome {
                             ui.label("Language:");
 
                             let dict = dict();
-                            let language_code = wallet.settings.language_code.clone();
+                            let language_code = core.settings.language_code.clone();
                             let language = dict.language(language_code.as_str()).unwrap().unwrap();
                             egui::ComboBox::from_id_source("language_selector")
                                 .selected_text(language)
@@ -112,9 +112,9 @@ impl ModuleT for Welcome {
                         let mut settings = self.settings.clone();
                         settings.initialized = true;
                         settings.store_sync().expect("Unable to store settings");
-                        wallet.settings = settings.clone();
-                        wallet.get_mut::<modules::Settings>().load(settings);
-                        wallet.select::<modules::Overview>();
+                        core.settings = settings.clone();
+                        core.get_mut::<modules::Settings>().load(settings);
+                        core.select::<modules::Overview>();
                     }
                 });
                 ui.separator();

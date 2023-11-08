@@ -87,7 +87,7 @@ impl WalletCreate {
 impl ModuleT for WalletCreate {
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -102,9 +102,9 @@ impl ModuleT for WalletCreate {
 
                     Panel::new(self)
                         .with_caption("Create Wallet")
-                        .with_back_enabled(wallet.has_stack(), |_|{
+                        .with_back_enabled(core.has_stack(), |_|{
                             // wallet.select_with_type_id(this.origin.take().unwrap())
-                            wallet.back()
+                            core.back()
                         })
                         .with_close_enabled(false, |_|{
                         })
@@ -457,7 +457,7 @@ impl ModuleT for WalletCreate {
                             Ok((mnemonic,account)) => {
                                 println!("Wallet created successfully");
                                 self.state = State::PresentMnemonic(mnemonic);
-                                wallet.get_mut::<modules::AccountManager>().select(Some(account.into()));
+                                core.get_mut::<modules::AccountManager>().select(Some(account.into()));
                             }
                             Err(err) => {
                                 println!("Wallet creation error: {}", err);
@@ -576,8 +576,8 @@ impl ModuleT for WalletCreate {
                         .with_footer(move |this,ui| {
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 this.state = State::Start;
-                                wallet.select::<modules::AccountManager>();
-                                wallet.update_wallet_list();
+                                core.select::<modules::AccountManager>();
+                                core.update_wallet_list();
                             }
                         })
                         .render(ui);

@@ -551,8 +551,6 @@ impl eframe::App for Core {
                     );
                 });
             } else {
-                // println!("*#*#*#*#*#*#*#*#*#*#*#*# RENDER ...");
-
                 self.modules
                     .get(&self.module)
                     .unwrap()

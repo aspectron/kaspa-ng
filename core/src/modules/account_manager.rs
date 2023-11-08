@@ -35,17 +35,17 @@ impl AccountManager {
 impl ModuleT for AccountManager {
     fn render(
         &mut self,
-        wallet: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
 
-        let wallet_state = wallet.state();
+        let wallet_state = core.state();
 
         match &self.state {
             State::Select => {
-                let accounts = wallet.account_list();
+                let accounts = core.account_list();
 
                 if accounts.len() == 1 {
                     self.state = State::Overview {

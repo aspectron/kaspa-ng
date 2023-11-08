@@ -71,14 +71,9 @@ impl super::Kaspad for Daemon {
                 // println!("loop...");
                 select! {
                     _ = task_ctl.request.recv().fuse() => {
-                        println!("task_ctl.recv()...");
-                        println!("********************************************************* DAEMON TERMINATION");
-
                         if let Err(err) = child.start_kill() {
                             println!("child start_kill error: {:?}", err);
                         }
-
-                        // break;
                     }
                     status = child.wait().fuse() => {
                         match status {
@@ -89,10 +84,7 @@ impl super::Kaspad for Daemon {
                                 println!("child error was: {:?}", err);
                             }
                         }
-                        println!("********************************************************* DAEMON CHILD STATUS");
-
                         is_running.store(false,Ordering::SeqCst);
-
                         break;
                     }
 
@@ -118,14 +110,9 @@ impl super::Kaspad for Daemon {
     }
 
     async fn stop(&self) -> Result<()> {
-        println!("********************************************************* DAEMON STOP [1]");
         if self.is_running() {
-            println!("********************************************************* DAEMON SIGNALING STOP [2]");
             self.inner.task_ctl.signal(()).await?;
         }
-        println!(
-            "********************************************************* DAEMON SIGNALING STOP [3]"
-        );
         Ok(())
     }
 }
