@@ -35,6 +35,18 @@ impl ModuleT for Metrics {
             .auto_shrink([false; 2])
             .show(ui, |ui| {
 
+                for metric in Metric::list().into_iter() {
+
+                    let metrics = self.interop.kaspa_service().metrics_data();
+                    let data = metrics.get(&metric).unwrap();
+                    let duration = 60 * 5; // 5 min (testing)
+                    let samples = if data.len() < duration { data.len() } else { duration };
+
+                    let period_data = data[data.len()-samples..].to_vec();
+                    let graph = CompositeGraph::new(metric.as_str(), &period_data);
+                    ui.add(graph);
+                }    
+
                 CollapsingHeader::new("Kaspa Node")
                     .default_open(true)
                     .show(ui, |ui| {
@@ -62,7 +74,7 @@ impl ModuleT for Metrics {
                                     let last = data.len();
                                     let first = if last < len { 0 } else { last - len };
                                     let samples = &data[first..last];
-                                    let text = samples.iter().map(|sample| format!("{}", sample)).collect::<Vec<_>>().join(", ");
+                                    let text = samples.iter().map(|sample| format!("{:?}", sample)).collect::<Vec<_>>().join(", ");
                                     ui.label(format!("[{text}]"));
                                     ui.label(" ");
                                 }

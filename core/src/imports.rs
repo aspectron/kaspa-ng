@@ -43,6 +43,7 @@ pub use egui::epaint::{
     FontFamily, FontId,
 };
 pub use egui::*;
+pub use egui_plot::{PlotPoint, PlotPoints};
 
 pub use crate::egui::extensions::*;
 pub use crate::egui::icon::{icons, Icon, IconSize, Icons};

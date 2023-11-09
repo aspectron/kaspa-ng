@@ -104,7 +104,7 @@ impl ModuleT for Testing {
                 self.text("icon 1 clicked");
             }
 
-            let graph = CompositeGraph::new(&self.graph_data);
+            let graph = CompositeGraph::new("testing",&self.graph_data);
             if ui.add(graph).clicked(){
                 self.text("graph clicked");
             }

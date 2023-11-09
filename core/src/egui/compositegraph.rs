@@ -17,14 +17,16 @@ use egui_plot::{
 
 #[must_use = "You should put this widget in an ui with `ui.add(widget);`"]
 pub struct CompositeGraph<'a> {
+    id: String,
     show_axes: bool,
     show_grid: bool,
     graph_data: &'a Vec<PlotPoint>,
 }
 
 impl<'a> CompositeGraph<'a> {
-    pub fn new(graph_data: &'a Vec<PlotPoint>) -> Self {
+    pub fn new(id: impl Into<String>, graph_data: &'a Vec<PlotPoint>) -> Self {
         Self {
+            id: id.into(),
             show_axes: true,
             show_grid: true,
             graph_data,
@@ -49,12 +51,16 @@ impl<'a> CompositeGraph<'a> {
         // };
         let first_point = self.graph_data[0];
         let last_point = self.graph_data[self.graph_data.len() - 1];
-        let plot = Plot::new("lines_demo")
+        let plot = Plot::new(&self.id)
             .legend(Legend::default())
+            .height(96.)
+            .auto_bounds_x()
+            // .auto_bounds_y()
             .y_axis_width(4)
             .show_axes(self.show_axes)
             .show_grid(self.show_grid)
             .allow_drag([true, false])
+            .allow_scroll(false)
             .x_axis_label("Time")
             // .x_grid_spacer(move |input|{
             //     let mut list = vec![];

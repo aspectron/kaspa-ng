@@ -71,7 +71,7 @@ pub struct KaspaService {
     pub wallet: Arc<runtime::Wallet>,
     pub logs: Mutex<VecDeque<Log>>,
     pub metrics: Arc<Metrics>,
-    pub metrics_data: Mutex<HashMap<Metric, Vec<f64>>>,
+    pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
     // pub peer_info: Mutex<Option<Vec<RpcPeerInfo>>>,
     // pub metrics_data
     // pub rpc : Mutex<Rpc>,
@@ -127,7 +127,7 @@ impl KaspaService {
         let metrics_data = Metric::list()
             .into_iter()
             .map(|metric| (metric, Vec::new()))
-            .collect::<HashMap<Metric, Vec<f64>>>();
+            .collect::<HashMap<Metric, Vec<_>>>();
 
         Self {
             application_events,
@@ -353,7 +353,7 @@ impl KaspaService {
         }
     }
 
-    pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<f64>>> {
+    pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
         self.metrics_data.lock().unwrap()
     }
 
@@ -366,13 +366,17 @@ impl KaspaService {
     // }
 
     pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
+        let timestamp = snapshot.unixtime;
         let mut metrics_data = self.metrics_data.lock().unwrap();
         for metric in Metric::list().into_iter() {
             let dest = metrics_data.get_mut(&metric).unwrap();
             if dest.len() > MAX_METRICS_SAMPLES {
                 dest.drain(0..MAX_METRICS_SAMPLES - dest.len());
             }
-            dest.push(snapshot.get(&metric));
+            dest.push(PlotPoint {
+                x: timestamp,
+                y: snapshot.get(&metric),
+            });
         }
 
         // if update_metrics_flag().load(Ordering::SeqCst) {
