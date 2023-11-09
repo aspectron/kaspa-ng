@@ -111,7 +111,6 @@ impl KaspaService {
         // enqueue startup event to the service channel to
         // start kaspad or initiate connection to remote kaspad
         if settings.initialized {
-
             match KaspadServiceEvents::try_from(&settings.node) {
                 Ok(event) => {
                     service_events.sender.try_send(event).unwrap_or_else(|err| {
@@ -377,10 +376,10 @@ impl KaspaService {
         }
 
         // if update_metrics_flag().load(Ordering::SeqCst) {
-            self.application_events
-                .sender
-                .try_send(crate::events::Events::Metrics { snapshot })
-                .unwrap();
+        self.application_events
+            .sender
+            .try_send(crate::events::Events::Metrics { snapshot })
+            .unwrap();
         // }
 
         Ok(())

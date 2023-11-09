@@ -3,6 +3,7 @@ use std::any::type_name;
 use crate::imports::*;
 
 kaspa_ng_macros::register_modules!([
+    about,
     account_manager,
     deposit,
     metrics,

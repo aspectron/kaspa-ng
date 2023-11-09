@@ -18,8 +18,8 @@ pub struct Theme {
     pub warning_color: Color32,
     pub ack_color: Color32,
     pub nack_color: Color32,
-    
-    pub status_icon_size : f32,
+
+    pub status_icon_size: f32,
     pub progress_color: Color32,
     // pub panel_icon_size : f32,
     // pub panel_icon_padding : f32,
@@ -47,9 +47,8 @@ impl Default for Theme {
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
 
-            status_icon_size : 18_f32,
+            status_icon_size: 18_f32,
             progress_color: Color32::from_rgb(21, 82, 71),
-
             // panel_icon_size : IconSize::new(Vec2::splat(26.),Vec2::new(36.,26.)),
         }
     }

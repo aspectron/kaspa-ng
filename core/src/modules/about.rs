@@ -1,17 +1,18 @@
 use crate::imports::*;
 
-pub struct Overview {
+pub struct About {
     #[allow(dead_code)]
     interop: Interop,
 }
 
-impl Overview {
+impl About {
     pub fn new(interop: Interop) -> Self {
         Self { interop }
     }
+
 }
 
-impl ModuleT for Overview {
+impl ModuleT for About {
     fn render(
         &mut self,
         _core: &mut Core,

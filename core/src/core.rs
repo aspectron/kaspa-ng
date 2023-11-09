@@ -11,15 +11,16 @@ const FORCE_WALLET_OPEN: bool = false;
 const ENABLE_DUAL_PANE: bool = false;
 
 enum Status {
-    Connected { 
-        current_daa_score : Option<u64>, 
-        peers : Option<usize>,
-        tps : Option<f64>,
+    Connected {
+        current_daa_score: Option<u64>,
+        peers: Option<usize>,
+        #[allow(dead_code)]
+        tps: Option<f64>,
     },
     Disconnected,
-    Syncing { 
-        sync_status : Option<SyncStatus>,
-        peers : Option<usize> 
+    Syncing {
+        sync_status: Option<SyncStatus>,
+        peers: Option<usize>,
     },
 }
 
@@ -49,7 +50,7 @@ impl State {
     }
 
     pub fn is_synced(&self) -> bool {
-        self.is_synced.unwrap_or(false) || matches!(self.sync_state,Some(SyncState::Synced))
+        self.is_synced.unwrap_or(false) || matches!(self.sync_state, Some(SyncState::Synced))
     }
 
     pub fn sync_state(&self) -> &Option<SyncState> {
@@ -167,7 +168,7 @@ impl Core {
 
         let modules = crate::modules::register_modules(&interop);
 
-        let mut module = if settings.developer_mode { 
+        let mut module = if settings.developer_mode {
             modules
                 .get(&TypeId::of::<modules::Testing>())
                 .unwrap()
@@ -188,8 +189,6 @@ impl Core {
                 .unwrap()
                 .clone();
         }
-
-    
 
         // modules.get_mut_with_typeid::<modules::Settings>().init(&settings);
 
@@ -242,7 +241,6 @@ impl Core {
             .expect("Unknown module");
 
         if self.module.type_id() != module.type_id() {
-
             self.stack.push_back(self.module.clone());
             self.module = module.clone();
 
@@ -391,7 +389,6 @@ impl eframe::App for Core {
         //     self.settings.store_sync().unwrap();
 
         // }
-
 
         // let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
         // section.borrow_mut().render(self, ctx, frame, ui);
@@ -676,22 +673,39 @@ impl eframe::App for Core {
 impl Core {
     fn render_status(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-
             if !self.state().is_connected() {
-                self.render_connected_state(ui,Status::Disconnected);
+                self.render_connected_state(ui, Status::Disconnected);
             } else {
                 // let metrics = self.interop.kaspa_service().metrics();
-                let peers = self.interop.kaspa_service().metrics().connected_peer_info().map(|peers|peers.len());
-                let tps = self.metrics.as_ref().map(|metrics|metrics.tps);
+                let peers = self
+                    .interop
+                    .kaspa_service()
+                    .metrics()
+                    .connected_peer_info()
+                    .map(|peers| peers.len());
+                let tps = self.metrics.as_ref().map(|metrics| metrics.tps);
                 ui.horizontal(|ui| {
                     if self.state().is_synced() {
-                        self.render_connected_state(ui,Status::Connected {
-                            current_daa_score : self.state().current_daa_score(),
-                            peers,
-                            tps
-                        });
+                        self.render_connected_state(
+                            ui,
+                            Status::Connected {
+                                current_daa_score: self.state().current_daa_score(),
+                                peers,
+                                tps,
+                            },
+                        );
                     } else {
-                        self.render_connected_state(ui,Status::Syncing { sync_status : self.state().sync_state.as_ref().map(SyncStatus::try_from), peers });
+                        self.render_connected_state(
+                            ui,
+                            Status::Syncing {
+                                sync_status: self
+                                    .state()
+                                    .sync_state
+                                    .as_ref()
+                                    .map(SyncStatus::try_from),
+                                peers,
+                            },
+                        );
                     }
                 });
             }
@@ -706,20 +720,23 @@ impl Core {
         });
     }
 
-
-    fn render_peers(&self, ui: &mut egui::Ui, peers : Option<usize>) {
+    fn render_peers(&self, ui: &mut egui::Ui, peers: Option<usize>) {
         let status_icon_size = theme().status_icon_size;
         // ui.separator();
         if let Some(peers) = peers {
             ui.label(format!("{} peers", peers));
         } else {
-            ui.label(RichText::new(egui_phosphor::light::CLOUD_SLASH).size(status_icon_size).color(Color32::LIGHT_RED));
+            ui.label(
+                RichText::new(egui_phosphor::light::CLOUD_SLASH)
+                    .size(status_icon_size)
+                    .color(Color32::LIGHT_RED),
+            );
             ui.label(RichText::new("No peers").color(Color32::LIGHT_RED));
         }
-
     }
 
-    fn render_connected_state(&self, ui: &mut egui::Ui, state : Status) { //connected : bool, icon: &str, color : Color32) {
+    fn render_connected_state(&self, ui: &mut egui::Ui, state: Status) {
+        //connected : bool, icon: &str, color : Color32) {
         let status_area_width = ui.available_width() - 24.;
         let status_icon_size = theme().status_icon_size;
 
@@ -727,10 +744,14 @@ impl Core {
             Status::Connected {
                 current_daa_score,
                 peers,
-                tps : _,
+                tps: _,
             } => {
                 ui.add_space(4.);
-                ui.label(RichText::new(egui_phosphor::light::CPU).size(status_icon_size).color(Color32::LIGHT_GREEN));
+                ui.label(
+                    RichText::new(egui_phosphor::light::CPU)
+                        .size(status_icon_size)
+                        .color(Color32::LIGHT_GREEN),
+                );
                 ui.separator();
                 ui.label("CONNECTED");
                 ui.separator();
@@ -744,16 +765,23 @@ impl Core {
             }
             Status::Disconnected => {
                 ui.add_space(4.);
-                ui.label(RichText::new(egui_phosphor::light::PLUGS).size(status_icon_size).color(Color32::LIGHT_RED));
+                ui.label(
+                    RichText::new(egui_phosphor::light::PLUGS)
+                        .size(status_icon_size)
+                        .color(Color32::LIGHT_RED),
+                );
                 ui.separator();
                 ui.label("Not Connected");
-        
             }
             Status::Syncing { sync_status, peers } => {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
                         ui.add_space(4.);
-                        ui.label(RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN).size(status_icon_size).color(Color32::YELLOW));
+                        ui.label(
+                            RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN)
+                                .size(status_icon_size)
+                                .color(Color32::YELLOW),
+                        );
                         ui.separator();
                         ui.label("CONNECTED");
                         ui.separator();
@@ -765,7 +793,7 @@ impl Core {
                                 ui.separator();
                                 status.render_text_state(ui);
                             }
-                        }        
+                        }
                     });
 
                     if let Some(status) = sync_status.as_ref() {
