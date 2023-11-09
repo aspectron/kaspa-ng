@@ -240,6 +240,8 @@ pub struct UxSettings {}
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
     pub initialized: bool,
+    pub version: String,
+    pub developer_mode : bool,
     pub node: NodeSettings,
     pub ux: UxSettings,
     pub language_code: String,
@@ -250,6 +252,8 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             initialized: false,
+            version : "0.0.0".to_string(),
+            developer_mode : false,
             node: NodeSettings::default(),
             ux: UxSettings::default(),
             language_code: "en".to_string(),

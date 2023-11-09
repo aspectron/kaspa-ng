@@ -376,12 +376,12 @@ impl KaspaService {
             dest.push(snapshot.get(&metric));
         }
 
-        if update_metrics_flag().load(Ordering::SeqCst) {
+        // if update_metrics_flag().load(Ordering::SeqCst) {
             self.application_events
                 .sender
                 .try_send(crate::events::Events::Metrics { snapshot })
                 .unwrap();
-        }
+        // }
 
         Ok(())
     }

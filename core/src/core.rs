@@ -13,7 +13,8 @@ const ENABLE_DUAL_PANE: bool = false;
 enum Status {
     Connected { 
         current_daa_score : Option<u64>, 
-        peers : Option<usize> 
+        peers : Option<usize>,
+        tps : Option<f64>,
     },
     Disconnected,
     Syncing { 
@@ -105,7 +106,7 @@ impl Core {
     pub fn new(
         cc: &eframe::CreationContext<'_>,
         interop: crate::interop::Interop,
-        settings: Settings,
+        mut settings: Settings,
     ) -> Self {
         let mut fonts = egui::FontDefinitions::default();
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Bold);
@@ -166,10 +167,30 @@ impl Core {
 
         let modules = crate::modules::register_modules(&interop);
 
-        let module = modules
-            .get(&TypeId::of::<modules::Testing>())
-            .unwrap()
-            .clone();
+        let mut module = if settings.developer_mode { 
+            modules
+                .get(&TypeId::of::<modules::Testing>())
+                .unwrap()
+                .clone()
+        } else {
+            modules
+                .get(&TypeId::of::<modules::Overview>())
+                .unwrap()
+                .clone()
+        };
+
+        if settings.version != env!("CARGO_PKG_VERSION") {
+            settings.version = env!("CARGO_PKG_VERSION").to_string();
+            settings.store_sync().unwrap();
+
+            module = modules
+                .get(&TypeId::of::<modules::Changelog>())
+                .unwrap()
+                .clone();
+        }
+
+    
+
         // modules.get_mut_with_typeid::<modules::Settings>().init(&settings);
 
         // modules.get(&TypeId::of::<modules::Settings>()).unwrap().init(&settings);
@@ -231,12 +252,12 @@ impl Core {
 
                 crate::runtime::kaspa::update_logs_flag()
                     .store(type_id == TypeId::of::<modules::Logs>(), Ordering::Relaxed);
-                crate::runtime::kaspa::update_metrics_flag().store(
-                    type_id == TypeId::of::<modules::Overview>()
-                        || type_id == TypeId::of::<modules::Metrics>()
-                        || type_id == TypeId::of::<modules::Node>(),
-                    Ordering::Relaxed,
-                );
+                // crate::runtime::kaspa::update_metrics_flag().store(
+                //     type_id == TypeId::of::<modules::Overview>()
+                //         || type_id == TypeId::of::<modules::Metrics>()
+                //         || type_id == TypeId::of::<modules::Node>(),
+                //     Ordering::Relaxed,
+                // );
             }
         }
     }
@@ -364,6 +385,13 @@ impl eframe::App for Core {
 
             return;
         }
+
+        // if self.settings.version != env!("CARGO_PKG_VERSION") {
+        //     self.settings.version = env!("CARGO_PKG_VERSION").to_string();
+        //     self.settings.store_sync().unwrap();
+
+        // }
+
 
         // let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
         // section.borrow_mut().render(self, ctx, frame, ui);
@@ -652,12 +680,15 @@ impl Core {
             if !self.state().is_connected() {
                 self.render_connected_state(ui,Status::Disconnected);
             } else {
+                // let metrics = self.interop.kaspa_service().metrics();
                 let peers = self.interop.kaspa_service().metrics().connected_peer_info().map(|peers|peers.len());
+                let tps = self.metrics.as_ref().map(|metrics|metrics.tps);
                 ui.horizontal(|ui| {
                     if self.state().is_synced() {
                         self.render_connected_state(ui,Status::Connected {
                             current_daa_score : self.state().current_daa_score(),
                             peers,
+                            tps
                         });
                     } else {
                         self.render_connected_state(ui,Status::Syncing { sync_status : self.state().sync_state.as_ref().map(SyncStatus::try_from), peers });
@@ -678,7 +709,7 @@ impl Core {
 
     fn render_peers(&self, ui: &mut egui::Ui, peers : Option<usize>) {
         let status_icon_size = theme().status_icon_size;
-        ui.separator();
+        // ui.separator();
         if let Some(peers) = peers {
             ui.label(format!("{} peers", peers));
         } else {
@@ -695,19 +726,21 @@ impl Core {
         match state {
             Status::Connected {
                 current_daa_score,
-                peers
+                peers,
+                tps : _,
             } => {
                 ui.add_space(4.);
                 ui.label(RichText::new(egui_phosphor::light::CPU).size(status_icon_size).color(Color32::LIGHT_GREEN));
                 ui.separator();
                 ui.label("CONNECTED");
                 ui.separator();
+                self.render_peers(ui, peers);
+                ui.separator();
                 ui.label(self.settings.node.network.to_string());
                 if let Some(current_daa_score) = current_daa_score {
                     ui.separator();
                     ui.label(format!("DAA {}", current_daa_score.separated_string()));
                 }
-                self.render_peers(ui, peers);
             }
             Status::Disconnected => {
                 ui.add_space(4.);
@@ -725,6 +758,7 @@ impl Core {
                         ui.label("CONNECTED");
                         ui.separator();
                         ui.label(self.settings.node.network.to_string());
+                        ui.separator();
                         self.render_peers(ui, peers);
                         if let Some(status) = sync_status.as_ref() {
                             if !status.synced {
@@ -824,6 +858,7 @@ impl Core {
                         self.state.url = None;
                         self.state.network_id = None;
                         self.state.current_daa_score = None;
+                        self.metrics = None;
                     }
                     CoreWallet::UtxoIndexNotEnabled { url } => {
                         self.exception = Some(Exception::UtxoIndexNotEnabled { url });
