@@ -722,8 +722,9 @@ impl Core {
 
     fn render_peers(&self, ui: &mut egui::Ui, peers: Option<usize>) {
         let status_icon_size = theme().status_icon_size;
-        // ui.separator();
-        if let Some(peers) = peers {
+
+        let peers = peers.unwrap_or(0);
+        if peers != 0 {
             ui.label(format!("{} peers", peers));
         } else {
             ui.label(
