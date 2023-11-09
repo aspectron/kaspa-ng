@@ -55,7 +55,7 @@ impl<'a> CompositeGraph<'a> {
             .legend(Legend::default())
             .height(96.)
             .auto_bounds_x()
-            // .auto_bounds_y()
+            .auto_bounds_y()
             .y_axis_width(4)
             .show_axes(self.show_axes)
             .show_grid(self.show_grid)
@@ -85,7 +85,7 @@ impl<'a> CompositeGraph<'a> {
                     DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
                         .expect("could not parse timestamp")
                         .with_timezone(&chrono::Local)
-                        .format("%H:%M")
+                        .format("%H:%M:%S")
                         .to_string()
                 } else {
                     "".to_string()
@@ -118,7 +118,8 @@ impl<'a> CompositeGraph<'a> {
         // ))
 
         Line::new(PlotPoints::Owned(self.graph_data.clone()))
-            .color(Color32::from_rgb(200, 100, 100))
+            .color(crate::egui::theme::theme().graph_color)
+            // .color(Color32::from_rgb(200, 100, 100))
             .style(LineStyle::Solid)
             .fill(0.0)
         //.name("wave")

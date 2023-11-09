@@ -21,6 +21,7 @@ pub struct Theme {
 
     pub status_icon_size: f32,
     pub progress_color: Color32,
+    pub graph_color: Color32,
     // pub panel_icon_size : f32,
     // pub panel_icon_padding : f32,
 }
@@ -49,6 +50,8 @@ impl Default for Theme {
 
             status_icon_size: 18_f32,
             progress_color: Color32::from_rgb(21, 82, 71),
+            graph_color: Color32::from_rgb(58, 221, 190),
+            // graph_color: Color32::from_rgb(21, 82, 71),
             // panel_icon_size : IconSize::new(Vec2::splat(26.),Vec2::new(36.,26.)),
         }
     }
