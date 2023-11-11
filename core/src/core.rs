@@ -354,8 +354,16 @@ impl Core {
 
 impl eframe::App for Core {
     fn on_close_event(&mut self) -> bool {
-        println!("*** ON CLOSE EVENT ***");
         true
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        let handle = tokio::spawn(async move { crate::interop::interop().shutdown().await });
+
+        while !handle.is_finished() {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
@@ -498,16 +506,16 @@ impl eframe::App for Core {
                         // }
                         // ui.separator();
                         // if ui.button(RichText::new(format!("{} Settings",egui_phosphor::light::GEAR))).clicked() {
-                        if ui.button("Settings").clicked() {
-                            self.select::<modules::Settings>();
-                        }
-                        ui.separator();
                         if ui.button("Node").clicked() {
                             self.select::<modules::Node>();
                         }
                         ui.separator();
                         if ui.button("Metrics").clicked() {
                             self.select::<modules::Metrics>();
+                        }
+                        ui.separator();
+                        if ui.button("Settings").clicked() {
+                            self.select::<modules::Settings>();
                         }
                         ui.separator();
                         if ui.button("Logs").clicked() {
@@ -786,6 +794,14 @@ impl Core {
                 // }
                 ui.separator();
                 ui.label(self.settings.node.network.to_string());
+                // ui.menu_button(self.settings.node.network.to_string(), |ui| {
+                //     Network::iter().for_each(|network| {
+                //         if ui.button(network.to_string()).clicked() {
+                //             ui.close_menu();
+                //         }
+                //     });
+                // });
+
                 ui.separator();
                 self.render_peers(ui, peers);
                 if let Some(current_daa_score) = current_daa_score {

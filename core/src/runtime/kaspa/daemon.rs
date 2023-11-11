@@ -1,6 +1,5 @@
 use crate::imports::*;
 use crate::runtime::kaspa::{Config, KaspadServiceEvents};
-// use alloc::task;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -65,10 +64,9 @@ impl super::Kaspad for Daemon {
         let mut reader = BufReader::new(stdout).lines();
         let stdout_relay_sender = self.inner.service_events.sender.clone();
         let task_ctl = self.inner.task_ctl.clone();
-        // let task_ctl_resop = self.inner.task_ctl.request.clone();
+
         tokio::spawn(async move {
             loop {
-                // println!("loop...");
                 select! {
                     _ = task_ctl.request.recv().fuse() => {
                         if let Err(err) = child.start_kill() {

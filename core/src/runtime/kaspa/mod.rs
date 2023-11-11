@@ -28,6 +28,7 @@ cfg_if! {
         pub trait Kaspad {
             async fn start(&self, config : Config) -> Result<()>;
             async fn stop(&self) -> Result<()>;
+            // async fn halt(&self) -> Result<()>;
         }
 
         #[derive(Debug, Clone)]
@@ -432,7 +433,17 @@ impl Service for KaspaService {
 
                 msg = wallet_events.recv().fuse() => {
                     if let Ok(event) = msg {
-                        println!("wallet event: {:?}", event);
+                        use kaspa_wallet_core::events::Events as CoreWallet;
+
+                        match *event {
+                            CoreWallet::DAAScoreChange{ .. } => {
+                            }
+                            _ => {
+                                println!("wallet event: {:?}", event);
+                            }
+                        }
+                        // if !matches(event, CoreWallet::DAAScoreChange{ .. }) {
+                        // }
                         this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
                     } else {
                         break;

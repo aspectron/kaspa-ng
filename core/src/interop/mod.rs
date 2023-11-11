@@ -12,9 +12,6 @@ cfg_if! {
 use crate::runtime::KaspaService;
 use crate::runtime::Runtime;
 
-// pub mod channel;
-// use crate::channel::Channel;
-
 pub mod payload;
 pub use payload::Payload;
 
@@ -23,6 +20,7 @@ pub struct Inner {
     kaspa: Arc<KaspaService>,
     runtime: Runtime,
     egui_ctx: egui::Context,
+    is_running: Arc<AtomicBool>,
 }
 
 #[derive(Clone)]
@@ -34,9 +32,7 @@ impl Interop {
     pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
         let application_events = ApplicationEventsChannel::unbounded(Some(egui_ctx.clone()));
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
-
         let runtime = Runtime::new(&[kaspa.clone()]);
-        // runtime.register_service(kaspa.clone());
 
         let interop = Self {
             inner: Arc::new(Inner {
@@ -44,7 +40,7 @@ impl Interop {
                 kaspa,
                 runtime,
                 egui_ctx: egui_ctx.clone(),
-                // services: Mutex::new(services),
+                is_running: Arc::new(AtomicBool::new(false)),
             }),
         };
 
@@ -58,41 +54,19 @@ impl Interop {
     }
 
     pub fn start(&self) {
+        self.inner.is_running.store(true, Ordering::SeqCst);
         self.runtime().start();
-        // let services = self.services();
-        // for service in services {
-        //     spawn(async move { service.spawn().await });
-        // }
     }
 
-    // pub fn services(&self) -> Vec<Arc<dyn Service + Send + Sync + 'static>> {
-    //     self.inner.services.lock().unwrap().clone()
-    // }
-
-    pub fn shutdown(&self) {
-        self.runtime().shutdown();
-        // self.services()
-        //     .into_iter()
-        //     .for_each(|service| service.terminate());
+    pub async fn shutdown(&self) {
+        if self.inner.is_running.load(Ordering::SeqCst) {
+            self.inner.is_running.store(false, Ordering::SeqCst);
+            self.runtime().shutdown();
+            self.runtime().join().await;
+            register_global(None);
+        }
     }
 
-    pub async fn join(&self) {
-        self.runtime().join().await;
-        // let futures = self
-        //     .services()
-        //     .into_iter()
-        //     .map(|service| service.join())
-        //     .collect::<Vec<_>>();
-        // join_all(futures).await;
-    }
-
-    pub fn drop(&self) {
-        register_global(None);
-    }
-
-    // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
-    //     &self.inner.kaspa.wallet
-    // }
     pub fn wallet(&self) -> Arc<dyn WalletApi> {
         self.inner.kaspa.wallet()
     }
@@ -155,14 +129,11 @@ impl Interop {
     pub fn egui_ctx(&self) -> &egui::Context {
         &self.inner.egui_ctx
     }
-    // pub fn request_repaint(&self) {
-    //     self.inner.egui_ctx.request_repaint();
-    // }
 }
 
 static mut INTEROP: Option<Interop> = None;
 
-fn interop() -> &'static Interop {
+pub fn interop() -> &'static Interop {
     unsafe {
         if let Some(interop) = &INTEROP {
             interop

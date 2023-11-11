@@ -117,16 +117,9 @@ cfg_if! {
                             Box::new(kaspa_ng_core::Core::new(cc, interop, settings))
                         }),
                     )?;
-                    println!("exit initiated...");
 
                     let interop = interop.lock().unwrap().take().unwrap();
-                    println!("wallet shutdown");
-                    interop.shutdown();
-                    println!("worker join");
-                    interop.join().await;
-                    println!("exit");
-                    interop.drop();
-
+                    interop.shutdown().await;
                 }
             }
 
