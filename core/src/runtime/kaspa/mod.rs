@@ -4,6 +4,7 @@ use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
+#[cfg(not(target_arch = "wasm32"))]
 use kaspa_rpc_service::service::RpcCoreService;
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
@@ -37,8 +38,8 @@ cfg_if! {
             StartInternalAsDaemon { config: Config, network : Network },
             StartExternalAsDaemon { path: PathBuf, config: Config, network : Network },
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
-            Stop,
             Stdout { line : String },
+            Stop,
             Exit,
         }
 
@@ -58,6 +59,7 @@ cfg_if! {
         #[derive(Debug)]
         pub enum KaspadServiceEvents {
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
+            Stop,
             Exit,
         }
 
@@ -70,14 +72,12 @@ pub struct KaspaService {
     pub task_ctl: Channel<()>,
     pub network: Mutex<Network>,
     pub wallet: Arc<runtime::Wallet>,
-    pub logs: Mutex<VecDeque<Log>>,
     pub metrics: Arc<Metrics>,
     pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
-    // pub peer_info: Mutex<Option<Vec<RpcPeerInfo>>>,
-    // pub metrics_data
-    // pub rpc : Mutex<Rpc>,
     #[cfg(not(target_arch = "wasm32"))]
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
+    #[cfg(not(target_arch = "wasm32"))]
+    pub logs: Mutex<VecDeque<Log>>,
 }
 
 impl KaspaService {
@@ -93,18 +93,6 @@ impl KaspaService {
                 .unwrap_or_else(|e| {
                     panic!("Failed to create wallet instance: {}", e);
                 });
-        // --
-        // let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
-        //     WrpcEncoding::Borsh,
-        //     NotificationMode::MultiListeners,
-        //     &settings.url,
-        // ).expect("Unable to create KaspaService RPC client"));
-        // let wrpc_ctl = wrpc_client.ctl().clone();
-        // let wrpc_api: Arc<DynRpcApi> = wrpc_client;
-        // let wrpc = Rpc::new(wrpc_api, wrpc_ctl);
-        // --
-
-        // let rpc = Self::create_rpc_client(&settings.rpc).expect("Kaspad Service - unable to create wRPC client");
 
         // create service event channel
         let service_events = Channel::unbounded();
@@ -136,14 +124,12 @@ impl KaspaService {
             task_ctl: Channel::oneshot(),
             network: Mutex::new(settings.node.network),
             wallet: Arc::new(wallet),
-            logs: Mutex::new(VecDeque::new()),
             metrics,
             metrics_data: Mutex::new(metrics_data),
-            // peer_info : Mutex::new(None),
-            // rpc : Mutex::new(rpc),
-            // wrpc,
             #[cfg(not(target_arch = "wasm32"))]
             kaspad: Mutex::new(None),
+            #[cfg(not(target_arch = "wasm32"))]
+            logs: Mutex::new(VecDeque::new()),
         }
     }
 
@@ -152,8 +138,6 @@ impl KaspaService {
             RpcConfig::Wrpc { url, encoding } => {
                 log_warning!("create_rpc_client - RPC URL: {:?}", url);
 
-                // let url = if let Some(url)
-
                 let url = KaspaRpcClient::parse_url(
                     // url.as_ref().unwrap_or("127.0.0.1"), //Some(url.clone()),
                     url.clone().or(Some("127.0.0.1".to_string())),
@@ -161,10 +145,6 @@ impl KaspaService {
                     NetworkId::from(network).into(),
                 )?
                 .expect("Unable to parse RPC URL");
-
-                // let url = url.unwrap_or("ws://127.0.0.1:17210".to_string());
-
-                // .ok_or_else(||Error::InvalidUrl(url.clone().unwrap()))?;
 
                 let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
                     *encoding,
@@ -196,16 +176,21 @@ impl KaspaService {
                 retry_interval: Some(Duration::from_millis(3000)),
             };
             wrpc_client.connect(options).await?;
-        } else if self
-            .wallet()
-            .rpc_api()
-            .clone()
-            .downcast_arc::<RpcCoreService>()
-            .is_ok()
-        {
-            self.wallet().rpc_ctl().signal_open().await?;
         } else {
-            unimplemented!("connect_rpc_client(): RPC client is not supported")
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                if self
+                    .wallet()
+                    .rpc_api()
+                    .clone()
+                    .downcast_arc::<RpcCoreService>()
+                    .is_ok()
+                {
+                    self.wallet().rpc_ctl().signal_open().await?;
+                } else {
+                    unimplemented!("connect_rpc_client(): RPC client is not supported")
+                }
+            }
         }
 
         Ok(())
@@ -215,16 +200,12 @@ impl KaspaService {
         self.wallet.clone()
     }
 
-    // pub fn logs(&self) -> String {
-    //     self.logs.lock().unwrap().iter().cloned().collect::<Vec<String>>().join("\n")
-    // }
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn logs(&self) -> MutexGuard<'_, VecDeque<Log>> {
         self.logs.lock().unwrap()
     }
 
-    // pub fn sanitize_log_line<'s>(line : &str) -> Log {
-
-    // }
+    #[cfg(not(target_arch = "wasm32"))]
     pub async fn update_logs(&self, line: String) {
         {
             let mut logs = self.logs.lock().unwrap();
@@ -242,16 +223,6 @@ impl KaspaService {
                 .unwrap();
         }
     }
-
-    // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
-    //     &self.wallet
-    // }
-
-    // pub async fn stop_wallet(&self) -> Result<()> {
-    //     self.wallet().stop().await.expect("Unable to stop wallet");
-    //     self.wallet().bind_rpc(None).await?;
-    //     Ok(())
-    // }
 
     pub async fn stop_all_services(&self) -> Result<()> {
         if !self.wallet().has_rpc() {
@@ -415,18 +386,10 @@ impl KaspaService {
 #[async_trait]
 impl Service for KaspaService {
     async fn spawn(self: Arc<Self>) -> Result<()> {
-        // println!("kaspad manager service starting...");
         let this = self.clone();
-
-        // println!("starting wallet...");
-        // this.wallet.start().await.unwrap_or_else(|err| {
-        //     println!("Wallet start error: {:?}", err);
-        // });
-
         let wallet_events = this.wallet.multiplexer().channel();
-
         let _application_events_sender = self.application_events.sender.clone();
-        // spawn(async move {
+
         loop {
             // println!("loop...");
             select! {
@@ -595,7 +558,10 @@ impl TryFrom<&NodeSettings> for KaspadServiceEvents {
 
             } else {
 
-                match &node_settings.kaspad {
+                match &node_settings.node_kind {
+                    KaspadNodeKind::Disable => {
+                        Ok(KaspadServiceEvents::Stop)
+                    }
                     KaspadNodeKind::Remote => {
                         Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : node_settings.into(), network : node_settings.network })
                     }

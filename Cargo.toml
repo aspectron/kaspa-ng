@@ -34,17 +34,17 @@ kaspa-utils = { path = "../rusty-kaspa/utils" }
 kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
 kaspa-metrics = { path = "../rusty-kaspa/metrics/metrics" }
 
-workflow-core = "0.8.1"
-workflow-log = "0.8.1"
-workflow-dom = "0.8.1"
-workflow-store = "0.8.1"
-workflow-chrome = "0.8.1"
+# workflow-core = "0.8.1"
+# workflow-log = "0.8.1"
+# workflow-dom = "0.8.1"
+# workflow-store = "0.8.1"
+# workflow-chrome = "0.8.1"
 # workflow-i18n = "0.8.1"
-# workflow-log = { path = "../workflow-rs/log" }
-# workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
-# workflow-dom = { path = "../workflow-rs/dom" }
-# workflow-store = { path = "../workflow-rs/store" }
-# workflow-chrome = { path = "../workflow-rs/chrome" }
+workflow-log = { path = "../workflow-rs/log" }
+workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
+workflow-dom = { path = "../workflow-rs/dom" }
+workflow-store = { path = "../workflow-rs/store" }
+workflow-chrome = { path = "../workflow-rs/chrome" }
 workflow-i18n = { path = "../workflow-rs/i18n" }
 
 

@@ -1,37 +1,39 @@
-// use crate::imports::*;
-// use wasm_bindgen::prelude::*;
+// Chrome Extension Wallet Adaptor
 
-// struct Inner {
-//     #[allow(dead_code)]
-//     interop: Interop,
-// }
+use crate::imports::*;
+use wasm_bindgen::prelude::*;
 
-// impl Inner {
-//     pub fn new(interop: Interop) -> Self {
-//         Self { interop }
-//     }
-// }
+struct Inner {
+    #[allow(dead_code)]
+    interop: Interop,
+}
 
-// #[wasm_bindgen]
-// pub struct Adaptor {
-//     #[allow(dead_code)]
-//     inner: Arc<Inner>,
-// }
+impl Inner {
+    pub fn new(interop: Interop) -> Self {
+        Self { interop }
+    }
+}
 
-// impl Adaptor {
-//     pub fn new(interop: Interop) -> Self {
-//         Self {
-//             inner: Arc::new(Inner::new(interop.clone())),
-//         }
-//     }
-// }
+#[wasm_bindgen]
+pub struct Adaptor {
+    #[allow(dead_code)]
+    inner: Arc<Inner>,
+}
 
-// #[wasm_bindgen]
-// impl Adaptor {
-//     #[wasm_bindgen(js_name = "sendTransaction")]
-//     pub fn send_transaction(&self) -> Result<()> {
-//         Ok(())
-//     }
-// }
+impl Adaptor {
+    pub fn new(interop: Interop) -> Self {
+        Self {
+            inner: Arc::new(Inner::new(interop.clone())),
+        }
+    }
+}
 
-// // static mut ADAPTOR : Option<Adaptor> = None;
+#[wasm_bindgen]
+impl Adaptor {
+    #[wasm_bindgen(js_name = "sendTransaction")]
+    pub fn send_transaction(&self) -> Result<()> {
+        Ok(())
+    }
+}
+
+// static mut ADAPTOR : Option<Adaptor> = None;

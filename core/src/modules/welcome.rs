@@ -56,6 +56,7 @@ impl ModuleT for Welcome {
                             [
                                 KaspadNodeKind::Disable,
                                 KaspadNodeKind::Remote,
+                                #[cfg(not(target_arch = "wasm32"))]
                                 KaspadNodeKind::IntegratedAsDaemon,
                                 // KaspadNodeKind::ExternalAsDaemon,
                                 // KaspadNodeKind::IntegratedInProc,

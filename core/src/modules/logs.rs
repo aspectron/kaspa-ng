@@ -24,14 +24,15 @@ impl ModuleT for Logs {
         _core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
-        ui: &mut egui::Ui,
+        _ui: &mut egui::Ui,
     ) {
 
+        #[cfg(not(target_arch = "wasm32"))]
         egui::ScrollArea::vertical()
             .id_source("node_logs")
             .auto_shrink([false; 2])
             .stick_to_bottom(true)
-            .show(ui, |ui| {
+            .show(_ui, |ui| {
 
                 for log in self.interop.kaspa_service().logs().iter() {
                     ui.label(RichText::from(log));

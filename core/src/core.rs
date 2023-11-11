@@ -353,6 +353,7 @@ impl Core {
 }
 
 impl eframe::App for Core {
+    #[cfg(not(target_arch = "wasm32"))]
     fn on_close_event(&mut self) -> bool {
         true
     }

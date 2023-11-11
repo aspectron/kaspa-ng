@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+cargo nextest run --release --workspace --lib

@@ -40,6 +40,7 @@ cfg_if! {
         #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
         #[serde(rename_all = "kebab-case")]
         pub enum KaspadNodeKind {
+            Disable,
             #[default]
             Remote,
         }
@@ -51,6 +52,7 @@ cfg_if! {
         impl std::fmt::Display for KaspadNodeKind {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 match self {
+                    KaspadNodeKind::Disable => write!(f, "Disable"),
                     KaspadNodeKind::Remote => write!(f, "Remote"),
                 }
             }
@@ -67,8 +69,11 @@ impl KaspadNodeKind {
         match self {
             KaspadNodeKind::Disable => i18n("Disable"),
             KaspadNodeKind::Remote => i18n("Connect to Remote RPC"),
+            #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedInProc => i18n("Integrated Node"),
+            #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedAsDaemon => i18n("Integrated Daemon"),
+            #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::ExternalAsDaemon => i18n("External Daemon"),
         }
     }
@@ -235,8 +240,8 @@ impl NodeSettings {
                 //     || self.wrpc_encoding != other.wrpc_encoding
                 //     || self.grpc_network_interface != other.grpc_network_interface
             } else if self.enable_grpc != other.enable_grpc
-            || self.grpc_network_interface != other.grpc_network_interface
-            || self.wrpc_url != other.wrpc_url
+                    || self.grpc_network_interface != other.grpc_network_interface
+                    || self.wrpc_url != other.wrpc_url
                     || self.wrpc_encoding != other.wrpc_encoding
                     || self.enable_wrpc_json != other.enable_wrpc_json
                     || self.wrpc_json_network_interface != other.wrpc_json_network_interface
@@ -254,12 +259,11 @@ impl NodeSettings {
             pub fn compare(&self, other: &NodeSettings) -> Option<bool> {
                 if self.network != other.network {
                     Some(true)
-                } else if self.kaspad != other.kaspad {
+                } else if self.node_kind != other.node_kind {
                     Some(true)
                 } else if self.rpc_kind != other.rpc_kind
                     || self.wrpc_url != other.wrpc_url
                     || self.wrpc_encoding != other.wrpc_encoding
-                    || self.grpc_url != other.grpc_url
                 {
                     Some(true)
                 } else {

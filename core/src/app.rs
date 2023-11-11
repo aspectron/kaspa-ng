@@ -127,7 +127,7 @@ cfg_if! {
         }
     } else {
 
-        use crate::result::Result;
+        // use crate::result::Result;
 
         pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
             use wasm_bindgen::prelude::*;
@@ -154,7 +154,7 @@ cfg_if! {
                 Settings::default()
             });
 
-            init_i18n(settings.language.as_str()).expect("failed to init i18n");
+            init_i18n(settings.language_code.as_str()).expect("failed to init i18n");
 
             // wasm_bindgen_futures::spawn_local(async {
                 use workflow_log::*;
