@@ -119,7 +119,7 @@ impl ModuleT for Export {
                                 let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {
-                                    wallet.wallet_open(secret, wallet_name).await?;
+                                    wallet.wallet_open(secret, wallet_name, true).await?;
                                     Ok(())
                                 });
 

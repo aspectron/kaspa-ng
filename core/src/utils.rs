@@ -61,6 +61,7 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
             // font_id: FontId::new(text_size + 4., FontFamily::Name("phosphor".into())),
             font_id: FontId::new(text_size + 4., FontFamily::Proportional),
             color,
+            valign: Align::Center,
             ..Default::default()
         },
     );
@@ -71,6 +72,7 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
         TextFormat {
             font_id: FontId::new(text_size, FontFamily::Proportional),
             color: text_color,
+            valign: Align::Center,
             ..Default::default()
         },
     );
@@ -105,5 +107,22 @@ pub fn format_duration(millis: u64) -> String {
         format!("{:2.4} sec", seconds)
     } else {
         format!("{} msec", millis)
+    }
+}
+
+#[derive(Default)]
+pub struct Arglist {
+    pub args: Vec<String>,
+}
+
+impl Arglist {
+    pub fn push(&mut self, arg: impl Into<String>) {
+        self.args.push(arg.into());
+    }
+}
+
+impl From<Arglist> for Vec<String> {
+    fn from(arglist: Arglist) -> Self {
+        arglist.args
     }
 }

@@ -78,10 +78,10 @@ impl super::Kaspad for Daemon {
                     status = child.wait().fuse() => {
                         match status {
                             Ok(status) => {
-                                println!("child status was: {:?}", status);
+                                println!("Kaspad daemon shutdown: {:?}", status);
                             }
                             Err(err) => {
-                                println!("child error was: {:?}", err);
+                                println!("Kaspad daemon shutdown: {:?}", err);
                             }
                         }
                         is_running.store(false,Ordering::SeqCst);
@@ -89,15 +89,8 @@ impl super::Kaspad for Daemon {
                     }
 
                     line = reader.next_line().fuse() => {
-                        match line {
-                            Ok(Some(line)) => {
-                                // println!("Child Daemon Stdout: {}", text);
-                                stdout_relay_sender.send(KaspadServiceEvents::Stdout { line }).await.unwrap();
-                            },
-                            v => {
-                                println!("Node daemon stdout error: {:?}", v);
-                                // break;
-                            }
+                        if let Ok(Some(line)) = line {
+                            stdout_relay_sender.send(KaspadServiceEvents::Stdout { line }).await.unwrap();
                         }
                     }
                 }

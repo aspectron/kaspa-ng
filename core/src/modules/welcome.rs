@@ -111,6 +111,7 @@ impl ModuleT for Welcome {
                     if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, "Apply")).clicked() {
                         let mut settings = self.settings.clone();
                         settings.initialized = true;
+                        settings.version.clear(); // triggers changelog
                         settings.store_sync().expect("Unable to store settings");
                         self.interop.kaspa_service().update_services(&self.settings.node);
                         core.settings = settings.clone();

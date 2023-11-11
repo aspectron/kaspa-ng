@@ -129,17 +129,18 @@ impl ModuleT for WalletOpen {
 
                             let mut unlock = false;
 
-                            if ui
-                                .add_sized(
+                            let response = ui.add_sized(
                                     size,
                                     TextEdit::singleline(&mut ctx.wallet_secret)
                                         .hint_text("Enter Password...")
                                         .password(true)
                                         .vertical_align(Align::Center),
-                                )
-                                .text_edit_submit(ui)
-                            {
+                                );
+                            // ui.memory().request_focus(resp.id);
+                            if response.text_edit_submit(ui) {
                                 unlock = true;
+                            } else {
+                                response.request_focus();
                             }
 
                             if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
@@ -155,7 +156,7 @@ impl ModuleT for WalletOpen {
                                 let wallet_name = ctx.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {
-                                    wallet.wallet_open(wallet_secret, wallet_name).await?;
+                                    wallet.wallet_open(wallet_secret, wallet_name, true).await?;
                                     Ok(())
                                 });
 

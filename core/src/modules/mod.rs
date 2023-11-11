@@ -45,14 +45,17 @@ pub trait ModuleT: Downcast {
         ModuleStyle::Large
     }
 
-    fn init(&mut self, _wallet: &mut Core) {}
+    fn activate(&mut self, _core: &mut Core) {}
+    fn deactivate(&mut self, _core: &mut Core) {}
+
+    fn init(&mut self, _core: &mut Core) {}
 
     fn render(
         &mut self,
-        _wallet: &mut Core,
-        _ctx: &egui::Context,
-        _frame: &mut eframe::Frame,
-        _ui: &mut egui::Ui,
+        core: &mut Core,
+        ctx: &egui::Context,
+        frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
     );
 
     // fn render(
@@ -82,13 +85,21 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn init(&self, wallet: &mut Core) {
-        self.inner.module.borrow_mut().init(wallet)
+    pub fn init(&self, core: &mut Core) {
+        self.inner.module.borrow_mut().init(core)
+    }
+
+    pub fn activate(&self, core: &mut Core) {
+        self.inner.module.borrow_mut().activate(core)
+    }
+
+    pub fn deactivate(&self, core: &mut Core) {
+        self.inner.module.borrow_mut().deactivate(core)
     }
 
     pub fn render(
         &self,
-        wallet: &mut Core,
+        core: &mut Core,
         ctx: &egui::Context,
         frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
@@ -97,14 +108,26 @@ impl Module {
 
         match module.style() {
             ModuleStyle::Large => {
-                ui.style_mut().text_styles = wallet.large_style.text_styles.clone();
+                ui.style_mut().text_styles = core.large_style.text_styles.clone();
             }
             ModuleStyle::Default => {
-                ui.style_mut().text_styles = wallet.default_style.text_styles.clone();
+                ui.style_mut().text_styles = core.default_style.text_styles.clone();
             }
         }
 
-        module.render(wallet, ctx, frame, ui)
+        module.render(core, ctx, frame, ui)
+    }
+
+    pub fn render_default(
+        &self,
+        core: &mut Core,
+        ctx: &egui::Context,
+        frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
+        let mut module = self.inner.module.borrow_mut();
+
+        module.render(core, ctx, frame, ui)
     }
 
     pub fn name(&self) -> &str {

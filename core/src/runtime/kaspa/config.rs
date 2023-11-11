@@ -1,4 +1,5 @@
 use crate::imports::*;
+use crate::utils::Arglist;
 // use kaspa_wrpc_server::address::WrpcNetAddress;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -8,15 +9,17 @@ pub use kaspad_lib::args::Args;
 pub struct Config {
     network: Network,
     enable_upnp: bool,
+    enable_grpc: bool,
+    grpc_network_interface: NetworkInterfaceConfig,
 }
 
 impl From<NodeSettings> for Config {
     fn from(node_settings: NodeSettings) -> Self {
-        let network = node_settings.network;
-        let enable_upnp = node_settings.enable_upnp;
         Self {
-            network,
-            enable_upnp,
+            network: node_settings.network,
+            enable_upnp: node_settings.enable_upnp,
+            enable_grpc: node_settings.enable_grpc,
+            grpc_network_interface: node_settings.grpc_network_interface,
         }
     }
 }
@@ -24,8 +27,9 @@ impl From<NodeSettings> for Config {
 cfg_if! {
 
     if #[cfg(not(target_arch = "wasm32"))] {
-        impl From<Config> for Args {
-            fn from(config: Config) -> Self {
+        impl TryFrom<Config> for Args {
+            type Error = Error;
+            fn try_from(config: Config) -> Result<Self> {
                 let mut args = Args::default();
                 match config.network {
                     Network::Mainnet => {}
@@ -44,15 +48,19 @@ cfg_if! {
                 args.yes = true;
                 args.utxoindex = true;
                 args.disable_upnp = !config.enable_upnp;
+
+                if config.enable_grpc {
+                    args.rpclisten = Some(config.grpc_network_interface.into());
+                }
                 // args.rpclisten_borsh = Some(WrpcNetAddress::Default);
 
-                args
+                Ok(args)
             }
         }
 
         impl From<Config> for Vec<String> {
             fn from(config: Config) -> Self {
-                let mut args = Vec::new();
+                let mut args = Arglist::default();
 
                 match config.network {
                     Network::Mainnet => {}
@@ -76,11 +84,15 @@ cfg_if! {
                     args.push("--disable-upnp");
                 }
 
+                if config.enable_grpc {
+                    args.push(format!("--rpclisten={}", config.grpc_network_interface));
+                }
+
                 // ---
 
                 args.push("--rpclisten-borsh=default");
 
-                args.into_iter().map(String::from).collect()
+                args.into()
             }
         }
 

@@ -17,10 +17,10 @@ pub enum Events {
     WalletList {
         wallet_list: Arc<Vec<WalletDescriptor>>,
     },
-    AccountList {
-        // account_list: Arc<Vec<Arc<dyn runtime::Account>>>,
-        account_list: Arc<Vec<Account>>,
-    },
+    // AccountList {
+    //     // account_list: Arc<Vec<Arc<dyn runtime::Account>>>,
+    //     account_list: Box<Vec<Account>>,
+    // },
     Wallet {
         event: Box<kaspa::Events>,
     },

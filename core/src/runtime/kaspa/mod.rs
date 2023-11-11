@@ -305,22 +305,17 @@ impl KaspaService {
             .await
             .expect("Unable to start wallet service");
 
-        self.metrics.start_task().await?;
-        self.metrics.set_rpc(Some(rpc_api));
         let this = self.clone();
         self.metrics
             .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
                 if let Err(err) = this.ingest_metrics_snapshot(Box::new(snapshot)) {
                     println!("Error ingesting metrics snapshot: {}", err);
                 }
-                // let this = this.clone();
-                // Box::pin(async move {
-                //     // this.service_events.send(KaspadServiceEvents::Metrics { snapshot }).await.unwrap();
-
-                //     Ok(())
-                // })
                 None
             })));
+        self.reset_metrics_data()?;
+        self.metrics.start_task().await?;
+        self.metrics.set_rpc(Some(rpc_api));
 
         // if rpc client is KaspaRpcClient, auto-connect to the node
         // if let Some(wrpc_client) = wrpc_client {
@@ -365,14 +360,40 @@ impl KaspaService {
     //     self.metrics.connected_peer_info()
     // }
 
+    pub fn reset_metrics_data(&self) -> Result<()> {
+        let now = unixtime_as_millis_f64();
+        let mut template = Vec::with_capacity(MAX_METRICS_SAMPLES);
+        let mut plot_point = PlotPoint {
+            x: now - MAX_METRICS_SAMPLES as f64 * 1000.0,
+            y: 0.0,
+        };
+        while template.len() < MAX_METRICS_SAMPLES {
+            template.push(plot_point);
+            plot_point.x += 1000.0;
+        }
+
+        let mut metrics_data = self.metrics_data.lock().unwrap();
+        for metric in Metric::list().into_iter() {
+            metrics_data.insert(metric, template.clone());
+        }
+        Ok(())
+    }
+
     pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
         let timestamp = snapshot.unixtime;
         let mut metrics_data = self.metrics_data.lock().unwrap();
         for metric in Metric::list().into_iter() {
             let dest = metrics_data.get_mut(&metric).unwrap();
             if dest.len() > MAX_METRICS_SAMPLES {
-                dest.drain(0..MAX_METRICS_SAMPLES - dest.len());
+                dest.drain(0..dest.len() - MAX_METRICS_SAMPLES);
             }
+            // else if dest.len() < MAX_METRICS_SAMPLES {
+            //     let mut last_point = dest.last().cloned().unwrap_or_default();
+            //     while dest.len() < MAX_METRICS_SAMPLES {
+            //         last_point.x += 1000.0;
+            //         dest.push(last_point.clone());
+            //     }
+            // }
             dest.push(PlotPoint {
                 x: timestamp,
                 y: snapshot.get(&metric),

@@ -31,7 +31,7 @@ impl InProc {
 #[async_trait]
 impl super::Kaspad for InProc {
     async fn start(&self, config: Config) -> Result<()> {
-        let args = Args::from(config);
+        let args = Args::try_from(config)?;
         println!("ARGS: {:#?}", args);
 
         let fd_total_budget = fd_budget::limit()

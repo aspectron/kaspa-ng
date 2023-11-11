@@ -8,6 +8,7 @@ pub use core::Core;
 pub mod adaptor;
 pub mod app;
 pub mod channel;
+pub mod collection;
 pub mod egui;
 pub mod error;
 pub mod events;

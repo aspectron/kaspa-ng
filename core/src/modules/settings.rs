@@ -10,23 +10,30 @@ pub struct Settings {
     interop: Interop,
     settings : crate::settings::Settings,
     // pub kaspad: KaspadNodeKind,
+    grpc_network_interface : NetworkInterfaceEditor, //::try_from(&self.settings.node.grpc_network_interface).unwrap();
+
 
 }
 
 impl Settings {
     pub fn new(interop: Interop) -> Self {
-        Self { interop, settings : crate::settings::Settings::default() }
+        Self { interop, settings : crate::settings::Settings::default(),
+        grpc_network_interface : NetworkInterfaceEditor::default(),
+         }
     }
 
     pub fn load(&mut self, settings : crate::settings::Settings) {
         self.settings = settings;
+
+        self.grpc_network_interface = NetworkInterfaceEditor::try_from(&self.settings.node.grpc_network_interface).unwrap();
+
     }
 }
 
 impl ModuleT for Settings {
 
     fn init(&mut self, wallet : &mut Core) {
-        self.settings = wallet.settings.clone();
+        self.load(wallet.settings.clone());
     }
 
     fn style(&self) -> ModuleStyle {
@@ -41,6 +48,9 @@ impl ModuleT for Settings {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
+
+        // self.grpc_network_interface = 
+
         // wallet.style()
 
         // ui.style_mut().text_styles = wallet.default_style.text_styles.clone();
@@ -65,6 +75,7 @@ impl ModuleT for Settings {
         // - pub enable_mainnet_mining: bool,
         // - pub perf_metrics: bool,
         // - pub perf_metrics_interval_sec: u64,
+
 
         CollapsingHeader::new("Kaspa p2p Network & Node Connection")
             .default_open(true)
@@ -117,27 +128,65 @@ impl ModuleT for Settings {
 
                     });
 
-                CollapsingHeader::new("RPC Protocol")
-                    .default_open(true)
-                    .show(ui, |ui| {
+                    CollapsingHeader::new("Client RPC")
+                        .default_open(true)
+                        .show(ui, |ui| {
+                    // ui.horizontal(|ui|{
+                    //     ui.separator();
 
-                        ui.horizontal(|ui|{
-                            ui.label("URL: ");
-                            ui.add(TextEdit::singleline(&mut self.settings.node.wrpc_url));
-                        });
-                        ui.horizontal_wrapped(|_ui|{
-                            // ui.radio_value(&mut );
-                        });
+                            ui.vertical(|ui|{
+                                ui.checkbox(&mut self.settings.node.enable_grpc, i18n("Enable gRPC"));
+                                if self.settings.node.enable_grpc {
 
-                        ui.label("This is the settings page");
+                                    CollapsingHeader::new("gRPC Network Interface & Port")
+                                        .default_open(true)
+                                        .show(ui, |ui| {
+                                        // ui.horizontal(|ui|{
+                                        //     ui.separator();
+                    
+                                            // ui.label(i18n("gRPC Network Interface & Port: "));
+                                            self.grpc_network_interface.ui(ui);
+                                        });
+                                    // ui.add(TextEdit::singleline(&mut self.settings.node.grpc_network_interface));
+                                }
+                            });
 
                     });
+                    
+                CollapsingHeader::new("p2p RPC")
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        ui.vertical(|ui|{
+                            ui.checkbox(&mut self.settings.node.enable_upnp, i18n("Enable UPnP"));
+                        });
+                    });
+
+                ui.add_space(32.);
+                ui.horizontal(|ui|{
+                    ui.label("URL: ");
+                    ui.add(TextEdit::singleline(&mut self.settings.node.wrpc_url));
+                });
+                ui.horizontal_wrapped(|_ui|{
+                    // ui.radio_value(&mut );
+                });
+
+                ui.label("This is the settings page");
+
+
+                if !self.grpc_network_interface.is_valid() {
+                    return;
+                } else {
+                    self.settings.node.grpc_network_interface = self.grpc_network_interface.as_ref().try_into().unwrap(); //NetworkInterfaceConfig::try_from(&self.grpc_network_interface).unwrap();
+                }
+
 
                 if let Some(restart) = self.settings.node.compare(&core.settings.node) {
 
                     if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
                         match response {
                             Confirm::Ack => {
+
+
                                 core.settings = self.settings.clone();
                                 core.settings.store_sync().unwrap();
                                 if restart {
@@ -151,23 +200,7 @@ impl ModuleT for Settings {
                             }
                         }
                     }
-                    // ui.separator();
-                    // ui.horizontal(|ui| {
 
-                    //     ui.add_space(ui.available_width() - 16. - (theme().medium_button_size.x + ui.spacing().item_spacing.x)*2.);
-
-                    //     if ui.medium_button("Apply").clicked() {
-                    //         wallet.settings = self.settings.clone();
-                    //         wallet.settings.store().unwrap();
-                    //         if restart {
-                    //             println!("TODO - restart");
-                    //         }
-                    //     }
-                        
-                    //     if ui.medium_button("Cancel").clicked() {
-                    //         self.settings = wallet.settings.clone();
-                    //     }
-                    // });
                     ui.separator();
                 }
 

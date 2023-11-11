@@ -59,9 +59,9 @@ impl<'a> CompositeGraph<'a> {
             .y_axis_width(4)
             .show_axes(self.show_axes)
             .show_grid(self.show_grid)
-            .allow_drag([true, false])
+            .allow_drag([false, false])
             .allow_scroll(false)
-            .x_axis_label("Time")
+            // .x_axis_label("Time")
             // .x_grid_spacer(move |input|{
             //     let mut list = vec![];
             //     //let value = first_point.x;//input.bounds.0.ceil();
@@ -79,8 +79,10 @@ impl<'a> CompositeGraph<'a> {
             //     //     GridMark { value: 225.0, step_size: 25.0 },
             //     // ]
             // })
-            .x_axis_formatter(move |x, size, range| {
-                workflow_log::log_info!("x:{x}, size:{size}, range:{range:?}");
+            // .y_axis_formatter(move |y,size,range|{
+            // })
+            .x_axis_formatter(move |x, _size, _range| {
+                // workflow_log::log_info!("x:{x}, size:{size}, range:{range:?}");
                 if x <= first_point.x || x >= last_point.x {
                     DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
                         .expect("could not parse timestamp")

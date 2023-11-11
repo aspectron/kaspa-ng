@@ -190,7 +190,7 @@ impl ModuleT for Import {
 
                                 spawn_with_result(&unlock_result, async move {
 
-                                    wallet.wallet_open(wallet_secret, wallet_name).await?;
+                                    wallet.wallet_open(wallet_secret, wallet_name, true).await?;
                                     // wallet.load(secret, wallet_name).await?;
                                     Ok(())
                                 });

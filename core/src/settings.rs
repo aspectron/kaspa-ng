@@ -1,4 +1,5 @@
 use crate::imports::*;
+use kaspa_utils::networking::ContextualNetAddress;
 use kaspa_wallet_core::storage::local::storage::Storage;
 use kaspa_wrpc_client::WrpcEncoding;
 
@@ -91,26 +92,68 @@ pub enum RpcConfig {
         encoding: WrpcEncoding,
     },
     Grpc {
-        url: Option<String>,
+        url: Option<NetworkInterfaceConfig>,
     },
 }
 
-// impl Default for RpcConfig {
-//     fn default() -> Self {
-//         cfg_if! {
-//             if #[cfg(not(target_arch = "wasm32"))] {
-//                 let url = "127.0.0.1";
-//             } else {
-//                 use workflow_dom::utils::*;
-//                 let url = window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
-//             }
-//         }
-//         RpcConfig::WRPC {
-//             url: url.to_string(),
-//             encoding: WrpcEncoding::Borsh,
-//         }
-//     }
-// }
+impl Default for RpcConfig {
+    fn default() -> Self {
+        cfg_if! {
+            if #[cfg(not(target_arch = "wasm32"))] {
+                let url = "127.0.0.1";
+            } else {
+                use workflow_dom::utils::*;
+                let url = window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
+            }
+        }
+        RpcConfig::Wrpc {
+            url: Some(url.to_string()),
+            encoding: WrpcEncoding::Borsh,
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum NetworkInterfaceKind {
+    #[default]
+    Local,
+    Any,
+    Custom,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct NetworkInterfaceConfig {
+    #[serde(rename = "type")]
+    pub kind: NetworkInterfaceKind,
+    pub custom: ContextualNetAddress,
+}
+
+impl Default for NetworkInterfaceConfig {
+    fn default() -> Self {
+        Self {
+            kind: NetworkInterfaceKind::Local,
+            custom: ContextualNetAddress::loopback(),
+        }
+    }
+}
+
+impl From<NetworkInterfaceConfig> for ContextualNetAddress {
+    fn from(network_interface_config: NetworkInterfaceConfig) -> Self {
+        match network_interface_config.kind {
+            NetworkInterfaceKind::Local => "127.0.0.1".parse().unwrap(),
+            NetworkInterfaceKind::Any => "0.0.0.0".parse().unwrap(),
+            NetworkInterfaceKind::Custom => network_interface_config.custom,
+        }
+    }
+}
+
+impl std::fmt::Display for NetworkInterfaceConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        ContextualNetAddress::from(self.clone()).fmt(f)
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -118,7 +161,12 @@ pub struct NodeSettings {
     pub rpc_kind: RpcKind,
     pub wrpc_url: String,
     pub wrpc_encoding: WrpcEncoding,
-    pub grpc_url: String,
+    // pub enable_wrpc_borsh : true,
+    // pub wrpc_network_interface_borsh: NetworkInterfaceConfig,
+    pub enable_wrpc_json: bool,
+    pub wrpc_json_network_interface: NetworkInterfaceConfig,
+    pub enable_grpc: bool,
+    pub grpc_network_interface: NetworkInterfaceConfig,
     pub enable_upnp: bool,
 
     pub network: Network,
@@ -151,10 +199,14 @@ impl Default for NodeSettings {
         }
 
         Self {
+            rpc_kind: RpcKind::Wrpc,
             wrpc_url: wrpc_url.to_string(), // : "127.0.0.1".to_string(),
             wrpc_encoding: WrpcEncoding::Borsh,
-            grpc_url: "127.0.0.1".to_string(),
-            rpc_kind: RpcKind::Wrpc,
+            // wrpc_borsh_network_interface: NetworkInterfaceConfig::default(),
+            enable_wrpc_json: false,
+            wrpc_json_network_interface: NetworkInterfaceConfig::default(),
+            enable_grpc: false,
+            grpc_network_interface: NetworkInterfaceConfig::default(),
             enable_upnp: true,
             // rpc: RpcConfig::default(),
             // network: Network::Mainnet,
@@ -178,10 +230,17 @@ impl NodeSettings {
                     Some(true)
                 } else if self.node_kind != other.node_kind {
                     Some(true)
-                } else if self.rpc_kind != other.rpc_kind
-                    || self.wrpc_url != other.wrpc_url
+                // } else if self.rpc_kind != other.rpc_kind
+                //     || self.wrpc_url != other.wrpc_url
+                //     || self.wrpc_encoding != other.wrpc_encoding
+                //     || self.grpc_network_interface != other.grpc_network_interface
+            } else if self.enable_grpc != other.enable_grpc
+            || self.grpc_network_interface != other.grpc_network_interface
+            || self.wrpc_url != other.wrpc_url
                     || self.wrpc_encoding != other.wrpc_encoding
-                    || self.grpc_url != other.grpc_url
+                    || self.enable_wrpc_json != other.enable_wrpc_json
+                    || self.wrpc_json_network_interface != other.wrpc_json_network_interface
+                    || self.enable_upnp != other.enable_upnp
                 {
                     Some(self.node_kind != KaspadNodeKind::IntegratedInProc)
                 } else if self.kaspad_daemon_binary != other.kaspad_daemon_binary {
@@ -220,7 +279,7 @@ impl From<&NodeSettings> for RpcConfig {
                 encoding: settings.wrpc_encoding,
             },
             RpcKind::Grpc => RpcConfig::Grpc {
-                url: Some(settings.grpc_url.clone()),
+                url: Some(settings.grpc_network_interface.clone()),
             },
         }
     }

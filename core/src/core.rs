@@ -4,7 +4,7 @@ use crate::sync::SyncStatus;
 use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
 use kaspa_wallet_core::events::Events as CoreWallet;
-use kaspa_wallet_core::storage::Hint;
+use kaspa_wallet_core::storage::{Binding, Hint};
 use workflow_i18n::*;
 
 const FORCE_WALLET_OPEN: bool = false;
@@ -98,7 +98,9 @@ pub struct Core {
     exception: Option<Exception>,
 
     pub wallet_list: Vec<WalletDescriptor>,
-    pub account_list: Option<Vec<Account>>,
+    pub account_collection: Option<AccountCollection>,
+    // pub account_list: Option<Vec<Account>>,
+    // pub account_map: Option<HashMap<AccountId, Account>>,
     pub selected_account: Option<Account>,
 }
 
@@ -212,7 +214,7 @@ impl Core {
             large_style,
 
             wallet_list: Vec::new(),
-            account_list: None,
+            account_collection: None,
             selected_account: None,
 
             metrics: None,
@@ -242,7 +244,10 @@ impl Core {
 
         if self.module.type_id() != module.type_id() {
             self.stack.push_back(self.module.clone());
+            // let previous = self.module.clone();
             self.module = module.clone();
+            // previous.deactivate(self);
+            // module.activate(self);
 
             #[cfg(not(target_arch = "wasm32"))]
             {
@@ -307,13 +312,20 @@ impl Core {
         &self.wallet_list
     }
 
-    pub fn account_list(&self) -> &Option<Vec<Account>> {
-        &self.account_list
+    pub fn account_collection(&self) -> &Option<AccountCollection> {
+        &self.account_collection
     }
+    // pub fn account_list(&self) -> &Option<Vec<Account>> {
+    //     &self.account_collection.list
+    // }
 
     // pub fn url(&self) -> String {
     //     self.rpc_client().url().to_string()
     // }
+
+    pub fn modules(&self) -> &HashMap<TypeId, Module> {
+        &self.modules
+    }
 
     pub fn get<T>(&self) -> Ref<'_, T>
     where
@@ -341,6 +353,11 @@ impl Core {
 }
 
 impl eframe::App for Core {
+    fn on_close_event(&mut self) -> bool {
+        println!("*** ON CLOSE EVENT ***");
+        true
+    }
+
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
@@ -368,7 +385,6 @@ impl eframe::App for Core {
         self.toasts.show(ctx);
 
         theme().apply(&mut current_visuals);
-
         ctx.set_visuals(current_visuals);
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -477,6 +493,11 @@ impl eframe::App for Core {
                             }
                         }
                         ui.separator();
+                        // if ui.button(icon_with_text(ui, egui_phosphor::light::GEAR, Color32::WHITE, "Settings")).clicked() {
+                        //     self.select::<modules::Settings>();
+                        // }
+                        // ui.separator();
+                        // if ui.button(RichText::new(format!("{} Settings",egui_phosphor::light::GEAR))).clicked() {
                         if ui.button("Settings").clicked() {
                             self.select::<modules::Settings>();
                         }
@@ -491,6 +512,10 @@ impl eframe::App for Core {
                         ui.separator();
                         if ui.button("Logs").clicked() {
                             self.select::<modules::Logs>();
+                        }
+                        ui.separator();
+                        if ui.button("About").clicked() {
+                            self.select::<modules::About>();
                         }
                         ui.separator();
                     });
@@ -754,11 +779,15 @@ impl Core {
                         .color(Color32::LIGHT_GREEN),
                 );
                 ui.separator();
+                // if peers.unwrap_or(0) != 0 {
+                // ui.label("ONLINE");
+                // } else {
                 ui.label("CONNECTED");
-                ui.separator();
-                self.render_peers(ui, peers);
+                // }
                 ui.separator();
                 ui.label(self.settings.node.network.to_string());
+                ui.separator();
+                self.render_peers(ui, peers);
                 if let Some(current_daa_score) = current_daa_score {
                     ui.separator();
                     ui.label(format!("DAA {}", current_daa_score.separated_string()));
@@ -838,9 +867,16 @@ impl Core {
                 //     a.filename.partial_cmp(&b.filename).unwrap()
                 // });
             }
-            Events::AccountList { account_list } => {
-                self.account_list = Some((*account_list).clone());
-            }
+            // Events::AccountList { account_list } => {
+            //     self.account_collection = Some((*account_list).into());
+            //     // self.account_list = Some((*account_list).clone());
+            //     // self.account_map = Some(
+            //     //     (*account_list)
+            //     //         .clone()
+            //     //         .into_iter()
+            //     //         .map(|account| (account.id(), account)).collect::<HashMap::<_,_>>()
+            //     // );
+            // }
             Events::Notify { notification } => {
                 notification.render(&mut self.toasts);
             }
@@ -910,41 +946,140 @@ impl Core {
                         self.hint = hint;
                         self.discard_hint = false;
                     }
-                    CoreWallet::WalletOpen | CoreWallet::WalletReload => {
+                    CoreWallet::WalletOpen {
+                        account_descriptors,
+                    }
+                    | CoreWallet::WalletReload {
+                        account_descriptors,
+                    } => {
                         self.state.is_open = true;
-                        self.update_account_list();
+
+                        if let Some(account_descriptors) = account_descriptors {
+                            let account_list = account_descriptors
+                                .into_iter()
+                                .map(Account::from)
+                                .collect::<Vec<_>>();
+
+                            self.account_collection = Some(account_list.into());
+                        } else {
+                            log_error!("CoreWallet::(WalletOpen | WalletReset): missing account descriptors");
+                        }
+
+                        // self.update_account_list();
                     }
                     CoreWallet::WalletError { message: _ } => {
                         // self.state.is_open = false;
                     }
+                    CoreWallet::WalletReady => {}
                     CoreWallet::WalletClose => {
                         self.hint = None;
                         self.state.is_open = false;
-                        self.account_list = None;
+                        self.account_collection = None;
                     }
                     CoreWallet::AccountSelection { id: _ } => {
                         // self.selected_account = self.wallet().account().ok();
                     }
                     CoreWallet::DAAScoreChange { current_daa_score } => {
-                        self.state.current_daa_score = Some(current_daa_score);
+                        self.state.current_daa_score.replace(current_daa_score);
                     }
-                    CoreWallet::Reorg { record: _ } => {}
-                    CoreWallet::External { record: _ } => {}
+                    CoreWallet::External { record } |
                     CoreWallet::Pending {
-                        record: _daa,
-                        is_outgoing: _,
-                    } => {}
+                        record, ..
+                        // is_outgoing: _,
+                    } |
                     CoreWallet::Maturity {
-                        record: _,
-                        is_outgoing: _,
-                    } => {}
-                    CoreWallet::Outgoing { record: _ } => {}
+                        record, ..
+                        // is_outgoing: _,
+                    } |
+                    CoreWallet::Outgoing { record } => {
+
+                        match record.binding().clone() {
+                            Binding::Account(id) => {
+
+                                self.account_collection.as_ref().and_then(|account_collection| {
+                                    account_collection.get(&id).map(|account| {
+                                        account.transactions().replace_or_insert(record.into());
+                                    })
+                                });
+                                // .or_else(|| {
+                                //     log_error!("unable to find account {}", id);
+                                //     None
+                                // });
+
+                                // if let Some(account_collection) = &self.account_collection {
+                                //     if let Some(account) = account_collection.get(id) {
+                                //         account.transactions().replace_or_insert(record.into());
+                                //     } else {
+                                //         log_error!("unable to find account {}", id);
+                                //     }
+                                // } else {
+                                //     log_error!(
+                                //         "received CoreWallet Transaction Data while account collection is empty"
+                                //     );
+                                // }
+                            }
+                            Binding::Custom(_) => {
+                                panic!("custom binding not supported");
+                            }
+                        }
+
+                    }
+
+                    CoreWallet::Reorg { record } => {
+                        match record.binding().clone() {
+                            Binding::Account(id) => {
+
+                                self.account_collection.as_mut().and_then(|account_collection| {
+                                    account_collection.get(&id).map(|account| {
+                                        account.transactions().remove(record.id())
+                                    })
+                                });
+                                // .or_else(|| {
+                                //     log_error!("unable to find account {}", id);
+                                //     None
+                                // });
+
+                                // if let Some(account_collection) = &self.account_collection {
+                                //     if let Some(account) = account_collection.get(id) {
+                                //         account.transactions().replace_or_insert(record.into());
+                                //     } else {
+                                //         log_error!("unable to find account {}", id);
+                                //     }
+                                // } else {
+                                //     log_error!(
+                                //         "received CoreWallet Transaction Data while account collection is empty"
+                                //     );
+                                // }
+                            }
+                            Binding::Custom(_) => {
+                                panic!("custom binding not supported");
+                            }
+                        }
+                    }
+
                     CoreWallet::Balance {
-                        balance: _,
-                        id: _,
-                        mature_utxo_size: _,
-                        pending_utxo_size: _,
-                    } => {}
+                        balance,
+                        id,
+                        mature_utxo_size,
+                        pending_utxo_size,
+                    } => {
+                        if let Some(account_collection) = &self.account_collection {
+                            if let Some(account) = account_collection.get(&id.into()) {
+                                println!("*** updating account balance: {}", id);
+                                account.update_balance(
+                                    balance,
+                                    mature_utxo_size,
+                                    pending_utxo_size,
+                                )?;
+                            } else {
+                                log_error!("unable to find account {}", id);
+                            }
+                        } else {
+                            log_error!(
+                                "received CoreWallet::Balance while account collection is empty"
+                            );
+                        }
+                    }
                 }
             } // _ => unimplemented!()
         }
@@ -965,26 +1100,26 @@ impl Core {
         });
     }
 
-    pub fn update_account_list(&self) {
-        let interop = self.interop.clone();
-        spawn(async move {
-            // let account_map = HashMap::group_from(account_list.into_iter().map(|account| (account.prv_key_data_id().unwrap(), account)));
-            let account_list = interop.wallet().account_enumerate().await?; //activate_all_stored_accounts().await?;
-            let account_list = account_list
-                .into_iter()
-                .map(Account::from)
-                .collect::<Vec<_>>();
-            interop
-                .send(Events::AccountList {
-                    account_list: Arc::new(account_list),
-                })
-                .await?;
-            // interop
-            //     .wallet()
-            //     .autoselect_default_account_if_single()
-            //     .await
-            //     .ok();
-            Ok(())
-        });
-    }
+    // pub fn update_account_list(&self) {
+    //     let interop = self.interop.clone();
+    //     spawn(async move {
+    //         // let account_map = HashMap::group_from(account_list.into_iter().map(|account| (account.prv_key_data_id().unwrap(), account)));
+    //         let account_list = interop.wallet().account_enumerate().await?; //activate_all_stored_accounts().await?;
+    //         let account_list = account_list
+    //             .into_iter()
+    //             .map(Account::from)
+    //             .collect::<Vec<_>>();
+    //         interop
+    //             .send(Events::AccountList {
+    //                 account_list: Box::new(account_list),
+    //             })
+    //             .await?;
+    //         // interop
+    //         //     .wallet()
+    //         //     .autoselect_default_account_if_single()
+    //         //     .await
+    //         //     .ok();
+    //         Ok(())
+    //     });
+    // }
 }

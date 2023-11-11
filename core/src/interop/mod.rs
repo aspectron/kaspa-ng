@@ -22,6 +22,7 @@ pub struct Inner {
     application_events: ApplicationEventsChannel,
     kaspa: Arc<KaspaService>,
     runtime: Runtime,
+    egui_ctx: egui::Context,
 }
 
 #[derive(Clone)]
@@ -42,6 +43,7 @@ impl Interop {
                 application_events,
                 kaspa,
                 runtime,
+                egui_ctx: egui_ctx.clone(),
                 // services: Mutex::new(services),
             }),
         };
@@ -109,7 +111,6 @@ impl Interop {
     }
 
     pub fn try_send(&self, msg: Events) -> Result<()> {
-        println!("interop try_send()");
         self.inner.application_events.sender.try_send(msg)?;
         Ok(())
     }
@@ -150,6 +151,13 @@ impl Interop {
             }
         });
     }
+
+    pub fn egui_ctx(&self) -> &egui::Context {
+        &self.inner.egui_ctx
+    }
+    // pub fn request_repaint(&self) {
+    //     self.inner.egui_ctx.request_repaint();
+    // }
 }
 
 static mut INTEROP: Option<Interop> = None;

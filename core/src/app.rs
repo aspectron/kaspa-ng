@@ -101,6 +101,8 @@ cfg_if! {
                     let native_options = eframe::NativeOptions {
                         icon_data : IconData::try_from_png_bytes(KASPA_NG_ICON_256X256).ok(),
                         persist_window : true,
+                        // initial_window_size : Some(egui::Vec2 { x : 1000.0, y : 600.0 }),
+                        // min_window_size : Some(egui::Vec2 { x : 1000.0, y : 600.0 }),
                         ..Default::default()
                     };
                     eframe::run_native(
@@ -115,12 +117,12 @@ cfg_if! {
                             Box::new(kaspa_ng_core::Core::new(cc, interop, settings))
                         }),
                     )?;
-                    // println!("exit initiated...");
+                    println!("exit initiated...");
 
                     let interop = interop.lock().unwrap().take().unwrap();
-                    // println!("wallet shutdown");
+                    println!("wallet shutdown");
                     interop.shutdown();
-                    // println!("worker join");
+                    println!("worker join");
                     interop.join().await;
                     println!("exit");
                     interop.drop();
