@@ -168,7 +168,17 @@ impl Core {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        let modules = crate::modules::register_modules(&interop);
+        let modules: HashMap<TypeId, Module> = {
+            cfg_if! {
+                if #[cfg(not(target_arch = "wasm32"))] {
+                    crate::modules::register_generic_modules(&interop).into_iter().chain(
+                        crate::modules::register_native_modules(&interop).into_iter()
+                    ).collect()
+                } else {
+                    crate::modules::register_generic_modules(&interop)
+                }
+            }
+        };
 
         let mut module = if settings.developer_mode {
             modules
@@ -507,20 +517,24 @@ impl eframe::App for Core {
                         // }
                         // ui.separator();
                         // if ui.button(RichText::new(format!("{} Settings",egui_phosphor::light::GEAR))).clicked() {
-                        if ui.button("Node").clicked() {
-                            self.select::<modules::Node>();
-                        }
-                        ui.separator();
-                        if ui.button("Metrics").clicked() {
-                            self.select::<modules::Metrics>();
-                        }
-                        ui.separator();
                         if ui.button("Settings").clicked() {
                             self.select::<modules::Settings>();
                         }
-                        ui.separator();
-                        if ui.button("Logs").clicked() {
-                            self.select::<modules::Logs>();
+                        cfg_if! {
+                            if #[cfg(not(target_arch = "wasm32"))] {
+                                ui.separator();
+                                if ui.button("Node").clicked() {
+                                    self.select::<modules::Node>();
+                                }
+                                ui.separator();
+                                if ui.button("Metrics").clicked() {
+                                    self.select::<modules::Metrics>();
+                                }
+                                ui.separator();
+                                if ui.button("Logs").clicked() {
+                                    self.select::<modules::Logs>();
+                                }
+                            }
                         }
                         ui.separator();
                         if ui.button("About").clicked() {
@@ -709,7 +723,8 @@ impl eframe::App for Core {
 
 impl Core {
     fn render_status(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
+        egui::menu::bar(ui, |ui| {
+            // ui.horizontal(|ui| {
             if !self.state().is_connected() {
                 self.render_connected_state(ui, Status::Disconnected);
             } else {
@@ -773,12 +788,82 @@ impl Core {
         }
     }
 
+    fn render_network_selector(&self, ui: &mut Ui) {
+        // let network_selector_id = ui.make_persistent_id("network-selector");
+        // let mut network_selector =
+        // ui.button(self.settings.node.network.to_string());//.sense(Sense::clickable());
+        // ui.label(self.settings.node.network.to_string());//.sense(Sense::clickable());
+        // network_selector.sense.click = true;
+        // if network_selector.clicked() {
+        ui.menu_button(self.settings.node.network.to_string(), |ui| {
+            Network::iter().for_each(|network| {
+                if ui.button(network.to_string()).clicked() {
+                    ui.close_menu();
+                }
+            });
+        });
+
+        // }
+        // if network_selector.clicked() {
+        //     println!("network selector clicked...");
+        //     popup_above_or_below_widget(ui, network_selector_id, &network_selector, AboveOrBelow::Above, |ui| {
+
+        //             Network::iter().for_each(|network| {
+        //                 if ui.button(network.to_string()).clicked() {
+        //                     ui.close_menu();
+        //                 }
+        //             });
+        //     });
+        // }
+    }
+
     fn render_connected_state(&self, ui: &mut egui::Ui, state: Status) {
         //connected : bool, icon: &str, color : Color32) {
         let status_area_width = ui.available_width() - 24.;
         let status_icon_size = theme().status_icon_size;
 
         match state {
+            Status::Disconnected => {
+                ui.add_space(4.);
+
+                match self.settings.node.node_kind {
+                    KaspadNodeKind::Disable => {
+                        ui.label(
+                            RichText::new(egui_phosphor::light::PLUGS)
+                                .size(status_icon_size)
+                                .color(Color32::LIGHT_RED),
+                        );
+                        ui.separator();
+                        ui.label("Not Connected");
+                    }
+                    KaspadNodeKind::Remote => {
+                        ui.label(
+                            RichText::new(egui_phosphor::light::TREE_STRUCTURE)
+                                .size(status_icon_size)
+                                .color(Color32::LIGHT_RED),
+                        );
+                        ui.separator();
+                        ui.label("Connecting...");
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    _ => {
+                        ui.label(
+                            RichText::new(egui_phosphor::light::PLUGS)
+                                .size(status_icon_size)
+                                .color(Color32::LIGHT_RED),
+                        );
+                        ui.separator();
+                        ui.label("Starting...");
+                    }
+                }
+                // if self.settings.node.node_kind != KaspadNodeKind::Disable {
+                //     ui.label("Not Connected");
+
+                // } else {
+                //     ui.label("Not Connected");
+                // }
+            }
+
             Status::Connected {
                 current_daa_score,
                 peers,
@@ -797,18 +882,7 @@ impl Core {
                 ui.label("CONNECTED");
                 // }
                 ui.separator();
-                // let network_selector =
-                ui.label(self.settings.node.network.to_string());
-                // if network_selector.clicked() {
-                //     popup_above_or_below_widget(ui, "network-selector".into(), &network_selector, AboveOrBelow::Above, |ui| {
-
-                //             Network::iter().for_each(|network| {
-                //                 if ui.button(network.to_string()).clicked() {
-                //                     ui.close_menu();
-                //                 }
-                //             });
-                //     });
-                // }
+                self.render_network_selector(ui);
                 // ui.menu_button(self.settings.node.network.to_string(), |ui| {
                 //     Network::iter().for_each(|network| {
                 //         if ui.button(network.to_string()).clicked() {
@@ -824,16 +898,6 @@ impl Core {
                     ui.label(format!("DAA {}", current_daa_score.separated_string()));
                 }
             }
-            Status::Disconnected => {
-                ui.add_space(4.);
-                ui.label(
-                    RichText::new(egui_phosphor::light::PLUGS)
-                        .size(status_icon_size)
-                        .color(Color32::LIGHT_RED),
-                );
-                ui.separator();
-                ui.label("Not Connected");
-            }
             Status::Syncing { sync_status, peers } => {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
@@ -846,7 +910,9 @@ impl Core {
                         ui.separator();
                         ui.label("CONNECTED");
                         ui.separator();
-                        ui.label(self.settings.node.network.to_string());
+                        self.render_network_selector(ui);
+
+                        // ui.label(self.settings.node.network.to_string());
                         ui.separator();
                         self.render_peers(ui, peers);
                         if let Some(status) = sync_status.as_ref() {

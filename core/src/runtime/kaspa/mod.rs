@@ -4,11 +4,19 @@ use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
-#[cfg(not(target_arch = "wasm32"))]
-use kaspa_rpc_service::service::RpcCoreService;
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 use kaspa_wallet_core::{ConnectOptions, ConnectStrategy};
+
+cfg_if! {
+    if #[cfg(not(target_arch = "wasm32"))] {
+        #[cfg(not(target_arch = "wasm32"))]
+        use kaspa_rpc_service::service::RpcCoreService;
+
+        const LOG_BUFFER_LINES: usize = 4096;
+        const LOG_BUFFER_MARGIN: usize = 128;
+    }
+}
 
 #[allow(clippy::identity_op)]
 const MAX_METRICS_SAMPLES: usize = 60 * 60 * 24 * 1; // 1 day
@@ -77,7 +85,8 @@ pub struct KaspaService {
     #[cfg(not(target_arch = "wasm32"))]
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
     #[cfg(not(target_arch = "wasm32"))]
-    pub logs: Mutex<VecDeque<Log>>,
+    pub logs: Mutex<Vec<Log>>,
+    // pub logs: Mutex<VecDeque<Log>>,
 }
 
 impl KaspaService {
@@ -129,7 +138,8 @@ impl KaspaService {
             #[cfg(not(target_arch = "wasm32"))]
             kaspad: Mutex::new(None),
             #[cfg(not(target_arch = "wasm32"))]
-            logs: Mutex::new(VecDeque::new()),
+            logs: Mutex::new(Vec::new()),
+            // logs: Mutex::new(VecDeque::new()),
         }
     }
 
@@ -201,7 +211,8 @@ impl KaspaService {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn logs(&self) -> MutexGuard<'_, VecDeque<Log>> {
+    // pub fn logs(&self) -> MutexGuard<'_, VecDeque<Log>> {
+    pub fn logs(&self) -> MutexGuard<'_, Vec<Log>> {
         self.logs.lock().unwrap()
     }
 
@@ -209,10 +220,11 @@ impl KaspaService {
     pub async fn update_logs(&self, line: String) {
         {
             let mut logs = self.logs.lock().unwrap();
-            while logs.len() > 4096 {
-                logs.pop_front();
+            if logs.len() > LOG_BUFFER_LINES {
+                logs.drain(0..LOG_BUFFER_MARGIN);
             }
-            logs.push_back(line.as_str().into());
+            // logs.push_back(line.as_str().into());
+            logs.push(line.as_str().into());
         }
 
         if update_logs_flag().load(Ordering::SeqCst) {

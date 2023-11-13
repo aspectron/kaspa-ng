@@ -1,5 +1,5 @@
 [package]
-name = "chrome"
+name = "kaspa-ng-chrome"
 version.workspace = true
 authors.workspace = true
 license.workspace = true

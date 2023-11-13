@@ -2,27 +2,30 @@ use std::any::type_name;
 
 use crate::imports::*;
 
-kaspa_ng_macros::register_modules!([
-    about,
-    account_manager,
-    deposit,
-    metrics,
-    wallet_open,
-    request,
-    send,
-    settings,
-    transactions,
-    account_create,
-    wallet_create,
-    export,
-    import,
-    testing,
-    logs,
-    changelog,
-    welcome,
-    overview,
-    node,
-]);
+kaspa_ng_macros::register_modules!(
+    register_generic_modules,
+    [
+        about,
+        account_create,
+        account_manager,
+        changelog,
+        deposit,
+        export,
+        import,
+        overview,
+        request,
+        send,
+        settings,
+        testing,
+        transactions,
+        wallet_create,
+        wallet_open,
+        welcome,
+    ]
+);
+
+#[cfg(not(target_arch = "wasm32"))]
+kaspa_ng_macros::register_modules!(register_native_modules, [logs, metrics, node,]);
 
 pub enum ModuleStyle {
     Large,

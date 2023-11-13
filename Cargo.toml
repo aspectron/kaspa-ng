@@ -90,18 +90,21 @@ kaspad = { path = "../rusty-kaspa/kaspad" }
 # workflow-chrome = "0.8.1"
 # workflow-core = "0.8.1"
 # workflow-dom = "0.8.1"
+# workflow-http = "0.8.1"
 # workflow-i18n = "0.8.1"
 # workflow-log = "0.8.1"
 # workflow-store = "0.8.1"
 workflow-chrome = { path = "../workflow-rs/chrome" }
 workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
 workflow-dom = { path = "../workflow-rs/dom" }
+workflow-http = { path = "../workflow-rs/http" }
 workflow-i18n = { path = "../workflow-rs/i18n" }
 workflow-log = { path = "../workflow-rs/log" }
 workflow-store = { path = "../workflow-rs/store" }
 # workflow-chrome = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-core = {  git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["no-unsafe-eval"] }
 # workflow-dom = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
+# workflow-http = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-log = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-store = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }

@@ -51,43 +51,19 @@ impl ModuleT for Metrics {
                     for metric in Metric::list().into_iter() {
                         
                         ui.vertical(|ui| {
-                            // let value = metrics.get(&metric);
-                            // let caption = metrics.format(&metric, true);
-                            // ui.rig
                             ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
-
                                 ui.label(metrics.format(&metric, true));
                             });
 
                             // ---
-                            
-                            let metrics_data = self.interop.kaspa_service().metrics_data();
-                            let data = metrics_data.get(&metric).unwrap();
-                            let duration = 60 * 10; // 15 min (testing)
-                            let samples = if data.len() < duration { data.len() } else { duration };
+                            let graph_data = {
 
-                            let graph_data = data[data.len()-samples..].to_vec();
-                            // let graph_data = &data[data.len()-samples..];//.to_vec();
-                            // let start_time = graph_data[0].x;
-
-                            // let graph_data = if graph_data.len() < samples {
-                            //     // vec![PlotPoint::new(0.,0.),samples-graph_data.len()]//.concat(graph_data)
-                            //     let len = samples-graph_data.len();
-                            //     let mut vec = Vec::with_capacity(len);
-                            //     for _ in 0..len {
-                            //         vec.push(PlotPoint::new(0.,0.));
-                            //     }
-                            //     vec
-                            // } else {
-                            //     graph_data.to_vec()
-                            // };
-
-                            // let graph = CompositeGraph::new(metric.as_str(), &period_data);
-                            // ui.add(graph);
-
-
-
-
+                                let metrics_data = self.interop.kaspa_service().metrics_data();
+                                let data = metrics_data.get(&metric).unwrap();
+                                let duration = 60 * 10; // 15 min (testing)
+                                let samples = if data.len() < duration { data.len() } else { duration };
+                                data[data.len()-samples..].to_vec()
+                            };
 
                             // let first_point = graph_data[0];
                             // let last_point = graph_data[graph_data.len() - 1];
@@ -103,20 +79,14 @@ impl ModuleT for Metrics {
                                 .allow_drag([false, false])
                                 .allow_scroll(false)
                                 .y_axis_formatter(move |y,_size,_range|{
-                                    // "".to_string()
                                     metric.format(y, true)
                                 })
                                 .x_axis_formatter(move |x, _size, _range| {
-                                    // workflow_log::log_info!("x:{x}, size:{size}, range:{range:?}");
-                                    // if x <= first_point.x || x >= last_point.x {
-                                        DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
-                                            .expect("could not parse timestamp")
-                                            .with_timezone(&chrono::Local)
-                                            .format("%H:%M:%S")
-                                            .to_string()
-                                    // } else {
-                                    //     "".to_string()
-                                    // }
+                                    DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
+                                        .expect("could not parse timestamp")
+                                        .with_timezone(&chrono::Local)
+                                        .format("%H:%M:%S")
+                                        .to_string()
                                 })
                                 .x_grid_spacer(
                                     uniform_grid_spacer(|_input| {
@@ -147,30 +117,6 @@ impl ModuleT for Metrics {
                             });
 
                             ui.add_space(12.);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                         });
                     }    

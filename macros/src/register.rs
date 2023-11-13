@@ -14,6 +14,7 @@ use syn::{
 
 #[derive(Debug)]
 struct Modules {
+    function_name: Expr,
     modules: ExprArray,
 }
 
@@ -26,18 +27,23 @@ impl Parse for Modules {
                 "usage: declare_modules!(<array of module names>)".to_string(),
             ));
         }
+
         let parsed = parsed.unwrap();
-        if parsed.len() != 1 {
+        if parsed.len() != 2 {
             return Err(Error::new_spanned(
                 parsed,
-                "usage: declare_modules!(<array of module names>)".to_string(),
+                "usage: declare_modules!(<function name>, <array of module names>)".to_string(),
             ));
         }
 
         let mut iter = parsed.iter();
+        let function_name = iter.next().unwrap().clone();
         let modules = get_modules(iter.next().unwrap().clone())?;
 
-        Ok(Modules { modules })
+        Ok(Modules {
+            function_name,
+            modules,
+        })
     }
 }
 
@@ -73,7 +79,10 @@ pub fn register_modules(input: TokenStream) -> TokenStream {
 }
 
 fn render(modules: Modules) -> TokenStream {
-    let Modules { modules } = modules;
+    let Modules {
+        function_name,
+        modules,
+    } = modules;
 
     let mut pub_mod = HashSet::new();
     let mut use_mod = Vec::new();
@@ -110,7 +119,7 @@ fn render(modules: Modules) -> TokenStream {
 
         #(#use_mod)*
 
-        pub fn register_modules(interop : &Interop) -> HashMap::<TypeId, Module> {
+        pub fn #function_name (interop : &Interop) -> HashMap::<TypeId, Module> {
             let mut modules = HashMap::<TypeId, Module>::new();
 
             #(#targets)*
