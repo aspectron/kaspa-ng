@@ -24,8 +24,6 @@ cfg_if! {
         use crate::utils::*;
         use std::fs;
 
-        // use log::info;
-
         #[derive(Debug)]
         enum I18n {
 
@@ -60,46 +58,23 @@ cfg_if! {
                         .action(ArgAction::SetTrue)
                         .help("Reset KaspaNG settings.")
                     )
-                    .arg(
-                        Arg::new("i18n-export")
-                        .long("i18n-export")
-                        .action(ArgAction::SetTrue)
-                        .hide(true)
-                        .help("Update i18n dictionary data.")
-                    )
 
-                    // .arg(arg!(--i18n "Process."))
                     .subcommand(
                         Command::new("i18n").hide(true)
                         .subcommand(
-                            Command::new("import")//.hide(true)
+                            Command::new("import")
                             // .help("import i18n data")
                             .about("import JSON files suffixed with language codes (*_en.json, *_de.json, etc.)")
                         )
                         .subcommand(
-                            Command::new("export")//.hide(true)
+                            Command::new("export")
                             .about("export default 'en' data as JSON")
                         )
                     )
                     ;
 
-
-
                     let matches = cmd.get_matches();
-
-                    // let v = matches.subcommand_matches("i18n")
-                    //     .and_then(|matches|{
-                    //         matches.subcommand_matches("import").map(|_|I18n::Import).or_else(||{
-                    //             matches.subcommand_matches("export").map(|_|I18n::Export)
-                    //         })
-
-                    //     });
-
-                    // println!("v: {:#?}", v);
-                    // std::process::exit(1);
-
-                        // .map(|_matches|I18n::Import)
-                        // .or_else(|| matches);
+                    // println!("matches: {:#?}", matches);
 
                     if let Some(matches) = matches.subcommand_matches("i18n") {
                         if let Some(_matches) = matches.subcommand_matches("import") {
@@ -114,20 +89,7 @@ cfg_if! {
                         let disable = matches.get_one::<bool>("disable").cloned().unwrap_or(false);
 
                         Args::Kng { reset_settings, disable }
-
                     }
-                    // println!("Args: {:#?}", v);
-                    // std::process::exit(1);
-
-                    // let i18n_import = matches.subcommand_matches("i18n").and_then(|matches|matches.subcommand_matches("import")).is_some();
-                    // let i18n_export = matches.subcommand_matches("i18n").and_then(|matches|matches.subcommand_matches("export")).is_some();
-
-
-                    // println!("matches: {:#?}", matches);
-
-                    // println!("i18n import: {:#?}", i18n_import);
-                    // println!("i18n export: {:#?}", i18n_export);
-                    // std::process::exit(1);
             }
         }
 
@@ -162,16 +124,17 @@ cfg_if! {
 
                     match op {
                         I18n::Import => {
-                            let source_folder = std::env::current_dir()?;
+                            let source_folder = i18n_storage_folder()?;
                             println!("importing translation files from: '{}'", source_folder.display());
                             i18n::import_translation_files(source_folder,false)?;
                         }
                         I18n::Export => {
-                            let target_folder = if let Some(cwd) = try_cwd_repo_root()? {
+                            let mut target_folder = if let Some(cwd) = try_cwd_repo_root()? {
                                 cwd.join("resources").join("i18n")
                             } else {
                                 std::env::current_dir()?
                             };
+                            target_folder.push("kaspa-ng_en.json");
                             println!("exporting default language to: '{}'", target_folder.display());
                             i18n::export_default_language(move |json_data: &str| {
                                 Ok(fs::write(&target_folder, json_data)?)

@@ -78,20 +78,15 @@ pub struct Core {
     interop: Interop,
     wallet: Arc<dyn WalletApi>,
     channel: ApplicationEventsChannel,
-    // module: TypeId,
     module: Module,
-    // stack: VecDeque<TypeId>,
     stack: VecDeque<Module>,
     modules: HashMap<TypeId, Module>,
-    // #[allow(dead_code)]
     pub settings: Settings,
-
     pub toasts: Toasts,
-
     pub large_style: egui::Style,
     pub default_style: egui::Style,
-
     pub metrics: Option<Box<MetricsSnapshot>>,
+
     state: State,
     hint: Option<Hint>,
     discard_hint: bool,
@@ -99,13 +94,11 @@ pub struct Core {
 
     pub wallet_list: Vec<WalletDescriptor>,
     pub account_collection: Option<AccountCollection>,
-    // pub account_list: Option<Vec<Account>>,
-    // pub account_map: Option<HashMap<AccountId, Account>>,
     pub selected_account: Option<Account>,
 }
 
 impl Core {
-    /// Called once before the first frame.
+    /// Core initialization
     pub fn new(
         cc: &eframe::CreationContext<'_>,
         interop: crate::interop::Interop,
@@ -172,7 +165,7 @@ impl Core {
             cfg_if! {
                 if #[cfg(not(target_arch = "wasm32"))] {
                     crate::modules::register_generic_modules(&interop).into_iter().chain(
-                        crate::modules::register_native_modules(&interop).into_iter()
+                        crate::modules::register_native_modules(&interop)
                     ).collect()
                 } else {
                     crate::modules::register_generic_modules(&interop)
@@ -202,10 +195,6 @@ impl Core {
                 .clone();
         }
 
-        // modules.get_mut_with_typeid::<modules::Settings>().init(&settings);
-
-        // modules.get(&TypeId::of::<modules::Settings>()).unwrap().init(&settings);
-
         let channel = interop.application_events().clone();
         let wallet = interop.wallet().clone();
 
@@ -213,8 +202,7 @@ impl Core {
             interop,
             wallet,
             channel,
-            // module: TypeId::of::<modules::WalletOpen>(),
-            module, //: TypeId::of::<modules::Testing>(),
+            module,
             modules: modules.clone(),
             stack: VecDeque::new(),
             settings: settings.clone(),
@@ -285,11 +273,6 @@ impl Core {
         }
     }
 
-    // pub fn select_with_type_id(&mut self, type_id : TypeId)
-    // {
-    //     self.section = type_id;
-    // }
-
     pub fn sender(&self) -> crate::channel::Sender<Events> {
         self.channel.sender.clone()
     }
@@ -302,22 +285,6 @@ impl Core {
         &self.state
     }
 
-    // pub fn wallet(&self) -> &Arc<runtime::Wallet> {
-    //     &self.wallet
-    // }
-
-    // pub fn rpc_api(&self) -> Arc<DynRpcApi> {
-    //     self.wallet().rpc_api()
-    // }
-
-    // pub fn rpc_client(&self) -> Option<Arc<KaspaRpcClient>> {
-    //     self.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok()
-    // }
-
-    // pub fn network_id(&self) -> Result<NetworkId> {
-    //     Ok(self.wallet().network_id()?)
-    // }
-
     pub fn wallet_list(&self) -> &Vec<WalletDescriptor> {
         &self.wallet_list
     }
@@ -325,13 +292,6 @@ impl Core {
     pub fn account_collection(&self) -> &Option<AccountCollection> {
         &self.account_collection
     }
-    // pub fn account_list(&self) -> &Option<Vec<Account>> {
-    //     &self.account_collection.list
-    // }
-
-    // pub fn url(&self) -> String {
-    //     self.rpc_client().url().to_string()
-    // }
 
     pub fn modules(&self) -> &HashMap<TypeId, Module> {
         &self.modules
@@ -710,14 +670,14 @@ impl eframe::App for Core {
                 });
         */
 
-        if false {
-            egui::Window::new("Window").show(ctx, |ui| {
-                ui.label("Windows can be moved by dragging them.");
-                ui.label("They are automatically sized based on contents.");
-                ui.label("You can turn on resizing and scrolling if you like.");
-                ui.label("You would normally choose either panels OR windows.");
-            });
-        }
+        // if false {
+        //     egui::Window::new("Window").show(ctx, |ui| {
+        //         ui.label("Windows can be moved by dragging them.");
+        //         ui.label("They are automatically sized based on contents.");
+        //         ui.label("You can turn on resizing and scrolling if you like.");
+        //         ui.label("You would normally choose either panels OR windows.");
+        //     });
+        // }
     }
 }
 
@@ -789,32 +749,14 @@ impl Core {
     }
 
     fn render_network_selector(&self, ui: &mut Ui) {
-        // let network_selector_id = ui.make_persistent_id("network-selector");
-        // let mut network_selector =
-        // ui.button(self.settings.node.network.to_string());//.sense(Sense::clickable());
-        // ui.label(self.settings.node.network.to_string());//.sense(Sense::clickable());
-        // network_selector.sense.click = true;
-        // if network_selector.clicked() {
-        ui.menu_button(self.settings.node.network.to_string(), |ui| {
-            Network::iter().for_each(|network| {
-                if ui.button(network.to_string()).clicked() {
-                    ui.close_menu();
-                }
-            });
-        });
-
-        // }
-        // if network_selector.clicked() {
-        //     println!("network selector clicked...");
-        //     popup_above_or_below_widget(ui, network_selector_id, &network_selector, AboveOrBelow::Above, |ui| {
-
-        //             Network::iter().for_each(|network| {
-        //                 if ui.button(network.to_string()).clicked() {
-        //                     ui.close_menu();
-        //                 }
-        //             });
+        ui.label(self.settings.node.network.to_string());
+        // ui.menu_button(self.settings.node.network.to_string(), |ui| {
+        //     Network::iter().for_each(|network| {
+        //         if ui.button(network.to_string()).clicked() {
+        //             ui.close_menu();
+        //         }
         //     });
-        // }
+        // });
     }
 
     fn render_connected_state(&self, ui: &mut egui::Ui, state: Status) {

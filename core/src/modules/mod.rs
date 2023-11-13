@@ -60,17 +60,6 @@ pub trait ModuleT: Downcast {
         frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     );
-
-    // fn render(
-    //     &mut self,
-    //     wallet: &mut Wallet,
-    //     _ctx: &egui::Context,
-    //     _frame: &mut eframe::Frame,
-    //     ui: &mut egui::Ui,
-    // ) {
-    //     ui.style_mut().text_styles = wallet.large_style.text_styles.clone();
-    //     self.main(wallet, _ctx, _frame, ui);
-    // }
 }
 
 impl_downcast!(ModuleT);
@@ -139,7 +128,6 @@ impl Module {
             .borrow_mut()
             .name()
             .unwrap_or_else(|| self.inner.name.as_str())
-        // self.inner.name.as_str()
     }
 
     pub fn type_id(&self) -> TypeId {
@@ -192,48 +180,14 @@ pub trait HashMapModuleExtension<T> {
     fn insert_typeid(&mut self, value: T)
     where
         T: ModuleT + 'static;
-
-    // fn get_with_typeid<M>(&self) -> Ref<'_, M>
-    // where
-    //     M: ModuleT + 'static;
-
-    // fn get_mut_with_typeid<M>(&mut self) -> RefMut<'_, M>
-    // where
-    //     M: ModuleT + 'static;
 }
 
-// impl<T> HashMapSectionExtension<T> for HashMap<TypeId, Rc<RefCell<dyn SectionT>>>
 impl<T> HashMapModuleExtension<T> for HashMap<TypeId, Module>
 where
     T: ModuleT,
 {
     fn insert_typeid(&mut self, section: T) {
         let section = Rc::new(RefCell::new(section));
-        // let name = type_name::<T>().to_string();
         self.insert(TypeId::of::<T>(), section.into());
     }
-
-    // fn get_with_typeid<M>(&self) -> Ref<'_, M>
-    // where
-    //     M: ModuleT + 'static,
-    // {
-    //     let cell = self.get(&TypeId::of::<M>()).unwrap();
-    //     Ref::map(cell.inner.module.borrow(), |r| {
-    //         (r).as_any()
-    //             .downcast_ref::<M>()
-    //             .expect("unable to downcast section")
-    //     })
-    // }
-
-    // fn get_mut_with_typeid<M>(&mut self) -> RefMut<'_, M>
-    // where
-    //     M: ModuleT + 'static,
-    // {
-    //     let cell = self.get_mut(&TypeId::of::<M>()).unwrap();
-    //     RefMut::map(cell.inner.module.borrow_mut(), |r| {
-    //         (r).as_any_mut()
-    //             .downcast_mut::<M>()
-    //             .expect("unable to downcast_mut module")
-    //     })
-    // }
 }
