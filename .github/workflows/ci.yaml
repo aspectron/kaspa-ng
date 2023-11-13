@@ -65,7 +65,7 @@ jobs:
           sudo apt-get clean || echo "::warning::The command [sudo apt-get clean] failed to complete successfully. Proceeding..."
           df -h          
 
-      Free up disk space on Ubuntu
+      # Free up disk space on Ubuntu
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
         with:
