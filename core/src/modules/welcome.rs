@@ -74,16 +74,17 @@ impl ModuleT for Welcome {
 
                             ui.label("Language:");
 
-                            let dict = dict();
+                            // let dict = i18n::dict();
                             let language_code = core.settings.language_code.clone();
-                            let language = dict.language(language_code.as_str()).unwrap().unwrap();
+                            let dictionary = i18n::dictionary();
+                            let language = dictionary.language_title(language_code.as_str()).unwrap();//.unwrap();
                             egui::ComboBox::from_id_source("language_selector")
                                 .selected_text(language)
                                 .show_ui(ui, |ui| {
                                     ui.style_mut().wrap = Some(false);
                                     ui.set_min_width(60.0);
-                                    ["en", "pt", "ru", "zh_HANS", "it"].into_iter().for_each(|lang| {
-                                        ui.selectable_value(&mut self.settings.language_code, lang.to_string(), dict.language(lang).unwrap().unwrap());
+                                    dictionary.enabled_languages().into_iter().for_each(|(code,lang)| {
+                                        ui.selectable_value(&mut self.settings.language_code, code.to_string(), lang);
                                     });
                                 });
 

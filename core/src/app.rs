@@ -3,12 +3,14 @@ use cfg_if::cfg_if;
 use kaspa_ng_core::interop;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::api::WalletApi;
+use std::path::PathBuf;
 use std::sync::Arc;
 use workflow_i18n::*;
 use workflow_log::*;
 
 #[allow(unused)]
 pub const KASPA_NG_ICON_256X256: &[u8] = include_bytes!("../../resources/icons/icon-256.png");
+pub const I18N_DATA: &str = include_str!("../../resources/i18n/i18n.json");
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -26,6 +28,7 @@ cfg_if! {
             Kng {
                 reset_settings : bool,
                 disable : bool,
+                rebuild_i18n: bool,
             },
             Kaspad { args : Box<NodeArgs> },
         }
@@ -46,13 +49,24 @@ cfg_if! {
                         .long("reset-settings")
                         .action(ArgAction::SetTrue)
                         .help("Reset KaspaNG settings.")
-                    );
+                    )
+                    .arg(
+                        Arg::new("i18n")
+                        .long("i18n")
+                        .action(ArgAction::SetTrue)
+                        .hide(true)
+                        .help("Update i18n dictionary data.")
+                    )
+                    // .arg(arg!(--i18n "Process."))
+
+                    ;
 
                     let matches = cmd.get_matches();
                     let reset_settings = matches.get_one::<bool>("reset-settings").cloned().unwrap_or(false);
                     let disable = matches.get_one::<bool>("disable").cloned().unwrap_or(false);
+                    let rebuild_i18n = matches.get_one::<bool>("i18n").cloned().unwrap_or(false);
 
-                    Args::Kng { reset_settings, disable }
+                    Args::Kng { reset_settings, disable, rebuild_i18n }
             }
         }
 
@@ -70,7 +84,7 @@ cfg_if! {
                     core.run();
                 }
 
-                Args::Kng { reset_settings, disable } => {
+                Args::Kng { reset_settings, disable, rebuild_i18n } => {
 
                     println!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version());
 
@@ -93,7 +107,27 @@ cfg_if! {
                         settings.node.node_kind = kaspa_ng_core::settings::KaspadNodeKind::Disable;
                     }
 
-                    init_i18n(settings.language_code.as_str()).expect("failed to init i18n");
+                    if rebuild_i18n {
+
+                        let storage_path = i18n::storage_path()?;
+                        let i18n_json = storage_path.join("i18n.json");
+                        if !i18n_json.exists() {
+                            i18n::try_init(settings.language_code.as_str(), "en", None, Option::<PathBuf>::None).expect("failed to init i18n");
+                            i18n::store(i18n::storage_path()?).expect("failed to store i18n data");
+                        }
+                        // else {
+
+                        // }
+                        // i18n::store("hello").expect("failed to store i18n data");
+
+                        return Ok(());
+                    } else {
+                        // i18n::try_init(settings.language_code.as_str(), "en", Some(I18N_DATA), Some(i18n::storage_path()?)).expect("failed to init i18n");
+                        i18n::try_init(settings.language_code.as_str(), "en", Some(I18N_DATA), Option::<PathBuf>::None).expect("failed to init i18n");
+
+                    }
+
+
 
                     let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
                     let delegate = interop.clone();

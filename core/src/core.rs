@@ -530,18 +530,21 @@ impl eframe::App for Core {
                     });
 
                     cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        let dict = dict();
-                        let language_code = self.settings.language_code.clone();
-                        let language = dict.language(language_code.as_str()).unwrap().unwrap();
+                        let dictionary = i18n::dictionary();
                         #[allow(clippy::useless_format)]
-                        ui.menu_button(format!("{language}"), |ui| {
-                            ["en", "pt", "ru", "zh_HANS", "it"].iter().for_each(|lang| {
-                                if ui.button(dict.language(lang).unwrap().unwrap()).clicked() {
-                                    self.settings.language_code = lang.to_string();
-                                    // self.settings.save();
-                                    ui.close_menu();
-                                }
-                            });
+                        ui.menu_button(format!("{}", dictionary.current_title()), |ui| {
+                            dictionary
+                                .enabled_languages()
+                                .into_iter()
+                                .for_each(|(code, lang)| {
+                                    if ui.button(lang).clicked() {
+                                        self.settings.language_code = code.to_string();
+                                        dictionary
+                                            .activate_language_code(code)
+                                            .expect("Unable to activate language");
+                                        ui.close_menu();
+                                    }
+                                });
                         });
 
                         ui.separator();
@@ -794,7 +797,18 @@ impl Core {
                 ui.label("CONNECTED");
                 // }
                 ui.separator();
+                // let network_selector =
                 ui.label(self.settings.node.network.to_string());
+                // if network_selector.clicked() {
+                //     popup_above_or_below_widget(ui, "network-selector".into(), &network_selector, AboveOrBelow::Above, |ui| {
+
+                //             Network::iter().for_each(|network| {
+                //                 if ui.button(network.to_string()).clicked() {
+                //                     ui.close_menu();
+                //                 }
+                //             });
+                //     });
+                // }
                 // ui.menu_button(self.settings.node.network.to_string(), |ui| {
                 //     Network::iter().for_each(|network| {
                 //         if ui.button(network.to_string()).clicked() {

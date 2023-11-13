@@ -65,7 +65,7 @@ impl KaspadNodeKind {
         KASPAD_NODE_KINDS.iter()
     }
 
-    pub fn describe(&self) -> String {
+    pub fn describe(&self) -> &str {
         match self {
             KaspadNodeKind::Disable => i18n("Disable"),
             KaspadNodeKind::Remote => i18n("Connect to Remote RPC"),

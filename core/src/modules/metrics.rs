@@ -96,6 +96,7 @@ impl ModuleT for Metrics {
                                 .height(96.)
                                 .auto_bounds_x()
                                 .auto_bounds_y()
+                                .set_margin_fraction(vec2(0.0,0.0) )
                                 .y_axis_width(4)
                                 .show_axes(true)
                                 .show_grid(true)

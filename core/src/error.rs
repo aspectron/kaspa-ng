@@ -1,5 +1,4 @@
 use std::net::AddrParseError;
-
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 use workflow_core::channel::{ChannelError, SendError, TrySendError};
@@ -56,6 +55,9 @@ pub enum Error {
 
     #[error(transparent)]
     AddrParseError(#[from] AddrParseError),
+
+    #[error(transparent)]
+    I18n(#[from] workflow_i18n::error::Error),
 }
 
 impl Error {

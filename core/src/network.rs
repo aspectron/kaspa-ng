@@ -46,7 +46,7 @@ impl Network {
         NETWORKS.iter()
     }
 
-    pub fn describe(&self) -> String {
+    pub fn describe(&self) -> &str {
         match self {
             Network::Mainnet => i18n("Mainnet (Main Kaspa network)"),
             Network::Testnet10 => i18n("Testnet-10 (1 BPS)"),
