@@ -4,11 +4,9 @@ members = [
     "app",
     "core",
     "macros",
-    "background",
     "extensions/chrome",
 ]
 default-members = ["app"]
-
 
 [workspace.package]
 version = "0.1.0"
@@ -16,61 +14,18 @@ authors = ["ASPECTRON Inc."]
 license = "MIT/Apache-2.0"
 edition = "2021"
 
-
 [workspace.dependencies]
+
 kaspa-ng = { version = "0.1.0", path = "app/" }
 kaspa-ng-core = { version = "0.1.0", path = "core/" }
 kaspa-ng-macros = { version = "0.1.0", path = "macros/" }
-kaspa-ng-background = { version = "0.1.0", path = "background/" }
 
-# kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
-kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core", features=["no-unsafe-eval"] }
-kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
-kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
-kaspa-utils = { path = "../rusty-kaspa/utils" }
-kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
-kaspa-metrics = { path = "../rusty-kaspa/metrics/metrics" }
+# ___________________
+#  ____ ____ _  _ _ 
+#  |___ | __ |  | | 
+#  |___ |__] |__| | 
+# ___________________
 
-# workflow-core = "0.8.1"
-# workflow-log = "0.8.1"
-# workflow-dom = "0.8.1"
-# workflow-store = "0.8.1"
-# workflow-chrome = "0.8.1"
-# workflow-i18n = "0.8.1"
-workflow-log = { path = "../workflow-rs/log" }
-workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
-workflow-dom = { path = "../workflow-rs/dom" }
-workflow-store = { path = "../workflow-rs/store" }
-workflow-chrome = { path = "../workflow-rs/chrome" }
-workflow-i18n = { path = "../workflow-rs/i18n" }
-
-
-cfg-if = "1.0.0"
-log = "0.4"
-serde = { version = "1", features = ["derive"] }
-thiserror = "1.0.47"
-derivative = "2.2.0"
-downcast = "0.11.0"
-downcast-rs = "1.2.0"
-separator = "0.4.1"
-futures = { version = "0.3" }
-futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
-zeroize = { version = "1", default-features = false, features = ["alloc"] }
-async-trait = "0.1.73"
-slug = "0.1.4"
-qrcode = "0.12.0"
-js-sys = "0.3.64"
-wasm-bindgen = "0.2.87"
-rand = "0.8"
-chrome-sys = "0.1.0"
-pad = "0.1.6"
-
-# chrome-sys = {path = "../chrome-sys"}
-
-chrono = "0.4.31"
 egui = "0.23.0"
 egui_plot = "0.23.0"
 egui_extras = { version = "0.23.0", features = ["svg"] }
@@ -96,28 +51,93 @@ egui-notify = "0.10.0"
 # egui-notify = { path = "../egui-notify" }
 # egui-toast = { path = "../egui-toast" }
 
-web-sys = { version = "0.3.64", features = [
-    # 'console',
-    # 'Document',
-    # 'Element',
-    # 'HtmlElement',
-    'Window',
-] }
+# _______________________________________________________
+#  ____ _  _ ____ ___ _   _    _  _ ____ ____ ___  ____ 
+#  |__/ |  | [__   |   \_/  __ |_/  |__| [__  |__] |__| 
+#  |  \ |__| ___]  |    |      | \_ |  | ___] |    |  | 
+# _______________________________________________________
 
-# native:
-kaspad = { path = "../rusty-kaspa/kaspad" }
-kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
-kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
+kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
+kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
 kaspa-core = { path = "../rusty-kaspa/core" }
-tokio = { version = "1", features = ["sync", "rt-multi-thread", "process"] }
-ctrlc = { version = "3.2", features = ["termination"] }
-env_logger = "0.10"
-num_cpus = "1.15.0"
+kaspa-metrics = { path = "../rusty-kaspa/metrics/metrics" }
+kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
+kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
+kaspa-utils = { path = "../rusty-kaspa/utils" }
+kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core", features=["no-unsafe-eval"] }
+kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
+kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
+kaspad = { path = "../rusty-kaspa/kaspad" }
+
+# kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+# kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+# kaspa-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+# kaspa-metrics = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+# kaspa-rpc-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+# kaspa-rpc-service = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+# kaspa-utils = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+# kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng", features=["no-unsafe-eval"] }
+# kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng", features=["no-unsafe-eval"] }
+# kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+# kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "kng" }
+
+# _________________________________________________________
+#  _ _ _ ____ ____ _  _ ____ _    ____ _ _ _    ____ ____ 
+#  | | | |  | |__/ |_/  |___ |    |  | | | | __ |__/ [__  
+#  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
+# _________________________________________________________
+
+# workflow-chrome = "0.8.1"
+# workflow-core = "0.8.1"
+# workflow-dom = "0.8.1"
+# workflow-i18n = "0.8.1"
+# workflow-log = "0.8.1"
+# workflow-store = "0.8.1"
+workflow-chrome = { path = "../workflow-rs/chrome" }
+workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
+workflow-dom = { path = "../workflow-rs/dom" }
+workflow-i18n = { path = "../workflow-rs/i18n" }
+workflow-log = { path = "../workflow-rs/log" }
+workflow-store = { path = "../workflow-rs/store" }
+# workflow-chrome = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
+# workflow-core = {  git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["no-unsafe-eval"] }
+# workflow-dom = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
+# workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
+# workflow-log = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
+# workflow-store = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
+
+# ----------------------------------------
+# ----------------------------------------
+# ----------------------------------------
+
+async-trait = "0.1.73"
+cfg-if = "1.0.0"
+chrome-sys = "0.1.0"
+# chrome-sys = {path = "../chrome-sys"}
+chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["derive", "string", "cargo"] }
-
-
-# web:
+ctrlc = { version = "3.2", features = ["termination"] }
+derivative = "2.2.0"
+downcast = "0.11.0"
+downcast-rs = "1.2.0"
+env_logger = "0.10"
+futures = { version = "0.3" }
+futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
+js-sys = "0.3.64"
+log = "0.4"
+num_cpus = "1.15.0"
+pad = "0.1.6"
+qrcode = "0.12.0"
+rand = "0.8"
+separator = "0.4.1"
+serde = { version = "1", features = ["derive"] }
+slug = "0.1.4"
+thiserror = "1.0.47"
+tokio = { version = "1", features = ["sync", "rt-multi-thread", "process"] }
+wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3.64", features = ['Window'] }
+zeroize = { version = "1", default-features = false, features = ["alloc"] }
 
 [profile.release]
 opt-level = 2 # fast and small wasm
