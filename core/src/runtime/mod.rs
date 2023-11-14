@@ -1,13 +1,13 @@
 use crate::imports::*;
 
-cfg_if! {
-    if #[cfg(not(target_arch = "wasm32"))] {
-        // pub mod signals;
-        pub mod panic;
-    } else {
-        // ...
-    }
-}
+// cfg_if! {
+//     if #[cfg(not(target_arch = "wasm32"))] {
+//         // pub mod signals;
+//         pub mod panic;
+//     } else {
+//         // ...
+//     }
+// }
 
 pub mod service;
 use futures_util::future::join_all;

@@ -21,7 +21,10 @@ pub struct Theme {
 
     pub status_icon_size: f32,
     pub progress_color: Color32,
-    pub graph_color: Color32,
+    pub performance_graph_color: Color32,
+    pub storage_graph_color: Color32,
+    pub node_graph_color: Color32,
+    pub network_graph_color: Color32,
     // pub panel_icon_size : f32,
     // pub panel_icon_padding : f32,
 }
@@ -50,7 +53,11 @@ impl Default for Theme {
 
             status_icon_size: 18_f32,
             progress_color: Color32::from_rgb(21, 82, 71),
-            graph_color: Color32::from_rgb(58, 221, 190),
+            performance_graph_color: Color32::from_rgb(186, 238, 255),
+            storage_graph_color: Color32::from_rgb(255, 231, 186),
+            node_graph_color: Color32::from_rgb(241, 255, 186),
+            network_graph_color: Color32::from_rgb(186, 255, 241),
+            // network_graph_color: Color32::from_rgb(58, 221, 190),
             // graph_color: Color32::from_rgb(21, 82, 71),
             // panel_icon_size : IconSize::new(Vec2::splat(26.),Vec2::new(36.,26.)),
         }

@@ -97,7 +97,7 @@ cfg_if! {
 
             use std::sync::Mutex;
 
-            runtime::panic::init_panic_handler();
+            interop::panic::init_panic_handler();
 
             match parse_args() {
                 Args::Kaspad{ args } => {

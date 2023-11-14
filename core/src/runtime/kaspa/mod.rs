@@ -19,7 +19,7 @@ cfg_if! {
 }
 
 #[allow(clippy::identity_op)]
-const MAX_METRICS_SAMPLES: usize = 60 * 60 * 24 * 1; // 1 day
+pub const MAX_METRICS_SAMPLES: usize = 60 * 60 * 24 * 1; // 1 day
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {

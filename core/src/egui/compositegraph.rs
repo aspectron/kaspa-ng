@@ -120,7 +120,7 @@ impl<'a> CompositeGraph<'a> {
         // ))
 
         Line::new(PlotPoints::Owned(self.graph_data.clone()))
-            .color(crate::egui::theme::theme().graph_color)
+            .color(crate::egui::theme::theme().performance_graph_color)
             // .color(Color32::from_rgb(200, 100, 100))
             .style(LineStyle::Solid)
             .fill(0.0)

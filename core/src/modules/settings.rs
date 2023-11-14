@@ -211,6 +211,10 @@ impl ModuleT for Settings {
                     notification : Notification::info("Test Toast")
                 }).unwrap();
             }
+            ui.add_space(32.);
+            if ui.button("Test Panic").clicked() {
+                panic!("Testing panic...");
+            }
     }
 }
 
