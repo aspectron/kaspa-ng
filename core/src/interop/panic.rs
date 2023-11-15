@@ -1,4 +1,4 @@
-use std::{panic, process};
+use std::panic;
 
 pub fn init_panic_handler() {
     let default_hook = panic::take_hook();

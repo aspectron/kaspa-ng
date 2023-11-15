@@ -21,6 +21,7 @@ pub struct Inner {
     runtime: Runtime,
     egui_ctx: egui::Context,
     is_running: Arc<AtomicBool>,
+    start_time: std::time::Instant,
 }
 
 /// Interop is a core component of the Kaspa NG application responsible for
@@ -44,12 +45,17 @@ impl Interop {
                 runtime,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
+                start_time: std::time::Instant::now(),
             }),
         };
 
         register_global(Some(interop.clone()));
 
         interop
+    }
+
+    pub fn uptime(&self) -> Duration {
+        self.inner.start_time.elapsed()
     }
 
     /// Get a reference to the interop runtime.
@@ -160,7 +166,7 @@ fn register_global(interop: Option<Interop>) {
     }
 }
 
-/// Spawn an async task that will result in 
+/// Spawn an async task that will result in
 /// egui redraw upon its completion.
 pub fn spawn<F>(task: F)
 where
@@ -169,7 +175,7 @@ where
     interop().spawn_task(task);
 }
 
-/// Spawn an async task that will result in 
+/// Spawn an async task that will result in
 /// egui redraw upon its completion. Upon
 /// the task completion, the supplied [`Payload`]
 /// will be populated with the task result.
@@ -192,12 +198,11 @@ pub fn halt() {
     }
 }
 
-/// Attempt to halt the interop runtime but exit the process 
-/// if it takes too long. This is used in attempt to shutdown 
+/// Attempt to halt the interop runtime but exit the process
+/// if it takes too long. This is used in attempt to shutdown
 /// kaspad if the kaspa-ng process panics, which can result
 /// in a still functioning zombie child process on unix systems.
 pub fn abort() {
-
     const TIMEOUT: u128 = 5000;
     let flag = Arc::new(AtomicBool::new(false));
     let flag_ = flag.clone();
@@ -212,7 +217,8 @@ pub fn abort() {
                 }
                 std::thread::sleep(std::time::Duration::from_millis(50));
             }
-        }).ok();
+        })
+        .ok();
 
     halt();
 
@@ -222,5 +228,4 @@ pub fn abort() {
     }
 
     std::process::exit(1);
-
 }

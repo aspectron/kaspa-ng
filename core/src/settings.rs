@@ -292,18 +292,18 @@ impl From<&NodeSettings> for RpcConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct MetricsSettings {
-    pub graph_columns : usize,
-    pub graph_height : usize,
-    pub graph_duration : usize,
+    pub graph_columns: usize,
+    pub graph_height: usize,
+    pub graph_duration: usize,
     // pub rows : usize,
 }
 
 impl Default for MetricsSettings {
     fn default() -> Self {
         Self {
-            graph_columns : 1,
-            graph_height : 96,
-            graph_duration : 15 * 60,
+            graph_columns: 1,
+            graph_height: 96,
+            graph_duration: 15 * 60,
             // rows : 5,
         }
     }
@@ -312,7 +312,7 @@ impl Default for MetricsSettings {
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct UxSettings {
-    pub metrics : MetricsSettings,
+    pub metrics: MetricsSettings,
 }
 
 // impl Default for UxSettings {

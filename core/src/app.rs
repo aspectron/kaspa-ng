@@ -18,7 +18,6 @@ cfg_if! {
         use kaspad_lib::args::parse_args as parse_kaspad_args;
         use kaspa_utils::fd_budget;
         use kaspa_core::signals::Signals;
-        use kaspa_ng_core::runtime;
         use clap::ArgAction;
         use eframe::IconData;
         use crate::utils::*;

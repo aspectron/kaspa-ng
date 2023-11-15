@@ -36,7 +36,7 @@ impl ModuleT for Metrics {
     ) {
         let theme = theme();
 
-        ui.heading("p2p Node Metrics");
+        ui.heading("Node Metrics");
         ui.separator();
 
         let mut graph_columns = core.settings.ux.metrics.graph_columns;
@@ -103,7 +103,7 @@ impl ModuleT for Metrics {
                                 if let Some(metric) = metric_iter.next() {
                                     // let duration = 60 * 10; // 15 min (testing)
                                     let duration = core.settings.ux.metrics.graph_duration;
-                                    render_metric(ui,&self.interop,metric,metrics,theme,duration,graph_width,graph_height);
+                                    self.render_metric(ui,metric,metrics,theme,duration,graph_width,graph_height);
                                 } else {
                                     draw = false;
                                 }
@@ -116,96 +116,120 @@ impl ModuleT for Metrics {
     }
 }
 
+impl Metrics {
 
-fn render_metric(ui : &mut Ui, interop: &Interop, metric : Metric, metrics : &MetricsSnapshot, theme : &Theme, duration : usize, graph_width : f32, graph_height : f32 ) {
+    #[allow(clippy::too_many_arguments)]
+    fn render_metric(
+        &mut self, 
+        ui : &mut Ui, 
+        metric : Metric, 
+        metrics : &MetricsSnapshot, 
+        theme : &Theme, 
+        duration : usize, 
+        graph_width : f32, 
+        graph_height : f32
+    ) {
 
-    let group = MetricGroup::from(metric);
+        let group = MetricGroup::from(metric);
+        let graph_color = match group {
+            MetricGroup::System => theme.performance_graph_color,
+            MetricGroup::Storage => theme.storage_graph_color,
+            MetricGroup::Node => theme.node_graph_color,
+            MetricGroup::Network => theme.network_graph_color,
+        };
 
-    let graph_color = match group {
-        MetricGroup::System => theme.performance_graph_color,
-        MetricGroup::Storage => theme.storage_graph_color,
-        MetricGroup::Node => theme.node_graph_color,
-        MetricGroup::Network => theme.network_graph_color,
-    };
+        StripBuilder::new(ui)
+            .size(Size::exact(graph_width))
+            .horizontal(|mut strip| {
 
-    StripBuilder::new(ui)
-    .size(Size::exact(graph_width))
-    .horizontal(|mut strip| {
+                strip.cell(|ui| {
+                ui.vertical(|ui| {
+                    ui.add_space(8.);
+                    ui.horizontal(|ui|{
+                        ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
+                            ui.label(format!("{}: {}", i18n(metric.title()), metric.format(metrics.get(&metric), true, false)));
+                        });
+                    });
 
-        strip.cell(|ui| {
-        ui.vertical(|ui| {
-            ui.add_space(8.);
-            ui.horizontal(|ui|{
-                ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
-                    ui.label(format!("{}: {}", i18n(metric.title()), metric.format(metrics.get(&metric), true, false)));
+                    // ---
+                    let graph_data = {
+                        let metrics_data = self.interop.kaspa_service().metrics_data();
+                        let data = metrics_data.get(&metric).unwrap();
+                        let samples = if data.len() < duration { data.len() } else { duration };
+                        data[data.len()-samples..].to_vec()
+                    };
+
+                    let mut plot = Plot::new(metric.as_str())
+                        .legend(Legend::default())
+                        .width(graph_width)
+                        .height(graph_height)
+                        .auto_bounds_x()
+                        .auto_bounds_y()
+                        .set_margin_fraction(vec2(0.0,0.0) )
+                        .y_axis_width(4)
+                        .show_axes(true)
+                        .show_grid(true)
+                        .allow_drag([false, false])
+                        .allow_scroll(false)
+                        .y_axis_formatter(move |y,_size,_range|{
+                            metric.format(y, true, true)
+                        })
+                        .x_axis_formatter(move |x, _size, _range| {
+                            DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
+                                .expect("could not parse timestamp")
+                                .with_timezone(&chrono::Local)
+                                .format("%H:%M:%S")
+                                .to_string()
+                        })
+                        .x_grid_spacer(
+                            uniform_grid_spacer(move |input| {
+
+                                let (start_time,stop_time) = input.bounds;
+                                let range = stop_time - start_time;
+                                let base_step_size = range / graph_width as f64 * 64.;
+                                calculate_grid_lines(base_step_size)
+                            })
+                        )
+                        .label_formatter(move |_name, point| {
+                            let PlotPoint { x, y } = point;
+
+                            format!("{} @ {}", metric.format(*y, true, true), DateTime::<chrono::Utc>::from_timestamp((*x / 1000.0) as i64, 0)
+                                .expect("could not parse timestamp")
+                                .with_timezone(&chrono::Local)
+                                .format("%H:%M:%S")
+                            )
+                        })                                                    
+                        ;
+
+                    if [Metric::CpuUsage].contains(&metric) {
+                        plot = plot.include_y(100.);
+                    }
+            
+                    if [
+                        Metric::ResidentSetSizeBytes, 
+                        Metric::VirtualMemorySizeBytes,
+                        Metric::FdNum,
+                        // Metric::DiskIoReadBytes,
+                        // Metric::DiskIoWriteBytes,
+                        Metric::DiskIoReadPerSec,
+                        Metric::DiskIoWritePerSec,
+                        Metric::Tps,
+                    ].contains(&metric) {
+                        plot = plot.include_y(100.);
+                    }
+            
+                    let line = Line::new(PlotPoints::Owned(graph_data))
+                        .color(graph_color)
+                        .style(LineStyle::Solid)
+                        .fill(0.0);
+            
+                        plot.show(ui, |plot_ui| {
+                            plot_ui.line(line);
+                        });
+                    });
                 });
             });
-
-            // ---
-            let graph_data = {
-                let metrics_data = interop.kaspa_service().metrics_data();
-                let data = metrics_data.get(&metric).unwrap();
-                let samples = if data.len() < duration { data.len() } else { duration };
-                data[data.len()-samples..].to_vec()
-            };
-
-            let mut plot = Plot::new(metric.as_str())
-                .legend(Legend::default())
-                .width(graph_width)
-                .height(graph_height)
-                .auto_bounds_x()
-                .auto_bounds_y()
-                .set_margin_fraction(vec2(0.0,0.0) )
-                .y_axis_width(4)
-                .show_axes(true)
-                .show_grid(true)
-                .allow_drag([false, false])
-                .allow_scroll(false)
-                .y_axis_formatter(move |y,_size,_range|{
-                    metric.format(y, true, true)
-                })
-                .x_axis_formatter(move |x, _size, _range| {
-                    DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
-                        .expect("could not parse timestamp")
-                        .with_timezone(&chrono::Local)
-                        .format("%H:%M:%S")
-                        .to_string()
-                })
-                .x_grid_spacer(
-                    uniform_grid_spacer(move |input| {
-
-                        let (start_time,stop_time) = input.bounds;
-                        let range = stop_time - start_time;
-                        let base_step_size = range / graph_width as f64 * 64.;
-                        calculate_grid_lines(base_step_size)
-                    })
-                )
-                .label_formatter(move |_name, point| {
-                    let PlotPoint { x, y } = point;
-
-                    format!("{} @ {}", metric.format(*y, true, true), DateTime::<chrono::Utc>::from_timestamp((*x / 1000.0) as i64, 0)
-                        .expect("could not parse timestamp")
-                        .with_timezone(&chrono::Local)
-                        .format("%H:%M:%S")
-                    )
-                })                                                    
-                ;
-
-            if metric == Metric::CpuUsage {
-                plot = plot.include_y(100.);
-            }
-    
-            let line = Line::new(PlotPoints::Owned(graph_data))
-                .color(graph_color)
-                .style(LineStyle::Solid)
-                .fill(0.0);
-    
-            plot.show(ui, |plot_ui| {
-                plot_ui.line(line);
-            });
-        });
-    });
-});
+    }
 }
 
 fn calculate_grid_lines(base_step_size : f64) -> [f64; 3] {
@@ -226,7 +250,7 @@ fn calculate_grid_lines(base_step_size : f64) -> [f64; 3] {
         large_grid *= 2.;
     }
 
-    [small_grid as f64, medium_grid as f64, large_grid as f64]
+    [small_grid, medium_grid, large_grid]
 }
 
 fn format_duration(seconds: u64) -> String {

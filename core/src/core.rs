@@ -123,17 +123,21 @@ impl Core {
 
         // "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
         // "/System/Library/Fonts/Hiragino Sans GB.ttc"
-        fonts.font_data.insert(
-            "test_font".to_owned(),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
-            egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
-        );
 
-        fonts
-            .families
-            .entry(egui::FontFamily::Proportional)
-            .or_default()
-            .insert(0, "test_font".to_owned());
+        // ---
+        // fonts.font_data.insert(
+        //     "test_font".to_owned(),
+        //     // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
+        //     egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
+        // );
+
+        // fonts
+        //     .families
+        //     .entry(egui::FontFamily::Proportional)
+        //     .or_default()
+        //     .insert(0, "test_font".to_owned());
+
+        // ---
 
         // #[cfg(target_os = "macos")]
         // if let Ok(font) = std::fs::read("/System/Library/Fonts/Hiragino Sans GB.ttc") {
@@ -600,10 +604,10 @@ impl eframe::App for Core {
         });
         // });
 
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            self.render_status(ui);
-            egui::warn_if_debug_build(ui);
-        });
+        // egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+        //     self.render_status(ui);
+        //     egui::warn_if_debug_build(ui);
+        // });
         /*
         if size.x > 600. {
             egui::SidePanel::left("left_panel").show(&ctx, |ui| {
@@ -734,6 +738,13 @@ impl eframe::App for Core {
         //         ui.label("You would normally choose either panels OR windows.");
         //     });
         // }
+
+
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            self.render_status(ui);
+            egui::warn_if_debug_build(ui);
+        });
+
     }
 }
 
@@ -845,11 +856,12 @@ impl Core {
                     }
                     #[cfg(not(target_arch = "wasm32"))]
                     _ => {
-                        ui.label(
-                            RichText::new(egui_phosphor::light::PLUGS)
-                                .size(status_icon_size)
-                                .color(Color32::LIGHT_RED),
-                        );
+                        ui.add(egui::Spinner::new());
+                        // ui.label(
+                        //     RichText::new(egui_phosphor::light::PLUGS)
+                        //         .size(status_icon_size)
+                        //         .color(Color32::LIGHT_RED),
+                        // );
                         ui.separator();
                         ui.label("Starting...");
                     }
@@ -1218,7 +1230,7 @@ impl Core {
     //     });
     // }
 
-    fn init_fonts(&self, egui_ctx: &egui::Context) {
+    fn _init_fonts(&self, egui_ctx: &egui::Context) {
         let mut fonts = egui::FontDefinitions::default();
 
         // Install my own font (maybe supporting non-latin characters).

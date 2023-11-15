@@ -21,6 +21,7 @@ pub struct Theme {
 
     pub status_icon_size: f32,
     pub progress_color: Color32,
+    pub graph_frame_color: Color32,
     pub performance_graph_color: Color32,
     pub storage_graph_color: Color32,
     pub node_graph_color: Color32,
@@ -53,6 +54,8 @@ impl Default for Theme {
 
             status_icon_size: 18_f32,
             progress_color: Color32::from_rgb(21, 82, 71),
+
+            graph_frame_color: Color32::GRAY,
             performance_graph_color: Color32::from_rgb(186, 238, 255),
             storage_graph_color: Color32::from_rgb(255, 231, 186),
             node_graph_color: Color32::from_rgb(241, 255, 186),
