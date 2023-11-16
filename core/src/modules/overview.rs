@@ -188,7 +188,7 @@ impl Overview {
                     });
 
                     let text = format!("{} {}", i18n(metric.title()).to_uppercase(), metric.format(value, true, true));
-                    let rich_text = egui::RichText::new(&text).size(10.).color(Color32::WHITE).raised();//.background_color(Color32::from_black_alpha(128));
+                    let rich_text = egui::RichText::new(text).size(10.).color(Color32::WHITE).raised();//.background_color(Color32::from_black_alpha(128));
                     let label = Label::new(rich_text);
                     let mut rect = plot_result.response.rect;
                     rect.set_bottom(rect.top() + 12.);

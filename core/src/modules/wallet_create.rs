@@ -577,7 +577,7 @@ impl ModuleT for WalletCreate {
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 this.state = State::Start;
                                 core.select::<modules::AccountManager>();
-                                core.update_wallet_list();
+                                core.wallet_update_list();
                             }
                         })
                         .render(ui);

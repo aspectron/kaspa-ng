@@ -39,6 +39,8 @@ struct Inner {
     descriptor: Mutex<AccountDescriptor>,
     context: Mutex<Option<Arc<Context>>>,
     transactions: Mutex<TransactionCollection>,
+    total_transaction_count: AtomicU64,
+    is_loading: AtomicBool,
 }
 
 impl Inner {
@@ -51,6 +53,8 @@ impl Inner {
             descriptor: Mutex::new(descriptor),
             context: Mutex::new(context),
             transactions: Mutex::new(TransactionCollection::default()),
+            total_transaction_count: AtomicU64::new(0),
+            is_loading: AtomicBool::new(true),
         }
     }
 
@@ -125,6 +129,36 @@ impl Account {
     ) -> Result<()> {
         *self.inner.balance.lock().unwrap() = balance;
         *self.inner.utxo_sizes.lock().unwrap() = Some((mature_utxo_size, pending_utxo_size));
+
+        Ok(())
+    }
+
+    pub fn set_loading(&self, is_loading: bool) {
+        self.inner.is_loading.store(is_loading, Ordering::SeqCst);
+    }
+
+    pub fn is_loading(&self) -> bool {
+        self.inner.is_loading.load(Ordering::SeqCst)
+    }
+
+    pub fn set_transaction_count(&self, count: u64) {
+        self.inner
+            .total_transaction_count
+            .store(count, Ordering::SeqCst);
+    }
+
+    pub fn transaction_count(&self) -> u64 {
+        self.inner.total_transaction_count.load(Ordering::SeqCst)
+    }
+
+    pub fn load_transactions(
+        &self,
+        transactions: Vec<Arc<TransactionRecord>>,
+        total: u64,
+    ) -> Result<()> {
+        self.set_transaction_count(total);
+        self.transactions()
+            .load(transactions.into_iter().map(|t| t.into()));
 
         Ok(())
     }

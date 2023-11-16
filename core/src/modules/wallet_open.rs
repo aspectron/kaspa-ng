@@ -156,7 +156,10 @@ impl ModuleT for WalletOpen {
                                 let wallet_name = ctx.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {
-                                    wallet.wallet_open(wallet_secret, wallet_name, true).await?;
+                                    // let account_descriptors = 
+                                    wallet.wallet_open(wallet_secret, wallet_name, true, true).await?;
+                                    // TODO - load transactions
+                                    // wallet.accounts_activate(None).await?;
                                     Ok(())
                                 });
 

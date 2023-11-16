@@ -39,7 +39,7 @@ where
         self.list.is_empty()
     }
 
-    pub fn insert(&mut self, v: T) {
+    pub fn push(&mut self, v: T) {
         self.map.insert(*v.id(), v.clone());
         self.list.push(v);
     }
@@ -95,6 +95,17 @@ where
     pub fn clear(&mut self) {
         self.list.clear();
         self.map.clear();
+    }
+
+    pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
+        for v in iter {
+            self.push(v);
+        }
+    }
+
+    pub fn load(&mut self, iter: impl IntoIterator<Item = T>) {
+        self.clear();
+        self.extend(iter);
     }
 }
 

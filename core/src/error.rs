@@ -58,6 +58,12 @@ pub enum Error {
 
     #[error(transparent)]
     I18n(#[from] workflow_i18n::error::Error),
+
+    #[error("Network id is not valid during the wallet open operation")]
+    WalletOpenNetworkId,
+
+    #[error("Account descriptors are not valid during the wallet open operation")]
+    WalletOpenAccountDescriptors,
 }
 
 impl Error {

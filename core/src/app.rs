@@ -32,6 +32,7 @@ cfg_if! {
 
         enum Args {
             I18n { op : I18n },
+            Cli,
             Kng {
                 reset_settings : bool,
                 disable : bool,
@@ -50,16 +51,17 @@ cfg_if! {
 
                     .about(format!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version()))
                     // .version(env!("CARGO_PKG_VERSION"))
-                    .arg(arg!(--disable "Disable node services when starting."))
+                    .arg(arg!(--disable "Disable node services when starting"))
                     .arg(
                         Arg::new("reset-settings")
                         .long("reset-settings")
                         .action(ArgAction::SetTrue)
-                        .help("Reset KaspaNG settings.")
+                        .help("Reset kaspa-ng settings")
                     )
 
                     .subcommand(
                         Command::new("i18n").hide(true)
+                        .about("kaspa-ng i18n user interface translation")
                         .subcommand(
                             Command::new("import")
                             // .help("import i18n data")
@@ -67,15 +69,22 @@ cfg_if! {
                         )
                         .subcommand(
                             Command::new("export")
-                            .about("export default 'en' data as JSON")
+                            .about("export default 'en' translations as JSON")
                         )
+                    )
+
+                    .subcommand(
+                        Command::new("cli")
+                            .about("Run kaspa-ng as rusty-kaspa cli wallet")
                     )
                     ;
 
                     let matches = cmd.get_matches();
                     // println!("matches: {:#?}", matches);
 
-                    if let Some(matches) = matches.subcommand_matches("i18n") {
+                    if matches.subcommand_matches("cli").is_some() {
+                        Args::Cli
+                    } else if let Some(matches) = matches.subcommand_matches("i18n") {
                         if let Some(_matches) = matches.subcommand_matches("import") {
                             Args::I18n { op : I18n::Import }
                         } else if let Some(_matches) = matches.subcommand_matches("export") {
@@ -99,6 +108,13 @@ cfg_if! {
             interop::panic::init_panic_handler();
 
             match parse_args() {
+                Args::Cli => {
+                    use kaspa_cli_lib::*;
+                    let result = kaspa_cli(TerminalOptions::new().with_prompt("$ "), None).await;
+                    if let Err(err) = result {
+                        println!("{err}");
+                    }
+                }
                 Args::Kaspad{ args } => {
                     let fd_total_budget = fd_budget::limit() - args.rpc_max_clients as i32 - args.inbound_limit as i32 - args.outbound_target as i32;
                     let (core, _) = create_core(*args, fd_total_budget);

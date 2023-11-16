@@ -311,7 +311,7 @@ impl AccountManager {
                     let estimate = self.estimate.clone();
 
                     spawn(async move {
-                        let request = AccountEstimateRequest {
+                        let request = AccountsEstimateRequest {
                             task_id: None,
                             account_id,
                             destination: payment_output.into(),
@@ -319,7 +319,7 @@ impl AccountManager {
                             payload: None,
                         };
 
-                        match interop.wallet().account_estimate_call(request).await {
+                        match interop.wallet().accounts_estimate_call(request).await {
                             Ok(response) => {
                                 *estimate.lock().unwrap() = Estimate::GeneratorSummary(response.generator_summary);
                             }
@@ -423,7 +423,7 @@ impl AccountManager {
                         let payment_secret = None; // Secret::try_from(self.payment_secret.clone()).expect("Invalid secret");
     
                         spawn(async move {
-                            let request = AccountSendRequest {
+                            let request = AccountsSendRequest {
                                 task_id: None,
                                 account_id,
                                 destination: payment_output.into(),
@@ -433,7 +433,7 @@ impl AccountManager {
                                 payload: None,
                             };
     
-                            match interop.wallet().account_send_call(request).await {
+                            match interop.wallet().accounts_send_call(request).await {
                                 Ok(response) => {
                                     println!("****** RESPONSE: {:?}", response);
                                     // *estimate.lock().unwrap() = Estimate::GeneratorSummary(response.generator_summary);

@@ -1,7 +1,49 @@
 use crate::imports::*;
 use kaspa_consensus_core::tx::{TransactionInput, TransactionOutpoint};
-use kaspa_wallet_core::storage::transaction::TransactionData;
-use pad::*;
+use kaspa_wallet_core::storage::{
+    transaction::{TransactionData, UtxoRecord},
+    TransactionType,
+};
+// use pad::*;
+
+pub trait AsColor {
+    fn as_color(&self) -> Color32;
+}
+
+impl AsColor for TransactionType {
+    fn as_color(&self) -> Color32 {
+        match self {
+            TransactionType::Incoming => Color32::LIGHT_GREEN,
+            TransactionType::Outgoing => Color32::LIGHT_RED,
+            TransactionType::External => Color32::LIGHT_BLUE,
+            TransactionType::Reorg => Color32::BLACK,
+            TransactionType::Batch => Color32::GRAY,
+        }
+    }
+}
+
+pub trait RenderUtxo {
+    fn render(&self, ui: &mut Ui, suffix: &str);
+}
+
+impl RenderUtxo for UtxoRecord {
+    fn render(&self, ui: &mut Ui, suffix: &str) {
+        let address = self
+            .address
+            .as_ref()
+            .map(|addr| addr.to_string())
+            .unwrap_or_else(|| "n/a".to_string());
+        // let index = self.index;
+        let amount = sompi_to_kaspa_string(self.amount);
+
+        ui.label(address);
+        if self.is_coinbase {
+            ui.label(format!("{} {amount} {suffix} COINBASE UTXO", ""));
+        } else {
+            ui.label(format!("{} {amount} {suffix} STANDARD UTXO", ""));
+        }
+    }
+}
 
 struct Inner {
     id: TransactionId,
@@ -55,37 +97,48 @@ impl From<TransactionRecord> for Transaction {
     }
 }
 
+impl From<Arc<TransactionRecord>> for Transaction {
+    fn from(record: Arc<TransactionRecord>) -> Self {
+        Self {
+            inner: Arc::new(Inner {
+                id: *record.id(),
+                record: Mutex::new(record),
+            }),
+        }
+    }
+}
+
 impl Transaction {
     pub fn render(
         &self,
         ui: &mut Ui,
         network_type: NetworkType,
         current_daa_score: Option<u64>,
-        include_utxos: bool,
+        _include_utxos: bool,
     ) {
         let record = self.record();
         let transaction_type = record.transaction_type();
         // let kind = transaction_type.style(&transaction_type.to_string());
 
-        let maturity_progress = current_daa_score
-            .and_then(|current_daa_score| {
-                record
-                    .maturity_progress(current_daa_score)
-                    .map(|progress| format!("{}% - ", (progress * 100.) as usize))
-            })
-            .unwrap_or_default()
-            .pad_to_width_with_alignment(7, Alignment::Right);
-        // .flatten();
+        let maturity_progress = current_daa_score.and_then(|current_daa_score| {
+            record
+                .maturity_progress(current_daa_score)
+                .map(|progress| format!("{}% - ", (progress * 100.) as usize))
+        });
 
         let block_daa_score = record.block_daa_score().separated_string();
-        // let state = state.unwrap_or(&maturity);
-        let mut lines = vec![format!(
-            "{}{} @{block_daa_score} DAA - {transaction_type}",
-            maturity_progress,
-            record.id()
-        )];
+        let transaction_id = record.id().to_string();
+        let short_id = transaction_id.chars().take(8).collect::<String>();
 
         let suffix = kaspa_suffix(&network_type);
+
+        let (default_color, strong_color) = if ui.visuals().dark_mode {
+            (Color32::LIGHT_GRAY, Color32::WHITE)
+        } else {
+            (Color32::DARK_GRAY, Color32::BLACK)
+        };
+
+        let font_id = FontId::monospace(12.0);
 
         match record.transaction_data() {
             TransactionData::Reorg {
@@ -101,32 +154,27 @@ impl Transaction {
                 aggregate_input_value,
             } => {
                 let aggregate_input_value = sompi_to_kaspa_string(*aggregate_input_value);
-                // .as_str();
-                lines.push(format!(
-                    "{:>10}UTXOs: {}  Total: {}",
-                    "",
-                    utxo_entries.len(),
-                    aggregate_input_value
-                ));
-                if include_utxos {
-                    for utxo_entry in utxo_entries {
-                        let address = utxo_entry
-                            .address
-                            .as_ref()
-                            .map(|addr| addr.to_string())
-                            .unwrap_or_else(|| "n/a".to_string());
-                        let index = utxo_entry.index;
-                        let is_coinbase = if utxo_entry.is_coinbase {
-                            format!("coinbase utxo [{index}]")
-                        } else {
-                            format!("standard utxo [{index}]")
-                        };
-                        let amount = sompi_to_kaspa_string(utxo_entry.amount);
 
-                        lines.push(format!("{:>10}{address}", ""));
-                        lines.push(format!("{:>10}{amount} {suffix} {is_coinbase}", ""));
-                    }
+                let mut job = LayoutJobBuilder::new(8.0, Some(font_id));
+
+                if let Some(maturity_progress) = maturity_progress {
+                    job = job.text(maturity_progress.as_str(), strong_color);
                 }
+
+                let job = job
+                    .text(&aggregate_input_value, transaction_type.as_color())
+                    .text(&transaction_type.to_string().to_uppercase(), default_color)
+                    .text(&short_id, default_color)
+                    .text(format!("@{} DAA", block_daa_score).as_str(), default_color);
+
+                CollapsingHeader::new(job)
+                    .id_source(transaction_id)
+                    .default_open(false)
+                    .show(ui, |ui| {
+                        utxo_entries.iter().for_each(|utxo_entry| {
+                            utxo_entry.render(ui, suffix);
+                        });
+                    });
             }
             TransactionData::Outgoing {
                 fees,
@@ -136,30 +184,45 @@ impl Transaction {
                 change_value,
                 ..
             } => {
-                if let Some(payment_value) = payment_value {
-                    lines.push(format!(
-                        "{:>10}Payment: {}  Used: {}  Fees: {}  Change: {}  UTXOs: [{}↠{}]",
-                        "",
-                        sompi_to_kaspa_string(*payment_value),
-                        sompi_to_kaspa_string(*aggregate_input_value),
-                        sompi_to_kaspa_string(*fees),
-                        sompi_to_kaspa_string(*change_value),
-                        transaction.inputs.len(),
-                        transaction.outputs.len(),
-                    ));
+                let job = if let Some(payment_value) = payment_value {
+                    LayoutJobBuilder::new(8.0, Some(font_id.clone()))
+                        .text("SEND", TransactionType::Outgoing.as_color())
+                        .text(
+                            &sompi_to_kaspa_string(*payment_value),
+                            TransactionType::Outgoing.as_color(),
+                        )
+                        .text("Used:", default_color)
+                        .text(&sompi_to_kaspa_string(*aggregate_input_value), strong_color)
+                        .text("Fees:", default_color)
+                        .text(
+                            &sompi_to_kaspa_string(*fees),
+                            TransactionType::Outgoing.as_color(),
+                        )
+                        .text("Change:", default_color)
+                        .text(
+                            &sompi_to_kaspa_string(*change_value),
+                            TransactionType::Incoming.as_color(),
+                        )
+                    //     transaction.inputs.len(),
+                    //     transaction.outputs.len(),
                 } else {
-                    lines.push(format!(
-                        "{:>10}Sweep: {}  Fees: {}  Change: {}  UTXOs: [{}↠{}]",
-                        "",
-                        sompi_to_kaspa_string(*aggregate_input_value),
-                        sompi_to_kaspa_string(*fees),
-                        sompi_to_kaspa_string(*change_value),
-                        transaction.inputs.len(),
-                        transaction.outputs.len(),
-                    ));
-                }
+                    LayoutJobBuilder::new(16.0, Some(font_id.clone()))
+                        .text("Sweep:", default_color)
+                        .text(&sompi_to_kaspa_string(*aggregate_input_value), strong_color)
+                        .text("Fees:", default_color)
+                        .text(
+                            &sompi_to_kaspa_string(*fees),
+                            TransactionType::Outgoing.as_color(),
+                        )
+                        .text("Change:", default_color)
+                        .text(&sompi_to_kaspa_string(*change_value), strong_color)
+                };
 
-                if include_utxos {
+                CollapsingHeader::new(job)
+                .id_source(transaction_id)
+                .default_open(false)
+                .show(ui, |ui| {
+
                     for (_n, input) in transaction.inputs.iter().enumerate() {
                         let TransactionInput {
                             previous_outpoint,
@@ -172,20 +235,15 @@ impl Transaction {
                             index,
                         } = previous_outpoint;
 
-                        lines.push(format!(
-                            "{:>10}{sequence:>2}: {transaction_id}:{index} SigOps: {sig_op_count}",
-                            ""
-                        ));
-                        // lines.push(format!("{:>4}{:>2}  Sig Ops: {sig_op_count}", "", ""));
-                        // lines.push(format!("{:>4}{:>2}   Script: {}", "", "", signature_script.to_hex()));
-                    }
-                }
-            }
-        }
+                        let text = RichText::new(format!(
+                            "{:>10}{sequence:>2}: {transaction_id}:{index} SigOps: {sig_op_count}",""
+                        )).font(font_id.clone());
 
-        for line in lines.iter() {
-            // ui.label(line);
-            ui.label(egui::RichText::new(line).size(14.).raised());
+                        ui.label(text);
+                    }
+
+                });
+            }
         }
     }
 }

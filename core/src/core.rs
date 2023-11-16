@@ -3,6 +3,7 @@ use crate::interop::Interop;
 use crate::sync::SyncStatus;
 use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
+use kaspa_wallet_core::api::TransactionDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint};
 use workflow_i18n::*;
@@ -290,7 +291,7 @@ impl Core {
             module.init(&mut this);
         });
 
-        this.update_wallet_list();
+        this.wallet_update_list();
 
         this
     }
@@ -739,12 +740,10 @@ impl eframe::App for Core {
         //     });
         // }
 
-
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             self.render_status(ui);
             egui::warn_if_debug_build(ui);
         });
-
     }
 }
 
@@ -1061,23 +1060,18 @@ impl Core {
                     } => {
                         self.state.is_open = true;
 
-                        if let Some(account_descriptors) = account_descriptors {
-                            let account_list = account_descriptors
-                                .into_iter()
-                                .map(Account::from)
-                                .collect::<Vec<_>>();
-
-                            self.account_collection = Some(account_list.into());
-                        } else {
-                            log_error!("CoreWallet::(WalletOpen | WalletReset): missing account descriptors");
-                        }
-
+                        let network_id = self.state.network_id.ok_or(Error::WalletOpenNetworkId)?;
+                        let account_descriptors = account_descriptors.ok_or(Error::WalletOpenAccountDescriptors)?;
+                        self.load_accounts(network_id, account_descriptors)?;
                         // self.update_account_list();
+                    }
+                    CoreWallet::AccountActivation { ids: _ } => {
+                        // TODO
                     }
                     CoreWallet::WalletError { message: _ } => {
                         // self.state.is_open = false;
                     }
-                    CoreWallet::WalletReady => {}
+                    // CoreWallet::WalletReady => {}
                     CoreWallet::WalletClose => {
                         self.hint = None;
                         self.state.is_open = false;
@@ -1194,7 +1188,7 @@ impl Core {
         Ok(())
     }
 
-    pub fn update_wallet_list(&self) {
+    pub fn wallet_update_list(&self) {
         let interop = self.interop.clone();
         spawn(async move {
             let wallet_list = interop.wallet().wallet_enumerate().await?;
@@ -1205,6 +1199,70 @@ impl Core {
                 .await?;
             Ok(())
         });
+    }
+
+    fn load_accounts(
+        &mut self,
+        network_id: NetworkId,
+        account_descriptors: Vec<AccountDescriptor>,
+    ) -> Result<()> {
+        let account_list = account_descriptors
+            .into_iter()
+            .map(Account::from)
+            .collect::<Vec<_>>();
+
+        self.account_collection = Some(account_list.clone().into());
+
+        let interop = self.interop.clone();
+        spawn(async move {
+            let account_ids = account_list
+                .iter()
+                .map(|account| account.id())
+                .collect::<Vec<_>>();
+            let account_map: HashMap<AccountId, Account> = account_list
+                .clone()
+                .into_iter()
+                .map(|account| (account.id(), account))
+                .collect::<HashMap<_, _>>();
+
+            let futures = account_ids
+                .into_iter()
+                .map(|account_id| {
+                    interop
+                        .wallet()
+                        .transaction_data_get_range(account_id, network_id, 0..128)
+                })
+                .collect::<Vec<_>>();
+
+            let transaction_data = join_all(futures)
+                .await
+                .into_iter()
+                .map(|v| v.map_err(Error::from))
+                .collect::<Result<Vec<_>>>()?;
+
+            transaction_data.into_iter().for_each(|data| {
+                let TransactionDataGetResponse {
+                    account_id,
+                    transactions,
+                    start: _,
+                    total,
+                } = data;
+
+                if let Some(account) = account_map.get(&account_id) {
+                    if let Err(err) = account.load_transactions(transactions, total) {
+                        log_error!("error loading transactions into account {account_id}: {err}");
+                    }
+                } else {
+                    log_error!("unable to find account {}", account_id);
+                }
+            });
+
+            interop.wallet().accounts_activate(None).await?;
+
+            Ok(())
+        });
+
+        Ok(())
     }
 
     // pub fn update_account_list(&self) {

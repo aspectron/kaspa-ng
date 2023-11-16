@@ -391,7 +391,7 @@ impl ModuleT for AccountCreate {
                                 // TODO - add account to wallet ^^^
                                 let descriptor = account.descriptor().unwrap();
                                 let account = Account::from(descriptor);
-                                core.account_collection.as_mut().unwrap().insert(account.clone());
+                                core.account_collection.as_mut().unwrap().push(account.clone());
 
                                 core.select::<modules::AccountManager>();
                                 core.get_mut::<modules::AccountManager>().select(Some(account));

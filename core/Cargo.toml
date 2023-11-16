@@ -15,6 +15,7 @@ default = []
 kaspa-ng-macros.workspace = true
 
 kaspa-bip32.workspace = true
+kaspa-cli.workspace = true
 kaspa-consensus-core.workspace = true
 kaspa-metrics.workspace = true
 kaspa-rpc-core.workspace = true

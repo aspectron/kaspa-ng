@@ -100,3 +100,46 @@ impl UiExtension for Ui {
         )
     }
 }
+
+#[derive(Default)]
+pub struct LayoutJobBuilder {
+    job: LayoutJob,
+    leading: f32,
+    font_id: Option<FontId>,
+}
+
+impl LayoutJobBuilder {
+    pub fn new(leading: f32, font_id: Option<FontId>) -> Self {
+        Self {
+            job: LayoutJob::default(),
+            leading,
+            font_id,
+        }
+    }
+
+    pub fn text(mut self, text: &str, color: Color32) -> Self {
+        self.job.append(
+            text,
+            self.leading,
+            TextFormat {
+                color,
+                font_id: self.font_id.clone().unwrap_or_default(),
+                ..Default::default()
+            },
+        );
+
+        self
+    }
+}
+
+impl From<LayoutJobBuilder> for LayoutJob {
+    fn from(builder: LayoutJobBuilder) -> Self {
+        builder.job
+    }
+}
+
+impl From<LayoutJobBuilder> for WidgetText {
+    fn from(builder: LayoutJobBuilder) -> Self {
+        builder.job.into()
+    }
+}

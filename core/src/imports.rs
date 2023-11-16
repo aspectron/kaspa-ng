@@ -20,6 +20,7 @@ pub use downcast_rs::{impl_downcast, Downcast, DowncastSync};
 // pub use futures_util::future::BoxFuture;
 pub use async_trait::async_trait;
 pub use futures::{future::FutureExt, select, Future};
+pub use futures_util::future::{join_all, try_join_all};
 pub use separator::*;
 pub use serde::{Deserialize, Serialize};
 pub use std::any::{Any, TypeId};
@@ -30,7 +31,7 @@ pub use std::path::{Path, PathBuf};
 pub use std::rc::Rc;
 pub use std::str::FromStr;
 pub use std::sync::{
-    atomic::{AtomicBool, AtomicU32, Ordering},
+    atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering},
     OnceLock,
 };
 pub use std::sync::{Arc, Mutex, MutexGuard};
