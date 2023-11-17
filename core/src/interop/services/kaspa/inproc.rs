@@ -1,5 +1,5 @@
 use crate::imports::*;
-use crate::runtime::kaspa::Config;
+use crate::interop::services::kaspa::Config;
 use kaspa_core::core::Core;
 use kaspa_core::signals::Shutdown;
 use kaspa_utils::fd_budget;

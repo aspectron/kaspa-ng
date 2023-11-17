@@ -1,9 +1,11 @@
-pub mod service;
-pub use service::Service;
-pub mod kaspa;
-pub use kaspa::KaspaService;
-
 use crate::imports::*;
+
+#[async_trait]
+pub trait Service: Sync + Send {
+    async fn spawn(self: Arc<Self>) -> Result<()>;
+    async fn join(self: Arc<Self>) -> Result<()>;
+    fn terminate(self: Arc<Self>);
+}
 
 pub struct Inner {
     services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,

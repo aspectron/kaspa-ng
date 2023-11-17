@@ -130,122 +130,167 @@ impl ModuleT for AccountManager {
             }
 
             State::Overview { account } => {
-                ui.heading("Wallet");
-                // ui.label("This is the overview page");
-                ui.label(format!("Account: {}", account.name_or_id()));
-                ui.separator();
-                ui.label(" ");
+                let width = ui.available_width();
 
-                // let network_type = if let Some(network_id) = wallet_state.network_id() {
-                //     network_id.network_type()
-                // } else {
-                //     ui.label("Network is not selected");
-                //     return;
-                // };
+                ui.horizontal(|ui| {
 
-                let context = if let Some(context) = account.context() {
-                    context
-                } else {
-                    ui.label("Account is missing context");
-                    return;
-                };
-
-                ui.label(format!("Address: {}", context.address()));
-
-                if ui.button(RichText::new(egui_phosphor::light::CLIPBOARD_TEXT)).clicked() {
-                    ui.output_mut(|o| o.copied_text = context.address().to_string());
-                }
-
-                // let balance = account.balance();
-                if let Some(balance) = account.balance() {
-                    // ui.label("Balance");
-                    ui.heading(
-                        RichText::new(sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)).code()
-                    );
-                    if balance.pending != 0 {
-                        ui.label(format!(
-                            "Pending: {}",
-                            sompi_to_kaspa_string_with_suffix(
-                                balance.pending,
-                                &network_type
-                            )
-                        ));
-                    }
-                } else {
-                    ui.label("Balance: N/A");
-                }
-
-                if let Some((mature_utxo_size, pending_utxo_size)) =
-                    account.utxo_sizes()
-                {
-                    if pending_utxo_size == 0 {
-                        ui.label(format!(
-                            "UTXOs: {}",
-                            mature_utxo_size,
-                        ));
-                    } else {
-                        ui.label(format!(
-                            "UTXOs: {} ({} pending)",
-                            mature_utxo_size, pending_utxo_size
-                        ));
-                    }
-                } else {
-                    ui.label("No UTXOs");
-                }
-
-                ui.vertical_centered(|ui| {
-                    ui.add(
-                        egui::Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://qr.svg"), bytes: context.qr() })
-                        .fit_to_original_size(1.)
-                        // .shrink_to_fit()
-                    );
-                });
-                
-                // ui.separator();
-
-
-                
-                // -----------------------------------------------------------------
-                // -----------------------------------------------------------------
-                // -----------------------------------------------------------------
-
-                if self.action.is_sending() {
-                    self.render_send_ui(core, ui, &account, &context, network_type);
-                } else {
-                    ui.horizontal(|ui| {
-                        if ui.medium_button("Send").clicked() {
-                            self.action = Action::Estimating;
-                            // self.state = State::Send {
-                            //     account: account.clone(),
-                            // };
-                        }
-                        if ui.medium_button("Receive").clicked() {
-                            // self.state = State::Receive {
-                            //     account: account.clone(),
-                            // };
-                        }
+                    ui.heading("Wallet");
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label(format!("Account: {}", account.name_or_id()));
+                        
                     });
-                }
-                // -----------------------------------------------------------------
-                // -----------------------------------------------------------------
-                // -----------------------------------------------------------------
-
-                ui.separator();
-
-                egui::ScrollArea::vertical().show(ui, |ui| {
-
-                    let transactions = account.transactions();
-
-                    if transactions.is_empty() {
-                        ui.label("No transactions");
-                    } else {
-                        transactions.reverse_iter().for_each(|transaction| {
-                            transaction.render(ui, network_type, current_daa_score, true);
-                        });
-                    }
-
                 });
 
+
+
+
+                SidePanel::left("account_manager_left").exact_width(width/2.).resizable(false).show_separator_line(true).show_inside(ui, |ui| {
+                    // ui.label("Kaspa NG");
+                    egui::ScrollArea::vertical()
+                        .id_source("overview_metrics")
+                        .auto_shrink([false; 2])
+                        .show(ui, |ui| {
+        
+                            // ui.label("This is the overview page");
+                            let context = if let Some(context) = account.context() {
+                                context
+                            } else {
+                                ui.label("Account is missing context");
+                                return;
+                            };
+                            ui.separator();
+                            // ui.label(" ");
+                            ui.add_space(8.);
+
+                            ui.horizontal(|ui|{
+
+                                let address = format_address(context.address(), Some(8));
+                                // ui.label(format!("Address: {}", context.address()));
+                                ui.label(format!("Address: {address}"));
+                                if ui.button(RichText::new(egui_phosphor::light::CLIPBOARD_TEXT)).clicked() {
+                                    ui.output_mut(|o| o.copied_text = context.address().to_string());
+                                }
+                            });
+
+
+                            // let network_type = if let Some(network_id) = wallet_state.network_id() {
+                            //     network_id.network_type()
+                            // } else {
+                            //     ui.label("Network is not selected");
+                            //     return;
+                            // };
+
+
+
+
+                            // let balance = account.balance();
+                            if let Some(balance) = account.balance() {
+                                // ui.label("Balance");
+                                ui.heading(
+                                    RichText::new(sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)).code()
+                                );
+                                if balance.pending != 0 {
+                                    ui.label(format!(
+                                        "Pending: {}",
+                                        sompi_to_kaspa_string_with_suffix(
+                                            balance.pending,
+                                            &network_type
+                                        )
+                                    ));
+                                }
+                                if balance.outgoing != 0 {
+                                    ui.label(format!(
+                                        "Sending: {}",
+                                        sompi_to_kaspa_string_with_suffix(
+                                            balance.outgoing,
+                                            &network_type
+                                        )
+                                    ));
+                                }
+                            } else {
+                                ui.label("Balance: N/A");
+                            }
+
+                            if let Some((mature_utxo_size, pending_utxo_size)) =
+                                account.utxo_sizes()
+                            {
+                                if pending_utxo_size == 0 {
+                                    ui.label(format!(
+                                        "UTXOs: {}",
+                                        mature_utxo_size,
+                                    ));
+                                } else {
+                                    ui.label(format!(
+                                        "UTXOs: {} ({} pending)",
+                                        mature_utxo_size, pending_utxo_size
+                                    ));
+                                }
+                            } else {
+                                ui.label("No UTXOs");
+                            }
+
+                            ui.vertical_centered(|ui| {
+                                ui.add(
+                                    egui::Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://qr.svg"), bytes: context.qr() })
+                                    .fit_to_original_size(1.)
+                                    // .shrink_to_fit()
+                                );
+                            });
+                            
+                            // ui.separator();
+
+
+                            
+                            // -----------------------------------------------------------------
+                            // -----------------------------------------------------------------
+                            // -----------------------------------------------------------------
+
+                            if self.action.is_sending() {
+                                self.render_send_ui(core, ui, &account, &context, network_type);
+                            } else {
+                                ui.horizontal(|ui| {
+                                    if ui.medium_button("Send").clicked() {
+                                        self.action = Action::Estimating;
+                                        // self.state = State::Send {
+                                        //     account: account.clone(),
+                                        // };
+                                    }
+                                    if ui.medium_button("Receive").clicked() {
+                                        // self.state = State::Receive {
+                                        //     account: account.clone(),
+                                        // };
+                                    }
+                                });
+                            }
+                            // -----------------------------------------------------------------
+                            // -----------------------------------------------------------------
+                            // -----------------------------------------------------------------
+                        });
+                    });
+
+                
+                SidePanel::right("account_manager_right")
+                    .exact_width(width/2.)
+                    .resizable(false)
+                    .show_separator_line(false)
+                    .show_inside(ui, |ui| {    
+                        ui.separator();
+
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+
+                            let transactions = account.transactions();
+
+                            if transactions.is_empty() {
+                                ui.label("No transactions");
+                            } else {
+                                let total: u64 = transactions.iter().map(|transaction|transaction.aggregate_input_value()).sum();
+                                transactions.iter().for_each(|transaction| {
+                                    transaction.render(ui, network_type, current_daa_score, true, Some(total));
+                                });
+                            }
+
+                        });
+                    });
 
             }
 

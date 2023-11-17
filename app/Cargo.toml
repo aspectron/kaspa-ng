@@ -10,7 +10,6 @@ kaspa-ng-core.workspace = true
 workflow-log.workspace = true
 cfg-if.workspace = true
 
-
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio.workspace = true
 

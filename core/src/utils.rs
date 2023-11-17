@@ -110,6 +110,40 @@ pub fn format_duration(millis: u64) -> String {
     }
 }
 
+pub fn _format_address_colors(address: &Address, range: Option<usize>) -> String {
+    let address = address.to_string();
+
+    let parts = address.split(':').collect::<Vec<&str>>();
+    let prefix = style(parts[0]).dim();
+    let payload = parts[1];
+    let range = range.unwrap_or(6);
+    let start = range;
+    let finish = payload.len() - range;
+
+    let left = &payload[0..start];
+    let center = style(&payload[start..finish]).dim();
+    let right = &payload[finish..];
+
+    format!("{prefix}:{left}:{center}:{right}")
+}
+
+pub fn format_address(address: &Address, range: Option<usize>) -> String {
+    let address = address.to_string();
+
+    let parts = address.split(':').collect::<Vec<&str>>();
+    let prefix = parts[0];
+    let payload = parts[1];
+    let range = range.unwrap_or(6);
+    let start = range;
+    let finish = payload.len() - range;
+
+    let left = &payload[0..start];
+    // let center = style(&payload[start..finish]).dim();
+    let right = &payload[finish..];
+
+    format!("{prefix}:{left}....{right}")
+}
+
 #[derive(Default)]
 pub struct Arglist {
     pub args: Vec<String>,

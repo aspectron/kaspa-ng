@@ -1,5 +1,5 @@
 use crate::imports::*;
-use crate::runtime::kaspa::{Config, KaspadServiceEvents};
+use crate::interop::services::kaspa::{Config, KaspadServiceEvents};
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;

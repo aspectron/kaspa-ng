@@ -2,14 +2,19 @@
 name = "kaspa-ng-core"
 version.workspace = true
 edition.workspace = true # = "2021"
+build = "build.rs"
 
 [lib]
 crate-type = ["cdylib", "lib"]
 
 [features]
 browser-extension = []
-desktop-application = []
+cli = []
 default = []
+
+[build-dependencies]
+vergen = { version = "8.2.6", features = ["build", "cargo", "git", "gitcl", "rustc", "si"] }
+# vergen = { version = "8.2.6", features = ["build", "git", "gitcl"] }
 
 [dependencies]
 kaspa-ng-macros.workspace = true
@@ -83,12 +88,10 @@ kaspa-rpc-service.workspace = true
 kaspa-wrpc-server.workspace = true
 kaspad.workspace = true
 num_cpus.workspace = true
+sysinfo.workspace = true
 tokio.workspace = true
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures.workspace = true
-
-# [profile.release]
-# opt-level = 2 # fast and small wasm
 

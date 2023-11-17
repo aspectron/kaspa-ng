@@ -110,6 +110,30 @@ impl Core {
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
 
+        // ---
+        fonts.font_data.insert(
+            "kng_mono".to_owned(),
+            // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
+            // egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
+            egui::FontData::from_static(include_bytes!(
+                "../../resources/fonts/UbuntuMono/UbuntuMono-Regular.ttf"
+            )),
+            // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSansMono-Regular.ttf")),
+            // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSansMono-Light.ttf")),
+            // egui::FontData::from_static(include_bytes!("../../resources/fonts/SourceCodePro-Regular.ttf")),
+            // egui::FontData::from_static(include_bytes!("../../resources/fonts/SourceCodePro-Light.ttf")),
+            // egui::FontData::from_static(include_bytes!("../../resources/fonts/RobotoMono-Regular.ttf")),
+            // egui::FontData::from_static(include_bytes!("../../resources/fonts/RobotoMono-Light.ttf")),
+        );
+
+        fonts
+            .families
+            .entry(egui::FontFamily::Monospace)
+            .or_default()
+            .insert(0, "kng_mono".to_owned());
+
+        // ---
+
         // #[cfg(windows)]
         // {
         //     let font_file = {
@@ -316,7 +340,7 @@ impl Core {
             {
                 let type_id = self.module.type_id();
 
-                crate::runtime::kaspa::update_logs_flag()
+                crate::interop::services::kaspa::update_logs_flag()
                     .store(type_id == TypeId::of::<modules::Logs>(), Ordering::Relaxed);
                 // crate::runtime::kaspa::update_metrics_flag().store(
                 //     type_id == TypeId::of::<modules::Overview>()
@@ -604,6 +628,10 @@ impl eframe::App for Core {
             // ui.spacing()
         });
         // });
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            self.render_status(ui);
+            egui::warn_if_debug_build(ui);
+        });
 
         // egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
         //     self.render_status(ui);
@@ -739,11 +767,6 @@ impl eframe::App for Core {
         //         ui.label("You would normally choose either panels OR windows.");
         //     });
         // }
-
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            self.render_status(ui);
-            egui::warn_if_debug_build(ui);
-        });
     }
 }
 
@@ -855,7 +878,10 @@ impl Core {
                     }
                     #[cfg(not(target_arch = "wasm32"))]
                     _ => {
-                        ui.add(egui::Spinner::new());
+                        ui.vertical(|ui| {
+                            ui.add_space(2.);
+                            ui.add(egui::Spinner::new());
+                        });
                         // ui.label(
                         //     RichText::new(egui_phosphor::light::PLUGS)
                         //         .size(status_icon_size)
@@ -1061,7 +1087,8 @@ impl Core {
                         self.state.is_open = true;
 
                         let network_id = self.state.network_id.ok_or(Error::WalletOpenNetworkId)?;
-                        let account_descriptors = account_descriptors.ok_or(Error::WalletOpenAccountDescriptors)?;
+                        let account_descriptors =
+                            account_descriptors.ok_or(Error::WalletOpenAccountDescriptors)?;
                         self.load_accounts(network_id, account_descriptors)?;
                         // self.update_account_list();
                     }
@@ -1083,80 +1110,60 @@ impl Core {
                     CoreWallet::DAAScoreChange { current_daa_score } => {
                         self.state.current_daa_score.replace(current_daa_score);
                     }
-                    CoreWallet::External { record } |
-                    CoreWallet::Pending {
-                        record, ..
-                        // is_outgoing: _,
-                    } |
-                    CoreWallet::Maturity {
-                        record, ..
-                        // is_outgoing: _,
-                    } |
-                    CoreWallet::Outgoing { record } => {
-
-                        match record.binding().clone() {
-                            Binding::Account(id) => {
-
-                                self.account_collection.as_ref().and_then(|account_collection| {
+                    // This notification is for a UTXO change, which is
+                    // a part of the Outgoing transaction, we ignore it.
+                    CoreWallet::Change { record: _ } => {}
+                    // A transaction has been confirmed
+                    CoreWallet::Maturity { record } => match record.binding().clone() {
+                        Binding::Account(id) => {
+                            self.account_collection
+                                .as_ref()
+                                .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
-                                        account.transactions().replace_or_insert(record.into());
+                                        account.transactions().replace_or_insert(
+                                            Transaction::new_confirmed(Arc::new(record)),
+                                        );
                                     })
                                 });
-                                // .or_else(|| {
-                                //     log_error!("unable to find account {}", id);
-                                //     None
-                                // });
-
-                                // if let Some(account_collection) = &self.account_collection {
-                                //     if let Some(account) = account_collection.get(id) {
-                                //         account.transactions().replace_or_insert(record.into());
-                                //     } else {
-                                //         log_error!("unable to find account {}", id);
-                                //     }
-                                // } else {
-                                //     log_error!(
-                                //         "received CoreWallet Transaction Data while account collection is empty"
-                                //     );
-                                // }
-                            }
-                            Binding::Custom(_) => {
-                                panic!("custom binding not supported");
-                            }
                         }
-
-                    }
-
-                    CoreWallet::Reorg { record } => {
-                        match record.binding().clone() {
-                            Binding::Account(id) => {
-
-                                self.account_collection.as_mut().and_then(|account_collection| {
+                        Binding::Custom(_) => {
+                            panic!("custom binding not supported");
+                        }
+                    },
+                    // Observing a new, unconfirmed transaction
+                    CoreWallet::External { record }
+                    | CoreWallet::Outgoing { record }
+                    | CoreWallet::Pending { record } => match record.binding().clone() {
+                        Binding::Account(id) => {
+                            self.account_collection
+                                .as_ref()
+                                .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
-                                        account.transactions().remove(record.id())
+                                        account.transactions().replace_or_insert(
+                                            Transaction::new_processing(Arc::new(record)),
+                                        );
                                     })
                                 });
-                                // .or_else(|| {
-                                //     log_error!("unable to find account {}", id);
-                                //     None
-                                // });
-
-                                // if let Some(account_collection) = &self.account_collection {
-                                //     if let Some(account) = account_collection.get(id) {
-                                //         account.transactions().replace_or_insert(record.into());
-                                //     } else {
-                                //         log_error!("unable to find account {}", id);
-                                //     }
-                                // } else {
-                                //     log_error!(
-                                //         "received CoreWallet Transaction Data while account collection is empty"
-                                //     );
-                                // }
-                            }
-                            Binding::Custom(_) => {
-                                panic!("custom binding not supported");
-                            }
                         }
-                    }
+                        Binding::Custom(_) => {
+                            panic!("custom binding not supported");
+                        }
+                    },
+
+                    CoreWallet::Reorg { record } => match record.binding().clone() {
+                        Binding::Account(id) => {
+                            self.account_collection
+                                .as_mut()
+                                .and_then(|account_collection| {
+                                    account_collection
+                                        .get(&id)
+                                        .map(|account| account.transactions().remove(record.id()))
+                                });
+                        }
+                        Binding::Custom(_) => {
+                            panic!("custom binding not supported");
+                        }
+                    },
 
                     CoreWallet::Balance {
                         balance,
@@ -1264,29 +1271,6 @@ impl Core {
 
         Ok(())
     }
-
-    // pub fn update_account_list(&self) {
-    //     let interop = self.interop.clone();
-    //     spawn(async move {
-    //         // let account_map = HashMap::group_from(account_list.into_iter().map(|account| (account.prv_key_data_id().unwrap(), account)));
-    //         let account_list = interop.wallet().account_enumerate().await?; //activate_all_stored_accounts().await?;
-    //         let account_list = account_list
-    //             .into_iter()
-    //             .map(Account::from)
-    //             .collect::<Vec<_>>();
-    //         interop
-    //             .send(Events::AccountList {
-    //                 account_list: Box::new(account_list),
-    //             })
-    //             .await?;
-    //         // interop
-    //         //     .wallet()
-    //         //     .autoselect_default_account_if_single()
-    //         //     .await
-    //         //     .ok();
-    //         Ok(())
-    //     });
-    // }
 
     fn _init_fonts(&self, egui_ctx: &egui::Context) {
         let mut fonts = egui::FontDefinitions::default();

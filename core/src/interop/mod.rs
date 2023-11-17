@@ -9,8 +9,11 @@ cfg_if! {
     }
 }
 
-use crate::runtime::KaspaService;
-use crate::runtime::Runtime;
+pub mod runtime;
+pub mod services;
+
+use runtime::Runtime;
+use services::KaspaService;
 
 pub mod payload;
 pub use payload::Payload;
@@ -160,6 +163,10 @@ fn interop() -> &'static Interop {
     }
 }
 
+fn try_interop() -> Option<&'static Interop> {
+    unsafe { INTEROP.as_ref() }
+}
+
 fn register_global(interop: Option<Interop>) {
     unsafe {
         INTEROP = interop;
@@ -191,10 +198,12 @@ where
 /// to shutdown kaspad when the kaspa-ng process exit
 /// is an inevitable eventuality.
 pub fn halt() {
-    let handle = tokio::spawn(async move { interop().shutdown().await });
+    if try_interop().is_some() {
+        let handle = tokio::spawn(async move { interop().shutdown().await });
 
-    while !handle.is_finished() {
-        std::thread::sleep(std::time::Duration::from_millis(50));
+        while !handle.is_finished() {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
     }
 }
 

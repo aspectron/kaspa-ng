@@ -10,6 +10,7 @@ cfg_if! {
 
         #[tokio::main]
         async fn main() {
+
             if let Err(err) = kaspa_ng_main(None).await {
                 log_error!("Error: {err}");
             }

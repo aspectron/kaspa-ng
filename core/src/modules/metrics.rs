@@ -1,4 +1,5 @@
-use crate::{imports::*, runtime::kaspa::MAX_METRICS_SAMPLES};
+use crate::imports::*;
+use crate::interop::services::kaspa::MAX_METRICS_SAMPLES;
 use egui_extras::{StripBuilder, Size};
 use kaspa_metrics::{Metric,MetricGroup, MetricsSnapshot};
 use chrono::DateTime;

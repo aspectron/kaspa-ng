@@ -105,6 +105,7 @@ impl UiExtension for Ui {
 pub struct LayoutJobBuilder {
     job: LayoutJob,
     leading: f32,
+    icon_font_id: Option<FontId>,
     font_id: Option<FontId>,
 }
 
@@ -114,7 +115,13 @@ impl LayoutJobBuilder {
             job: LayoutJob::default(),
             leading,
             font_id,
+            ..Default::default()
         }
+    }
+
+    pub fn with_icon_font(mut self, icon_font_id: FontId) -> Self {
+        self.icon_font_id = Some(icon_font_id);
+        self
     }
 
     pub fn text(mut self, text: &str, color: Color32) -> Self {
@@ -124,6 +131,19 @@ impl LayoutJobBuilder {
             TextFormat {
                 color,
                 font_id: self.font_id.clone().unwrap_or_default(),
+                ..Default::default()
+            },
+        );
+
+        self
+    }
+    pub fn icon(mut self, text: &str, color: Color32) -> Self {
+        self.job.append(
+            text,
+            self.leading,
+            TextFormat {
+                color,
+                font_id: self.icon_font_id.clone().unwrap_or_default(),
                 ..Default::default()
             },
         );

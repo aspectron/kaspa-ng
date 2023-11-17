@@ -1,18 +1,14 @@
 use crate::imports::*;
 
 pub struct Context {
-    // qr: Arc<RetainedImage>,
-    // qr: Arc<String>,
     qr: load::Bytes,
-    receive_address: String,
+    receive_address: Address,
 }
 
 impl Context {
     pub fn new(descriptor: &AccountDescriptor) -> Option<Arc<Self>> {
-        // if account.wallet().network_id().is_ok() {
-        if let Some(receive_address) = descriptor.receive_address().map(String::from) {
-            // let receive_address = account.receive_address().unwrap().to_string();
-            let qr = render_qrcode(&receive_address, 128, 128);
+        if let Some(receive_address) = descriptor.receive_address() {
+            let qr = render_qrcode(&receive_address.to_string(), 128, 128);
             Some(Arc::new(Self {
                 qr: qr.as_bytes().to_vec().into(),
                 receive_address,
@@ -22,8 +18,8 @@ impl Context {
         }
     }
 
-    pub fn address(&self) -> &str {
-        self.receive_address.as_str()
+    pub fn address(&self) -> &Address {
+        &self.receive_address
     }
 
     pub fn qr(&self) -> load::Bytes {
@@ -58,13 +54,6 @@ impl Inner {
         }
     }
 
-    // fn descriptor(&self) -> MutexGuard<'_, AccountDescriptor> {
-    //     self.descriptor.lock().unwrap()
-    // }
-
-    // fn transactions(&self) -> MutexGuard<'_, AccountDescriptor> {
-    //     self.descriptor.lock().unwrap()
-    // }
 }
 
 #[derive(Clone)]
@@ -162,6 +151,7 @@ impl Account {
 
         Ok(())
     }
+
 }
 
 impl IdT for Account {
@@ -180,78 +170,3 @@ impl std::fmt::Debug for Account {
 
 pub type AccountCollection = Collection<AccountId, Account>;
 
-// #[derive(Default)]
-// pub struct AccountCollection {
-//     list : Vec<Account>,
-//     map : HashMap<AccountId, Account>,
-// }
-
-// impl AccountCollection {
-//     pub fn new() -> Self {
-//         Self {
-//             list : Vec::new(),
-//             map : HashMap::new(),
-//         }
-//     }
-
-//     pub fn len(&self) -> usize {
-//         self.list.len()
-//     }
-
-//     pub fn is_empty(&self) -> bool {
-//         self.list.is_empty()
-//     }
-
-//     pub fn insert(&mut self, account : Account) {
-//         self.list.push(account.clone());
-//         self.map.insert(account.id(), account);
-//     }
-
-//     pub fn first(&self) -> Option<&Account> {
-//         self.list.first()
-//     }
-
-//     pub fn get(&self, id : &AccountId) -> Option<&Account> {
-//         self.map.get(id)
-//     }
-
-//     pub fn list(&self) -> &Vec<Account> {
-//         &self.list
-//     }
-
-//     pub fn list_mut(&mut self) -> &mut Vec<Account> {
-//         &mut self.list
-//     }
-
-//     pub fn remove(&mut self, id : &AccountId) -> Option<Account> {
-//         if let Some(account) = self.map.remove(id) {
-//             self.list.retain(|a| a.id() != *id);
-//             Some(account)
-//         } else {
-//             None
-//         }
-//     }
-
-//     pub fn iter(&self) -> impl Iterator<Item = &Account> {
-//         self.list.iter()
-//     }
-
-//     pub fn clear(&mut self) {
-//         self.list.clear();
-//         self.map.clear();
-//     }
-
-// }
-
-// impl From<Vec<Account>> for AccountCollection {
-//     fn from(list : Vec<Account>) -> Self {
-//         Self {
-//             map :   list
-//                     .clone()
-//                     .into_iter()
-//                     .map(|account| (account.id(), account)).collect::<HashMap::<_,_>>(),
-//             list,
-
-//         }
-//     }
-// }

@@ -21,7 +21,6 @@ pub mod panel;
 pub mod primitives;
 pub mod prompt;
 pub mod result;
-pub mod runtime;
 pub mod settings;
 pub mod sync;
 pub mod utils;
