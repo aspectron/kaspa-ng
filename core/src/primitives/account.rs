@@ -53,7 +53,6 @@ impl Inner {
             is_loading: AtomicBool::new(true),
         }
     }
-
 }
 
 #[derive(Clone)]
@@ -151,7 +150,6 @@ impl Account {
 
         Ok(())
     }
-
 }
 
 impl IdT for Account {
@@ -169,4 +167,3 @@ impl std::fmt::Debug for Account {
 }
 
 pub type AccountCollection = Collection<AccountId, Account>;
-

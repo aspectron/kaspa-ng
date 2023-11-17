@@ -10,6 +10,9 @@ use workflow_log::*;
 #[allow(unused)]
 pub const KASPA_NG_ICON_256X256: &[u8] = include_bytes!("../../resources/icons/icon-256.png");
 pub const I18N_EMBEDDED: &str = include_str!("../../resources/i18n/i18n.json");
+pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
+pub const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
+pub const GIT_SHA: &str = env!("VERGEN_GIT_SHA");
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -47,10 +50,24 @@ cfg_if! {
             if std::env::var("KASPA_NG_NODE").is_ok() {
                 Args::Kaspad { args : Box::new(parse_kaspad_args()) }
             } else {
+
+
+                // use sysinfo::*;
+                // let mut system = System::new();
+                // system.refresh_cpu_specifics(CpuRefreshKind::new().with_frequency());
+                // system.refresh_memory();
+                // let cpus = system.cpus();
+                // println!("cpus: {:#?}", cpus);
+                // let memory = system.total_memory()/1024/1024/1024;
+                // println!("memory: {:#?}", memory);
+                // panic!();
+                // println!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version());
+                // println!("git sha: {}", env!("VERGEN_GIT_SHA"));
+                // println!("");
+
                 let cmd = Command::new("kaspa-ng")
 
-                    .about(format!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version()))
-                    // .version(env!("CARGO_PKG_VERSION"))
+                    .about(format!("kaspa-ng v{}-{GIT_DESCRIBE} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version()))
                     .arg(arg!(--disable "Disable node services when starting"))
                     .arg(
                         Arg::new("reset-settings")
@@ -90,7 +107,9 @@ cfg_if! {
                         } else if let Some(_matches) = matches.subcommand_matches("export") {
                             Args::I18n { op : I18n::Export }
                         } else {
-                            panic!("unknown i18n subcommand")
+                            println!();
+                            println!("please specify a valid i18n subcommand");
+                            std::process::exit(1);
                         }
                     } else {
                         let reset_settings = matches.get_one::<bool>("reset-settings").cloned().unwrap_or(false);
@@ -200,7 +219,7 @@ cfg_if! {
                     let native_options = eframe::NativeOptions {
                         icon_data : IconData::try_from_png_bytes(KASPA_NG_ICON_256X256).ok(),
                         persist_window : true,
-                        // initial_window_size : Some(egui::Vec2 { x : 1000.0, y : 600.0 }),
+                        initial_window_size : Some(egui::Vec2 { x : 1000.0, y : 600.0 }),
                         // min_window_size : Some(egui::Vec2 { x : 1000.0, y : 600.0 }),
                         ..Default::default()
                     };

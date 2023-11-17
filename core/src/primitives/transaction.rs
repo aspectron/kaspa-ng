@@ -85,7 +85,6 @@ impl Transaction {
     pub fn aggregate_input_value(&self) -> u64 {
         self.context().record.aggregate_input_value()
     }
-
 }
 
 impl IdT for Transaction {
