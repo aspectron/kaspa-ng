@@ -5,12 +5,12 @@ use crate::utils::format_duration;
 
 pub struct Node {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
 }
 
 impl Node {
-    pub fn new(interop: Interop) -> Self {
-        Self { interop }
+    pub fn new(runtime: Runtime) -> Self {
+        Self { runtime }
     }
 }
 
@@ -48,7 +48,7 @@ impl ModuleT for Node {
 
                         ui.vertical(|ui| {
 
-                            if let Some(peers) = self.interop.peer_monitor_service().peer_info() {
+                            if let Some(peers) = self.runtime.peer_monitor_service().peer_info() {
                                 let (inbound, outbound) : (Vec<_>,Vec<_>) = peers.iter().partition(|peer| peer.is_outbound);
 
                                 CollapsingHeader::new(i18n("Inbound"))

@@ -6,6 +6,7 @@ use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, Wallet
 use kaspa_wallet_core::storage::interface::AccessContext;
 use kaspa_wallet_core::storage::{AccessContextT, AccountKind};
 
+
 #[derive(Clone)]
 pub enum State {
     Start,
@@ -17,26 +18,26 @@ pub enum State {
     AccountError(Arc<Error>),
     PresentMnemonic(Arc<CreationData>),
     ConfirmMnemonic(Arc<CreationData>),
-    Finish(Arc<dyn runtime::Account>),
+    Finish(Arc<dyn KaspaAccount>),
 }
 
 pub enum CreationData {
     Bip32 {
         mnemonic: Option<Mnemonic>,
-        account: Arc<dyn runtime::Account>,
+        account: Arc<dyn KaspaAccount>,
     },
     Keypair {
         private_key: Secret,
-        account: Arc<dyn runtime::Account>,
+        account: Arc<dyn KaspaAccount>,
     },
     MultiSig {
         mnemonics: Vec<Mnemonic>,
-        account: Arc<dyn runtime::Account>,
+        account: Arc<dyn KaspaAccount>,
     },
 }
 
 impl CreationData {
-    pub fn account(&self) -> Arc<dyn runtime::Account> {
+    pub fn account(&self) -> Arc<dyn KaspaAccount> {
         match self {
             Self::Bip32 { account, .. } => account.clone(),
             Self::Keypair { account, .. } => account.clone(),
@@ -58,16 +59,16 @@ struct Context {
 
 pub struct AccountCreate {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     // secret: String,
     args: Context,
     pub state: State,
 }
 
 impl AccountCreate {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            interop,
+            runtime,
             // secret: String::new(),
             state: State::Start,
             args: Default::default(),
@@ -226,7 +227,7 @@ impl ModuleT for AccountCreate {
                     if !wallet_create_result.is_pending() {
 
                         // TODO CREATE WALLET !
-                        let _wallet = self.interop.wallet().clone();
+                        let _wallet = self.runtime.wallet().clone();
                         spawn_with_result(&wallet_create_result, async move {
 
                             if args.enable_payment_secret && args.payment_secret.is_empty() {

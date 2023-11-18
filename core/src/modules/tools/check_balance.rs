@@ -9,16 +9,16 @@ pub enum State {
 
 pub struct Tools {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     state: State,
     address_string: String,
     address: Option<Address>,
 }
 
 impl Tools {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            interop,
+            runtime,
             state: State::Select,
             address_string: Default::default(),
             address: None,
@@ -94,7 +94,7 @@ impl ModuleT for Tools {
                         let address_balance_result =
                             Payload::<Result<u64>>::new("tools_check_balance_result");
                         if !address_balance_result.is_pending() {
-                            let _wallet = this.interop.wallet().clone();
+                            let _wallet = this.runtime.wallet().clone();
                             spawn_with_result(&address_balance_result, async move {
                                 todo!("CheckBalanceProcess")
                             });

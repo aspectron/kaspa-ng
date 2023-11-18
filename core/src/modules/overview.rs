@@ -11,12 +11,12 @@ use crate::imports::*;
 
 pub struct Overview {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
 }
 
 impl Overview {
-    pub fn new(interop: Interop) -> Self {
-        Self { interop }
+    pub fn new(runtime: Runtime) -> Self {
+        Self { runtime }
     }
 }
 
@@ -119,10 +119,10 @@ impl Overview {
         };    
 
         let graph_data = {
-            let metrics_data = self.interop.metrics_service().metrics_data();
+            let metrics_data = self.runtime.metrics_service().metrics_data();
             let data = metrics_data.get(&metric).unwrap();
             let mut duration = 2 * 60;
-            let uptime = self.interop.uptime().as_secs() as usize;
+            let uptime = self.runtime.uptime().as_secs() as usize;
             if uptime < duration {
                 duration = uptime;
             }

@@ -13,7 +13,7 @@ use wasm_bindgen::prelude::*;
 #[repr(u8)]
 pub enum Target {
     Wallet = 0,
-    Interop = 1,
+    Runtime = 1,
 }
 
 impl TryFrom<u8> for Target {
@@ -22,7 +22,7 @@ impl TryFrom<u8> for Target {
     fn try_from(value: u8) -> Result<Self> {
         match value {
             0 => Ok(Target::Wallet),
-            1 => Ok(Target::Interop),
+            1 => Ok(Target::Runtime),
             _ => Err(Error::custom("invalid message target")),
         }
     }

@@ -65,7 +65,7 @@ struct Context {
 
 pub struct WalletCreate {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     // secret: String,
     args: Context,
     pub state: State,
@@ -73,9 +73,9 @@ pub struct WalletCreate {
 }
 
 impl WalletCreate {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            interop,
+            runtime,
             // secret: String::new(),
             state: State::Start,
             args: Default::default(),
@@ -391,7 +391,7 @@ impl ModuleT for WalletCreate {
                     if !wallet_create_result.is_pending() {
 
                         // TODO CREATE WALLET !
-                        let wallet = self.interop.wallet().clone();
+                        let wallet = self.runtime.wallet().clone();
                         spawn_with_result(&wallet_create_result, async move {
 
                             println!("### A");

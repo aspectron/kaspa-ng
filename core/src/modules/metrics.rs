@@ -1,5 +1,5 @@
 use crate::imports::*;
-use crate::interop::services::metrics::MAX_METRICS_SAMPLES;
+use crate::runtime::services::metrics::MAX_METRICS_SAMPLES;
 use egui_extras::{StripBuilder, Size};
 use kaspa_metrics::{Metric,MetricGroup, MetricsSnapshot};
 use chrono::DateTime;
@@ -13,12 +13,12 @@ use egui_plot::{
 
 pub struct Metrics {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
 }
 
 impl Metrics {
-    pub fn new(interop: Interop) -> Self {
-        Self { interop }
+    pub fn new(runtime: Runtime) -> Self {
+        Self { runtime }
     }
 }
 
@@ -77,7 +77,7 @@ impl ModuleT for Metrics {
             core.settings.ux.metrics.graph_columns = graph_columns;
             core.settings.ux.metrics.graph_height = graph_height;
             core.settings.ux.metrics.graph_duration = graph_duration;
-            // TODO - post an application loop to relay to interop
+            // TODO - post an application loop to relay to runtime
             // so that we can combine multiple saves into one
             core.settings.store_sync().ok();
         }
@@ -154,7 +154,7 @@ impl Metrics {
 
                     // ---
                     let graph_data = {
-                        let metrics_data = self.interop.metrics_service().metrics_data();
+                        let metrics_data = self.runtime.metrics_service().metrics_data();
                         let data = metrics_data.get(&metric).unwrap();
                         let samples = if data.len() < duration { data.len() } else { duration };
                         data[data.len()-samples..].to_vec()

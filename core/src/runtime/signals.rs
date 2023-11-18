@@ -1,17 +1,17 @@
 use crate::events::Events;
-use crate::interop::Interop;
+use crate::runtime::Runtime;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 pub struct Signals {
-    interop: Interop,
+    runtime: Runtime,
     iterations: AtomicU64,
 }
 
 impl Signals {
-    pub fn bind(interop: &Interop) {
+    pub fn bind(runtime: &Runtime) {
         let signals = Arc::new(Signals {
-            interop: interop.clone(),
+            runtime: runtime.clone(),
             iterations: AtomicU64::new(0),
         });
 
@@ -22,16 +22,16 @@ impl Signals {
                 0 => {
                     // post a graceful exit event to the main event loop
                     println!("^SIGTERM - shutting down...");
-                    signals.interop.try_send(Events::Exit).unwrap_or_else(|e| {
+                    signals.runtime.try_send(Events::Exit).unwrap_or_else(|e| {
                         println!("Error sending exit event: {:?}", e);
                     });
                 }
                 1 => {
-                    // start interop abort sequence
+                    // start runtime abort sequence
                     // (attempt to gracefully shutdown kaspad if running)
                     // this will execute process::exit(1) after 5 seconds
                     println!("^SIGTERM - aborting...");
-                    crate::interop::abort();
+                    crate::runtime::abort();
                 }
                 _ => {
                     // exit the process immediately

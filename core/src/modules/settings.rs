@@ -7,7 +7,7 @@ use crate::imports::*;
 
 pub struct Settings {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     settings : crate::settings::Settings,
     // pub kaspad: KaspadNodeKind,
     grpc_network_interface : NetworkInterfaceEditor, //::try_from(&self.settings.node.grpc_network_interface).unwrap();
@@ -16,8 +16,8 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new(interop: Interop) -> Self {
-        Self { interop, settings : crate::settings::Settings::default(),
+    pub fn new(runtime: Runtime) -> Self {
+        Self { runtime, settings : crate::settings::Settings::default(),
         grpc_network_interface : NetworkInterfaceEditor::default(),
          }
     }
@@ -191,7 +191,7 @@ impl ModuleT for Settings {
                                 core.settings.store_sync().unwrap();
                                 if restart {
                                     println!("NODE INTERFACE UPDATE: {:?}", self.settings.node);
-                                    self.interop.kaspa_service().update_services(&self.settings.node);
+                                    self.runtime.kaspa_service().update_services(&self.settings.node);
                                     // println!("TODO - restart");
                                 }
                             },
@@ -207,7 +207,7 @@ impl ModuleT for Settings {
             });
 
             if ui.button("Test Toast").clicked() {
-                self.interop.try_send(Events::Notify {
+                self.runtime.try_send(Events::Notify {
                     notification : Notification::info("Test Toast")
                 }).unwrap();
             }

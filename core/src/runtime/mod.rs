@@ -41,15 +41,15 @@ pub struct Inner {
     start_time: std::time::Instant,
 }
 
-/// Interop is a core component of the Kaspa NG application responsible for
+/// Runtime is a core component of the Kaspa NG application responsible for
 /// running application services and communication between these services
 /// and the application UI.
 #[derive(Clone)]
-pub struct Interop {
+pub struct Runtime {
     inner: Arc<Inner>,
 }
 
-impl Interop {
+impl Runtime {
     pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
         let application_events = ApplicationEventsChannel::unbounded(Some(egui_ctx.clone()));
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
@@ -66,7 +66,7 @@ impl Interop {
             metrics_service.clone(),
         ]);
 
-        let interop = Self {
+        let runtime = Self {
             inner: Arc::new(Inner {
                 services,
                 application_events,
@@ -79,9 +79,9 @@ impl Interop {
             }),
         };
 
-        register_global(Some(interop.clone()));
+        register_global(Some(runtime.clone()));
 
-        interop
+        runtime
     }
 
     pub fn uptime(&self) -> Duration {
@@ -118,13 +118,13 @@ impl Interop {
         register_global(None);
     }
 
-    // / Start the interop runtime.
+    // / Start the runtime runtime.
     pub fn start(&self) {
         self.inner.is_running.store(true, Ordering::SeqCst);
         self.start_services();
     }
 
-    /// Shutdown interop runtime.
+    /// Shutdown runtime runtime.
     pub async fn shutdown(&self) {
         if self.inner.is_running.load(Ordering::SeqCst) {
             self.inner.is_running.store(false, Ordering::SeqCst);
@@ -211,25 +211,25 @@ impl Interop {
     }
 }
 
-static mut INTEROP: Option<Interop> = None;
+static mut RUNTIME: Option<Runtime> = None;
 
-fn interop() -> &'static Interop {
+fn runtime() -> &'static Runtime {
     unsafe {
-        if let Some(interop) = &INTEROP {
-            interop
+        if let Some(runtime) = &RUNTIME {
+            runtime
         } else {
-            panic!("interop not initialized")
+            panic!("runtime not initialized")
         }
     }
 }
 
-fn try_interop() -> Option<&'static Interop> {
-    unsafe { INTEROP.as_ref() }
+fn try_runtime() -> Option<&'static Runtime> {
+    unsafe { RUNTIME.as_ref() }
 }
 
-fn register_global(interop: Option<Interop>) {
+fn register_global(runtime: Option<Runtime>) {
     unsafe {
-        INTEROP = interop;
+        RUNTIME = runtime;
     }
 }
 
@@ -239,7 +239,7 @@ pub fn spawn<F>(task: F)
 where
     F: Future<Output = Result<()>> + Send + 'static,
 {
-    interop().spawn_task(task);
+    runtime().spawn_task(task);
 }
 
 /// Spawn an async task that will result in
@@ -251,15 +251,15 @@ where
     R: Clone + Send + 'static,
     F: Future<Output = Result<R>> + Send + 'static,
 {
-    interop().spawn_task_with_result(payload, task);
+    runtime().spawn_task_with_result(payload, task);
 }
 
-/// Gracefully halt the interop runtime. This is used
+/// Gracefully halt the runtime runtime. This is used
 /// to shutdown kaspad when the kaspa-ng process exit
 /// is an inevitable eventuality.
 pub fn halt() {
-    if try_interop().is_some() {
-        let handle = tokio::spawn(async move { interop().shutdown().await });
+    if try_runtime().is_some() {
+        let handle = tokio::spawn(async move { runtime().shutdown().await });
 
         while !handle.is_finished() {
             std::thread::sleep(std::time::Duration::from_millis(50));
@@ -267,7 +267,7 @@ pub fn halt() {
     }
 }
 
-/// Attempt to halt the interop runtime but exit the process
+/// Attempt to halt the runtime runtime but exit the process
 /// if it takes too long. This is used in attempt to shutdown
 /// kaspad if the kaspa-ng process panics, which can result
 /// in a still functioning zombie child process on unix systems.

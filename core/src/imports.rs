@@ -9,7 +9,7 @@ pub use kaspa_wallet_core::api;
 pub use kaspa_wallet_core::api::WalletApi;
 pub use kaspa_wallet_core::events::SyncState;
 pub use kaspa_wallet_core::rpc::DynRpcApi;
-pub use kaspa_wallet_core::runtime;
+pub use kaspa_wallet_core::runtime::{Account as KaspaAccount, Wallet as KaspaWallet};
 pub use kaspa_wallet_core::runtime::{AccountDescriptor, AccountId, Balance};
 pub use kaspa_wallet_core::secret::Secret;
 pub use kaspa_wallet_core::storage::{
@@ -68,8 +68,6 @@ pub use crate::events::{ApplicationEventsChannel, Events};
 // pub use crate::channel::Channel;
 pub use crate::collection::Collection;
 pub use crate::core::Core;
-pub use crate::interop;
-pub use crate::interop::{spawn, spawn_with_result, Interop, Payload, Service};
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
 pub use crate::network::Network;
@@ -78,6 +76,8 @@ pub use crate::panel::Panel;
 pub use crate::primitives::{Account, AccountCollection, Transaction, TransactionCollection};
 pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
+pub use crate::runtime;
+pub use crate::runtime::{spawn, spawn_with_result, Payload, Runtime, Service};
 pub use crate::settings::{
     KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, RpcConfig,
     Settings, UxSettings,

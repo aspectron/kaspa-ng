@@ -2,13 +2,13 @@ use crate::imports::*;
 
 pub struct Logs {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
 }
 
 impl Logs {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            interop,
+            runtime,
         }
     }
 }
@@ -34,7 +34,7 @@ impl ModuleT for Logs {
             .stick_to_bottom(true)
             .show(_ui, |ui| {
 
-                for log in self.interop.kaspa_service().logs().iter() {
+                for log in self.runtime.kaspa_service().logs().iter() {
                     ui.label(RichText::from(log));
                 }
             });

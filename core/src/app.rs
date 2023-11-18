@@ -1,6 +1,6 @@
 use crate::result::Result;
 use cfg_if::cfg_if;
-use kaspa_ng_core::interop;
+use kaspa_ng_core::runtime;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::api::WalletApi;
 use std::sync::Arc;
@@ -124,7 +124,7 @@ cfg_if! {
 
             use std::sync::Mutex;
 
-            interop::panic::init_panic_handler();
+            runtime::panic::init_panic_handler();
 
             match parse_args() {
                 Args::Cli => {
@@ -213,8 +213,8 @@ cfg_if! {
                         settings.node.node_kind = kaspa_ng_core::settings::KaspadNodeKind::Disable;
                     }
 
-                    let interop: Arc<Mutex<Option<interop::Interop>>> = Arc::new(Mutex::new(None));
-                    let delegate = interop.clone();
+                    let runtime: Arc<Mutex<Option<runtime::Runtime>>> = Arc::new(Mutex::new(None));
+                    let delegate = runtime.clone();
                     // println!("spawn done");
                     let native_options = eframe::NativeOptions {
                         icon_data : IconData::try_from_png_bytes(KASPA_NG_ICON_256X256).ok(),
@@ -227,17 +227,17 @@ cfg_if! {
                         "Kaspa NG",
                         native_options,
                         Box::new(move |cc| {
-                            let interop = interop::Interop::new(&cc.egui_ctx, &settings);
-                            delegate.lock().unwrap().replace(interop.clone());
-                            interop::signals::Signals::bind(&interop);
-                            interop.start();
+                            let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings);
+                            delegate.lock().unwrap().replace(runtime.clone());
+                            runtime::signals::Signals::bind(&runtime);
+                            runtime.start();
 
-                            Box::new(kaspa_ng_core::Core::new(cc, interop, settings))
+                            Box::new(kaspa_ng_core::Core::new(cc, runtime, settings))
                         }),
                     )?;
 
-                    let interop = interop.lock().unwrap().take().unwrap();
-                    interop.shutdown().await;
+                    let runtime = runtime.lock().unwrap().take().unwrap();
+                    runtime.shutdown().await;
                 }
             }
 
@@ -288,10 +288,10 @@ cfg_if! {
                     "kaspa-ng",
                     web_options,
                     Box::new(move |cc| {
-                        let interop = interop::Interop::new(&cc.egui_ctx, &settings);
-                        interop.start();
+                        let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings);
+                        runtime.start();
 
-                        let adaptor = kaspa_ng_core::adaptor::Adaptor::new(interop.clone());
+                        let adaptor = kaspa_ng_core::adaptor::Adaptor::new(runtime.clone());
                         let window = web_sys::window().expect("no global `window` exists");
                         js_sys::Reflect::set(
                             &window,
@@ -299,7 +299,7 @@ cfg_if! {
                             &JsValue::from(adaptor),
                         ).expect("failed to set adaptor");
 
-                        Box::new(kaspa_ng_core::Core::new(cc, interop, settings))
+                        Box::new(kaspa_ng_core::Core::new(cc, runtime, settings))
                     }),
                 )
                 .await

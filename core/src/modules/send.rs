@@ -2,12 +2,12 @@ use crate::imports::*;
 
 pub struct Send {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
 }
 
 impl Send {
-    pub fn new(interop: Interop) -> Self {
-        Self { interop }
+    pub fn new(runtime: Runtime) -> Self {
+        Self { runtime }
     }
 }
 

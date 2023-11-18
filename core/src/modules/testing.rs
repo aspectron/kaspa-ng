@@ -12,7 +12,7 @@ pub enum State {
 
 pub struct Testing {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     // pub state: State,
     // pub message: Option<String>,
 
@@ -21,7 +21,7 @@ pub struct Testing {
 }
 
 impl Testing {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         let now = workflow_core::time::unixtime_as_millis_f64();
         let graph_data = vec![
             PlotPoint::new(now + 1000.0, 1.5),
@@ -32,7 +32,7 @@ impl Testing {
             PlotPoint::new(now + 20000.0, 5.0),
         ];
         Self {
-            interop,
+            runtime,
             // state: State::Select,
             // message: None,
             graph_data,
@@ -248,7 +248,7 @@ impl ModuleT for Testing {
                                     ctx.wallet_secret.as_bytes().to_vec(),
                                 );
                                 ctx.wallet_secret.zeroize();
-                                let wallet = ctx.interop.wallet().clone();
+                                let wallet = ctx.runtime.wallet().clone();
                                 let wallet_name = ctx.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {

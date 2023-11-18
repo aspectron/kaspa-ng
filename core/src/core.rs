@@ -1,5 +1,5 @@
 use crate::imports::*;
-use crate::interop::Interop;
+use crate::runtime::Runtime;
 use crate::sync::SyncStatus;
 use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
@@ -76,7 +76,7 @@ impl State {
 }
 
 pub struct Core {
-    interop: Interop,
+    runtime: Runtime,
     wallet: Arc<dyn WalletApi>,
     channel: ApplicationEventsChannel,
     module: Module,
@@ -102,7 +102,7 @@ impl Core {
     /// Core initialization
     pub fn new(
         cc: &eframe::CreationContext<'_>,
-        interop: crate::interop::Interop,
+        runtime: crate::runtime::Runtime,
         mut settings: Settings,
     ) -> Self {
         let mut fonts = egui::FontDefinitions::default();
@@ -253,11 +253,11 @@ impl Core {
         let modules: HashMap<TypeId, Module> = {
             cfg_if! {
                 if #[cfg(not(target_arch = "wasm32"))] {
-                    crate::modules::register_generic_modules(&interop).into_iter().chain(
-                        crate::modules::register_native_modules(&interop)
+                    crate::modules::register_generic_modules(&runtime).into_iter().chain(
+                        crate::modules::register_native_modules(&runtime)
                     ).collect()
                 } else {
-                    crate::modules::register_generic_modules(&interop)
+                    crate::modules::register_generic_modules(&runtime)
                 }
             }
         };
@@ -284,11 +284,11 @@ impl Core {
                 .clone();
         }
 
-        let channel = interop.application_events().clone();
-        let wallet = interop.wallet().clone();
+        let channel = runtime.application_events().clone();
+        let wallet = runtime.wallet().clone();
 
         let mut this = Self {
-            interop,
+            runtime,
             wallet,
             channel,
             module,
@@ -340,7 +340,7 @@ impl Core {
             {
                 let type_id = self.module.type_id();
 
-                crate::interop::services::kaspa::update_logs_flag()
+                crate::runtime::services::kaspa::update_logs_flag()
                     .store(type_id == TypeId::of::<modules::Logs>(), Ordering::Relaxed);
                 // crate::runtime::kaspa::update_metrics_flag().store(
                 //     type_id == TypeId::of::<modules::Overview>()
@@ -419,7 +419,7 @@ impl eframe::App for Core {
 
     #[cfg(not(target_arch = "wasm32"))]
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
-        crate::interop::halt();
+        crate::runtime::halt();
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
@@ -428,7 +428,7 @@ impl eframe::App for Core {
         // println!("update...");
         for event in self.channel.iter() {
             if let Err(err) = self.handle_events(event.clone(), ctx, frame) {
-                log_error!("error processing wallet interop event: {}", err);
+                log_error!("error processing wallet runtime event: {}", err);
             }
         }
 
@@ -777,9 +777,9 @@ impl Core {
             if !self.state().is_connected() {
                 self.render_connected_state(ui, Status::Disconnected);
             } else {
-                // let metrics = self.interop.kaspa_service().metrics();
+                // let metrics = self.runtime.kaspa_service().metrics();
                 let peers = self
-                    .interop
+                    .runtime
                     .peer_monitor_service()
                     .peer_info()
                     .map(|peers| peers.len());
@@ -1195,10 +1195,10 @@ impl Core {
     }
 
     pub fn wallet_update_list(&self) {
-        let interop = self.interop.clone();
+        let runtime = self.runtime.clone();
         spawn(async move {
-            let wallet_list = interop.wallet().wallet_enumerate().await?;
-            interop
+            let wallet_list = runtime.wallet().wallet_enumerate().await?;
+            runtime
                 .send(Events::WalletList {
                     wallet_list: Arc::new(wallet_list),
                 })
@@ -1219,7 +1219,7 @@ impl Core {
 
         self.account_collection = Some(account_list.clone().into());
 
-        let interop = self.interop.clone();
+        let runtime = self.runtime.clone();
         spawn(async move {
             let account_ids = account_list
                 .iter()
@@ -1234,7 +1234,7 @@ impl Core {
             let futures = account_ids
                 .into_iter()
                 .map(|account_id| {
-                    interop
+                    runtime
                         .wallet()
                         .transaction_data_get_range(account_id, network_id, 0..128)
                 })
@@ -1263,7 +1263,7 @@ impl Core {
                 }
             });
 
-            interop.wallet().accounts_activate(None).await?;
+            runtime.wallet().accounts_activate(None).await?;
 
             Ok(())
         });

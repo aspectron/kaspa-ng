@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::imports::*;
-use crate::interop::Service;
+use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 // use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
 #[allow(unused_imports)]
@@ -76,7 +76,7 @@ pub struct KaspaService {
     pub service_events: Channel<KaspadServiceEvents>,
     pub task_ctl: Channel<()>,
     pub network: Mutex<Network>,
-    pub wallet: Arc<runtime::Wallet>,
+    pub wallet: Arc<KaspaWallet>,
     // pub metrics: Arc<Metrics>,
     // pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -90,15 +90,14 @@ impl KaspaService {
     pub fn new(application_events: ApplicationEventsChannel, settings: &Settings) -> Self {
         // --
         // create wallet instance
-        let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
+        let storage = KaspaWallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
 
-        let wallet =
-            runtime::Wallet::try_with_rpc(None, storage, Some(settings.node.network.into()))
-                .unwrap_or_else(|e| {
-                    panic!("Failed to create wallet instance: {}", e);
-                });
+        let wallet = KaspaWallet::try_with_rpc(None, storage, Some(settings.node.network.into()))
+            .unwrap_or_else(|e| {
+                panic!("Failed to create wallet instance: {}", e);
+            });
 
         // create service event channel
         let service_events = Channel::unbounded();
@@ -203,7 +202,7 @@ impl KaspaService {
         Ok(())
     }
 
-    pub fn wallet(&self) -> Arc<runtime::Wallet> {
+    pub fn wallet(&self) -> Arc<KaspaWallet> {
         self.wallet.clone()
     }
 
@@ -238,7 +237,7 @@ impl KaspaService {
             return Ok(());
         }
 
-        for service in crate::interop::interop().services().into_iter() {
+        for service in crate::runtime::runtime().services().into_iter() {
             service.detach_rpc().await?;
         }
 
@@ -302,7 +301,7 @@ impl KaspaService {
         // self.metrics.start_task().await?;
         // self.metrics.set_rpc(Some(rpc_api.clone()));
 
-        for service in crate::interop::interop().services().into_iter() {
+        for service in crate::runtime::runtime().services().into_iter() {
             service.attach_rpc(rpc_api.clone()).await?;
         }
 

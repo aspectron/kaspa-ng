@@ -9,7 +9,7 @@ pub enum State {
 
 pub struct Export {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     secret: String,
     pub state: State,
     pub message: Option<String>,
@@ -18,9 +18,9 @@ pub struct Export {
 }
 
 impl Export {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            interop,
+            runtime,
             secret: String::new(),
             state: State::Select,
             message: None,
@@ -115,7 +115,7 @@ impl ModuleT for Export {
                                     self.secret.as_bytes().to_vec(),
                                 );
                                 self.secret.zeroize();
-                                let wallet = self.interop.wallet();//.clone();
+                                let wallet = self.runtime.wallet();//.clone();
                                 let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {

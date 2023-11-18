@@ -11,7 +11,7 @@ pub enum State {
 
 pub struct WalletOpen {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     wallet_secret: String,
     pub state: State,
     pub message: Option<String>,
@@ -19,9 +19,9 @@ pub struct WalletOpen {
 }
 
 impl WalletOpen {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            interop,
+            runtime,
             wallet_secret: String::new(),
             state: State::Select,
             message: None,
@@ -152,7 +152,7 @@ impl ModuleT for WalletOpen {
                                     ctx.wallet_secret.as_bytes().to_vec(),
                                 );
                                 ctx.wallet_secret.zeroize();
-                                let wallet = ctx.interop.wallet().clone();
+                                let wallet = ctx.runtime.wallet().clone();
                                 let wallet_name = ctx.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {

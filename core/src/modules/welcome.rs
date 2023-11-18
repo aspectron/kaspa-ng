@@ -2,14 +2,14 @@ use crate::imports::*;
 
 pub struct Welcome {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     settings : Settings,
 }
 
 impl Welcome {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self { 
-            interop, 
+            runtime, 
             settings : Settings::default(),
         }
     }
@@ -115,7 +115,7 @@ impl ModuleT for Welcome {
                         settings.initialized = true;
                         settings.version.clear(); // triggers changelog
                         settings.store_sync().expect("Unable to store settings");
-                        self.interop.kaspa_service().update_services(&self.settings.node);
+                        self.runtime.kaspa_service().update_services(&self.settings.node);
                         core.settings = settings.clone();
                         core.get_mut::<modules::Settings>().load(settings);
                         core.select::<modules::Overview>();

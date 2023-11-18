@@ -11,7 +11,7 @@ pub enum State {
 
 pub struct Import {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     wallet_secret: String,
 
     word : String,
@@ -24,9 +24,9 @@ pub struct Import {
 }
 
 impl Import {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            interop,
+            runtime,
             wallet_secret: String::new(),
 
             word : String::new(),
@@ -185,7 +185,7 @@ impl ModuleT for Import {
                                     self.wallet_secret.as_bytes().to_vec()
                                 );
                                 self.wallet_secret.zeroize();
-                                let wallet = self.interop.wallet().clone();
+                                let wallet = self.runtime.wallet().clone();
                                 let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
 
                                 spawn_with_result(&unlock_result, async move {

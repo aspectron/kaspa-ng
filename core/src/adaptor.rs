@@ -5,12 +5,12 @@ use wasm_bindgen::prelude::*;
 
 struct Inner {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
 }
 
 impl Inner {
-    pub fn new(interop: Interop) -> Self {
-        Self { interop }
+    pub fn new(runtime: Runtime) -> Self {
+        Self { runtime }
     }
 }
 
@@ -21,9 +21,9 @@ pub struct Adaptor {
 }
 
 impl Adaptor {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            inner: Arc::new(Inner::new(interop.clone())),
+            inner: Arc::new(Inner::new(runtime.clone())),
         }
     }
 }

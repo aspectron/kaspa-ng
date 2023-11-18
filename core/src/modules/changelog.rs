@@ -2,15 +2,15 @@ use crate::imports::*;
 use crate::egui::easy_mark::easy_mark;
 pub struct Changelog {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
     changelog : &'static str,
 }
 
 impl Changelog {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
 
         Self { 
-            interop,
+            runtime,
             changelog : include_str!("../../../CHANGELOG.md")
         }
     }

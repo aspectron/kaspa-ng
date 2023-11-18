@@ -96,7 +96,7 @@ fn render(modules: Modules) -> TokenStream {
         let module_name = module.clone();
         let type_name = Ident::new(&last.to_case(Case::UpperCamel), Span::call_site());
         targets.push(quote! {
-            modules.insert_typeid(#module_name::#type_name::new(interop.clone()));
+            modules.insert_typeid(#module_name::#type_name::new(runtime.clone()));
         });
 
         pub_mod.insert(first.clone());
@@ -119,7 +119,7 @@ fn render(modules: Modules) -> TokenStream {
 
         #(#use_mod)*
 
-        pub fn #function_name (interop : &Interop) -> HashMap::<TypeId, Module> {
+        pub fn #function_name (runtime : &Runtime) -> HashMap::<TypeId, Module> {
             let mut modules = HashMap::<TypeId, Module>::new();
 
             #(#targets)*

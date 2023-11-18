@@ -40,7 +40,7 @@ enum Estimate {
 
 pub struct AccountManager {
     #[allow(dead_code)]
-    interop: Interop,
+    runtime: Runtime,
 
     selected: Option<Account>,
     state: State,
@@ -56,9 +56,9 @@ pub struct AccountManager {
 }
 
 impl AccountManager {
-    pub fn new(interop: Interop) -> Self {
+    pub fn new(runtime: Runtime) -> Self {
         Self {
-            interop,
+            runtime,
             selected: None,
             state: State::Select,
             send_address : String::new(),
@@ -346,7 +346,7 @@ impl AccountManager {
                     // - TODO -
                     let address = Address::try_from("kaspatest:qqz22l98sf8jun72rwh5rqe2tm8lhwtdxdmynrz4ypwak427qed5juktjt7ju").expect("Invalid address");
                     // let address = Address::try_from(context.address()).expect("Invalid address");
-                    let interop = self.interop.clone();
+                    let runtime = self.runtime.clone();
                     let account_id = account.id();
                     let payment_output = PaymentOutput {
                         address,
@@ -364,7 +364,7 @@ impl AccountManager {
                             payload: None,
                         };
 
-                        match interop.wallet().accounts_estimate_call(request).await {
+                        match runtime.wallet().accounts_estimate_call(request).await {
                             Ok(response) => {
                                 *estimate.lock().unwrap() = Estimate::GeneratorSummary(response.generator_summary);
                             }
@@ -373,7 +373,7 @@ impl AccountManager {
                             }    
                         }
 
-                        interop.egui_ctx().request_repaint();
+                        runtime.egui_ctx().request_repaint();
                         Ok(())
                     });
 
@@ -458,7 +458,7 @@ impl AccountManager {
 
                         // let address = Address::try_from(context.address()).expect("Invalid address");
                         let address = Address::try_from("kaspatest:qqz22l98sf8jun72rwh5rqe2tm8lhwtdxdmynrz4ypwak427qed5juktjt7ju").expect("Invalid address");
-                        let interop = self.interop.clone();
+                        let runtime = self.runtime.clone();
                         let account_id = account.id();
                         let payment_output = PaymentOutput {
                             address,
@@ -478,7 +478,7 @@ impl AccountManager {
                                 payload: None,
                             };
     
-                            match interop.wallet().accounts_send_call(request).await {
+                            match runtime.wallet().accounts_send_call(request).await {
                                 Ok(response) => {
                                     println!("****** RESPONSE: {:?}", response);
                                     // *estimate.lock().unwrap() = Estimate::GeneratorSummary(response.generator_summary);
@@ -489,7 +489,7 @@ impl AccountManager {
                                 }    
                             }
     
-                            interop.egui_ctx().request_repaint();
+                            runtime.egui_ctx().request_repaint();
                             Ok(())
                         });
                 
