@@ -79,8 +79,8 @@ pub use crate::result::Result;
 pub use crate::runtime;
 pub use crate::runtime::{spawn, spawn_with_result, Payload, Runtime, Service};
 pub use crate::settings::{
-    KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, RpcConfig,
-    Settings, UxSettings,
+    KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, PluginSettings,
+    PluginSettingsMap, RpcConfig, Settings, UxSettings,
 };
 pub use crate::utils::spawn;
 // #[macro_use]

@@ -64,6 +64,21 @@ pub enum Error {
 
     #[error("Account descriptors are not valid during the wallet open operation")]
     WalletOpenAccountDescriptors,
+
+    #[error(transparent)]
+    AddressError(#[from] kaspa_addresses::AddressError),
+
+    #[error("Invalid network type")]
+    InvalidNetworkType,
+
+    #[error("Http error: {0}")]
+    HttpError(#[from] workflow_http::error::Error),
+
+    #[error("Invalid JSON: {0}")]
+    SerdeJson(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    NetworkType(#[from] kaspa_consensus_core::network::NetworkTypeError),
 }
 
 impl Error {

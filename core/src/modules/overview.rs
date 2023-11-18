@@ -96,7 +96,7 @@ impl Overview {
                         if let Some(metric) = metric_iter.next() {
                             // let duration = 60 * 10; // 15 min (testing)
                             // let duration = core.settings.ux.metrics.graph_duration;
-                            let value = snapshot.get(&metric);
+                            let value = snapshot.get(metric);
                             self.render_graph(ui,  *metric, value, theme);
                         } else {
                             draw = false;

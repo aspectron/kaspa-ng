@@ -9,32 +9,20 @@ cfg_if! {
     }
 }
 
-pub mod services;
-use services::*;
-
 pub mod payload;
+pub mod plugins;
+pub mod services;
 pub use payload::Payload;
-
-#[async_trait]
-pub trait Service: Sync + Send {
-    async fn spawn(self: Arc<Self>) -> Result<()>;
-    async fn join(self: Arc<Self>) -> Result<()>;
-    fn terminate(self: Arc<Self>);
-    // --
-    async fn attach_rpc(self: Arc<Self>, _rpc_api: Arc<dyn RpcApi>) -> Result<()> {
-        Ok(())
-    }
-    async fn detach_rpc(self: Arc<Self>) -> Result<()> {
-        Ok(())
-    }
-}
+pub use services::Service;
+use services::*;
 
 pub struct Inner {
     // services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
     services: Mutex<Vec<Arc<dyn Service>>>,
     kaspa: Arc<KaspaService>,
-    peer_monitor: Arc<PeerMonitorService>,
+    peer_monitor_service: Arc<PeerMonitorService>,
     metrics_service: Arc<MetricsService>,
+    plugin_manager_service: Arc<PluginManagerService>,
     application_events: ApplicationEventsChannel,
     egui_ctx: egui::Context,
     is_running: Arc<AtomicBool>,
@@ -53,17 +41,22 @@ impl Runtime {
     pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
         let application_events = ApplicationEventsChannel::unbounded(Some(egui_ctx.clone()));
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
-        let peer_monitor = Arc::new(PeerMonitorService::new(
+        let peer_monitor_service = Arc::new(PeerMonitorService::new(
             application_events.clone(),
             settings,
         ));
         let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
+        let plugin_manager_service = Arc::new(PluginManagerService::new(
+            application_events.clone(),
+            settings,
+        ));
         // let runtime = Runtime::new(&[kaspa.clone(), peer_monitor.clone(), metrics_service.clone()]);
 
         let services: Mutex<Vec<Arc<dyn Service>>> = Mutex::new(vec![
             kaspa.clone(),
-            peer_monitor.clone(),
+            peer_monitor_service.clone(),
             metrics_service.clone(),
+            plugin_manager_service.clone(),
         ]);
 
         let runtime = Self {
@@ -71,7 +64,8 @@ impl Runtime {
                 services,
                 application_events,
                 kaspa,
-                peer_monitor,
+                peer_monitor_service,
+                plugin_manager_service,
                 metrics_service,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
@@ -145,11 +139,15 @@ impl Runtime {
     }
 
     pub fn peer_monitor_service(&self) -> &Arc<PeerMonitorService> {
-        &self.inner.peer_monitor
+        &self.inner.peer_monitor_service
     }
 
     pub fn metrics_service(&self) -> &Arc<MetricsService> {
         &self.inner.metrics_service
+    }
+
+    pub fn plugin_manager_service(&self) -> &Arc<PluginManagerService> {
+        &self.inner.plugin_manager_service
     }
 
     /// Returns the reference to the application events channel.

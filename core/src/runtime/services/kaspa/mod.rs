@@ -302,7 +302,7 @@ impl KaspaService {
         // self.metrics.set_rpc(Some(rpc_api.clone()));
 
         for service in crate::runtime::runtime().services().into_iter() {
-            service.attach_rpc(rpc_api.clone()).await?;
+            service.attach_rpc(&rpc_api).await?;
         }
 
         // if rpc client is KaspaRpcClient, auto-connect to the node

@@ -1,15 +1,10 @@
-// use std::time::Duration;
-
 use crate::imports::*;
-pub use futures::{future::FutureExt, select, Future};
+// pub use futures::{future::FutureExt, select, Future};
 use kaspa_rpc_core::RpcPeerInfo;
-// use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
-#[allow(unused_imports)]
-use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
-// use kaspa_wallet_core::{ConnectOptions, ConnectStrategy};
+// #[allow(unused_imports)]
+// use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 
-// #[allow(clippy::identity_op)]
-pub const PEER_POLLING_INTERVAL: usize = 1; // 1 sec
+pub const PEER_POLLING_INTERVAL_SECONDS: u64 = 1; // 1 sec
 
 pub enum PeerMonitorEvents {
     Exit,
@@ -45,8 +40,8 @@ impl PeerMonitorService {
 
 #[async_trait]
 impl Service for PeerMonitorService {
-    async fn attach_rpc(self: Arc<Self>, rpc_api: Arc<dyn RpcApi>) -> Result<()> {
-        self.rpc_api.lock().unwrap().replace(rpc_api);
+    async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
+        self.rpc_api.lock().unwrap().replace(rpc_api.clone());
         Ok(())
     }
 
@@ -59,14 +54,12 @@ impl Service for PeerMonitorService {
 
     async fn spawn(self: Arc<Self>) -> Result<()> {
         let this = self.clone();
-        // let wallet_events = this.wallet.multiplexer().channel();
         let _application_events_sender = self.application_events.sender.clone();
 
-        let interval = interval(Duration::from_secs(1));
+        let interval = interval(Duration::from_secs(PEER_POLLING_INTERVAL_SECONDS));
         pin_mut!(interval);
 
         loop {
-            // println!("loop...");
             select! {
                 _ = interval.next().fuse() => {
                     if let Some(rpc_api) = this.rpc_api() {
@@ -75,13 +68,9 @@ impl Service for PeerMonitorService {
                         }
                     }
                 },
-
                 msg = this.as_ref().service_events.receiver.recv().fuse() => {
-
                     if let Ok(event) = msg {
-
                         match event {
-
                             PeerMonitorEvents::Exit => {
                                 break;
                             }
@@ -93,10 +82,7 @@ impl Service for PeerMonitorService {
             }
         }
 
-        println!("shutting down peer monitor...");
-        // this.stop_all_services().await?;
         this.task_ctl.send(()).await.unwrap();
-
         Ok(())
     }
 

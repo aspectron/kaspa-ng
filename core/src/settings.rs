@@ -321,6 +321,16 @@ pub struct UxSettings {
 //     }
 // }
 
+// pub type PluginSettings = HashMap<String, serde_json::Value>;
+
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+pub struct PluginSettings {
+    pub enabled: bool,               //HashMap<String, bool>,
+    pub settings: serde_json::Value, //HashMap<String, serde_json::Value>,
+}
+
+pub type PluginSettingsMap = HashMap<String, PluginSettings>;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
@@ -331,6 +341,9 @@ pub struct Settings {
     pub ux: UxSettings,
     pub language_code: String,
     pub theme: String,
+    pub enable_plugins: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugins: Option<PluginSettingsMap>,
 }
 
 impl Default for Settings {
@@ -343,6 +356,8 @@ impl Default for Settings {
             ux: UxSettings::default(),
             language_code: "en".to_string(),
             theme: "Dark".to_string(),
+            enable_plugins: false,
+            plugins: Some(PluginSettingsMap::default()),
         }
     }
 }

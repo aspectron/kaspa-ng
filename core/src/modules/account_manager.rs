@@ -44,7 +44,7 @@ pub struct AccountManager {
 
     selected: Option<Account>,
     state: State,
-    send_address : String,
+    destination_address_string : String,
     send_amount_text: String,
     send_amount_sompi : u64,
     send_info: Option<String>,
@@ -61,7 +61,7 @@ impl AccountManager {
             runtime,
             selected: None,
             state: State::Select,
-            send_address : String::new(),
+            destination_address_string : String::new(),
             send_amount_text: String::new(),
             send_amount_sompi : 0,
             send_info : None,
@@ -317,14 +317,25 @@ impl AccountManager {
 
         let mut proceed_with_estimate = false;
 
-        
+        let mut destination_address_string = self.destination_address_string.clone();
         ui.label(egui::RichText::new("Enter address").size(12.).raised());
-        ui.add_sized(
+
+        // TODO - address processing...
+        let _response = ui.add_sized(
             size,
-            TextEdit::singleline(&mut self.send_address)
+            TextEdit::singleline(&mut destination_address_string)
                 // .hint_text("Payment password...")
                 .vertical_align(Align::Center),
         );
+        if destination_address_string != self.destination_address_string {
+            self.destination_address_string = destination_address_string;
+            match try_user_string_to_address(self.destination_address_string.as_str(), &network_type) {
+                Ok(_address) => {},
+                Err(err) => {
+                    self.send_info = Some(err.to_string());
+                }
+            }
+        }
 
         ui.label(egui::RichText::new("Enter amount to send").size(12.).raised());
         let mut send_amount_text = self.send_amount_text.clone();

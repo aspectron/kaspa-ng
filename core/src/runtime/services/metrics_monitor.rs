@@ -115,7 +115,7 @@ impl MetricsService {
 
 #[async_trait]
 impl Service for MetricsService {
-    async fn attach_rpc(self: Arc<Self>, rpc_api: Arc<dyn RpcApi>) -> Result<()> {
+    async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
         let this = self.clone();
         self.metrics
             .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
@@ -127,7 +127,7 @@ impl Service for MetricsService {
 
         self.reset_metrics_data()?;
         self.metrics.start_task().await?;
-        self.metrics.set_rpc(Some(rpc_api));
+        self.metrics.set_rpc(Some(rpc_api.clone()));
         Ok(())
     }
     async fn detach_rpc(self: Arc<Self>) -> Result<()> {
