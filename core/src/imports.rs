@@ -69,7 +69,7 @@ pub use crate::events::{ApplicationEventsChannel, Events};
 pub use crate::collection::Collection;
 pub use crate::core::Core;
 pub use crate::interop;
-pub use crate::interop::{spawn, spawn_with_result, Interop, Payload};
+pub use crate::interop::{spawn, spawn_with_result, Interop, Payload, Service};
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
 pub use crate::network::Network;

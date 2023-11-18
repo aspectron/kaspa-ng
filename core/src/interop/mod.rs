@@ -9,21 +9,33 @@ cfg_if! {
     }
 }
 
-pub mod runtime;
 pub mod services;
-
-use runtime::Runtime;
 use services::*;
 
 pub mod payload;
 pub use payload::Payload;
 
+#[async_trait]
+pub trait Service: Sync + Send {
+    async fn spawn(self: Arc<Self>) -> Result<()>;
+    async fn join(self: Arc<Self>) -> Result<()>;
+    fn terminate(self: Arc<Self>);
+    // --
+    async fn attach_rpc(self: Arc<Self>, _rpc_api: Arc<dyn RpcApi>) -> Result<()> {
+        Ok(())
+    }
+    async fn detach_rpc(self: Arc<Self>) -> Result<()> {
+        Ok(())
+    }
+}
+
 pub struct Inner {
-    application_events: ApplicationEventsChannel,
+    // services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
+    services: Mutex<Vec<Arc<dyn Service>>>,
     kaspa: Arc<KaspaService>,
     peer_monitor: Arc<PeerMonitorService>,
     metrics_service: Arc<MetricsService>,
-    runtime: Runtime,
+    application_events: ApplicationEventsChannel,
     egui_ctx: egui::Context,
     is_running: Arc<AtomicBool>,
     start_time: std::time::Instant,
@@ -46,15 +58,21 @@ impl Interop {
             settings,
         ));
         let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
-        let runtime = Runtime::new(&[kaspa.clone(), peer_monitor.clone(), metrics_service.clone()]);
+        // let runtime = Runtime::new(&[kaspa.clone(), peer_monitor.clone(), metrics_service.clone()]);
+
+        let services: Mutex<Vec<Arc<dyn Service>>> = Mutex::new(vec![
+            kaspa.clone(),
+            peer_monitor.clone(),
+            metrics_service.clone(),
+        ]);
 
         let interop = Self {
             inner: Arc::new(Inner {
+                services,
                 application_events,
                 kaspa,
                 peer_monitor,
                 metrics_service,
-                runtime,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
                 start_time: std::time::Instant::now(),
@@ -70,27 +88,48 @@ impl Interop {
         self.inner.start_time.elapsed()
     }
 
-    /// Get a reference to the interop runtime.
-    pub fn runtime(&self) -> &Runtime {
-        &self.inner.runtime
+    pub fn start_services(&self) {
+        let services = self.services();
+        for service in services {
+            spawn(async move { service.spawn().await });
+        }
     }
 
-    pub fn services(&self) -> Vec<Arc<dyn runtime::Service + Send + Sync + 'static>> {
-        self.inner.runtime.services()
+    pub fn services(&self) -> Vec<Arc<dyn Service>> {
+        self.inner.services.lock().unwrap().clone()
     }
 
-    /// Start the interop runtime.
+    pub fn stop_services(&self) {
+        self.services()
+            .into_iter()
+            .for_each(|service| service.terminate());
+    }
+
+    pub async fn join_services(&self) {
+        let futures = self
+            .services()
+            .into_iter()
+            .map(|service| service.join())
+            .collect::<Vec<_>>();
+        join_all(futures).await;
+    }
+
+    pub fn drop(&self) {
+        register_global(None);
+    }
+
+    // / Start the interop runtime.
     pub fn start(&self) {
         self.inner.is_running.store(true, Ordering::SeqCst);
-        self.runtime().start();
+        self.start_services();
     }
 
     /// Shutdown interop runtime.
     pub async fn shutdown(&self) {
         if self.inner.is_running.load(Ordering::SeqCst) {
             self.inner.is_running.store(false, Ordering::SeqCst);
-            self.runtime().shutdown();
-            self.runtime().join().await;
+            self.stop_services();
+            self.join_services().await;
             register_global(None);
         }
     }

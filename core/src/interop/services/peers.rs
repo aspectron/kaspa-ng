@@ -1,7 +1,6 @@
 // use std::time::Duration;
 
 use crate::imports::*;
-use crate::interop::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 use kaspa_rpc_core::RpcPeerInfo;
 // use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
