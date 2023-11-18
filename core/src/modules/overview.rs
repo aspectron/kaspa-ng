@@ -47,7 +47,7 @@ impl ModuleT for Overview {
                 CollapsingHeader::new(i18n("Kaspa"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version(), crate::app::GIT_DESCRIBE));
+                        ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version()));
                         self.render_graphs(core,ui);
                     });
 
@@ -79,7 +79,7 @@ impl Overview {
         //     Metric::ChainBlockCounts,
         // ].into_iter();
 
-        let mut metric_iter = Metric::list().into_iter();
+        let mut metric_iter = METRICS.iter(); //Metric::list().into_iter();
 
         if let Some(snapshot) = core.metrics.as_ref() {
             let theme = theme();
@@ -97,7 +97,7 @@ impl Overview {
                             // let duration = 60 * 10; // 15 min (testing)
                             // let duration = core.settings.ux.metrics.graph_duration;
                             let value = snapshot.get(&metric);
-                            self.render_graph(ui,  metric, value, theme);
+                            self.render_graph(ui,  *metric, value, theme);
                         } else {
                             draw = false;
                         }
@@ -197,3 +197,36 @@ impl Overview {
         });
     }
 }
+
+const METRICS : [Metric;23] = [
+    Metric::CpuUsage,
+    Metric::ResidentSetSizeBytes,
+    // Metric::VirtualMemorySizeBytes,
+    Metric::FdNum,
+    Metric::DiskIoReadBytes,
+    Metric::DiskIoWriteBytes,
+    Metric::DiskIoReadPerSec,
+    Metric::DiskIoWritePerSec,
+    // Metric::BorshLiveConnections,
+    // Metric::BorshConnectionAttempts,
+    // Metric::BorshHandshakeFailures,
+    // Metric::JsonLiveConnections,
+    // Metric::JsonConnectionAttempts,
+    // Metric::JsonHandshakeFailures,
+    Metric::ActivePeers,
+    Metric::BlocksSubmitted,
+    Metric::HeaderCounts,
+    Metric::DepCounts,
+    Metric::BodyCounts,
+    Metric::TxnCounts,
+    Metric::Tps,
+    Metric::ChainBlockCounts,
+    Metric::MassCounts,
+    Metric::BlockCount,
+    Metric::HeaderCount,
+    Metric::TipHashesCount,
+    Metric::Difficulty,
+    Metric::PastMedianTime,
+    Metric::VirtualParentHashesCount,
+    Metric::VirtualDaaScore,
+];
