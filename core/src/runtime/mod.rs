@@ -223,7 +223,7 @@ fn runtime() -> &'static Runtime {
     }
 }
 
-fn try_runtime() -> Option<&'static Runtime> {
+pub fn try_runtime() -> Option<&'static Runtime> {
     unsafe { RUNTIME.as_ref() }
 }
 
@@ -257,6 +257,7 @@ where
 /// Gracefully halt the runtime runtime. This is used
 /// to shutdown kaspad when the kaspa-ng process exit
 /// is an inevitable eventuality.
+#[cfg(not(target_arch = "wasm32"))]
 pub fn halt() {
     if try_runtime().is_some() {
         let handle = tokio::spawn(async move { runtime().shutdown().await });
@@ -271,6 +272,7 @@ pub fn halt() {
 /// if it takes too long. This is used in attempt to shutdown
 /// kaspad if the kaspa-ng process panics, which can result
 /// in a still functioning zombie child process on unix systems.
+#[cfg(not(target_arch = "wasm32"))]
 pub fn abort() {
     const TIMEOUT: u128 = 5000;
     let flag = Arc::new(AtomicBool::new(false));
