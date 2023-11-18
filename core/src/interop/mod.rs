@@ -13,7 +13,7 @@ pub mod runtime;
 pub mod services;
 
 use runtime::Runtime;
-use services::KaspaService;
+use services::*;
 
 pub mod payload;
 pub use payload::Payload;
@@ -21,6 +21,8 @@ pub use payload::Payload;
 pub struct Inner {
     application_events: ApplicationEventsChannel,
     kaspa: Arc<KaspaService>,
+    peer_monitor: Arc<PeerMonitorService>,
+    metrics_service: Arc<MetricsService>,
     runtime: Runtime,
     egui_ctx: egui::Context,
     is_running: Arc<AtomicBool>,
@@ -39,12 +41,19 @@ impl Interop {
     pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
         let application_events = ApplicationEventsChannel::unbounded(Some(egui_ctx.clone()));
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
-        let runtime = Runtime::new(&[kaspa.clone()]);
+        let peer_monitor = Arc::new(PeerMonitorService::new(
+            application_events.clone(),
+            settings,
+        ));
+        let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
+        let runtime = Runtime::new(&[kaspa.clone(), peer_monitor.clone(), metrics_service.clone()]);
 
         let interop = Self {
             inner: Arc::new(Inner {
                 application_events,
                 kaspa,
+                peer_monitor,
+                metrics_service,
                 runtime,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
@@ -64,6 +73,10 @@ impl Interop {
     /// Get a reference to the interop runtime.
     pub fn runtime(&self) -> &Runtime {
         &self.inner.runtime
+    }
+
+    pub fn services(&self) -> Vec<Arc<dyn runtime::Service + Send + Sync + 'static>> {
+        self.inner.runtime.services()
     }
 
     /// Start the interop runtime.
@@ -90,6 +103,14 @@ impl Interop {
     /// Returns the reference to the kaspa service.
     pub fn kaspa_service(&self) -> &Arc<KaspaService> {
         &self.inner.kaspa
+    }
+
+    pub fn peer_monitor_service(&self) -> &Arc<PeerMonitorService> {
+        &self.inner.peer_monitor
+    }
+
+    pub fn metrics_service(&self) -> &Arc<MetricsService> {
+        &self.inner.metrics_service
     }
 
     /// Returns the reference to the application events channel.

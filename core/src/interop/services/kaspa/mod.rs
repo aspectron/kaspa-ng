@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::imports::*;
 use crate::interop::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
-use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
+// use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 use kaspa_wallet_core::{ConnectOptions, ConnectStrategy};
@@ -17,9 +17,6 @@ cfg_if! {
         const LOG_BUFFER_MARGIN: usize = 128;
     }
 }
-
-#[allow(clippy::identity_op)]
-pub const MAX_METRICS_SAMPLES: usize = 60 * 60 * 24 * 1; // 1 day
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -80,8 +77,8 @@ pub struct KaspaService {
     pub task_ctl: Channel<()>,
     pub network: Mutex<Network>,
     pub wallet: Arc<runtime::Wallet>,
-    pub metrics: Arc<Metrics>,
-    pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
+    // pub metrics: Arc<Metrics>,
+    // pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
     #[cfg(not(target_arch = "wasm32"))]
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -121,11 +118,11 @@ impl KaspaService {
             }
         }
 
-        let metrics = Arc::new(Metrics::default());
-        let metrics_data = Metric::list()
-            .into_iter()
-            .map(|metric| (metric, Vec::new()))
-            .collect::<HashMap<Metric, Vec<_>>>();
+        // let metrics = Arc::new(Metrics::default());
+        // let metrics_data = Metric::list()
+        //     .into_iter()
+        //     .map(|metric| (metric, Vec::new()))
+        //     .collect::<HashMap<Metric, Vec<_>>>();
 
         Self {
             application_events,
@@ -133,8 +130,8 @@ impl KaspaService {
             task_ctl: Channel::oneshot(),
             network: Mutex::new(settings.node.network),
             wallet: Arc::new(wallet),
-            metrics,
-            metrics_data: Mutex::new(metrics_data),
+            // metrics,
+            // metrics_data: Mutex::new(metrics_data),
             #[cfg(not(target_arch = "wasm32"))]
             kaspad: Mutex::new(None),
             #[cfg(not(target_arch = "wasm32"))]
@@ -241,6 +238,10 @@ impl KaspaService {
             return Ok(());
         }
 
+        for service in crate::interop::interop().services().into_iter() {
+            service.detach_rpc().await?;
+        }
+
         if let Ok(wrpc_client) = self
             .wallet()
             .rpc_api()
@@ -267,9 +268,9 @@ impl KaspaService {
             }
         }
 
-        self.metrics.unregister_sink();
-        self.metrics.stop_task().await?;
-        self.metrics.set_rpc(None);
+        // self.metrics.unregister_sink();
+        // self.metrics.stop_task().await?;
+        // self.metrics.set_rpc(None);
 
         Ok(())
     }
@@ -289,17 +290,21 @@ impl KaspaService {
             .await
             .expect("Unable to start wallet service");
 
-        let this = self.clone();
-        self.metrics
-            .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
-                if let Err(err) = this.ingest_metrics_snapshot(Box::new(snapshot)) {
-                    println!("Error ingesting metrics snapshot: {}", err);
-                }
-                None
-            })));
-        self.reset_metrics_data()?;
-        self.metrics.start_task().await?;
-        self.metrics.set_rpc(Some(rpc_api));
+        // let this = self.clone();
+        // self.metrics
+        //     .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
+        //         if let Err(err) = this.ingest_metrics_snapshot(Box::new(snapshot)) {
+        //             println!("Error ingesting metrics snapshot: {}", err);
+        //         }
+        //         None
+        //     })));
+        // self.reset_metrics_data()?;
+        // self.metrics.start_task().await?;
+        // self.metrics.set_rpc(Some(rpc_api.clone()));
+
+        for service in crate::interop::interop().services().into_iter() {
+            service.attach_rpc(rpc_api.clone()).await?;
+        }
 
         // if rpc client is KaspaRpcClient, auto-connect to the node
         // if let Some(wrpc_client) = wrpc_client {
@@ -332,67 +337,67 @@ impl KaspaService {
         }
     }
 
-    pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
-        self.metrics_data.lock().unwrap()
-    }
+    // pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
+    //     self.metrics_data.lock().unwrap()
+    // }
 
-    pub fn metrics(&self) -> &Arc<Metrics> {
-        &self.metrics
-    }
+    // pub fn metrics(&self) -> &Arc<Metrics> {
+    //     &self.metrics
+    // }
 
     // pub fn connected_peer_info(&self) -> Option<Arc<Vec<RpcPeerInfo>>> {
     //     self.metrics.connected_peer_info()
     // }
 
-    pub fn reset_metrics_data(&self) -> Result<()> {
-        let now = unixtime_as_millis_f64();
-        let mut template = Vec::with_capacity(MAX_METRICS_SAMPLES);
-        let mut plot_point = PlotPoint {
-            x: now - MAX_METRICS_SAMPLES as f64 * 1000.0,
-            y: 0.0,
-        };
-        while template.len() < MAX_METRICS_SAMPLES {
-            template.push(plot_point);
-            plot_point.x += 1000.0;
-        }
+    // pub fn reset_metrics_data(&self) -> Result<()> {
+    //     let now = unixtime_as_millis_f64();
+    //     let mut template = Vec::with_capacity(MAX_METRICS_SAMPLES);
+    //     let mut plot_point = PlotPoint {
+    //         x: now - MAX_METRICS_SAMPLES as f64 * 1000.0,
+    //         y: 0.0,
+    //     };
+    //     while template.len() < MAX_METRICS_SAMPLES {
+    //         template.push(plot_point);
+    //         plot_point.x += 1000.0;
+    //     }
 
-        let mut metrics_data = self.metrics_data.lock().unwrap();
-        for metric in Metric::list().into_iter() {
-            metrics_data.insert(metric, template.clone());
-        }
-        Ok(())
-    }
+    //     let mut metrics_data = self.metrics_data.lock().unwrap();
+    //     for metric in Metric::list().into_iter() {
+    //         metrics_data.insert(metric, template.clone());
+    //     }
+    //     Ok(())
+    // }
 
-    pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
-        let timestamp = snapshot.unixtime;
-        let mut metrics_data = self.metrics_data.lock().unwrap();
-        for metric in Metric::list().into_iter() {
-            let dest = metrics_data.get_mut(&metric).unwrap();
-            if dest.len() > MAX_METRICS_SAMPLES {
-                dest.drain(0..dest.len() - MAX_METRICS_SAMPLES);
-            }
-            // else if dest.len() < MAX_METRICS_SAMPLES {
-            //     let mut last_point = dest.last().cloned().unwrap_or_default();
-            //     while dest.len() < MAX_METRICS_SAMPLES {
-            //         last_point.x += 1000.0;
-            //         dest.push(last_point.clone());
-            //     }
-            // }
-            dest.push(PlotPoint {
-                x: timestamp,
-                y: snapshot.get(&metric),
-            });
-        }
+    // pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
+    //     let timestamp = snapshot.unixtime;
+    //     let mut metrics_data = self.metrics_data.lock().unwrap();
+    //     for metric in Metric::list().into_iter() {
+    //         let dest = metrics_data.get_mut(&metric).unwrap();
+    //         if dest.len() > MAX_METRICS_SAMPLES {
+    //             dest.drain(0..dest.len() - MAX_METRICS_SAMPLES);
+    //         }
+    //         // else if dest.len() < MAX_METRICS_SAMPLES {
+    //         //     let mut last_point = dest.last().cloned().unwrap_or_default();
+    //         //     while dest.len() < MAX_METRICS_SAMPLES {
+    //         //         last_point.x += 1000.0;
+    //         //         dest.push(last_point.clone());
+    //         //     }
+    //         // }
+    //         dest.push(PlotPoint {
+    //             x: timestamp,
+    //             y: snapshot.get(&metric),
+    //         });
+    //     }
 
-        // if update_metrics_flag().load(Ordering::SeqCst) {
-        self.application_events
-            .sender
-            .try_send(crate::events::Events::Metrics { snapshot })
-            .unwrap();
-        // }
+    //     // if update_metrics_flag().load(Ordering::SeqCst) {
+    //     self.application_events
+    //         .sender
+    //         .try_send(crate::events::Events::Metrics { snapshot })
+    //         .unwrap();
+    //     // }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }
 
 #[async_trait]

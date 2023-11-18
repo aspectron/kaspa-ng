@@ -2,6 +2,7 @@ pub use cfg_if::cfg_if;
 pub use downcast_rs::{impl_downcast, Downcast, DowncastSync};
 pub use kaspa_consensus_core::constants::SOMPI_PER_KASPA;
 pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
+pub use kaspa_rpc_core::api::rpc::RpcApi;
 pub use kaspa_utils::hex::{FromHex, ToHex};
 pub use kaspa_utils::{hashmap::GroupExtension, networking::ContextualNetAddress};
 pub use kaspa_wallet_core::api;
@@ -17,10 +18,11 @@ pub use kaspa_wallet_core::storage::{
 pub use kaspa_wallet_core::utils::*;
 pub use kaspa_wallet_core::Address;
 pub use kaspa_wrpc_client::{KaspaRpcClient, WrpcEncoding};
+
 // pub use egui::Ui;
 // pub use futures_util::future::BoxFuture;
 pub use async_trait::async_trait;
-pub use futures::{future::FutureExt, select, Future};
+pub use futures::{pin_mut, select, FutureExt, StreamExt};
 pub use futures_util::future::{join_all, try_join_all};
 pub use separator::*;
 pub use serde::{Deserialize, Serialize};
@@ -28,7 +30,9 @@ pub use std::any::{Any, TypeId};
 pub use std::cell::{Ref, RefCell, RefMut};
 pub use std::collections::HashMap;
 pub use std::collections::VecDeque;
+pub use std::future::Future;
 pub use std::path::{Path, PathBuf};
+pub use std::pin::Pin;
 pub use std::rc::Rc;
 pub use std::str::FromStr;
 pub use std::sync::{
@@ -37,8 +41,10 @@ pub use std::sync::{
 };
 pub use std::sync::{Arc, Mutex, MutexGuard};
 pub use std::time::Duration;
+
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::extensions::is_not_empty::*;
+pub use workflow_core::task::interval;
 pub use workflow_core::time::unixtime_as_millis_f64;
 pub use workflow_i18n::*;
 pub use workflow_log::*;

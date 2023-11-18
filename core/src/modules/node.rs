@@ -48,7 +48,7 @@ impl ModuleT for Node {
 
                         ui.vertical(|ui| {
 
-                            if let Some(peers) = self.interop.kaspa_service().metrics().connected_peer_info() {
+                            if let Some(peers) = self.interop.peer_monitor_service().peer_info() {
                                 let (inbound, outbound) : (Vec<_>,Vec<_>) = peers.iter().partition(|peer| peer.is_outbound);
 
                                 CollapsingHeader::new(i18n("Inbound"))

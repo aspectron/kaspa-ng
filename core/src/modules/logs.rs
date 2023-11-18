@@ -15,9 +15,9 @@ impl Logs {
 
 impl ModuleT for Logs {
 
-    fn style(&self) -> ModuleStyle {
-        ModuleStyle::Default
-    }
+    // fn style(&self) -> ModuleStyle {
+    //     ModuleStyle::Default
+    // }
 
     fn render(
         &mut self,

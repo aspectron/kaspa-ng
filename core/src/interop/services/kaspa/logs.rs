@@ -1,4 +1,4 @@
-use egui::RichText;
+use crate::imports::*;
 
 pub enum Log {
     Debug(String),
@@ -49,6 +49,6 @@ impl From<&Log> for RichText {
             Log::Processed(text) => RichText::from(text).color(egui::Color32::LIGHT_GREEN),
         };
 
-        text.monospace()
+        text.font(FontId::monospace(theme().node_log_font_size))
     }
 }

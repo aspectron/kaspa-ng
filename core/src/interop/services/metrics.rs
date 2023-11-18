@@ -1,16 +1,15 @@
-use std::time::Duration;
+// use std::time::Duration;
 
 use crate::imports::*;
-use crate::runtime::Service;
+use crate::interop::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
-use kaspa_wallet_core::{ConnectOptions, ConnectStrategy};
+// use kaspa_wallet_core::{ConnectOptions, ConnectStrategy};
 
 #[allow(clippy::identity_op)]
 pub const MAX_METRICS_SAMPLES: usize = 60 * 60 * 24 * 1; // 1 day
-
 
 pub struct MetricsService {
     pub application_events: ApplicationEventsChannel,
@@ -23,10 +22,9 @@ pub struct MetricsService {
 }
 
 impl MetricsService {
-    pub fn new(application_events: ApplicationEventsChannel, settings: &Settings) -> Self {
+    pub fn new(application_events: ApplicationEventsChannel, _settings: &Settings) -> Self {
         // create service event channel
         // let service_events = Channel::unbounded();
-
 
         let metrics = Arc::new(Metrics::default());
         let metrics_data = Metric::list()
@@ -45,33 +43,16 @@ impl MetricsService {
         }
     }
 
+    // pub async fn stop_all_services(&self) -> Result<()> {
 
-    pub async fn stop_all_services(&self) -> Result<()> {
+    //     Ok(())
+    // }
 
-        self.metrics.unregister_sink();
-        self.metrics.stop_task().await?;
-        self.metrics.set_rpc(None);
+    // pub async fn start_all_services(self: &Arc<Self>, rpc: Rpc, network: Network) -> Result<()> {
+    //     let rpc_api = rpc.rpc_api().clone();
 
-        Ok(())
-    }
-
-    pub async fn start_all_services(self: &Arc<Self>, rpc: Rpc, network: Network) -> Result<()> {
-        let rpc_api = rpc.rpc_api().clone();
-
-        let this = self.clone();
-        self.metrics
-            .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
-                if let Err(err) = this.ingest_metrics_snapshot(Box::new(snapshot)) {
-                    println!("Error ingesting metrics snapshot: {}", err);
-                }
-                None
-            })));
-        self.reset_metrics_data()?;
-        self.metrics.start_task().await?;
-        self.metrics.set_rpc(Some(rpc_api));
-
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
         self.metrics_data.lock().unwrap()
@@ -134,49 +115,71 @@ impl MetricsService {
 
 #[async_trait]
 impl Service for MetricsService {
-    async fn spawn(self: Arc<Self>) -> Result<()> {
+    async fn attach_rpc(self: Arc<Self>, rpc_api: Arc<dyn RpcApi>) -> Result<()> {
         let this = self.clone();
-        let wallet_events = this.wallet.multiplexer().channel();
-        let _application_events_sender = self.application_events.sender.clone();
-
-        loop {
-            // println!("loop...");
-            select! {
-
-
-                msg = this.as_ref().service_events.receiver.recv().fuse() => {
-
-                    if let Ok(event) = msg {
-
-                        match event {
-
-                            KaspadServiceEvents::Exit => {
-                                break;
-                            }
-                        }
-                    } else {
-                        break;
-                    }
+        self.metrics
+            .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
+                if let Err(err) = this.ingest_metrics_snapshot(Box::new(snapshot)) {
+                    println!("Error ingesting metrics snapshot: {}", err);
                 }
-            }
-        }
+                None
+            })));
 
-        println!("shutting down node manager...");
-        this.stop_all_services().await?;
-        this.task_ctl.send(()).await.unwrap();
+        self.reset_metrics_data()?;
+        self.metrics.start_task().await?;
+        self.metrics.set_rpc(Some(rpc_api));
+        Ok(())
+    }
+    async fn detach_rpc(self: Arc<Self>) -> Result<()> {
+        self.metrics.unregister_sink();
+        self.metrics.stop_task().await?;
+        self.metrics.set_rpc(None);
+
+        Ok(())
+    }
+
+    async fn spawn(self: Arc<Self>) -> Result<()> {
+        // let this = self.clone();
+        // // let wallet_events = this.wallet.multiplexer().channel();
+        // let _application_events_sender = self.application_events.sender.clone();
+
+        // loop {
+        //     // println!("loop...");
+        //     select! {
+
+        //         msg = this.as_ref().service_events.receiver.recv().fuse() => {
+
+        //             if let Ok(event) = msg {
+
+        //                 match event {
+
+        //                     KaspadServiceEvents::Exit => {
+        //                         break;
+        //                     }
+        //                 }
+        //             } else {
+        //                 break;
+        //             }
+        //         }
+        //     }
+        // }
+
+        // println!("shutting down node manager...");
+        // this.stop_all_services().await?;
+        // this.task_ctl.send(()).await.unwrap();
 
         Ok(())
     }
 
     fn terminate(self: Arc<Self>) {
-        self.service_events
-            .sender
-            .try_send(KaspadServiceEvents::Exit)
-            .unwrap();
+        // self.service_events
+        //     .sender
+        //     .try_send(KaspadServiceEvents::Exit)
+        //     .unwrap();
     }
 
     async fn join(self: Arc<Self>) -> Result<()> {
-        self.task_ctl.recv().await.unwrap();
+        // self.task_ctl.recv().await.unwrap();
         Ok(())
     }
 }

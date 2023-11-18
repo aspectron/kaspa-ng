@@ -47,7 +47,7 @@ impl ModuleT for Overview {
                 CollapsingHeader::new(i18n("Kaspa"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        ui.label(format!("Kaspa NG v{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version()));
+                        ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version(), crate::app::GIT_DESCRIBE));
                         self.render_graphs(core,ui);
                     });
 
@@ -114,12 +114,12 @@ impl Overview {
         let graph_color = match group {
             MetricGroup::System => theme.performance_graph_color,
             MetricGroup::Storage => theme.storage_graph_color,
-            MetricGroup::Node => theme.node_graph_color,
             MetricGroup::Network => theme.network_graph_color,
+            MetricGroup::BlockDAG => theme.blockdag_graph_color,
         };    
 
         let graph_data = {
-            let metrics_data = self.interop.kaspa_service().metrics_data();
+            let metrics_data = self.interop.metrics_service().metrics_data();
             let data = metrics_data.get(&metric).unwrap();
             let mut duration = 2 * 60;
             let uptime = self.interop.uptime().as_secs() as usize;

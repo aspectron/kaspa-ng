@@ -1,5 +1,5 @@
 use crate::imports::*;
-use crate::interop::services::kaspa::MAX_METRICS_SAMPLES;
+use crate::interop::services::metrics::MAX_METRICS_SAMPLES;
 use egui_extras::{StripBuilder, Size};
 use kaspa_metrics::{Metric,MetricGroup, MetricsSnapshot};
 use chrono::DateTime;
@@ -135,8 +135,8 @@ impl Metrics {
         let graph_color = match group {
             MetricGroup::System => theme.performance_graph_color,
             MetricGroup::Storage => theme.storage_graph_color,
-            MetricGroup::Node => theme.node_graph_color,
             MetricGroup::Network => theme.network_graph_color,
+            MetricGroup::BlockDAG => theme.blockdag_graph_color,
         };
 
         StripBuilder::new(ui)
@@ -154,7 +154,7 @@ impl Metrics {
 
                     // ---
                     let graph_data = {
-                        let metrics_data = self.interop.kaspa_service().metrics_data();
+                        let metrics_data = self.interop.metrics_service().metrics_data();
                         let data = metrics_data.get(&metric).unwrap();
                         let samples = if data.len() < duration { data.len() } else { duration };
                         data[data.len()-samples..].to_vec()

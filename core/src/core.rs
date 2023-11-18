@@ -780,9 +780,8 @@ impl Core {
                 // let metrics = self.interop.kaspa_service().metrics();
                 let peers = self
                     .interop
-                    .kaspa_service()
-                    .metrics()
-                    .connected_peer_info()
+                    .peer_monitor_service()
+                    .peer_info()
                     .map(|peers| peers.len());
                 let tps = self.metrics.as_ref().map(|metrics| metrics.tps);
                 ui.horizontal(|ui| {

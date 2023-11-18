@@ -5,6 +5,13 @@ pub trait Service: Sync + Send {
     async fn spawn(self: Arc<Self>) -> Result<()>;
     async fn join(self: Arc<Self>) -> Result<()>;
     fn terminate(self: Arc<Self>);
+    // --
+    async fn attach_rpc(self: Arc<Self>, _rpc_api: Arc<dyn RpcApi>) -> Result<()> {
+        Ok(())
+    }
+    async fn detach_rpc(self: Arc<Self>) -> Result<()> {
+        Ok(())
+    }
 }
 
 pub struct Inner {
