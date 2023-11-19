@@ -28,7 +28,7 @@ pub trait Service: Sync + Send {
     /// Block until the service is terminated
     async fn join(self: Arc<Self>) -> Result<()>;
 
-    /// Called when Kaspa RPC API has been created (but node is not 
+    /// Called when Kaspa RPC API has been created (but node is not
     /// connected yet, see [`connect_rpc`](Service::connect_rpc))
     /// for connectivity signalling.
     async fn attach_rpc(self: Arc<Self>, _rpc_api: &Arc<dyn RpcApi>) -> Result<()> {

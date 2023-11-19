@@ -47,7 +47,10 @@ impl Runtime {
             settings,
         ));
         let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
-        let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(application_events.clone(), settings));
+        let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(
+            application_events.clone(),
+            settings,
+        ));
         let plugin_manager_service = Arc::new(PluginManagerService::new(
             application_events.clone(),
             settings,

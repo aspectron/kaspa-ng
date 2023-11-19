@@ -9,11 +9,15 @@ use egui_plot::{
 pub struct BlockDag {
     #[allow(dead_code)]
     runtime: Runtime,
+    daa_cursor: f64,
+    last_daa_score : u64,
+    running : bool,
+    
 }
 
 impl BlockDag {
     pub fn new(runtime: Runtime) -> Self {
-        Self { runtime }
+        Self { runtime, daa_cursor : 0.0, last_daa_score : 0, running : false }
     }
 }
 
@@ -36,6 +40,24 @@ impl ModuleT for BlockDag {
         ui.separator();
 
         let current_daa_score = core.state().current_daa_score().unwrap_or_default();
+        if self.last_daa_score != current_daa_score {
+
+            if !self.running {
+                self.running = true;
+                self.daa_cursor = current_daa_score as f64;
+            }
+
+            self.last_daa_score = current_daa_score;
+        }
+
+        let delta = 0.005;
+        let diff = current_daa_score as f64 - self.daa_cursor;
+        let step = diff * delta;
+        self.daa_cursor += step;
+        if diff > 0.01 {
+            crate::runtime::try_runtime().unwrap().request_repaint();
+        }
+        
         let graph_width = ui.available_width();
         let graph_height = ui.available_height();
 
@@ -43,13 +65,17 @@ impl ModuleT for BlockDag {
             .legend(Legend::default())
             .width(graph_width)
             .height(graph_height)
-            .include_x(current_daa_score as f64 + 10.)
-            .include_x(current_daa_score as f64 - 70.)
-            .include_y(100.)
-            .include_y(-100.)
+            .include_x(self.daa_cursor + 8.)
+            .include_x(self.daa_cursor - 20.)
+            // .include_x(self.daa_cursor + 30.)
+            // .include_x(self.daa_cursor - 150.)
+            .include_y(15.)
+            .include_y(-15.)
+            // .include_y(100.)
+            // .include_y(-100.)
             // .auto_bounds_x()
             // .auto_bounds_y()
-            .data_aspect(1.)
+            .data_aspect(0.3)
             .y_axis_width(4)
             .show_axes(true)
             .show_grid(true)
@@ -106,10 +132,10 @@ impl ModuleT for BlockDag {
 
                 let d = 1.5;
                 let points: PlotPoints = [
-                    [x+d, y+d],
-                    [x-d, y+d],
-                    [x-d, y-d],
-                    [x+d, y-d],
+                    [x+d*0.3, y+d],
+                    [x-d*0.3, y+d],
+                    [x-d*0.3, y-d],
+                    [x+d*0.3, y-d],
                 ].to_vec().into();
             
                 Polygon::new(points)

@@ -332,7 +332,6 @@ impl Core {
             .expect("Unknown module");
 
         if self.module.type_id() != module.type_id() {
-
             let next = module.clone();
 
             self.stack.push_back(self.module.clone());

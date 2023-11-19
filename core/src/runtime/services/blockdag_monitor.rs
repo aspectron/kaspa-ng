@@ -1,8 +1,8 @@
 use crate::imports::*;
-use kaspa_rpc_core::RpcBlock;
-use kaspa_rpc_core::notify::connection::{ChannelConnection, ChannelType};
+use kaspa_notify::{listener::ListenerId, scope::*};
 use kaspa_rpc_core::api::notifications::Notification;
-use kaspa_notify::{scope::*, listener::ListenerId};
+use kaspa_rpc_core::notify::connection::{ChannelConnection, ChannelType};
+use kaspa_rpc_core::RpcBlock;
 
 pub enum BlockDagMonitorEvents {
     Exit,
@@ -35,12 +35,22 @@ impl BlockDagMonitorService {
 
     pub async fn register_notification_listener(&self) -> Result<()> {
         if let Some(rpc_api) = self.rpc_api() {
-            let listener_id = 
-                    rpc_api
-                    .register_new_listener(ChannelConnection::new(self.notification_channel.sender.clone(), ChannelType::Persistent));
-                *self.listener_id.lock().unwrap() = Some(listener_id);
-                rpc_api.start_notify(listener_id, Scope::BlockAdded(BlockAddedScope {  })).await?;
-                rpc_api.start_notify(listener_id, Scope::VirtualChainChanged(VirtualChainChangedScope { include_accepted_transaction_ids: false })).await?;
+            let listener_id = rpc_api.register_new_listener(ChannelConnection::new(
+                self.notification_channel.sender.clone(),
+                ChannelType::Persistent,
+            ));
+            *self.listener_id.lock().unwrap() = Some(listener_id);
+            rpc_api
+                .start_notify(listener_id, Scope::BlockAdded(BlockAddedScope {}))
+                .await?;
+            rpc_api
+                .start_notify(
+                    listener_id,
+                    Scope::VirtualChainChanged(VirtualChainChangedScope {
+                        include_accepted_transaction_ids: false,
+                    }),
+                )
+                .await?;
         }
 
         Ok(())
@@ -48,7 +58,7 @@ impl BlockDagMonitorService {
 
     pub async fn unregister_notification_listener(&self) -> Result<()> {
         if let Some(rpc_api) = self.rpc_api() {
-                let listener_id = self.listener_id.lock().unwrap().take();
+            let listener_id = self.listener_id.lock().unwrap().take();
             if let Some(id) = listener_id {
                 // we do not need this as we are unregister the entire listener here...
                 rpc_api.unregister_listener(id).await?;
@@ -57,11 +67,9 @@ impl BlockDagMonitorService {
         Ok(())
     }
 
-
     pub fn rpc_api(&self) -> Option<Arc<dyn RpcApi>> {
         self.rpc_api.lock().unwrap().clone()
     }
-
 }
 
 #[async_trait]
@@ -70,18 +78,18 @@ impl Service for BlockDagMonitorService {
         self.rpc_api.lock().unwrap().replace(rpc_api.clone());
         Ok(())
     }
-    
+
     async fn detach_rpc(self: Arc<Self>) -> Result<()> {
         self.rpc_api.lock().unwrap().take();
-        
+
         Ok(())
     }
-    
+
     async fn connect_rpc(self: Arc<Self>) -> Result<()> {
         self.register_notification_listener().await?;
         Ok(())
     }
-    
+
     async fn disconnect_rpc(self: Arc<Self>) -> Result<()> {
         self.unregister_notification_listener().await?;
         Ok(())
@@ -91,7 +99,7 @@ impl Service for BlockDagMonitorService {
         let this = self.clone();
         let _application_events_sender = self.application_events.sender.clone();
 
-        let mut chain : VecDeque<Arc<RpcBlock>> = Default::default();
+        let mut chain: VecDeque<Arc<RpcBlock>> = Default::default();
 
         loop {
             select! {
