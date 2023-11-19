@@ -8,6 +8,7 @@ kaspa_ng_macros::register_modules!(
         about,
         account_create,
         account_manager,
+        block_dag,
         changelog,
         deposit,
         export,

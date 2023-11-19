@@ -30,7 +30,7 @@ pub enum Events {
         message: String,
     },
     Notify {
-        notification: Notification,
+        notification: UserNotification,
     },
     Close,
     // Send,

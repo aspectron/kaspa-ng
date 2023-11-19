@@ -22,6 +22,7 @@ pub struct Inner {
     kaspa: Arc<KaspaService>,
     peer_monitor_service: Arc<PeerMonitorService>,
     metrics_service: Arc<MetricsService>,
+    block_dag_monitor_service: Arc<BlockDagMonitorService>,
     plugin_manager_service: Arc<PluginManagerService>,
     application_events: ApplicationEventsChannel,
     egui_ctx: egui::Context,
@@ -46,6 +47,7 @@ impl Runtime {
             settings,
         ));
         let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
+        let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(application_events.clone(), settings));
         let plugin_manager_service = Arc::new(PluginManagerService::new(
             application_events.clone(),
             settings,
@@ -56,6 +58,7 @@ impl Runtime {
             kaspa.clone(),
             peer_monitor_service.clone(),
             metrics_service.clone(),
+            block_dag_monitor_service.clone(),
             plugin_manager_service.clone(),
         ]);
 
@@ -67,6 +70,7 @@ impl Runtime {
                 peer_monitor_service,
                 plugin_manager_service,
                 metrics_service,
+                block_dag_monitor_service,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
                 start_time: std::time::Instant::now(),
@@ -146,6 +150,10 @@ impl Runtime {
         &self.inner.metrics_service
     }
 
+    pub fn block_dag_monitor_service(&self) -> &Arc<BlockDagMonitorService> {
+        &self.inner.block_dag_monitor_service
+    }
+
     pub fn plugin_manager_service(&self) -> &Arc<PluginManagerService> {
         &self.inner.plugin_manager_service
     }
@@ -206,6 +214,10 @@ impl Runtime {
 
     pub fn egui_ctx(&self) -> &egui::Context {
         &self.inner.egui_ctx
+    }
+
+    pub fn request_repaint(&self) {
+        self.inner.egui_ctx.request_repaint();
     }
 }
 

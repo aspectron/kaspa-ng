@@ -17,12 +17,13 @@ vergen = { version = "8.2.6", features = ["build", "cargo", "git", "gitcl", "rus
 # vergen = { version = "8.2.6", features = ["build", "git", "gitcl"] }
 
 [dependencies]
-kaspa-ng-macros.workspace = true
 kaspa-addresses.workspace = true
 kaspa-bip32.workspace = true
 kaspa-cli.workspace = true
 kaspa-consensus-core.workspace = true
 kaspa-metrics.workspace = true
+kaspa-ng-macros.workspace = true
+kaspa-notify.workspace = true
 kaspa-rpc-core.workspace = true
 kaspa-utils.workspace = true
 kaspa-wallet-core.workspace = true

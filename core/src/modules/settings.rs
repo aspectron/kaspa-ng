@@ -208,7 +208,7 @@ impl ModuleT for Settings {
 
             if ui.button("Test Toast").clicked() {
                 self.runtime.try_send(Events::Notify {
-                    notification : Notification::info("Test Toast")
+                    notification : UserNotification::info("Test Toast")
                 }).unwrap();
             }
             ui.add_space(32.);

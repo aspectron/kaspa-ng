@@ -39,7 +39,7 @@ pub use std::sync::{
     atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering},
     OnceLock,
 };
-pub use std::sync::{Arc, Mutex, MutexGuard};
+pub use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 pub use std::time::Duration;
 
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
@@ -71,7 +71,7 @@ pub use crate::core::Core;
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
 pub use crate::network::Network;
-pub use crate::notifications::{Notification, Notify};
+pub use crate::notifications::{UserNotification, UserNotifyKind};
 pub use crate::panel::Panel;
 pub use crate::primitives::{Account, AccountCollection, Transaction, TransactionCollection};
 pub use crate::prompt::{cascade, with_secret};

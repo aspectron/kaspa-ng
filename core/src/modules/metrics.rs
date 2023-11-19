@@ -144,92 +144,92 @@ impl Metrics {
             .horizontal(|mut strip| {
 
                 strip.cell(|ui| {
-                ui.vertical(|ui| {
-                    ui.add_space(8.);
-                    ui.horizontal(|ui|{
-                        ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
-                            ui.label(format!("{}: {}", i18n(metric.title()), metric.format(metrics.get(&metric), true, false)));
+                    ui.vertical(|ui| {
+                        ui.add_space(8.);
+                        ui.horizontal(|ui|{
+                            ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
+                                ui.label(format!("{}: {}", i18n(metric.title()), metric.format(metrics.get(&metric), true, false)));
+                            });
                         });
-                    });
 
-                    // ---
-                    let graph_data = {
-                        let metrics_data = self.runtime.metrics_service().metrics_data();
-                        let data = metrics_data.get(&metric).unwrap();
-                        let samples = if data.len() < duration { data.len() } else { duration };
-                        data[data.len()-samples..].to_vec()
-                    };
+                        // ---
+                        let graph_data = {
+                            let metrics_data = self.runtime.metrics_service().metrics_data();
+                            let data = metrics_data.get(&metric).unwrap();
+                            let samples = if data.len() < duration { data.len() } else { duration };
+                            data[data.len()-samples..].to_vec()
+                        };
 
-                    let mut plot = Plot::new(metric.as_str())
-                        .legend(Legend::default())
-                        .width(graph_width)
-                        .height(graph_height)
-                        .auto_bounds_x()
-                        .auto_bounds_y()
-                        .set_margin_fraction(vec2(0.0,0.0) )
-                        .y_axis_width(4)
-                        .show_axes(true)
-                        .show_grid(true)
-                        .allow_drag([false, false])
-                        .allow_scroll(false)
-                        .y_axis_formatter(move |y,_size,_range|{
-                            metric.format(y, true, true)
-                        })
-                        .x_axis_formatter(move |x, _size, _range| {
-                            DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
-                                .expect("could not parse timestamp")
-                                .with_timezone(&chrono::Local)
-                                .format("%H:%M:%S")
-                                .to_string()
-                        })
-                        .x_grid_spacer(
-                            uniform_grid_spacer(move |input| {
-
-                                let (start_time,stop_time) = input.bounds;
-                                let range = stop_time - start_time;
-                                let base_step_size = range / graph_width as f64 * 64.;
-                                calculate_grid_lines(base_step_size)
+                        let mut plot = Plot::new(metric.as_str())
+                            .legend(Legend::default())
+                            .width(graph_width)
+                            .height(graph_height)
+                            .auto_bounds_x()
+                            .auto_bounds_y()
+                            .set_margin_fraction(vec2(0.0,0.0) )
+                            .y_axis_width(4)
+                            .show_axes(true)
+                            .show_grid(true)
+                            .allow_drag([false, false])
+                            .allow_scroll(false)
+                            .y_axis_formatter(move |y,_size,_range|{
+                                metric.format(y, true, true)
                             })
-                        )
-                        .label_formatter(move |_name, point| {
-                            let PlotPoint { x, y } = point;
+                            .x_axis_formatter(move |x, _size, _range| {
+                                DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
+                                    .expect("could not parse timestamp")
+                                    .with_timezone(&chrono::Local)
+                                    .format("%H:%M:%S")
+                                    .to_string()
+                            })
+                            .x_grid_spacer(
+                                uniform_grid_spacer(move |input| {
 
-                            format!("{} @ {}", metric.format(*y, true, true), DateTime::<chrono::Utc>::from_timestamp((*x / 1000.0) as i64, 0)
-                                .expect("could not parse timestamp")
-                                .with_timezone(&chrono::Local)
-                                .format("%H:%M:%S")
+                                    let (start_time,stop_time) = input.bounds;
+                                    let range = stop_time - start_time;
+                                    let base_step_size = range / graph_width as f64 * 64.;
+                                    calculate_grid_lines(base_step_size)
+                                })
                             )
-                        })                                                    
-                        ;
+                            .label_formatter(move |_name, point| {
+                                let PlotPoint { x, y } = point;
 
-                    if [Metric::CpuUsage].contains(&metric) {
-                        plot = plot.include_y(100.);
-                    }
-            
-                    if [
-                        Metric::ResidentSetSizeBytes, 
-                        Metric::VirtualMemorySizeBytes,
-                        Metric::FdNum,
-                        // Metric::DiskIoReadBytes,
-                        // Metric::DiskIoWriteBytes,
-                        Metric::DiskIoReadPerSec,
-                        Metric::DiskIoWritePerSec,
-                        Metric::Tps,
-                    ].contains(&metric) {
-                        plot = plot.include_y(100.);
-                    }
-            
-                    let line = Line::new(PlotPoints::Owned(graph_data))
-                        .color(graph_color)
-                        .style(LineStyle::Solid)
-                        .fill(0.0);
-            
+                                format!("{} @ {}", metric.format(*y, true, true), DateTime::<chrono::Utc>::from_timestamp((*x / 1000.0) as i64, 0)
+                                    .expect("could not parse timestamp")
+                                    .with_timezone(&chrono::Local)
+                                    .format("%H:%M:%S")
+                                )
+                            })                                                    
+                            ;
+
+                        if [Metric::CpuUsage].contains(&metric) {
+                            plot = plot.include_y(100.);
+                        }
+                
+                        if [
+                            Metric::ResidentSetSizeBytes, 
+                            Metric::VirtualMemorySizeBytes,
+                            Metric::FdNum,
+                            // Metric::DiskIoReadBytes,
+                            // Metric::DiskIoWriteBytes,
+                            Metric::DiskIoReadPerSec,
+                            Metric::DiskIoWritePerSec,
+                            Metric::Tps,
+                        ].contains(&metric) {
+                            plot = plot.include_y(100.);
+                        }
+                
+                        let line = Line::new(PlotPoints::Owned(graph_data))
+                            .color(graph_color)
+                            .style(LineStyle::Solid)
+                            .fill(0.0);
+                
                         plot.show(ui, |plot_ui| {
                             plot_ui.line(line);
                         });
                     });
                 });
-            });
+        });
     }
 }
 

@@ -79,6 +79,7 @@ pub struct Core {
     runtime: Runtime,
     wallet: Arc<dyn WalletApi>,
     channel: ApplicationEventsChannel,
+    deactivation: Option<Module>,
     module: Module,
     stack: VecDeque<Module>,
     modules: HashMap<TypeId, Module>,
@@ -291,6 +292,7 @@ impl Core {
             runtime,
             wallet,
             channel,
+            deactivation: None,
             module,
             modules: modules.clone(),
             stack: VecDeque::new(),
@@ -330,11 +332,15 @@ impl Core {
             .expect("Unknown module");
 
         if self.module.type_id() != module.type_id() {
+
+            let next = module.clone();
+
             self.stack.push_back(self.module.clone());
             // let previous = self.module.clone();
-            self.module = module.clone();
+            self.deactivation = Some(self.module.clone());
+            self.module = next.clone();
             // previous.deactivate(self);
-            // module.activate(self);
+            // next.activate(self);
 
             #[cfg(not(target_arch = "wasm32"))]
             {
@@ -576,6 +582,10 @@ impl eframe::App for Core {
                                     self.select::<modules::Metrics>();
                                 }
                                 ui.separator();
+                                if ui.button("BlockDAG").clicked() {
+                                    self.select::<modules::BlockDag>();
+                                }
+                                ui.separator();
                                 if ui.button("Logs").clicked() {
                                     self.select::<modules::Logs>();
                                 }
@@ -767,6 +777,10 @@ impl eframe::App for Core {
         //         ui.label("You would normally choose either panels OR windows.");
         //     });
         // }
+
+        if let Some(module) = self.deactivation.take() {
+            module.deactivate(self);
+        }
     }
 }
 

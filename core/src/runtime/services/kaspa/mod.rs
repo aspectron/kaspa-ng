@@ -336,6 +336,22 @@ impl KaspaService {
         }
     }
 
+    pub async fn connect_all_services(&self) -> Result<()> {
+        for service in crate::runtime::runtime().services().into_iter() {
+            service.connect_rpc().await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn disconnect_all_services(&self) -> Result<()> {
+        for service in crate::runtime::runtime().services().into_iter() {
+            service.disconnect_rpc().await?;
+        }
+
+        Ok(())
+    }
+
     // pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
     //     self.metrics_data.lock().unwrap()
     // }
@@ -416,6 +432,12 @@ impl Service for KaspaService {
 
                         match *event {
                             CoreWallet::DAAScoreChange{ .. } => {
+                            }
+                            CoreWallet::Connect { .. } => {
+                                this.connect_all_services().await?;
+                            }
+                            CoreWallet::Disconnect { .. } => {
+                                this.disconnect_all_services().await?;
                             }
                             _ => {
                                 println!("wallet event: {:?}", event);

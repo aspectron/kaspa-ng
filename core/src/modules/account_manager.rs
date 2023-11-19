@@ -284,7 +284,7 @@ impl ModuleT for AccountManager {
                     .show_inside(ui, |ui| {    
                         ui.separator();
 
-                        egui::ScrollArea::vertical().show(ui, |ui| {
+                        egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
 
                             let transactions = account.transactions();
 
