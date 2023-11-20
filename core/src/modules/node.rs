@@ -91,7 +91,7 @@ fn render_peer(ui : &mut Ui, peer: &RpcPeerInfo) {
             Grid::new("peer_info_grid")
                 .num_columns(2)
                 .spacing([40.0,4.0])
-                .min_col_width(140.0)
+                .min_col_width(120.0)
                 // .striped(true)
                 .show(ui, |ui| {
 
@@ -99,30 +99,27 @@ fn render_peer(ui : &mut Ui, peer: &RpcPeerInfo) {
                     ui.colored_label(color, peer.user_agent.to_string());
                     ui.end_row();
 
-                    ui.label(i18n("Address"));
-                    ui.colored_label(color, peer.address.to_string());
+                    ui.label(i18n("Connection"));
+                    ui.horizontal(|ui| {
+                        ui.label(i18n("Address:"));
+                        ui.colored_label(color, peer.address.to_string());
+                        ui.label(i18n("Protocol:"));
+                        ui.colored_label(color, format!("v{}", peer.advertised_protocol_version));
+                        ui.label(i18n("IBD:"));
+                        ui.colored_label(color, peer.is_ibd_peer.to_string());
+                    });
                     ui.end_row();
 
-                    ui.label(i18n("Protocol"));
-                    ui.colored_label(color, peer.advertised_protocol_version.to_string());
+                    ui.label("Metrics");
+                    ui.horizontal(|ui|{
+                        ui.label(i18n("Ping:"));
+                        ui.colored_label(color, format_duration(peer.last_ping_duration));
+                        ui.label(i18n("Time Offset:"));
+                        ui.colored_label(color, peer.time_offset.to_string());
+                        ui.label(i18n("Uptime:"));
+                        ui.colored_label(color, format_duration(peer.time_connected));
+                    });
                     ui.end_row();
-
-                    ui.label(i18n("Ping"));
-                    ui.colored_label(color, format_duration(peer.last_ping_duration));
-                    ui.end_row();
-
-                    ui.label(i18n("IBD"));
-                    ui.colored_label(color, peer.is_ibd_peer.to_string());
-                    ui.end_row();
-
-                    ui.label(i18n("Time Offset"));
-                    ui.colored_label(color, peer.time_offset.to_string());
-                    ui.end_row();
-
-                    ui.label(i18n("Connection duration"));
-                    ui.colored_label(color, format_duration(peer.time_connected));
-                    ui.end_row();
-
                 });
 
         });

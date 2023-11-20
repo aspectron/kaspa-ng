@@ -235,6 +235,7 @@ impl ModuleT for AccountManager {
                                     ui.add(
                                         egui::Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://qr.svg"), bytes: context.qr() })
                                         .fit_to_original_size(1.)
+                                        .texture_options(TextureOptions::NEAREST)
                                         // .shrink_to_fit()
                                     );
                                 // });

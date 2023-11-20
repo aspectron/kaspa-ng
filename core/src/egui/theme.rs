@@ -11,7 +11,7 @@ pub struct Theme {
     pub error_icon_size: IconSize,
     pub medium_button_size: Vec2,
     pub large_button_size: Vec2,
-    pub panel_footer_height: f32, //72_f32,
+    pub panel_footer_height: f32,
     // pub panel_alert_icon_size : IconSize,
     // pub panel_icon_size : IconSize,
     pub error_color: Color32,
@@ -29,6 +29,10 @@ pub struct Theme {
     pub node_log_font_size: f32,
     // pub panel_icon_size : f32,
     // pub panel_icon_padding : f32,
+    pub dagviz_block_fill_color: Color32,
+    pub dagviz_block_stroke_color: Color32,
+    pub dagviz_vspc_connect_color: Color32,
+    pub dagviz_parent_connect_color: Color32,
 }
 
 impl Default for Theme {
@@ -36,7 +40,7 @@ impl Default for Theme {
         Self {
             kaspa_color: Color32::from_rgb(58, 221, 190),
             // hyperlink_color: Color32::from_rgb(58, 221, 190),
-            hyperlink_color: Color32::from_rgb(38, 148, 128),
+            hyperlink_color: Color32::from_rgb(141, 184, 178),
             // node_data_color : Color32::from_rgb(217, 233,230),
             node_data_color: Color32::WHITE,
             // node_data_color : Color32::from_rgb(151, 209, 198),
@@ -62,6 +66,11 @@ impl Default for Theme {
             network_graph_color: Color32::from_rgb(241, 255, 186),
             blockdag_graph_color: Color32::from_rgb(186, 255, 241),
             node_log_font_size: 15_f32,
+
+            dagviz_block_fill_color: Color32::from_rgb(0xAD, 0xD8, 0xE6),
+            dagviz_block_stroke_color: Color32::from_rgb(15, 84, 77),
+            dagviz_vspc_connect_color: Color32::from_rgb(23, 150, 137),
+            dagviz_parent_connect_color: Color32::from_rgb(0xAD, 0xD8, 0xE6),
             // network_graph_color: Color32::from_rgb(58, 221, 190),
             // graph_color: Color32::from_rgb(21, 82, 71),
             // panel_icon_size : IconSize::new(Vec2::splat(26.),Vec2::new(36.,26.)),

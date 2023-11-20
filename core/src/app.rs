@@ -13,6 +13,13 @@ pub const I18N_EMBEDDED: &str = include_str!("../../resources/i18n/i18n.json");
 pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 pub const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 pub const GIT_SHA: &str = env!("VERGEN_GIT_SHA");
+pub const RUSTC_CHANNEL: &str = env!("VERGEN_RUSTC_CHANNEL");
+pub const RUSTC_COMMIT_DATE: &str = env!("VERGEN_RUSTC_COMMIT_DATE");
+pub const RUSTC_COMMIT_HASH: &str = env!("VERGEN_RUSTC_COMMIT_HASH");
+pub const RUSTC_HOST_TRIPLE: &str = env!("VERGEN_RUSTC_HOST_TRIPLE");
+pub const RUSTC_LLVM_VERSION: &str = env!("VERGEN_RUSTC_LLVM_VERSION");
+pub const RUSTC_SEMVER: &str = env!("VERGEN_RUSTC_SEMVER");
+pub const CODENAME: &str = "This is the way";
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -50,20 +57,6 @@ cfg_if! {
             if std::env::var("KASPA_NG_NODE").is_ok() {
                 Args::Kaspad { args : Box::new(parse_kaspad_args()) }
             } else {
-
-
-                // use sysinfo::*;
-                // let mut system = System::new();
-                // system.refresh_cpu_specifics(CpuRefreshKind::new().with_frequency());
-                // system.refresh_memory();
-                // let cpus = system.cpus();
-                // println!("cpus: {:#?}", cpus);
-                // let memory = system.total_memory()/1024/1024/1024;
-                // println!("memory: {:#?}", memory);
-                // panic!();
-                // println!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version());
-                // println!("git sha: {}", env!("VERGEN_GIT_SHA"));
-                // println!("");
 
                 let cmd = Command::new("kaspa-ng")
 
@@ -144,37 +137,7 @@ cfg_if! {
                 Args::I18n {
                     op
                 } => {
-                    let i18n_json_file = i18n_storage_file()?;
-                    let i18n_json_file_store = i18n_storage_file()?;
-                    i18n::Builder::new("en", "en")
-                        .with_static_json_data(I18N_EMBEDDED)
-                        .with_string_json_data(i18n_json_file.exists().then(move ||{
-                            fs::read_to_string(i18n_json_file)
-                        }).transpose()?)
-                        .with_store(move |json_data: &str| {
-                            Ok(fs::write(&i18n_json_file_store, json_data)?)
-                        })
-                        .try_init()?;
-
-                    match op {
-                        I18n::Import => {
-                            let source_folder = i18n_storage_folder()?;
-                            println!("importing translation files from: '{}'", source_folder.display());
-                            i18n::import_translation_files(source_folder,false)?;
-                        }
-                        I18n::Export => {
-                            let mut target_folder = if let Some(cwd) = try_cwd_repo_root()? {
-                                cwd.join("resources").join("i18n")
-                            } else {
-                                std::env::current_dir()?
-                            };
-                            target_folder.push("kaspa-ng_en.json");
-                            println!("exporting default language to: '{}'", target_folder.display());
-                            i18n::export_default_language(move |json_data: &str| {
-                                Ok(fs::write(&target_folder, json_data)?)
-                            })?;
-                        }
-                    }
+                    manage_i18n(op)?;
                 }
 
                 Args::Kng { reset_settings, disable } => {
@@ -215,7 +178,6 @@ cfg_if! {
 
                     let runtime: Arc<Mutex<Option<runtime::Runtime>>> = Arc::new(Mutex::new(None));
                     let delegate = runtime.clone();
-                    // println!("spawn done");
                     let native_options = eframe::NativeOptions {
                         icon_data : IconData::try_from_png_bytes(KASPA_NG_ICON_256X256).ok(),
                         persist_window : true,
@@ -307,6 +269,46 @@ cfg_if! {
 
                 // log_info!("shutting down...");
             // });
+
+            Ok(())
+        }
+    }
+}
+
+cfg_if! {
+    if #[cfg(not(target_arch = "wasm32"))] {
+        fn manage_i18n(op : I18n) -> Result<()> {
+            let i18n_json_file = i18n_storage_file()?;
+            let i18n_json_file_store = i18n_storage_file()?;
+            i18n::Builder::new("en", "en")
+                .with_static_json_data(I18N_EMBEDDED)
+                .with_string_json_data(i18n_json_file.exists().then(move ||{
+                    fs::read_to_string(i18n_json_file)
+                }).transpose()?)
+                .with_store(move |json_data: &str| {
+                    Ok(fs::write(&i18n_json_file_store, json_data)?)
+                })
+                .try_init()?;
+
+            match op {
+                I18n::Import => {
+                    let source_folder = i18n_storage_folder()?;
+                    println!("importing translation files from: '{}'", source_folder.display());
+                    i18n::import_translation_files(source_folder,false)?;
+                }
+                I18n::Export => {
+                    let mut target_folder = if let Some(cwd) = try_cwd_repo_root()? {
+                        cwd.join("resources").join("i18n")
+                    } else {
+                        std::env::current_dir()?
+                    };
+                    target_folder.push("kaspa-ng_en.json");
+                    println!("exporting default language to: '{}'", target_folder.display());
+                    i18n::export_default_language(move |json_data: &str| {
+                        Ok(fs::write(&target_folder, json_data)?)
+                    })?;
+                }
+            }
 
             Ok(())
         }

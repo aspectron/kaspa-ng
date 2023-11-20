@@ -13,8 +13,8 @@ cli = []
 default = []
 
 [build-dependencies]
-vergen = { version = "8.2.6", features = ["build", "cargo", "git", "gitcl", "rustc", "si"] }
-# vergen = { version = "8.2.6", features = ["build", "git", "gitcl"] }
+# vergen = { version = "8.2.6", features = ["build", "cargo", "git", "gitcl", "rustc", "si"] }
+vergen = { version = "8.2.6", features = ["build", "git", "gitcl", "rustc", "cargo"] }
 
 [dependencies]
 kaspa-addresses.workspace = true
@@ -36,6 +36,7 @@ workflow-http.workspace = true
 workflow-store.workspace = true
 workflow-i18n.workspace = true
 
+ahash.workspace = true
 async-trait.workspace = true
 cfg-if.workspace = true
 derivative.workspace = true
@@ -47,6 +48,7 @@ js-sys.workspace = true
 log.workspace = true
 pad.workspace = true
 qrcode.workspace = true
+ritehash.workspace = true
 separator.workspace = true
 serde.workspace = true
 serde_json.workspace = true

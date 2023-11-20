@@ -333,13 +333,10 @@ impl Core {
 
         if self.module.type_id() != module.type_id() {
             let next = module.clone();
-
             self.stack.push_back(self.module.clone());
-            // let previous = self.module.clone();
             self.deactivation = Some(self.module.clone());
             self.module = next.clone();
-            // previous.deactivate(self);
-            // next.activate(self);
+            next.activate(self);
 
             #[cfg(not(target_arch = "wasm32"))]
             {

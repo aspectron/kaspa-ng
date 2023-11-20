@@ -60,6 +60,8 @@ pub trait ModuleT: Downcast {
         frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     );
+
+    fn shutdown(&mut self) {}
 }
 
 impl_downcast!(ModuleT);

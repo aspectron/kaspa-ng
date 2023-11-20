@@ -8,7 +8,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         .all_cargo()
         .all_git()
         .all_rustc()
-        .all_sysinfo()
         .emit()?;
     Ok(())
 }

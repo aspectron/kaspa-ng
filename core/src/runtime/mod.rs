@@ -12,9 +12,11 @@ cfg_if! {
 pub mod payload;
 pub mod plugins;
 pub mod services;
+pub mod system;
 pub use payload::Payload;
 pub use services::Service;
 use services::*;
+use system::*;
 
 pub struct Inner {
     // services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
@@ -28,6 +30,7 @@ pub struct Inner {
     egui_ctx: egui::Context,
     is_running: Arc<AtomicBool>,
     start_time: std::time::Instant,
+    system: Option<System>,
 }
 
 /// Runtime is a core component of the Kaspa NG application responsible for
@@ -40,6 +43,8 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
+        let system = System::new();
+
         let application_events = ApplicationEventsChannel::unbounded(Some(egui_ctx.clone()));
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
         let peer_monitor_service = Arc::new(PeerMonitorService::new(
@@ -55,7 +60,6 @@ impl Runtime {
             application_events.clone(),
             settings,
         ));
-        // let runtime = Runtime::new(&[kaspa.clone(), peer_monitor.clone(), metrics_service.clone()]);
 
         let services: Mutex<Vec<Arc<dyn Service>>> = Mutex::new(vec![
             kaspa.clone(),
@@ -77,6 +81,8 @@ impl Runtime {
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
                 start_time: std::time::Instant::now(),
+
+                system: Some(system),
             }),
         };
 
@@ -87,6 +93,10 @@ impl Runtime {
 
     pub fn uptime(&self) -> Duration {
         self.inner.start_time.elapsed()
+    }
+
+    pub fn system(&self) -> &Option<System> {
+        &self.inner.system
     }
 
     pub fn start_services(&self) {
@@ -226,7 +236,7 @@ impl Runtime {
 
 static mut RUNTIME: Option<Runtime> = None;
 
-fn runtime() -> &'static Runtime {
+pub fn runtime() -> &'static Runtime {
     unsafe {
         if let Some(runtime) = &RUNTIME {
             runtime
