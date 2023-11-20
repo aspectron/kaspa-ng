@@ -597,7 +597,7 @@ impl eframe::App for Core {
                     cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         let dictionary = i18n::dictionary();
                         #[allow(clippy::useless_format)]
-                        ui.menu_button(format!("{}", dictionary.current_title()), |ui| {
+                        ui.menu_button(format!("{} ⏷", dictionary.current_title()), |ui| {
                             dictionary
                                 .enabled_languages()
                                 .into_iter()
@@ -991,7 +991,7 @@ impl Core {
                 self.metrics = Some(snapshot);
             }
             Events::Exit => {
-                println!("Exit...");
+                // println!("exit");
                 cfg_if! {
                     if #[cfg(not(target_arch = "wasm32"))] {
                         _frame.close();

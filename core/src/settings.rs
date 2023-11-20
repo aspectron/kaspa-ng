@@ -393,7 +393,7 @@ impl Settings {
             match read_json::<Self>(storage.filename()).await {
                 Ok(settings) => Ok(settings),
                 Err(err) => {
-                    log_warning!("Settings::load: {}", err);
+                    log_warning!("Settings::load() error: {}", err);
                     Ok(Self::default())
                 }
             }

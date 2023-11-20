@@ -120,6 +120,7 @@ impl ModuleT for Overview {
                 CollapsingHeader::new(i18n("Resources"))
                     .default_open(true)
                     .show(ui, |ui| {
+                        // egui::special_emojis
                         // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
                         ui.hyperlink_to(
                             format!("• {}",i18n("Kaspa NextGen on GitHub")),

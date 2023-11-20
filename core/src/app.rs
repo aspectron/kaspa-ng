@@ -157,7 +157,7 @@ cfg_if! {
                         })
                     };
 
-                    println!("settings: {:#?}", settings);
+                    // println!("settings: {:#?}", settings);
 
                     let i18n_json_file = i18n_storage_file()?;
                     let i18n_json_file_load = i18n_json_file.clone();
@@ -200,6 +200,8 @@ cfg_if! {
 
                     let runtime = runtime.lock().unwrap().take().unwrap();
                     runtime.shutdown().await;
+
+                    println!("{}",i18n("bye!"));
                 }
             }
 

@@ -1,6 +1,5 @@
 use crate::imports::*;
 use crate::utils::Arglist;
-// use kaspa_wrpc_server::address::WrpcNetAddress;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use kaspad_lib::args::Args;
@@ -102,7 +101,6 @@ cfg_if! {
 
             fn into_iter(self) -> Self::IntoIter {
                 let args: Vec<String> = self.into();
-                println!("CONFIG ARGS: {:?}", args);
                 args.into_iter()
             }
         }

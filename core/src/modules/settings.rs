@@ -108,19 +108,20 @@ impl ModuleT for Settings {
                     // ui.label
 
                         ui.horizontal_wrapped(|ui|{
-
                             KaspadNodeKind::iter().for_each(|node_kind| {
                                 ui.radio_value(&mut self.settings.node.node_kind, *node_kind, node_kind.to_string());
                             });
-                            // ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::Remote, "Remote");
-                            // cfg_if! {
-                            //     if #[cfg(not(target_arch = "wasm32"))] {
-                            //         ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::IntegratedInProc, "Internal");
-                            //         ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::IntegratedAsDaemon, "Internal Daemon");
-                            //         ui.radio_value(&mut self.settings.kaspad, KaspadNodeKind::ExternalAsDaemon, "External Daemon");
-                            //     }
-                            // }
                         });
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        if self.settings.node.node_kind == KaspadNodeKind::Remote {
+                            ui.horizontal_wrapped(|ui|{
+                                ui.label("Recommended arguments for the remote node:");
+                                ui.code("kaspad --utxoindex --rpclisten-borsh=0.0.0.0");
+                                ui.label("If you are running locally, use");
+                                ui.code("--rpclisten-borsh=127.0.0.1.");
+                            });
+                        }
 
                         // ui.label("")
                             

@@ -105,13 +105,15 @@ impl DaaBucket {
                 }
             }
 
-            let mut y = 0.0;
+            let vspc_y = if settings.vspc_center { 0.0 } else { self.blocks.first().map(|block|block.src_y).unwrap_or_default() };
+
+            let mut y = vspc_y;
             (0..vspc_idx).rev().for_each(|idx| {
                 let block = &mut self.blocks[idx];
                 y -= y_distance;
                 block.dst_y = y;
             });
-            y = 0.0;
+            y = vspc_y;
             ((vspc_idx + 1)..len).for_each(|idx| {
                 let block = &mut self.blocks[idx];
                 y += y_distance;

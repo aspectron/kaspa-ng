@@ -116,7 +116,8 @@ impl ModuleT for BlockDag {
             .y_axis_width(0)
             .show_axes([true, false])
             .show_grid(true)
-            .allow_drag([true, false])
+            // .allow_drag([true, false])
+            .allow_drag([true, true])
             .allow_scroll(true)
             .allow_double_click_reset(true)
             .x_axis_formatter(move |x, _size, _range| {

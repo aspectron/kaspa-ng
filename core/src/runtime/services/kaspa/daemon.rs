@@ -75,11 +75,11 @@ impl super::Kaspad for Daemon {
                     }
                     status = child.wait().fuse() => {
                         match status {
-                            Ok(status) => {
-                                println!("Kaspad daemon shutdown: {:?}", status);
+                            Ok(_status) => {
+                                // println!("kaspad shutdown: {:?}", _status);
                             }
                             Err(err) => {
-                                println!("Kaspad daemon shutdown: {:?}", err);
+                                println!("kaspad shutdown error: {:?}", err);
                             }
                         }
                         is_running.store(false,Ordering::SeqCst);

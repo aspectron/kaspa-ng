@@ -3,7 +3,6 @@ use std::time::Duration;
 use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
-// use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 use kaspa_wallet_core::{ConnectOptions, ConnectStrategy};
@@ -77,13 +76,10 @@ pub struct KaspaService {
     pub task_ctl: Channel<()>,
     pub network: Mutex<Network>,
     pub wallet: Arc<KaspaWallet>,
-    // pub metrics: Arc<Metrics>,
-    // pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
     #[cfg(not(target_arch = "wasm32"))]
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
     #[cfg(not(target_arch = "wasm32"))]
     pub logs: Mutex<Vec<Log>>,
-    // pub logs: Mutex<VecDeque<Log>>,
 }
 
 impl KaspaService {
@@ -117,32 +113,23 @@ impl KaspaService {
             }
         }
 
-        // let metrics = Arc::new(Metrics::default());
-        // let metrics_data = Metric::list()
-        //     .into_iter()
-        //     .map(|metric| (metric, Vec::new()))
-        //     .collect::<HashMap<Metric, Vec<_>>>();
-
         Self {
             application_events,
             service_events,
             task_ctl: Channel::oneshot(),
             network: Mutex::new(settings.node.network),
             wallet: Arc::new(wallet),
-            // metrics,
-            // metrics_data: Mutex::new(metrics_data),
             #[cfg(not(target_arch = "wasm32"))]
             kaspad: Mutex::new(None),
             #[cfg(not(target_arch = "wasm32"))]
             logs: Mutex::new(Vec::new()),
-            // logs: Mutex::new(VecDeque::new()),
         }
     }
 
     pub fn create_rpc_client(config: &RpcConfig, network: Network) -> Result<Rpc> {
         match config {
             RpcConfig::Wrpc { url, encoding } => {
-                log_warning!("create_rpc_client - RPC URL: {:?}", url);
+                // log_warning!("create_rpc_client - RPC URL: {:?}", url);
 
                 let url = KaspaRpcClient::parse_url(
                     // url.as_ref().unwrap_or("127.0.0.1"), //Some(url.clone()),
@@ -207,7 +194,6 @@ impl KaspaService {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    // pub fn logs(&self) -> MutexGuard<'_, VecDeque<Log>> {
     pub fn logs(&self) -> MutexGuard<'_, Vec<Log>> {
         self.logs.lock().unwrap()
     }
@@ -219,7 +205,6 @@ impl KaspaService {
             if logs.len() > LOG_BUFFER_LINES {
                 logs.drain(0..LOG_BUFFER_MARGIN);
             }
-            // logs.push_back(line.as_str().into());
             logs.push(line.as_str().into());
         }
 
@@ -259,17 +244,11 @@ impl KaspaService {
         {
             let kaspad = self.kaspad.lock().unwrap().take();
             if let Some(kaspad) = kaspad {
-                println!("*** STOPPING KASPAD ***");
                 if let Err(err) = kaspad.stop().await {
-                    println!("error stopping kaspad: {}", err);
+                    println!("error shutting down kaspad: {}", err);
                 }
-                println!("*** KASPAD STOPPED ***");
             }
         }
-
-        // self.metrics.unregister_sink();
-        // self.metrics.stop_task().await?;
-        // self.metrics.set_rpc(None);
 
         Ok(())
     }
@@ -281,41 +260,15 @@ impl KaspaService {
             .set_network_id(network.into())
             .expect("Can not change network id while the wallet is connected");
 
-        // let wrpc_client = rpc.rpc_api().clone().downcast_arc::<KaspaRpcClient>().ok();
-
         self.wallet().bind_rpc(Some(rpc)).await.unwrap();
         self.wallet()
             .start()
             .await
             .expect("Unable to start wallet service");
 
-        // let this = self.clone();
-        // self.metrics
-        //     .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
-        //         if let Err(err) = this.ingest_metrics_snapshot(Box::new(snapshot)) {
-        //             println!("Error ingesting metrics snapshot: {}", err);
-        //         }
-        //         None
-        //     })));
-        // self.reset_metrics_data()?;
-        // self.metrics.start_task().await?;
-        // self.metrics.set_rpc(Some(rpc_api.clone()));
-
         for service in crate::runtime::runtime().services().into_iter() {
             service.attach_rpc(&rpc_api).await?;
         }
-
-        // if rpc client is KaspaRpcClient, auto-connect to the node
-        // if let Some(wrpc_client) = wrpc_client {
-        //     let options = ConnectOptions {
-        //         block_async_connect: false,
-        //         strategy: ConnectStrategy::Retry,
-        //         url : None,
-        //         connect_timeout: None,
-        //         retry_interval: Some(Duration::from_millis(3000)),
-        //     };
-        //     wrpc_client.connect(options).await?;
-        // }
 
         Ok(())
     }
@@ -351,68 +304,6 @@ impl KaspaService {
 
         Ok(())
     }
-
-    // pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
-    //     self.metrics_data.lock().unwrap()
-    // }
-
-    // pub fn metrics(&self) -> &Arc<Metrics> {
-    //     &self.metrics
-    // }
-
-    // pub fn connected_peer_info(&self) -> Option<Arc<Vec<RpcPeerInfo>>> {
-    //     self.metrics.connected_peer_info()
-    // }
-
-    // pub fn reset_metrics_data(&self) -> Result<()> {
-    //     let now = unixtime_as_millis_f64();
-    //     let mut template = Vec::with_capacity(MAX_METRICS_SAMPLES);
-    //     let mut plot_point = PlotPoint {
-    //         x: now - MAX_METRICS_SAMPLES as f64 * 1000.0,
-    //         y: 0.0,
-    //     };
-    //     while template.len() < MAX_METRICS_SAMPLES {
-    //         template.push(plot_point);
-    //         plot_point.x += 1000.0;
-    //     }
-
-    //     let mut metrics_data = self.metrics_data.lock().unwrap();
-    //     for metric in Metric::list().into_iter() {
-    //         metrics_data.insert(metric, template.clone());
-    //     }
-    //     Ok(())
-    // }
-
-    // pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
-    //     let timestamp = snapshot.unixtime;
-    //     let mut metrics_data = self.metrics_data.lock().unwrap();
-    //     for metric in Metric::list().into_iter() {
-    //         let dest = metrics_data.get_mut(&metric).unwrap();
-    //         if dest.len() > MAX_METRICS_SAMPLES {
-    //             dest.drain(0..dest.len() - MAX_METRICS_SAMPLES);
-    //         }
-    //         // else if dest.len() < MAX_METRICS_SAMPLES {
-    //         //     let mut last_point = dest.last().cloned().unwrap_or_default();
-    //         //     while dest.len() < MAX_METRICS_SAMPLES {
-    //         //         last_point.x += 1000.0;
-    //         //         dest.push(last_point.clone());
-    //         //     }
-    //         // }
-    //         dest.push(PlotPoint {
-    //             x: timestamp,
-    //             y: snapshot.get(&metric),
-    //         });
-    //     }
-
-    //     // if update_metrics_flag().load(Ordering::SeqCst) {
-    //     self.application_events
-    //         .sender
-    //         .try_send(crate::events::Events::Metrics { snapshot })
-    //         .unwrap();
-    //     // }
-
-    //     Ok(())
-    // }
 }
 
 #[async_trait]
@@ -423,7 +314,6 @@ impl Service for KaspaService {
         let _application_events_sender = self.application_events.sender.clone();
 
         loop {
-            // println!("loop...");
             select! {
 
                 msg = wallet_events.recv().fuse() => {
@@ -443,8 +333,6 @@ impl Service for KaspaService {
                                 println!("wallet event: {:?}", event);
                             }
                         }
-                        // if !matches(event, CoreWallet::DAAScoreChange{ .. }) {
-                        // }
                         this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
                     } else {
                         break;
@@ -472,7 +360,6 @@ impl Service for KaspaService {
 
                                 this.stop_all_services().await?;
 
-                                println!("*** STARTING NEW IN-PROC KASPAD ***");
                                 let kaspad = Arc::new(inproc::InProc::default());
                                 this.kaspad.lock().unwrap().replace(kaspad.clone());
 
@@ -490,7 +377,6 @@ impl Service for KaspaService {
                             KaspadServiceEvents::StartInternalAsDaemon { config, network } => {
                                 self.stop_all_services().await?;
 
-                                println!("*** STARTING NEW INTERNAL KASPAD DAEMON ***");
                                 let kaspad = Arc::new(daemon::Daemon::new(None, &this.service_events));
                                 this.kaspad.lock().unwrap().replace(kaspad.clone());
                                 kaspad.start(config).await.unwrap();
@@ -508,7 +394,6 @@ impl Service for KaspaService {
                             KaspadServiceEvents::StartExternalAsDaemon { path, config, network } => {
                                 self.stop_all_services().await?;
 
-                                println!("*** STARTING NEW EXTERNAL KASPAD DAEMON ***");
                                 let kaspad = Arc::new(daemon::Daemon::new(Some(path), &this.service_events));
                                 this.kaspad.lock().unwrap().replace(kaspad.clone());
                                 kaspad.start(config).await.unwrap();
@@ -526,11 +411,9 @@ impl Service for KaspaService {
 
                                 self.stop_all_services().await?;
 
-                                println!("*** STARTING NEW KASPAD RPC CONNECTION ***");
                                 let rpc = Self::create_rpc_client(&rpc_config, network).expect("Kaspad Service - unable to create wRPC client");
                                 this.start_all_services(rpc, network).await?;
                                 this.connect_rpc_client().await?;
-
                             },
 
                             KaspadServiceEvents::Stop => {
@@ -548,7 +431,6 @@ impl Service for KaspaService {
             }
         }
 
-        println!("shutting down node manager...");
         this.stop_all_services().await?;
         this.task_ctl.send(()).await.unwrap();
 
