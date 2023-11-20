@@ -81,7 +81,7 @@ cfg_if! {
                 }
             }
 
-            pub fn render(&self, ui: &mut Ui) {
+            pub fn render(&self, _ui: &mut Ui) {
 
             }
         }
