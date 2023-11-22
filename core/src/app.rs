@@ -9,6 +9,7 @@ use workflow_log::*;
 
 #[allow(unused)]
 pub const KASPA_NG_ICON_256X256: &[u8] = include_bytes!("../../resources/icons/icon-256.png");
+pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-ng.svg");
 pub const I18N_EMBEDDED: &str = include_str!("../../resources/i18n/i18n.json");
 pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 pub const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
@@ -19,6 +20,8 @@ pub const RUSTC_COMMIT_HASH: &str = env!("VERGEN_RUSTC_COMMIT_HASH");
 pub const RUSTC_HOST_TRIPLE: &str = env!("VERGEN_RUSTC_HOST_TRIPLE");
 pub const RUSTC_LLVM_VERSION: &str = env!("VERGEN_RUSTC_LLVM_VERSION");
 pub const RUSTC_SEMVER: &str = env!("VERGEN_RUSTC_SEMVER");
+pub const CARGO_TARGET_TRIPLE: &str = env!("VERGEN_CARGO_TARGET_TRIPLE");
+// pub const CARGO_PROFILE: &str = env!("VERGEN_CARGO_PROFILE");
 pub const CODENAME: &str = "This is the way";
 
 cfg_if! {
@@ -201,7 +204,6 @@ cfg_if! {
                     let runtime = runtime.lock().unwrap().take().unwrap();
                     runtime.shutdown().await;
 
-                    println!("{}",i18n("bye!"));
                 }
             }
 
@@ -230,6 +232,8 @@ cfg_if! {
             // Redirect `log` message to `console.log` and friends:
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();
             let web_options = eframe::WebOptions::default();
+
+            kaspa_core::log::set_log_level(kaspa_core::log::LevelFilter::Info);
 
             let settings = Settings::load().await.unwrap_or_else(|err| {
                 log_error!("Unable to load settings: {err}");
