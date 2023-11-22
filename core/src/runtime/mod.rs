@@ -240,7 +240,6 @@ impl Runtime {
     pub fn request_repaint(&self) {
         self.repaint_service().trigger();
     }
-
 }
 
 static mut RUNTIME: Option<Runtime> = None;

@@ -1,13 +1,13 @@
 use crate::imports::*;
 use crate::runtime::Runtime;
 use crate::sync::SyncStatus;
-use std::borrow::Cow;
 use egui::load::Bytes;
 use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
 use kaspa_wallet_core::api::TransactionDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint};
+use std::borrow::Cow;
 use workflow_i18n::*;
 
 enum Status {
@@ -72,7 +72,6 @@ impl State {
     pub fn current_daa_score(&self) -> Option<u64> {
         self.current_daa_score
     }
-
 }
 
 pub struct Core {
@@ -299,7 +298,6 @@ impl Core {
             settings: settings.clone(),
             toasts: Toasts::default(),
             // status_bar_message: None,
-
             default_style,
             large_style,
 
@@ -702,7 +700,6 @@ impl Core {
 
             self.module.status_bar(ui);
 
-
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if icons()
                     .sliders
@@ -772,14 +769,24 @@ impl Core {
 
                         match self.settings.node.node_kind {
                             KaspadNodeKind::Remote => {
-                                match KaspaRpcClient::parse_url(Some(self.settings.node.wrpc_url.clone()), self.settings.node.wrpc_encoding, self.settings.node.network.into()) {
+                                match KaspaRpcClient::parse_url(
+                                    Some(self.settings.node.wrpc_url.clone()),
+                                    self.settings.node.wrpc_encoding,
+                                    self.settings.node.network.into(),
+                                ) {
                                     Ok(url) => {
-                                        ui.label(format!("Connecting to {} ...", url.unwrap_or("?".to_string())));
+                                        ui.label(format!(
+                                            "Connecting to {} ...",
+                                            url.unwrap_or("?".to_string())
+                                        ));
                                     }
                                     Err(err) => {
                                         ui.label(
-                                            RichText::new(format!("Error connecting to {}: {err}",self.settings.node.wrpc_url))
-                                                .color(theme().warning_color),
+                                            RichText::new(format!(
+                                                "Error connecting to {}: {err}",
+                                                self.settings.node.wrpc_url
+                                            ))
+                                            .color(theme().warning_color),
                                         );
                                     }
                                 }
@@ -788,7 +795,6 @@ impl Core {
                                 ui.label("Connecting...");
                             }
                         }
-
                     }
                     #[cfg(not(target_arch = "wasm32"))]
                     _ => {
@@ -829,8 +835,8 @@ impl Core {
                 // if peers.unwrap_or(0) != 0 {
                 // ui.label("ONLINE");
                 // } else {
-                ui.label("CONNECTED").on_hover_ui(|ui|{
-                    ui.horizontal(|ui|{
+                ui.label("CONNECTED").on_hover_ui(|ui| {
+                    ui.horizontal(|ui| {
                         // ui.label("Connected to ");
                         ui.label(self.settings.node.wrpc_url.clone());
                     });

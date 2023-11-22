@@ -18,7 +18,6 @@ pub struct MetricsService {
 
 impl MetricsService {
     pub fn new(application_events: ApplicationEventsChannel, _settings: &Settings) -> Self {
-
         let metrics = Arc::new(Metrics::default());
         let metrics_data = Metric::list()
             .into_iter()
@@ -126,8 +125,7 @@ impl Service for MetricsService {
         Ok(())
     }
 
-    fn terminate(self: Arc<Self>) {
-    }
+    fn terminate(self: Arc<Self>) {}
 
     async fn join(self: Arc<Self>) -> Result<()> {
         Ok(())
