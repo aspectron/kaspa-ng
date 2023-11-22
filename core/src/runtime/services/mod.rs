@@ -1,5 +1,8 @@
 use crate::imports::*;
 
+pub mod repaint_service;
+pub use repaint_service::RepaintService;
+
 pub mod kaspa;
 pub use kaspa::KaspaService;
 

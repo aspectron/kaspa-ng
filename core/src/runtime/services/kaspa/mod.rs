@@ -104,13 +104,15 @@ impl KaspaService {
             match KaspadServiceEvents::try_from(&settings.node) {
                 Ok(event) => {
                     service_events.sender.try_send(event).unwrap_or_else(|err| {
-                        println!("KaspadService error: {}", err);
+                        log_error!("KaspadService error: {}", err);
                     });
                 }
                 Err(err) => {
-                    println!("KaspadServiceEvents::try_from() error: {}", err);
+                    log_error!("KaspadServiceEvents::try_from() error: {}", err);
                 }
             }
+        } else {
+            log_warning!("Node settings are not initialized");
         }
 
         Self {

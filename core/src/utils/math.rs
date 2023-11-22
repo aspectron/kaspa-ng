@@ -2,7 +2,7 @@ use crate::imports::*;
 
 pub fn hash_to_y_coord(hash: &kaspa_consensus_core::Hash, scale: f64) -> f64 {
     let bytes = hash.as_bytes().iter().take(2).cloned().collect::<Vec<_>>();
-    (i16::from_le_bytes(bytes.as_slice().try_into().unwrap()) - 127) as f64 * (scale / 32767.5)
+    (u16::from_le_bytes(bytes.as_slice().try_into().unwrap()) as f64 - 32767.5) / 32767.5 * scale
 }
 
 pub fn bezier(

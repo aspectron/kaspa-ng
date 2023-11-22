@@ -148,7 +148,7 @@ impl Metrics {
                         ui.add_space(8.);
                         ui.horizontal(|ui|{
                             ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
-                                ui.label(format!("{}: {}", i18n(metric.title()), metric.format(metrics.get(&metric), true, false)));
+                                ui.label(format!("{}: {}", i18n(metric.title().0), metric.format(metrics.get(&metric), true, false)));
                             });
                         });
 
@@ -202,19 +202,17 @@ impl Metrics {
                             })                                                    
                             ;
 
-                        if [Metric::CpuUsage].contains(&metric) {
+                        if [Metric::NodeCpuUsage].contains(&metric) {
                             plot = plot.include_y(100.);
                         }
                 
                         if [
-                            Metric::ResidentSetSizeBytes, 
-                            Metric::VirtualMemorySizeBytes,
-                            Metric::FdNum,
-                            // Metric::DiskIoReadBytes,
-                            // Metric::DiskIoWriteBytes,
-                            Metric::DiskIoReadPerSec,
-                            Metric::DiskIoWritePerSec,
-                            Metric::Tps,
+                            Metric::NodeResidentSetSizeBytes, 
+                            Metric::NodeVirtualMemorySizeBytes,
+                            Metric::NodeFileHandlesCount,
+                            Metric::NodeDiskIoReadPerSec,
+                            Metric::NodeDiskIoWritePerSec,
+                            Metric::NetworkTransactionsPerSecond,
                         ].contains(&metric) {
                             plot = plot.include_y(100.);
                         }

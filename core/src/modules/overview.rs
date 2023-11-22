@@ -38,6 +38,12 @@ impl ModuleT for Overview {
         ui: &mut egui::Ui,
     ) {
 
+        let screen_rect = ui.ctx().screen_rect();
+        let logo_size = vec2(648., 994.,) * 0.25;
+        let left = screen_rect.width() - logo_size.x - 8.;
+        let top = 32.;
+        let logo_rect = Rect::from_min_size(Pos2::new(left, top), logo_size);
+
         let width = ui.available_width();
 
         SidePanel::left("overview_left").exact_width(width/2.).resizable(false).show_separator_line(true).show_inside(ui, |ui| {
@@ -50,9 +56,17 @@ impl ModuleT for Overview {
                 CollapsingHeader::new(i18n("Kaspa p2p Node"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        // ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version()));
-                        self.render_graphs(core,ui);
+
+                        if core.state().is_connected() {
+                            self.render_graphs(core,ui);
+                        } else {
+                            ui.label(i18n("Not connected"));
+                        }
                     });
+
+                if let Some(system) = runtime().system() {
+                    system.render(ui);
+                }
 
                 ui.add_space(48.);
             });
@@ -63,117 +77,105 @@ impl ModuleT for Overview {
             .resizable(false)
             .show_separator_line(false)
             .show_inside(ui, |ui| {
-                // ui.label("Wallet Stuff");
-                // let module = core.modules().get(&TypeId::of::<modules::AccountManager>()).unwrap().clone();
-                // module.render_default(core,ctx,frame,ui);
 
-                // ui.image(Image::try_from(crate::app::KASPA_NG_ICON_256X256));
-                
-                // ui.horizontal(|ui| {
-                    // ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                        // ui.add(Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.png"), bytes : Bytes::Static(crate::app::KASPA_NG_ICON_256X256)}).maintain_aspect_ratio(true).max_size(vec2(128.,128.)));
-                    // });
-                // });
-                let image_size = vec2(64.,64.);
-                let cursor = ui.cursor().min;
-                let width = ui.available_width();
-                let left = width - image_size.x*2. + cursor.x;
-                let top = cursor.y;// - 32.;//image_size.y/2.;
-                // rect.se
-                let rect = Rect::from_min_size(Pos2::new(left, top), image_size);
+                Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.svg"), bytes : Bytes::Static(crate::app::KASPA_NG_LOGO_SVG)})
+                    .maintain_aspect_ratio(true)
+                    .max_size(logo_size)
+                    .fit_to_exact_size(logo_size)
+                    .shrink_to_fit()
+                    .texture_options(TextureOptions::LINEAR)
+                    .tint(Color32::from_f32(0.8))
+                    .paint_at(ui, logo_rect);
 
-                // ui.put(
-                //     rect,
-                //     Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.png"), bytes : Bytes::Static(crate::app::KASPA_NG_ICON_256X256)})
-                //         .maintain_aspect_ratio(true)
-                //         .max_size(image_size)
-                //         .fit_to_exact_size(image_size)
-                //         .shrink_to_fit()
-                //         .texture_options(TextureOptions::LINEAR)
-                // );
-
-                CollapsingHeader::new(i18n("Kaspa NG"))
-                    .default_open(true)
+                egui::ScrollArea::vertical()
+                    .id_source("overview_metrics")
+                    .auto_shrink([false; 2])
                     .show(ui, |ui| {
-                        ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version()));
-                        ui.label(format!("Build: {}", crate::app::BUILD_TIMESTAMP));
-                        ui.label(format!("rustc {}-{} {} llvm {} {}", 
-                            crate::app::RUSTC_SEMVER,
-                            crate::app::RUSTC_COMMIT_HASH.chars().take(8).collect::<String>(),
-                            crate::app::RUSTC_LLVM_VERSION,
-                            crate::app::RUSTC_CHANNEL,
-                            crate::app::RUSTC_HOST_TRIPLE
-                        ));
-                        ui.label("Codename: \"This is the way\"");
+            
+                        CollapsingHeader::new(i18n("Market"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                ui.label("TODO");
+                            });
+
+                        CollapsingHeader::new(i18n("Resources"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                // egui::special_emojis
+                                // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
+                                Hyperlink::from_label_and_url(
+                                    format!("• {}",i18n("Kaspa NextGen on GitHub")),
+                                    "https://github.com/aspectron/kaspa-ng"
+                                ).open_in_new_tab(true).ui(ui);
+                                Hyperlink::from_label_and_url(
+                                    format!("• {}",i18n("Rusty Kaspa on GitHub")),
+                                    "https://github.com/kaspanet/rusty-kaspa",
+                                ).open_in_new_tab(true).ui(ui);
+                                Hyperlink::from_label_and_url(
+                                    format!("• {}",i18n("NPM Modules for NodeJS")),
+                                    "https://www.npmjs.com/package/kaspa",
+                                ).open_in_new_tab(true).ui(ui);
+                                Hyperlink::from_label_and_url(
+                                    format!("• {}",i18n("WASM SDK for JavaScript and TypeScript")),
+                                    "https://github.com/kaspanet/rusty-kaspa/wasm",
+                                ).open_in_new_tab(true).ui(ui);
+                                Hyperlink::from_label_and_url(
+                                    format!("• {}",i18n("Rust Wallet SDK")),
+                                    "https://docs.rs/kaspa-wallet-core/0.0.4/kaspa_wallet_core/",
+                                ).open_in_new_tab(true).ui(ui);
+                                Hyperlink::from_label_and_url(
+                                    format!("• {}",i18n("Kaspa Discord")),
+                                    "https://discord.com/invite/kS3SK5F36R",
+                                ).open_in_new_tab(true).ui(ui);
+                            });
+
+                        let version = env!("CARGO_PKG_VERSION");
+                        let download = |platform: &str| { format!("https://github.com/aspectron/kaspa-ng/releases/download/{}/kaspa-ng-{}-{}.zip", version, version, platform) };
+                        CollapsingHeader::new(i18n("Redistributables"))
+                            .default_open(false)
+                            .show(ui, |ui| {
+                                ["windows-x64", "linux-gnu-amd64", "macos-arm64"].into_iter().for_each(|platform| {
+                                    Hyperlink::from_label_and_url(
+                                        format!("• kaspa-ng-{}-{}.zip", version, platform),
+                                        download(platform),
+                                    ).open_in_new_tab(true).ui(ui);
+                                });
+                            });
+
+                        CollapsingHeader::new(i18n("Music"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                ui.label("TODO");
+                            });
+
+
+                        CollapsingHeader::new(i18n("Build"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version()));
+                                ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
+                                ui.label(format!("rustc {}-{} {}  llvm {}", 
+                                    crate::app::RUSTC_SEMVER,
+                                    crate::app::RUSTC_COMMIT_HASH.chars().take(8).collect::<String>(),
+                                    crate::app::RUSTC_CHANNEL,
+                                    crate::app::RUSTC_LLVM_VERSION,
+                                ));
+                                ui.label(format!("architecture {}", 
+                                    crate::app::CARGO_TARGET_TRIPLE
+                                ));
+                                ui.label("Codename: \"This is the way\"");
+                            });
+
+
+                        CollapsingHeader::new(i18n("License Information"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                ui.label("TODO");
+                            });
                     });
-
-                if let Some(system) = runtime().system() {
-                    system.render(ui);
-                }
-
-                CollapsingHeader::new(i18n("Market"))
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        ui.label("TODO");
-                    });
-
-                CollapsingHeader::new(i18n("Resources"))
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        // egui::special_emojis
-                        // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
-                        ui.hyperlink_to(
-                            format!("• {}",i18n("Kaspa NextGen on GitHub")),
-                            "https://github.com/aspectron/kaspa-ng",
-                        );
-                        ui.hyperlink_to(
-                            format!("• {}",i18n("Rusty Kaspa on GitHub")),
-                            "https://github.com/kaspanet/rusty-kaspa",
-                        );
-                        ui.hyperlink_to(
-                            format!("• {}",i18n("WASM SDK for JavaScript and TypeScript")),
-                            "https://github.com/kaspanet/rusty-kaspa/wasm",
-                        );
-                        ui.hyperlink_to(
-                            format!("• {}",i18n("Rust Wallet SDK")),
-                            "https://docs.rs/kaspa-wallet-core/0.0.4/kaspa_wallet_core/",
-                        );
-                        ui.hyperlink_to(
-                            format!("• {}",i18n("NPM Modules for NodeJS")),
-                            "https://www.npmjs.com/package/kaspa",
-                        );
-                        ui.hyperlink_to(
-                            format!("• {}",i18n("Kaspa Discord")),
-                            "https://discord.com/invite/kS3SK5F36R",
-                        );
-                    });
-
-                CollapsingHeader::new(i18n("Music"))
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        ui.label("TODO");
-                    });
-
-                CollapsingHeader::new(i18n("License Information"))
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        ui.label("TODO");
-                    });
-
-                ui.put(
-                    rect,
-                    Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.png"), bytes : Bytes::Static(crate::app::KASPA_NG_ICON_256X256)})
-                        .maintain_aspect_ratio(true)
-                        .max_size(image_size)
-                        .fit_to_exact_size(image_size)
-                        .shrink_to_fit()
-                        .texture_options(TextureOptions::LINEAR)
-                );
-
-    
-
 
             });
+
 
     }
 }
@@ -190,6 +192,7 @@ impl Overview {
 
         let mut metric_iter = METRICS.iter(); //Metric::list().into_iter();
 
+        // let last_connect_time = core.state().last_connect_time();
         if let Some(snapshot) = core.metrics.as_ref() {
             let theme = theme();
             let view_width = ui.available_width();
@@ -231,9 +234,9 @@ impl Overview {
             let metrics_data = self.runtime.metrics_service().metrics_data();
             let data = metrics_data.get(&metric).unwrap();
             let mut duration = 2 * 60;
-            let uptime = self.runtime.uptime().as_secs() as usize;
-            if uptime < duration {
-                duration = uptime;
+            let available_samples = runtime().metrics_service().samples_since_connection();
+            if available_samples < duration {
+                duration = available_samples;
             }
             let samples = if data.len() < duration { data.len() } else { duration };
             data[data.len()-samples..].to_vec()
@@ -265,7 +268,7 @@ impl Overview {
                         .show_y(false)
                         ;
 
-                    if [Metric::CpuUsage].contains(&metric) {
+                    if [Metric::NodeCpuUsage].contains(&metric) {
                         plot = plot.include_y(100.);
                     }
 
@@ -296,46 +299,49 @@ impl Overview {
                         plot_ui.line(line);
                     });
 
-                    let text = format!("{} {}", i18n(metric.title()).to_uppercase(), metric.format(value, true, true));
+                    let text = format!("{} {}", i18n(metric.title().1).to_uppercase(), metric.format(value, true, true));
                     let rich_text = egui::RichText::new(text).size(10.).color(Color32::WHITE).raised();//.background_color(Color32::from_black_alpha(128));
-                    let label = Label::new(rich_text);
+                    let label = Label::new(rich_text).wrap(false);
                     let mut rect = plot_result.response.rect;
                     rect.set_bottom(rect.top() + 12.);
+                    // rect.set_right(rect.left() + 12.);
                     ui.put(rect, label);
+
+                    // plot_result.response.on_hover_text("Test 123");
                 });
         });
     }
 }
 
 const METRICS : [Metric;23] = [
-    Metric::CpuUsage,
-    Metric::ResidentSetSizeBytes,
+    Metric::NodeCpuUsage,
+    Metric::NodeResidentSetSizeBytes,
     // Metric::VirtualMemorySizeBytes,
-    Metric::FdNum,
-    Metric::DiskIoReadBytes,
-    Metric::DiskIoWriteBytes,
-    Metric::DiskIoReadPerSec,
-    Metric::DiskIoWritePerSec,
+    Metric::NodeFileHandlesCount,
+    Metric::NodeDiskIoReadBytes,
+    Metric::NodeDiskIoWriteBytes,
+    Metric::NodeDiskIoReadPerSec,
+    Metric::NodeDiskIoWritePerSec,
     // Metric::BorshLiveConnections,
     // Metric::BorshConnectionAttempts,
     // Metric::BorshHandshakeFailures,
     // Metric::JsonLiveConnections,
     // Metric::JsonConnectionAttempts,
     // Metric::JsonHandshakeFailures,
-    Metric::ActivePeers,
-    Metric::BlocksSubmitted,
-    Metric::HeaderCounts,
-    Metric::DepCounts,
-    Metric::BodyCounts,
-    Metric::TxnCounts,
-    Metric::Tps,
-    Metric::ChainBlockCounts,
-    Metric::MassCounts,
-    Metric::BlockCount,
-    Metric::HeaderCount,
-    Metric::TipHashesCount,
-    Metric::Difficulty,
-    Metric::PastMedianTime,
-    Metric::VirtualParentHashesCount,
-    Metric::VirtualDaaScore,
+    Metric::NodeActivePeers,
+    Metric::NodeBlocksSubmittedCount,
+    Metric::NodeHeadersProcessedCount,
+    Metric::NodeDependenciesProcessedCount,
+    Metric::NodeBodiesProcessedCount,
+    Metric::NodeTransactionsProcessedCount,
+    Metric::NodeChainBlocksProcessedCount,
+    Metric::NodeMassProcessedCount,
+    Metric::NodeDatabaseBlocksCount,
+    Metric::NodeDatabaseHeadersCount,
+    Metric::NetworkTransactionsPerSecond,
+    Metric::NetworkTipHashesCount,
+    Metric::NetworkDifficulty,
+    Metric::NetworkPastMedianTime,
+    Metric::NetworkVirtualParentHashesCount,
+    Metric::NetworkVirtualDaaScore,
 ];

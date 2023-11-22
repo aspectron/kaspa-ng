@@ -21,6 +21,7 @@ use system::*;
 pub struct Inner {
     // services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
     services: Mutex<Vec<Arc<dyn Service>>>,
+    repaint_service: Arc<RepaintService>,
     kaspa: Arc<KaspaService>,
     peer_monitor_service: Arc<PeerMonitorService>,
     metrics_service: Arc<MetricsService>,
@@ -29,7 +30,7 @@ pub struct Inner {
     application_events: ApplicationEventsChannel,
     egui_ctx: egui::Context,
     is_running: Arc<AtomicBool>,
-    start_time: std::time::Instant,
+    start_time: Instant,
     system: Option<System>,
 }
 
@@ -46,6 +47,7 @@ impl Runtime {
         let system = System::new();
 
         let application_events = ApplicationEventsChannel::unbounded(Some(egui_ctx.clone()));
+        let repaint_service = Arc::new(RepaintService::new(application_events.clone(), settings));
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
         let peer_monitor_service = Arc::new(PeerMonitorService::new(
             application_events.clone(),
@@ -62,6 +64,7 @@ impl Runtime {
         ));
 
         let services: Mutex<Vec<Arc<dyn Service>>> = Mutex::new(vec![
+            repaint_service.clone(),
             kaspa.clone(),
             peer_monitor_service.clone(),
             metrics_service.clone(),
@@ -73,6 +76,7 @@ impl Runtime {
             inner: Arc::new(Inner {
                 services,
                 application_events,
+                repaint_service,
                 kaspa,
                 peer_monitor_service,
                 plugin_manager_service,
@@ -80,7 +84,7 @@ impl Runtime {
                 block_dag_monitor_service,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
-                start_time: std::time::Instant::now(),
+                start_time: Instant::now(),
 
                 system: Some(system),
             }),
@@ -148,6 +152,10 @@ impl Runtime {
     /// Returns the reference to the wallet API.
     pub fn wallet(&self) -> Arc<dyn WalletApi> {
         self.inner.kaspa.wallet()
+    }
+
+    pub fn repaint_service(&self) -> &Arc<RepaintService> {
+        &self.inner.repaint_service
     }
 
     /// Returns the reference to the kaspa service.
@@ -230,8 +238,9 @@ impl Runtime {
     }
 
     pub fn request_repaint(&self) {
-        self.inner.egui_ctx.request_repaint();
+        self.repaint_service().trigger();
     }
+
 }
 
 static mut RUNTIME: Option<Runtime> = None;

@@ -3,6 +3,7 @@ use crate::primitives::account::Context;
 use std::borrow::Cow;
 use kaspa_wallet_core::tx::{GeneratorSummary, PaymentOutput, Fees};
 use kaspa_wallet_core::api::*;
+use crate::primitives::descriptors::*;
 
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -11,6 +12,12 @@ enum State {
     Overview { account: Account },
     Send { account: Account },
     Receive { account: Account },
+}
+
+enum Details {
+    Transactions,
+    Account,
+    UtxoSelector
 }
 
 #[derive(Clone, Eq, PartialEq)]
@@ -44,6 +51,7 @@ pub struct AccountManager {
 
     selected: Option<Account>,
     state: State,
+    details : Details,
     destination_address_string : String,
     send_amount_text: String,
     send_amount_sompi : u64,
@@ -61,6 +69,7 @@ impl AccountManager {
             runtime,
             selected: None,
             state: State::Select,
+            details : Details::Transactions,
             destination_address_string : String::new(),
             send_amount_text: String::new(),
             send_amount_sompi : 0,
@@ -285,20 +294,41 @@ impl ModuleT for AccountManager {
                     .show_inside(ui, |ui| {    
                         ui.separator();
 
-                        egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
+                        egui::menu::bar(ui, |ui| {
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
 
-                            let transactions = account.transactions();
+                                ui.add_space(32.);
 
-                            if transactions.is_empty() {
-                                ui.label("No transactions");
-                            } else {
-                                let total: u64 = transactions.iter().map(|transaction|transaction.aggregate_input_value()).sum();
-                                transactions.iter().for_each(|transaction| {
-                                    transaction.render(ui, network_type, current_daa_score, true, Some(total));
-                                });
-                            }
+                                if ui.button("UTXOs").clicked() {
+                                    self.details = Details::UtxoSelector;
+                                }
+                                ui.separator();
+                                if ui.button("Details").clicked() {
+                                    self.details = Details::Account;
+                                }
+                                ui.separator();
+                                if ui.button("Transactions").clicked() {
+                                    self.details = Details::Transactions;
+                                }
+    
 
+                            });
                         });
+                        ui.separator();
+
+
+                        match self.details {
+                            Details::Transactions => {
+                                self.render_transactions(ui, core, &account, network_type, current_daa_score);
+                            }
+                            Details::Account => {
+                                self.render_account_details(ui, core, &account);
+                            }
+                            Details::UtxoSelector => {
+                                self.render_utxo_selector(ui, core, &account);
+                            }
+                        }
+
                     });
 
             }
@@ -311,6 +341,52 @@ impl ModuleT for AccountManager {
 }
 
 impl AccountManager {
+
+    fn render_transactions(&mut self, ui: &mut Ui, _core : &mut Core, account : &Account, network_type : NetworkType, current_daa_score : Option<u64>) {
+        egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
+
+            let transactions = account.transactions();
+
+            if transactions.is_empty() {
+                ui.label("No transactions");
+            } else {
+                let total: u64 = transactions.iter().map(|transaction|transaction.aggregate_input_value()).sum();
+                transactions.iter().for_each(|transaction| {
+                    transaction.render(ui, network_type, current_daa_score, true, Some(total));
+                });
+            }
+
+        });
+
+    }
+
+    fn render_account_details(&mut self, ui: &mut Ui, _core : &mut Core, account : &Account) {
+        egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
+
+            let descriptor = account.descriptor();
+
+            match &*descriptor {
+                AccountDescriptor::Bip32(descriptor) => {
+                    descriptor.render(ui);
+                },
+                _ => {
+                    ui.label("Unknown descriptor type");
+                }
+            }
+            
+        });
+
+    }
+
+    fn render_utxo_selector(&mut self, ui: &mut Ui, _core : &mut Core, _account : &Account) {
+        egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
+
+            ui.label("UTXO Selection");
+            
+        });
+
+    }
+
     fn render_send_ui(&mut self, _core: &mut Core, ui: &mut egui::Ui, account : &Account, _context : &Arc<Context>, network_type: NetworkType) {
 
 

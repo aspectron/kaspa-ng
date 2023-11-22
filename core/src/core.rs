@@ -1,15 +1,14 @@
 use crate::imports::*;
 use crate::runtime::Runtime;
 use crate::sync::SyncStatus;
+use std::borrow::Cow;
+use egui::load::Bytes;
 use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
 use kaspa_wallet_core::api::TransactionDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint};
 use workflow_i18n::*;
-
-const FORCE_WALLET_OPEN: bool = false;
-const ENABLE_DUAL_PANE: bool = false;
 
 enum Status {
     Connected {
@@ -73,6 +72,7 @@ impl State {
     pub fn current_daa_score(&self) -> Option<u64> {
         self.current_daa_score
     }
+
 }
 
 pub struct Core {
@@ -298,6 +298,7 @@ impl Core {
             stack: VecDeque::new(),
             settings: settings.clone(),
             toasts: Toasts::default(),
+            // status_bar_message: None,
 
             default_style,
             large_style,
@@ -422,6 +423,7 @@ impl eframe::App for Core {
     #[cfg(not(target_arch = "wasm32"))]
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
         crate::runtime::halt();
+        println!("{}", i18n("bye!"));
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
@@ -453,185 +455,24 @@ impl eframe::App for Core {
         theme().apply(&mut current_visuals);
         ctx.set_visuals(current_visuals);
 
-        #[cfg(not(target_arch = "wasm32"))]
         if !self.settings.initialized {
-            egui::CentralPanel::default().show(ctx, |ui| {
-                self.modules
-                    .get(&TypeId::of::<modules::Welcome>())
-                    .unwrap()
-                    .clone()
-                    .render(self, ctx, frame, ui);
-            });
+            cfg_if! {
+                if #[cfg(not(target_arch = "wasm32"))] {
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        self.modules
+                        .get(&TypeId::of::<modules::Welcome>())
+                        .unwrap()
+                        .clone()
+                        .render(self, ctx, frame, ui);
+                    });
 
-            return;
+                    return;
+                }
+            }
         }
 
-        // if self.settings.version != env!("CARGO_PKG_VERSION") {
-        //     self.settings.version = env!("CARGO_PKG_VERSION").to_string();
-        //     self.settings.store_sync().unwrap();
-
-        // }
-
-        // let section = self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone();
-        // section.borrow_mut().render(self, ctx, frame, ui);
-        // return;
-
-        // let mut style = (*ctx.style()).clone();
-        // // println!("style: {:?}", style.text_styles);
-        // style.text_styles.insert(
-        //     egui::TextStyle::Body,
-        //     egui::FontId::new(18.0, egui::FontFamily::Proportional),
-        // );
-        // style.text_styles.insert(
-        //     egui::TextStyle::Button,
-        //     egui::FontId::new(18.0, egui::FontFamily::Proportional),
-        // );
-        // style.text_styles.insert(
-        //     egui::TextStyle::Monospace,
-        //     egui::FontId::new(18.0, egui::FontFamily::Proportional),
-        // );
-
-        // if crate::prompt::prompt().render(ctx) {
-        //     return;
-        // }
-
-        // if let Some(wizard) = crate::stages::stages() {
-        //     if wizard.render_with_context(ctx) {
-        //         return;
-        //     }
-        // }
-
-        // let rect = ctx.screen_rect();
-        let size = ctx.screen_rect().size();
-
-        egui::TopBottomPanel::top("top_panel").show(ctx, |_ui| {
-            // The top panel is often a good place for a menu bar:
-            // #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
-            egui::menu::bar(_ui, |ui| {
-                ui.columns(2, |cols| {
-                    cols[0].horizontal(|ui| {
-                        ui.menu_button("File", |ui| {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            if ui.button("Quit").clicked() {
-                                frame.close();
-                            }
-                            ui.separator();
-                            ui.label(" ~ Debug Modules ~");
-                            ui.label(" ");
-
-                            // let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
-
-                            let (tests, mut modules): (Vec<_>, Vec<_>) = self
-                                .modules
-                                .values()
-                                .cloned()
-                                .partition(|module| module.name().starts_with('~'));
-
-                            tests.into_iter().for_each(|module| {
-                                if ui.button(module.name()).clicked() {
-                                    self.module = module; //.type_id();
-                                    ui.close_menu();
-                                }
-                            });
-
-                            ui.label(" ");
-
-                            modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
-                            modules.into_iter().for_each(|module| {
-                                // let SectionInner { name,type_id, .. } = section.inner;
-                                if ui.button(module.name()).clicked() {
-                                    self.module = module; //.type_id();
-                                    ui.close_menu();
-                                }
-                            });
-                        });
-
-                        ui.separator();
-                        if ui.button("Overview").clicked() {
-                            self.select::<modules::Overview>();
-                        }
-                        ui.separator();
-                        if ui.button("Wallet").clicked() {
-                            if self.state().is_open() {
-                                self.select::<modules::AccountManager>();
-                            } else {
-                                self.select::<modules::WalletOpen>();
-                            }
-                        }
-                        ui.separator();
-                        // if ui.button(icon_with_text(ui, egui_phosphor::light::GEAR, Color32::WHITE, "Settings")).clicked() {
-                        //     self.select::<modules::Settings>();
-                        // }
-                        // ui.separator();
-                        // if ui.button(RichText::new(format!("{} Settings",egui_phosphor::light::GEAR))).clicked() {
-                        if ui.button("Settings").clicked() {
-                            self.select::<modules::Settings>();
-                        }
-                        cfg_if! {
-                            if #[cfg(not(target_arch = "wasm32"))] {
-                                ui.separator();
-                                if ui.button("Node").clicked() {
-                                    self.select::<modules::Node>();
-                                }
-                                ui.separator();
-                                if ui.button("Metrics").clicked() {
-                                    self.select::<modules::Metrics>();
-                                }
-                                ui.separator();
-                                if ui.button("BlockDAG").clicked() {
-                                    self.select::<modules::BlockDag>();
-                                }
-                                ui.separator();
-                                if ui.button("Logs").clicked() {
-                                    self.select::<modules::Logs>();
-                                }
-                            }
-                        }
-                        ui.separator();
-                        if ui.button("About").clicked() {
-                            self.select::<modules::About>();
-                        }
-                        ui.separator();
-                    });
-
-                    cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        let dictionary = i18n::dictionary();
-                        #[allow(clippy::useless_format)]
-                        ui.menu_button(format!("{} ⏷", dictionary.current_title()), |ui| {
-                            dictionary
-                                .enabled_languages()
-                                .into_iter()
-                                .for_each(|(code, lang)| {
-                                    if ui.button(lang).clicked() {
-                                        self.settings.language_code = code.to_string();
-                                        dictionary
-                                            .activate_language_code(code)
-                                            .expect("Unable to activate language");
-                                        ui.close_menu();
-                                    }
-                                });
-                        });
-
-                        ui.separator();
-
-                        // let theme = theme();
-
-                        // let icon_size = theme.panel_icon_size();
-                        let icon = CompositeIcon::new(egui_phosphor::bold::MOON).icon_size(18.);
-                        // .padding(Some(icon_padding));
-                        // if ui.add_enabled(true, icon).clicked() {
-                        if ui.add(icon).clicked() {
-                            // close(self.this);
-                        }
-
-                        // if ui.button("Theme").clicked() {
-                        //     self.select::<modules::Logs>();
-                        // }
-                        ui.separator();
-                    });
-                });
-            });
-            // ui.spacing()
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            self.render_menu(ui, frame);
         });
         // });
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
@@ -639,131 +480,13 @@ impl eframe::App for Core {
             egui::warn_if_debug_build(ui);
         });
 
-        // egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-        //     self.render_status(ui);
-        //     egui::warn_if_debug_build(ui);
-        // });
-        /*
-        if size.x > 600. {
-            egui::SidePanel::left("left_panel").show(&ctx, |ui| {
-
-                if ui.add(egui::Button::new("Overview")).clicked() {
-                    // return Stage::Next;
-                }
-                if ui.add(egui::Button::new("Transactions")).clicked() {
-                    // return Stage::Next;
-                }
-
-                // let section = self.sections.get(&self.section).unwrap().clone();
-                // section.borrow_mut().render(self, ctx, frame, ui);
-            });
-        }
-        */
-
         egui::CentralPanel::default().show(ctx, |ui| {
-            // ui.style_mut().text_styles = self.large_style.text_styles.clone();
+            self.module.clone().render(self, ctx, frame, ui);
 
-            // if false && !self.wallet().is_open() {
-            if FORCE_WALLET_OPEN && !self.state.is_open() {
-                //self.wallet().is_open() {
-                let module = if self.module.type_id() == TypeId::of::<modules::WalletOpen>()
-                    || self.module.type_id() == TypeId::of::<modules::WalletCreate>()
-                {
-                    self.module.clone()
-                } else {
-                    self.modules
-                        .get(&TypeId::of::<modules::WalletOpen>())
-                        .unwrap()
-                        .clone()
-                    // self.modules.get::<modules::WalletOpen>().unwrap().clone()
-                    // TypeId::of::<modules::WalletOpen>()
-                };
-
-                // let section = match self.section {
-                //      | TypeId::of::<section::Create>() => {
-                //         self.section
-                //     },
-                //     _ => {
-                //         self.sections.get(&TypeId::of::<section::Open>()).unwrap().clone()
-                //     }
-                // };
-
-                // let section = self.sections.get(&section).unwrap().section.clone();
-                // section.borrow_mut().render(self, ctx, frame, ui);
-                // self.modules
-                //     .get(&module)
-                //     .unwrap()
-                //     .clone()
-                module.render(self, ctx, frame, ui);
-            } else if ENABLE_DUAL_PANE && size.x > 500. {
-                // ui.columns(2, |uis| {
-                //     self.modules
-                //         .get(&TypeId::of::<modules::AccountManager>())
-                //         .unwrap()
-                //         .clone()
-                //         .render(self, ctx, frame, &mut uis[0]);
-                //     self.modules.get(&self.module).unwrap().clone().render(
-                //         self,
-                //         ctx,
-                //         frame,
-                //         &mut uis[1],
-                //     );
-                // });
-            } else {
-                // self.modules
-                //     .get(&self.module)
-                //     .unwrap()
-                //     .clone()
-                self.module.clone().render(self, ctx, frame, ui);
-            }
+            // if self.settings.splash_screen && runtime().uptime().as_secs() < 30 {
+            //     self.render_splash(ui);
+            // }
         });
-
-        // egui::CentralPanel::default().show(ctx, |ui| {
-        //     // ui.style_mut().text_styles = style.text_styles;
-        //     let section = self.sections.get(&self.section).unwrap().clone();
-        //     section.borrow_mut().render(self, ctx, frame, ui);
-        // });
-
-        /*
-                egui::Window::new("main")
-                .resize(|r|{
-                    // r.resizable(false)
-                    // r.fixed_size(rect.size())
-                    r.fixed_size(ctx.screen_rect().size())
-                })
-                // .interactable(false)
-                .resizable(false)
-                .movable(false)
-                .title_bar(false)
-                .frame(egui::Frame::none())
-                .show(ctx, |ui| {
-
-
-                    egui::TopBottomPanel::top("top_panel").show_inside(ui, |_ui| {
-                        // The top panel is often a good place for a menu bar:
-                        #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
-                        egui::menu::bar(_ui, |ui| {
-                            ui.menu_button("File", |ui| {
-                                if ui.button("Quit").clicked() {
-                                    frame.close();
-                                }
-                            });
-                        });
-                    });
-
-                    egui::TopBottomPanel::bottom("bottom_panel").show_inside(ui, |ui| {
-                        self.render_status(ui);
-                        egui::warn_if_debug_build(ui);
-                    });
-
-                    egui::CentralPanel::default().show_inside(ui, |ui| {
-                        ui.style_mut().text_styles = style.text_styles;
-
-                        let section = self.sections.get(&self.section).unwrap().clone();
-                        section.borrow_mut().render(self, ctx, frame, ui);
-                    });
-                });
-        */
 
         // if false {
         //     egui::Window::new("Window").show(ctx, |ui| {
@@ -781,6 +504,160 @@ impl eframe::App for Core {
 }
 
 impl Core {
+    fn _render_splash(&mut self, ui: &mut Ui) {
+        let logo_rect = ui.ctx().screen_rect();
+        let logo_size = logo_rect.size();
+        Image::new(ImageSource::Bytes {
+            uri: Cow::Borrowed("bytes://logo.svg"),
+            bytes: Bytes::Static(crate::app::KASPA_NG_LOGO_SVG),
+        })
+        .maintain_aspect_ratio(true)
+        // .max_size(logo_size)
+        // .fit_to_fraction(vec2(0.9,0.8))
+        .fit_to_exact_size(logo_size)
+        // .fit_to_exact_size(logo_size)
+        // .shrink_to_fit()
+        // .bg_fill(Color32::DARK_GRAY)
+        .texture_options(TextureOptions::LINEAR)
+        // .tint(Color32::from_f32(0.9_f32))
+        .paint_at(ui, logo_rect);
+    }
+
+    fn render_menu(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+        egui::menu::bar(ui, |ui| {
+            ui.columns(2, |cols| {
+                cols[0].horizontal(|ui| {
+                    ui.menu_button("File", |ui| {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        if ui.button("Quit").clicked() {
+                            _frame.close();
+                        }
+                        ui.separator();
+                        ui.label(" ~ Debug Modules ~");
+                        ui.label(" ");
+
+                        // let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
+
+                        let (tests, mut modules): (Vec<_>, Vec<_>) = self
+                            .modules
+                            .values()
+                            .cloned()
+                            .partition(|module| module.name().starts_with('~'));
+
+                        tests.into_iter().for_each(|module| {
+                            if ui.button(module.name()).clicked() {
+                                self.module = module; //.type_id();
+                                ui.close_menu();
+                            }
+                        });
+
+                        ui.label(" ");
+
+                        modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
+                        modules.into_iter().for_each(|module| {
+                            // let SectionInner { name,type_id, .. } = section.inner;
+                            if ui.button(module.name()).clicked() {
+                                self.module = module; //.type_id();
+                                ui.close_menu();
+                            }
+                        });
+                    });
+
+                    ui.separator();
+                    if ui.button("Overview").clicked() {
+                        self.select::<modules::Overview>();
+                    }
+                    ui.separator();
+                    if ui.button("Wallet").clicked() {
+                        if self.state().is_open() {
+                            self.select::<modules::AccountManager>();
+                        } else {
+                            self.select::<modules::WalletOpen>();
+                        }
+                    }
+                    ui.separator();
+                    // if ui.button(icon_with_text(ui, egui_phosphor::light::GEAR, Color32::WHITE, "Settings")).clicked() {
+                    //     self.select::<modules::Settings>();
+                    // }
+                    // ui.separator();
+                    // if ui.button(RichText::new(format!("{} Settings",egui_phosphor::light::GEAR))).clicked() {
+                    if ui.button("Settings").clicked() {
+                        self.select::<modules::Settings>();
+                    }
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        ui.separator();
+                        if ui.button("Node").clicked() {
+                            self.select::<modules::Node>();
+                        }
+                    }
+
+                    ui.separator();
+                    if ui.button("Metrics").clicked() {
+                        self.select::<modules::Metrics>();
+                    }
+
+                    ui.separator();
+                    if ui.button("Block DAG").clicked() {
+                        self.select::<modules::BlockDag>();
+                    }
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        ui.separator();
+                        if ui.button("Logs").clicked() {
+                            self.select::<modules::Logs>();
+                        }
+                    }
+
+                    // ui.separator();
+                    // if ui.button("About").clicked() {
+                    //     self.select::<modules::About>();
+                    // }
+                    ui.separator();
+                });
+
+                cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let dictionary = i18n::dictionary();
+                    #[allow(clippy::useless_format)]
+                    ui.menu_button(format!("{} ⏷", dictionary.current_title()), |ui| {
+                        dictionary
+                            .enabled_languages()
+                            .into_iter()
+                            .for_each(|(code, lang)| {
+                                if ui.button(lang).clicked() {
+                                    self.settings.language_code = code.to_string();
+                                    dictionary
+                                        .activate_language_code(code)
+                                        .expect("Unable to activate language");
+                                    ui.close_menu();
+                                }
+                            });
+                    });
+
+                    ui.separator();
+
+                    // let theme = theme();
+
+                    // let icon_size = theme.panel_icon_size();
+                    let icon = CompositeIcon::new(egui_phosphor::bold::MOON).icon_size(18.);
+                    // .padding(Some(icon_padding));
+                    // if ui.add_enabled(true, icon).clicked() {
+                    if ui.add(icon).clicked() {
+                        // close(self.this);
+                    }
+
+                    // if ui.button("Theme").clicked() {
+                    //     self.select::<modules::Logs>();
+                    // }
+                    ui.separator();
+                });
+            });
+        });
+        // ui.spacing()
+    }
+
     fn render_status(&mut self, ui: &mut egui::Ui) {
         egui::menu::bar(ui, |ui| {
             // ui.horizontal(|ui| {
@@ -793,7 +670,10 @@ impl Core {
                     .peer_monitor_service()
                     .peer_info()
                     .map(|peers| peers.len());
-                let tps = self.metrics.as_ref().map(|metrics| metrics.tps);
+                let tps = self
+                    .metrics
+                    .as_ref()
+                    .map(|metrics| metrics.network_transactions_per_second);
                 ui.horizontal(|ui| {
                     if self.state().is_synced() {
                         self.render_connected_state(
@@ -819,14 +699,19 @@ impl Core {
                     }
                 });
             }
-            ui.add_space(ui.available_width() - 20.);
-            if icons()
-                .sliders
-                .render_with_options(ui, &IconSize::new(Vec2::splat(20.)), true)
-                .clicked()
-            {
-                self.select::<modules::Settings>();
-            }
+
+            self.module.status_bar(ui);
+
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if icons()
+                    .sliders
+                    .render_with_options(ui, &IconSize::new(Vec2::splat(20.)), true)
+                    .clicked()
+                {
+                    self.select::<modules::Settings>();
+                }
+            });
         });
     }
 
@@ -883,7 +768,27 @@ impl Core {
                                 .color(Color32::LIGHT_RED),
                         );
                         ui.separator();
-                        ui.label("Connecting...");
+                        // ui.label("Connecting...");
+
+                        match self.settings.node.node_kind {
+                            KaspadNodeKind::Remote => {
+                                match KaspaRpcClient::parse_url(Some(self.settings.node.wrpc_url.clone()), self.settings.node.wrpc_encoding, self.settings.node.network.into()) {
+                                    Ok(url) => {
+                                        ui.label(format!("Connecting to {} ...", url.unwrap_or("?".to_string())));
+                                    }
+                                    Err(err) => {
+                                        ui.label(
+                                            RichText::new(format!("Error connecting to {}: {err}",self.settings.node.wrpc_url))
+                                                .color(theme().warning_color),
+                                        );
+                                    }
+                                }
+                            }
+                            _ => {
+                                ui.label("Connecting...");
+                            }
+                        }
+
                     }
                     #[cfg(not(target_arch = "wasm32"))]
                     _ => {
@@ -919,11 +824,17 @@ impl Core {
                         .size(status_icon_size)
                         .color(Color32::LIGHT_GREEN),
                 );
+                //.on_hover_text(format!("Uptime: "));
                 ui.separator();
                 // if peers.unwrap_or(0) != 0 {
                 // ui.label("ONLINE");
                 // } else {
-                ui.label("CONNECTED");
+                ui.label("CONNECTED").on_hover_ui(|ui|{
+                    ui.horizontal(|ui|{
+                        // ui.label("Connected to ");
+                        ui.label(self.settings.node.wrpc_url.clone());
+                    });
+                });
                 // }
                 ui.separator();
                 self.render_network_selector(ui);
@@ -991,7 +902,7 @@ impl Core {
                 self.metrics = Some(snapshot);
             }
             Events::Exit => {
-                // println!("exit");
+                // println!("bye!");
                 cfg_if! {
                     if #[cfg(not(target_arch = "wasm32"))] {
                         _frame.close();
@@ -1047,7 +958,7 @@ impl Core {
                     }
                     #[allow(unused_variables)]
                     CoreWallet::Connect { url, network_id } => {
-                        // log_info!("Connected to {url}");
+                        log_info!("Connected to {url:?} on network {network_id}");
                         self.state.is_connected = true;
                         self.state.url = url;
                         self.state.network_id = Some(network_id);

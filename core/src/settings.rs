@@ -77,6 +77,19 @@ impl KaspadNodeKind {
             KaspadNodeKind::ExternalAsDaemon => i18n("External Daemon"),
         }
     }
+
+    pub fn is_config_capable(&self) -> bool {
+        match self {
+            KaspadNodeKind::Disable => false,
+            KaspadNodeKind::Remote => false,
+            #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::IntegratedInProc => true,
+            #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::IntegratedAsDaemon => true,
+            #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::ExternalAsDaemon => true,
+        }
+    }
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
@@ -335,6 +348,7 @@ pub type PluginSettingsMap = HashMap<String, PluginSettings>;
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
     pub initialized: bool,
+    pub splash_screen: bool,
     pub version: String,
     pub developer_mode: bool,
     pub node: NodeSettings,
@@ -349,7 +363,12 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            #[cfg(not(target_arch = "wasm32"))]
             initialized: false,
+            #[cfg(target_arch = "wasm32")]
+            initialized: true,
+
+            splash_screen: true,
             version: "0.0.0".to_string(),
             developer_mode: false,
             node: NodeSettings::default(),

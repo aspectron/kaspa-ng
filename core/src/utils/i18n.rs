@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use crate::imports::*;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -43,7 +44,7 @@ pub fn i18n_storage_folder() -> Result<PathBuf> {
                 // fallback to the default storage folder, which is the
                 // same as kaspa-ng settings storage folder: `~/.kaspa-ng/`
                 let storage_folder =
-                    Path::new(kaspa_wallet_core::storage::local::DEFAULT_STORAGE_FOLDER);
+                    Path::new(kaspa_wallet_core::storage::local::default_storage_folder());
                 if !storage_folder.exists() {
                     std::fs::create_dir_all(storage_folder)?;
                 }
@@ -81,7 +82,7 @@ pub fn i18n_storage_file() -> Result<PathBuf> {
                 // fallback to the default storage folder, which is the
                 // same as kaspa-ng settings storage folder: `~/.kaspa-ng/`
                 let storage_folder =
-                    Path::new(kaspa_wallet_core::storage::local::DEFAULT_STORAGE_FOLDER);
+                    Path::new(kaspa_wallet_core::storage::local::default_storage_folder());
                 if !storage_folder.exists() {
                     std::fs::create_dir_all(storage_folder)?;
                 }

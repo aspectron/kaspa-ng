@@ -1,8 +1,4 @@
 use crate::imports::*;
-// use ritehash::FxHasher64;
-// use std::hash::BuildHasherDefault;
-// type FxBuildHasher = BuildHasherDefault<FxHasher64>;
-// type FxHashMap<K, V> = HashMap<K, V, FxBuildHasher>;
 use egui_plot::{
     // Legend,
     LineStyle,
@@ -20,9 +16,8 @@ pub struct BlockDag {
     plot_bounds : PlotBounds,
     bezier : bool,
     parent_levels : usize,
-    needs_repaint : Arc<AtomicBool>,
-    // repaint_thread : Option<std::thread::JoinHandle<()>>,
-    // repaint_channel: Channel<()>,
+    last_repaint : Instant,
+    settings: BlockDagGraphSettings,
 }
 
 impl BlockDag {
@@ -34,10 +29,9 @@ impl BlockDag {
             running : false, 
             plot_bounds : PlotBounds::NOTHING, 
             bezier : true, 
-            needs_repaint : Arc::new(AtomicBool::new(true)),
+            last_repaint : Instant::now(),
             parent_levels : 1,
-            // repaint_thread : None, 
-            // repaint_channel : Channel::unbounded(),
+            settings: BlockDagGraphSettings::default(),
         }
     }
 }
@@ -46,6 +40,11 @@ impl ModuleT for BlockDag {
 
     fn style(&self) -> ModuleStyle {
         ModuleStyle::Default
+    }
+
+    fn status_bar(&self, ui : &mut Ui) {
+        ui.separator();
+        ui.label("Double click on the graph to re-center...");
     }
 
     fn render(
@@ -57,27 +56,38 @@ impl ModuleT for BlockDag {
     ) {
         let theme = theme();
 
+        let y_dist = self.settings.y_dist;
+        let vspc_center = self.settings.vspc_center;
+
         ui.horizontal(|ui| {
 
-            ui.heading("BlockDAG");
+            ui.heading("Block DAG");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                ui.checkbox(&mut self.bezier, "Bezier Curves");
+                ui.checkbox(&mut self.bezier, i18n("Bezier Curves"));
+                ui.separator();
+                ui.checkbox(&mut self.settings.vspc_center, i18n("Center VSPC"));
                 ui.separator();
                 ui.add(
                     Slider::new(&mut self.parent_levels, 1..=50)
-                        // .logarithmic(*logarithmic)
                         .clamp_to_range(true)
-                        // .smart_aim(*smart_aim)
-                        // .orientation(orientation)
-                        .text("Parent levels")
+                        .text(i18n("Parent levels"))
                         .step_by(1.0)
-                        // .trailing_fill(*trailing_fill),
                 );
-                // *value = value_i32 as f64;
-
+                ui.separator();
+                ui.add(
+                    Slider::new(&mut self.settings.y_dist, 1.0..=100.0)
+                        .clamp_to_range(true)
+                        .text(i18n("Y Distance"))
+                        // .step_by(1.0)
+                );
+                // ui.separator();
+            
+                if y_dist != self.settings.y_dist || vspc_center != self.settings.vspc_center {
+                    runtime().block_dag_monitor_service().update_settings(self.settings.clone());
+                }
             });
         });
-        // ui.horizontal_rtl(|ui| ui.label("Right"));
+
         ui.separator();
 
         let current_daa_score = core.state().current_daa_score().unwrap_or_default();
@@ -138,14 +148,11 @@ impl ModuleT for BlockDag {
                 let PlotPoint { x, y: _ } = point;
                 format!("{name}\n{} DAA", x.trunc().separated_string())
             })                        
-            // .legend(Legend::default().position(Corner::RightTop))                            
             ;
 
-        // let fill_color = Color32::LIGHT_BLUE;
-        // let stroke_color = Color32::BLUE;
-
         let mut graph_settled = true;
-        let mut lines = Vec::new();
+        let mut lines_parent = Vec::new();
+        let mut lines_vspc = Vec::new();
 
         let daa_margin = 10;
         let daa_min = self.plot_bounds.min()[0] as u64 - daa_margin;
@@ -186,9 +193,9 @@ impl ModuleT for BlockDag {
                             ].into_iter().map(|pt|pt.into()).collect::<Vec<_>>()
                         };
                         if level == 0 && *current_vspc && parent_vspc {
-                            lines.push(Line::new(PlotPoints::Owned(points)).color(theme.dagviz_vspc_connect_color).style(LineStyle::Solid).width(3.0));
+                            lines_vspc.push(Line::new(PlotPoints::Owned(points)).color(theme.dagviz_vspc_connect_color).style(LineStyle::Solid).width(3.0));
                         } else {
-                            lines.push(Line::new(PlotPoints::Owned(points)).color(theme.dagviz_parent_connect_color).style(LineStyle::Solid));
+                            lines_parent.push(Line::new(PlotPoints::Owned(points)).color(theme.dagviz_parent_connect_color).style(LineStyle::Solid));
                         }
                     }
                 }
@@ -212,7 +219,10 @@ impl ModuleT for BlockDag {
         }).collect::<Vec<_>>();
 
         let response = plot.show(ui, |plot_ui| {
-            lines.into_iter().for_each(|line| {
+            lines_parent.into_iter().for_each(|line| {
+                plot_ui.line(line);
+            });
+            lines_vspc.into_iter().for_each(|line| {
                 plot_ui.line(line);
             });
             polygons.into_iter().for_each(|polygon| {
@@ -221,49 +231,21 @@ impl ModuleT for BlockDag {
         });
 
         if daa_diff > 0.001 || !graph_settled {
-            self.needs_repaint.store(true, Ordering::Relaxed);
-            std::thread::sleep(Duration::from_millis(1000/30));
-            crate::runtime::try_runtime().unwrap().request_repaint();
+            runtime().request_repaint();
         } 
-        // else {
-        //     println!("skipping redraw...");
-        // }
 
         self.plot_bounds = *response.transform.bounds();
+        self.last_repaint = Instant::now();
         // println!("plot_bounds: {:?}", self.plot_bounds);
 
     }
 
     fn activate(&mut self, _core: &mut Core) {
         crate::runtime::runtime().block_dag_monitor_service().enable();
-
-    //     let needs_repaint = self.needs_repaint.clone();
-    //     let receiver = self.repaint_channel.receiver.clone();
-    //     let thread = std::thread::Builder::new()
-    //         .name("blockdag".to_string())
-    //         .spawn(move || {
-    //             // core_.run();
-    //             while receiver.try_recv().is_err() {
-    //                 if needs_repaint.load(Ordering::Relaxed) {
-    //                     needs_repaint.store(false, Ordering::Relaxed);
-    //                     crate::runtime::try_runtime().unwrap().request_repaint();
-    //                 } else {
-    //                     println!("skipping repaint...");
-    //                 }
-    //                 std::thread::sleep(std::time::Duration::from_millis(1000/30));
-    //             }
-
-    //         }).unwrap();
-    //         self.repaint_thread.replace(thread);
     }
 
     fn deactivate(&mut self, _core: &mut Core) {
         crate::runtime::runtime().block_dag_monitor_service().disable();
-
-    //     if let Some(join_handle) = self.repaint_thread.take() {
-    //         self.repaint_channel.try_send(()).unwrap();
-    //         join_handle.join().unwrap();
-    //     }
     }
 }
 

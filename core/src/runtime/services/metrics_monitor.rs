@@ -1,30 +1,23 @@
-// use std::time::Duration;
-
 use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
-// use kaspa_wallet_core::{ConnectOptions, ConnectStrategy};
 
 #[allow(clippy::identity_op)]
 pub const MAX_METRICS_SAMPLES: usize = 60 * 60 * 24 * 1; // 1 day
 
 pub struct MetricsService {
     pub application_events: ApplicationEventsChannel,
-    // pub service_events: Channel<KaspadServiceEvents>,
     pub task_ctl: Channel<()>,
-    // pub network: Mutex<Network>,
-    // pub wallet: Arc<runtime::Wallet>,
     pub metrics: Arc<Metrics>,
     pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
+    pub samples_since_connection: Arc<AtomicUsize>,
 }
 
 impl MetricsService {
     pub fn new(application_events: ApplicationEventsChannel, _settings: &Settings) -> Self {
-        // create service event channel
-        // let service_events = Channel::unbounded();
 
         let metrics = Arc::new(Metrics::default());
         let metrics_data = Metric::list()
@@ -34,25 +27,12 @@ impl MetricsService {
 
         Self {
             application_events,
-            // service_events,
             task_ctl: Channel::oneshot(),
-            // network: Mutex::new(settings.node.network),
-            // wallet: Arc::new(wallet),
             metrics,
             metrics_data: Mutex::new(metrics_data),
+            samples_since_connection: Arc::new(AtomicUsize::new(0)),
         }
     }
-
-    // pub async fn stop_all_services(&self) -> Result<()> {
-
-    //     Ok(())
-    // }
-
-    // pub async fn start_all_services(self: &Arc<Self>, rpc: Rpc, network: Network) -> Result<()> {
-    //     let rpc_api = rpc.rpc_api().clone();
-
-    //     Ok(())
-    // }
 
     pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
         self.metrics_data.lock().unwrap()
@@ -89,27 +69,24 @@ impl MetricsService {
             if dest.len() > MAX_METRICS_SAMPLES {
                 dest.drain(0..dest.len() - MAX_METRICS_SAMPLES);
             }
-            // else if dest.len() < MAX_METRICS_SAMPLES {
-            //     let mut last_point = dest.last().cloned().unwrap_or_default();
-            //     while dest.len() < MAX_METRICS_SAMPLES {
-            //         last_point.x += 1000.0;
-            //         dest.push(last_point.clone());
-            //     }
-            // }
             dest.push(PlotPoint {
                 x: timestamp,
                 y: snapshot.get(&metric),
             });
         }
 
-        // if update_metrics_flag().load(Ordering::SeqCst) {
         self.application_events
             .sender
             .try_send(crate::events::Events::Metrics { snapshot })
             .unwrap();
-        // }
+
+        self.samples_since_connection.fetch_add(1, Ordering::SeqCst);
 
         Ok(())
+    }
+
+    pub fn samples_since_connection(&self) -> usize {
+        self.samples_since_connection.load(Ordering::SeqCst)
     }
 }
 
@@ -138,48 +115,21 @@ impl Service for MetricsService {
         Ok(())
     }
 
+    async fn connect_rpc(self: Arc<Self>) -> Result<()> {
+        self.samples_since_connection.store(0, Ordering::SeqCst);
+        Ok(())
+    }
+
+    // async fn connect
+
     async fn spawn(self: Arc<Self>) -> Result<()> {
-        // let this = self.clone();
-        // // let wallet_events = this.wallet.multiplexer().channel();
-        // let _application_events_sender = self.application_events.sender.clone();
-
-        // loop {
-        //     // println!("loop...");
-        //     select! {
-
-        //         msg = this.as_ref().service_events.receiver.recv().fuse() => {
-
-        //             if let Ok(event) = msg {
-
-        //                 match event {
-
-        //                     KaspadServiceEvents::Exit => {
-        //                         break;
-        //                     }
-        //                 }
-        //             } else {
-        //                 break;
-        //             }
-        //         }
-        //     }
-        // }
-
-        // println!("shutting down node manager...");
-        // this.stop_all_services().await?;
-        // this.task_ctl.send(()).await.unwrap();
-
         Ok(())
     }
 
     fn terminate(self: Arc<Self>) {
-        // self.service_events
-        //     .sender
-        //     .try_send(KaspadServiceEvents::Exit)
-        //     .unwrap();
     }
 
     async fn join(self: Arc<Self>) -> Result<()> {
-        // self.task_ctl.recv().await.unwrap();
         Ok(())
     }
 }

@@ -21,7 +21,7 @@ pub struct BlockDagMonitorService {
     is_enabled: Arc<AtomicBool>,
     is_connected: Arc<AtomicBool>,
     pub chain: Mutex<AHashMap<u64, DaaBucket>>,
-    // pub settings : Mutex<BlockDagGraphSettings>,
+    pub settings: Arc<BlockDagGraphSettings>,
 }
 
 impl BlockDagMonitorService {
@@ -36,7 +36,7 @@ impl BlockDagMonitorService {
             chain: Mutex::new(AHashMap::new()),
             is_enabled: Arc::new(AtomicBool::new(false)),
             is_connected: Arc::new(AtomicBool::new(false)),
-            // settings: Mutex::new(BlockDagGraphSettings::default()),
+            settings: Arc::new(BlockDagGraphSettings::default()),
         }
     }
 
@@ -91,6 +91,13 @@ impl BlockDagMonitorService {
             .try_send(BlockDagMonitorEvents::Disable)
             .unwrap();
     }
+
+    pub fn update_settings(&self, settings: BlockDagGraphSettings) {
+        self.service_events
+            .sender
+            .try_send(BlockDagMonitorEvents::Settings(settings))
+            .unwrap();
+    }
 }
 
 #[async_trait]
@@ -129,8 +136,7 @@ impl Service for BlockDagMonitorService {
         let mut blocks_by_hash: AHashMap<kaspa_consensus_core::Hash, Arc<RpcBlock>> =
             AHashMap::default();
 
-        // let mut gc: VecDeque<DaaBucket> = Default::default();
-        let mut settings = BlockDagGraphSettings::default();
+        let mut settings = (*self.settings).clone();
         loop {
             select! {
 
@@ -147,7 +153,8 @@ impl Service for BlockDagMonitorService {
                                 if let Some(bucket) = chain.get_mut(&daa_score) {
                                     bucket.push(DagBlock::new(block, &settings), &settings);
                                 } else {
-                                    let bucket = DaaBucket::new(daa_score as f64, DagBlock::new(block, &settings));
+                                    let mut bucket = DaaBucket::new(daa_score as f64, DagBlock::new(block, &settings));
+                                    bucket.update(&settings);
                                     chain.insert(daa_score, bucket);
                                 }
 
@@ -195,7 +202,7 @@ impl Service for BlockDagMonitorService {
                             }
                         }
 
-                        crate::runtime::runtime().request_repaint();
+                        runtime().request_repaint();
                     } else {
                         break;
                     }
@@ -228,6 +235,10 @@ impl Service for BlockDagMonitorService {
                             }
                             BlockDagMonitorEvents::Settings(new_settings) => {
                                 settings = new_settings;
+                                let mut chain = self.chain.lock().unwrap();
+                                for bucket in chain.values_mut() {
+                                    bucket.reset(&settings);
+                                }
                             }
                         }
                     } else {

@@ -3,10 +3,10 @@ use kaspa_rpc_core::RpcBlock;
 
 #[derive(Clone)]
 pub struct BlockDagGraphSettings {
-    y_scale: f64,
-    y_dist: f64,
+    pub y_scale: f64,
+    pub y_dist: f64,
     pub graph_length_daa: usize,
-    vspc_center: bool,
+    pub vspc_center: bool,
 }
 
 impl Default for BlockDagGraphSettings {
@@ -72,15 +72,11 @@ impl DaaBucket {
 
     pub fn update_vspc(&mut self, hash: KaspaHash, flag: bool, settings: &BlockDagGraphSettings) {
         if let Some(block) = self.blocks.iter_mut().find(|b| b.data.header.hash == hash) {
-            if flag {
-                block.vspc = true;
-                block.settled = false;
-                if settings.vspc_center {
-                    block.dst_y = 0.0;
-                }
+            block.vspc = flag;
+            block.settled = false;
+            if flag && settings.vspc_center {
+                block.dst_y = 0.0;
             } else {
-                block.vspc = false;
-                block.settled = false;
                 block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
             }
         }
@@ -91,9 +87,10 @@ impl DaaBucket {
     pub fn update(&mut self, settings: &BlockDagGraphSettings) {
         self.blocks
             .sort_by(|a, b| a.src_y.partial_cmp(&b.src_y).unwrap());
+        // .sort_by(|a, b| a.dst_y.partial_cmp(&b.dst_y).unwrap());
         let y_distance = settings.y_dist;
+        let len = self.blocks.len();
         if let Some(mut vspc_idx) = self.blocks.iter().position(|block| block.vspc) {
-            let len = self.blocks.len();
             if settings.vspc_center && len > 2 {
                 let mid = len / 2;
                 if vspc_idx != mid {
@@ -105,7 +102,14 @@ impl DaaBucket {
                 }
             }
 
-            let vspc_y = if settings.vspc_center { 0.0 } else { self.blocks.first().map(|block|block.src_y).unwrap_or_default() };
+            let vspc_y = if settings.vspc_center {
+                0.0
+            } else {
+                self.blocks
+                    .get(vspc_idx)
+                    .map(|block| block.dst_y)
+                    .unwrap_or_default()
+            };
 
             let mut y = vspc_y;
             (0..vspc_idx).rev().for_each(|idx| {
@@ -119,7 +123,28 @@ impl DaaBucket {
                 y += y_distance;
                 block.dst_y = y;
             });
+        } else {
+            let mut y = len as f64 * y_distance / 2.0;
+            (0..len).for_each(|idx| {
+                let block = &mut self.blocks[idx];
+                y -= y_distance;
+                block.dst_y = y;
+            });
         }
+    }
+
+    pub fn reset(&mut self, settings: &BlockDagGraphSettings) {
+        self.blocks.iter_mut().for_each(|block| {
+            // block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
+            block.settled = false;
+            if block.vspc && settings.vspc_center {
+                block.dst_y = 0.0;
+            } else {
+                block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
+            }
+        });
+
+        self.update(settings);
     }
 
     pub fn render(&mut self) -> Vec<(Arc<RpcBlock>, PlotPoint, bool, bool)> {
@@ -132,7 +157,7 @@ impl DaaBucket {
                     let dist = block.src_y - block.dst_y;
                     // block.src_y -= dist * 0.01;
                     block.src_y -= dist * 0.1;
-                    if dist.abs() < 0.00001 {
+                    if dist.abs() < 0.001 {
                         block.settled = true;
                     }
                 }

@@ -12,6 +12,8 @@ mod format;
 pub use format::*;
 mod arglist;
 pub use arglist::*;
+mod color;
+pub use color::*;
 
 #[macro_export]
 macro_rules! spawn {

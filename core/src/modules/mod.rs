@@ -8,10 +8,12 @@ kaspa_ng_macros::register_modules!(
         about,
         account_create,
         account_manager,
+        block_dag,
         changelog,
         deposit,
         export,
         import,
+        metrics,
         overview,
         request,
         send,
@@ -25,7 +27,7 @@ kaspa_ng_macros::register_modules!(
 );
 
 #[cfg(not(target_arch = "wasm32"))]
-kaspa_ng_macros::register_modules!(register_native_modules, [logs, metrics, node, block_dag,]);
+kaspa_ng_macros::register_modules!(register_native_modules, [logs, node,]);
 
 pub enum ModuleStyle {
     Large,
@@ -46,8 +48,10 @@ pub trait ModuleT: Downcast {
 
     fn style(&self) -> ModuleStyle {
         ModuleStyle::Large
+        // ModuleStyle::Default
     }
 
+    fn status_bar(&self, _ui: &mut Ui) {}
     fn activate(&mut self, _core: &mut Core) {}
     fn deactivate(&mut self, _core: &mut Core) {}
 
@@ -89,6 +93,10 @@ impl Module {
 
     pub fn deactivate(&self, core: &mut Core) {
         self.inner.module.borrow_mut().deactivate(core)
+    }
+
+    pub fn status_bar(&self, ui: &mut Ui) {
+        self.inner.module.borrow_mut().status_bar(ui)
     }
 
     pub fn render(

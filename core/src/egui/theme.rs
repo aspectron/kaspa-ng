@@ -70,7 +70,7 @@ impl Default for Theme {
             dagviz_block_fill_color: Color32::from_rgb(0xAD, 0xD8, 0xE6),
             dagviz_block_stroke_color: Color32::from_rgb(15, 84, 77),
             dagviz_vspc_connect_color: Color32::from_rgb(23, 150, 137),
-            dagviz_parent_connect_color: Color32::from_rgb(0xAD, 0xD8, 0xE6),
+            dagviz_parent_connect_color: Color32::from_rgba_premultiplied(0xAD, 0xD8, 0xE6, 220),
             // network_graph_color: Color32::from_rgb(58, 221, 190),
             // graph_color: Color32::from_rgb(21, 82, 71),
             // panel_icon_size : IconSize::new(Vec2::splat(26.),Vec2::new(36.,26.)),

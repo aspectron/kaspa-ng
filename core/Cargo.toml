@@ -13,7 +13,6 @@ cli = []
 default = []
 
 [build-dependencies]
-# vergen = { version = "8.2.6", features = ["build", "cargo", "git", "gitcl", "rustc", "si"] }
 vergen = { version = "8.2.6", features = ["build", "git", "gitcl", "rustc", "cargo"] }
 
 [dependencies]
@@ -21,6 +20,7 @@ kaspa-addresses.workspace = true
 kaspa-bip32.workspace = true
 kaspa-cli.workspace = true
 kaspa-consensus-core.workspace = true
+kaspa-core.workspace = true
 kaspa-metrics.workspace = true
 kaspa-ng-macros.workspace = true
 kaspa-notify.workspace = true
@@ -62,7 +62,7 @@ egui_plot.workspace = true
 egui_extras.workspace = true
 chrono.workspace = true
 eframe = { workspace = true, default-features = false, features = [
-    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+    # "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
     # "wgpu",          # Use the glow rendering backend. Alternative: "wgpu".
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
@@ -74,15 +74,11 @@ egui-notify.workspace = true
 [dependencies.web-sys]
 workspace = true
 features = [
-    # 'console',
-    # 'Document',
-    # 'Element',
-    # 'HtmlElement',
     'Window',
 ]
 
 
-# native:
+# -- native
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 clap.workspace = true
 ctrlc.workspace = true
@@ -95,7 +91,7 @@ num_cpus.workspace = true
 sysinfo.workspace = true
 tokio.workspace = true
 
-# web:
+# -- web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures.workspace = true
 
