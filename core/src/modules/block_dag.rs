@@ -77,7 +77,7 @@ impl ModuleT for BlockDag {
                 ui.add(
                     Slider::new(&mut self.settings.y_dist, 1.0..=100.0)
                         .clamp_to_range(true)
-                        .text(i18n("Y Distance"))
+                        .text(i18n("Spread"))
                         // .step_by(1.0)
                 );
                 // ui.separator();

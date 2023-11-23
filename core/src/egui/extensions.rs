@@ -163,3 +163,109 @@ impl From<LayoutJobBuilder> for WidgetText {
         builder.job.into()
     }
 }
+
+pub trait HyperlinkExtension {
+    fn hyperlink_to_tab(&mut self, text: impl Into<WidgetText>, url: impl Into<String>)
+        -> Response;
+    fn hyperlink_url_to_tab(&mut self, url: impl Into<String>) -> Response;
+}
+
+impl HyperlinkExtension for Ui {
+    fn hyperlink_to_tab(
+        &mut self,
+        text: impl Into<WidgetText>,
+        url: impl Into<String>,
+    ) -> Response {
+        let url = url.into();
+        Hyperlink::from_label_and_url(text, url)
+            .open_in_new_tab(true)
+            .ui(self)
+    }
+    fn hyperlink_url_to_tab(&mut self, url: impl Into<String>) -> Response {
+        let url = url.into();
+        Hyperlink::from_label_and_url(url.clone(), url)
+            .open_in_new_tab(true)
+            .ui(self)
+    }
+}
+
+type TextEditorCreateFn<'editor> = Box<dyn FnOnce(&mut Ui, &mut String) -> Response + 'editor>;
+type TextEditorChangeFn<'editor> = Box<dyn FnOnce(&str) + 'editor>;
+type TextEditorSubmitFn<'editor, Focus> = Box<dyn FnOnce(&str, &mut Focus) + 'editor>;
+
+pub struct TextEditor<'editor, Focus>
+where
+    Focus: PartialEq + Copy,
+{
+    user_text: &'editor mut String,
+    focus_mut: &'editor mut Focus,
+    focus_value: Focus,
+    editor_create_fn: TextEditorCreateFn<'editor>,
+    editor_change_fn: Option<TextEditorChangeFn<'editor>>,
+    editor_submit_fn: Option<TextEditorSubmitFn<'editor, Focus>>,
+}
+
+impl<'editor, Focus> TextEditor<'editor, Focus>
+where
+    Focus: PartialEq + Copy,
+{
+    pub fn new(
+        user_text: &'editor mut String,
+        focus_mut_ref: &'editor mut Focus,
+        focus_value: Focus,
+        editor_create_fn: impl FnOnce(&mut Ui, &mut String) -> Response + 'editor,
+    ) -> Self {
+        Self {
+            user_text,
+            focus_mut: focus_mut_ref,
+            focus_value,
+            editor_create_fn: Box::new(editor_create_fn),
+            editor_change_fn: None,
+            editor_submit_fn: None,
+        }
+    }
+
+    pub fn change(mut self, change: impl FnOnce(&str) + 'editor) -> Self {
+        self.editor_change_fn = Some(Box::new(change));
+        self
+    }
+
+    pub fn submit(mut self, submit: impl FnOnce(&str, &mut Focus) + 'editor) -> Self {
+        self.editor_submit_fn = Some(Box::new(submit));
+        self
+    }
+
+    pub fn build(self, ui: &mut Ui) -> Response {
+        let TextEditor {
+            user_text,
+            focus_mut,
+            focus_value,
+            editor_create_fn,
+            editor_change_fn,
+            editor_submit_fn,
+        } = self;
+
+        let mut editor_text = user_text.clone();
+        let response = editor_create_fn(ui, &mut editor_text);
+
+        if response.gained_focus() {
+            *focus_mut = focus_value;
+        } else if *focus_mut == focus_value && !response.has_focus() {
+            response.request_focus();
+        };
+
+        if *user_text != editor_text {
+            *user_text = editor_text;
+            if let Some(editor_change_fn) = editor_change_fn {
+                editor_change_fn(user_text.as_str());
+            }
+        } else if response.text_edit_submit(ui) {
+            *user_text = editor_text;
+            if let Some(editor_submit_fn) = editor_submit_fn {
+                editor_submit_fn(user_text.as_str(), focus_mut);
+            }
+        }
+
+        response
+    }
+}

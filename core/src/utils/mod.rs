@@ -81,3 +81,54 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
 
     job
 }
+
+type Handler<'panel> = Box<dyn FnOnce() + 'panel>;
+
+#[derive(Default)]
+pub struct CenterLayoutBuilder<'layout, W>
+where
+    W: Widget,
+{
+    pub list: Vec<(bool, W, Handler<'layout>)>,
+}
+
+impl<'layout, W> CenterLayoutBuilder<'layout, W>
+where
+    W: Widget,
+{
+    pub fn new() -> Self {
+        Self { list: Vec::new() }
+    }
+    pub fn add(mut self, widget: W, handler: impl FnOnce() + 'layout) -> Self {
+        self.list.push((true, widget, Box::new(handler)));
+        self
+    }
+    pub fn add_enabled(
+        mut self,
+        enabled: bool,
+        widget: W,
+        handler: impl FnOnce() + 'layout,
+    ) -> Self {
+        self.list.push((enabled, widget, Box::new(handler)));
+        self
+    }
+
+    pub fn build(self, ui: &mut Ui) {
+        let theme = theme();
+        let button_size = theme.medium_button_size();
+        let available_width = ui.available_width();
+        let buttons_len = self.list.len() as f32;
+        let spacing = ui.spacing().item_spacing.x;
+        let total_width = buttons_len * button_size.x + spacing * (buttons_len - 1.0);
+        let margin = (available_width - total_width) * 0.5;
+
+        ui.add_space(margin);
+        self.list
+            .into_iter()
+            .for_each(|(enabled, widget, handler)| {
+                if ui.add_enabled(enabled, widget).clicked() {
+                    handler();
+                }
+            });
+    }
+}

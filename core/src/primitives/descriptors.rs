@@ -57,8 +57,8 @@ fn grid(ui: &mut Ui, id: &AccountId, add_contents: impl FnOnce(&mut Ui)) {
         .show(ui, |ui| {
             Grid::new("bip32_descriptor")
                 .num_columns(2)
-                .spacing([40.0, 4.0])
-                .min_col_width(120.0)
+                .spacing([20.0, 4.0])
+                // .min_col_width(120.0)
                 // .striped(true)
                 .show(ui, |ui| {
                     add_contents(ui);
@@ -76,7 +76,10 @@ impl RenderDescriptor for Bip32 {
             let color = Color32::WHITE;
 
             ui.label(i18n("Account Name"));
-            ui.colored_label(color, self.account_name.as_ref().unwrap_or(&"".to_string()));
+            ui.colored_label(
+                color,
+                self.account_name.as_ref().unwrap_or(&"...".to_string()),
+            );
             ui.end_row();
             ui.label(i18n("Type"));
             ui.colored_label(color, "BIP-32 / Kaspa Core");

@@ -37,14 +37,9 @@ impl ModuleT for Overview {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-
+        // let width = ui.available_width();
         let screen_rect = ui.ctx().screen_rect();
-        let logo_size = vec2(648., 994.,) * 0.25;
-        let left = screen_rect.width() - logo_size.x - 8.;
-        let top = 32.;
-        let logo_rect = Rect::from_min_size(Pos2::new(left, top), logo_size);
-
-        let width = ui.available_width();
+        let width = screen_rect.width();
 
         SidePanel::left("overview_left").exact_width(width/2.).resizable(false).show_separator_line(true).show_inside(ui, |ui| {
             // ui.label("Kaspa NG");
@@ -52,24 +47,8 @@ impl ModuleT for Overview {
                 .id_source("overview_metrics")
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
-
-                CollapsingHeader::new(i18n("Kaspa p2p Node"))
-                    .default_open(true)
-                    .show(ui, |ui| {
-
-                        if core.state().is_connected() {
-                            self.render_graphs(core,ui);
-                        } else {
-                            ui.label(i18n("Not connected"));
-                        }
-                    });
-
-                if let Some(system) = runtime().system() {
-                    system.render(ui);
-                }
-
-                ui.add_space(48.);
-            });
+                    self.render_stats(core,ui);
+                });
         });
 
         SidePanel::right("overview_right")
@@ -77,103 +56,7 @@ impl ModuleT for Overview {
             .resizable(false)
             .show_separator_line(false)
             .show_inside(ui, |ui| {
-
-                Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.svg"), bytes : Bytes::Static(crate::app::KASPA_NG_LOGO_SVG)})
-                    .maintain_aspect_ratio(true)
-                    .max_size(logo_size)
-                    .fit_to_exact_size(logo_size)
-                    .shrink_to_fit()
-                    .texture_options(TextureOptions::LINEAR)
-                    .tint(Color32::from_f32(0.8))
-                    .paint_at(ui, logo_rect);
-
-                egui::ScrollArea::vertical()
-                    .id_source("overview_metrics")
-                    .auto_shrink([false; 2])
-                    .show(ui, |ui| {
-            
-                        CollapsingHeader::new(i18n("Market"))
-                            .default_open(true)
-                            .show(ui, |ui| {
-                                ui.label("TODO");
-                            });
-
-                        CollapsingHeader::new(i18n("Resources"))
-                            .default_open(true)
-                            .show(ui, |ui| {
-                                // egui::special_emojis
-                                // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
-                                Hyperlink::from_label_and_url(
-                                    format!("• {}",i18n("Kaspa NextGen on GitHub")),
-                                    "https://github.com/aspectron/kaspa-ng"
-                                ).open_in_new_tab(true).ui(ui);
-                                Hyperlink::from_label_and_url(
-                                    format!("• {}",i18n("Rusty Kaspa on GitHub")),
-                                    "https://github.com/kaspanet/rusty-kaspa",
-                                ).open_in_new_tab(true).ui(ui);
-                                Hyperlink::from_label_and_url(
-                                    format!("• {}",i18n("NPM Modules for NodeJS")),
-                                    "https://www.npmjs.com/package/kaspa",
-                                ).open_in_new_tab(true).ui(ui);
-                                Hyperlink::from_label_and_url(
-                                    format!("• {}",i18n("WASM SDK for JavaScript and TypeScript")),
-                                    "https://github.com/kaspanet/rusty-kaspa/wasm",
-                                ).open_in_new_tab(true).ui(ui);
-                                Hyperlink::from_label_and_url(
-                                    format!("• {}",i18n("Rust Wallet SDK")),
-                                    "https://docs.rs/kaspa-wallet-core/0.0.4/kaspa_wallet_core/",
-                                ).open_in_new_tab(true).ui(ui);
-                                Hyperlink::from_label_and_url(
-                                    format!("• {}",i18n("Kaspa Discord")),
-                                    "https://discord.com/invite/kS3SK5F36R",
-                                ).open_in_new_tab(true).ui(ui);
-                            });
-
-                        let version = env!("CARGO_PKG_VERSION");
-                        let download = |platform: &str| { format!("https://github.com/aspectron/kaspa-ng/releases/download/{}/kaspa-ng-{}-{}.zip", version, version, platform) };
-                        CollapsingHeader::new(i18n("Redistributables"))
-                            .default_open(false)
-                            .show(ui, |ui| {
-                                ["windows-x64", "linux-gnu-amd64", "macos-arm64"].into_iter().for_each(|platform| {
-                                    Hyperlink::from_label_and_url(
-                                        format!("• kaspa-ng-{}-{}.zip", version, platform),
-                                        download(platform),
-                                    ).open_in_new_tab(true).ui(ui);
-                                });
-                            });
-
-                        CollapsingHeader::new(i18n("Music"))
-                            .default_open(true)
-                            .show(ui, |ui| {
-                                ui.label("TODO");
-                            });
-
-
-                        CollapsingHeader::new(i18n("Build"))
-                            .default_open(true)
-                            .show(ui, |ui| {
-                                ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version()));
-                                ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
-                                ui.label(format!("rustc {}-{} {}  llvm {}", 
-                                    crate::app::RUSTC_SEMVER,
-                                    crate::app::RUSTC_COMMIT_HASH.chars().take(8).collect::<String>(),
-                                    crate::app::RUSTC_CHANNEL,
-                                    crate::app::RUSTC_LLVM_VERSION,
-                                ));
-                                ui.label(format!("architecture {}", 
-                                    crate::app::CARGO_TARGET_TRIPLE
-                                ));
-                                ui.label("Codename: \"This is the way\"");
-                            });
-
-
-                        CollapsingHeader::new(i18n("License Information"))
-                            .default_open(true)
-                            .show(ui, |ui| {
-                                ui.label("TODO");
-                            });
-                    });
-
+                self.render_details(core, ui);
             });
 
 
@@ -181,6 +64,213 @@ impl ModuleT for Overview {
 }
 
 impl Overview {
+
+    fn render_stats(&mut self, core: &mut Core, ui : &mut Ui) {
+
+        CollapsingHeader::new(i18n("Kaspa p2p Node"))
+        .default_open(true)
+        .show(ui, |ui| {
+
+            if core.state().is_connected() {
+                self.render_graphs(core,ui);
+            } else {
+                ui.label(i18n("Not connected"));
+            }
+        });
+
+        if let Some(system) = runtime().system() {
+            system.render(ui);
+        }
+
+        ui.add_space(48.);
+    }
+
+    fn render_details(&mut self, _core: &mut Core, ui : &mut Ui) {
+
+        let screen_rect = ui.ctx().screen_rect();
+        let logo_size = vec2(648., 994.,) * 0.25;
+        let left = screen_rect.width() - logo_size.x - 8.;
+        let top = 32.;
+        let logo_rect = Rect::from_min_size(Pos2::new(left, top), logo_size);
+
+        Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.svg"), bytes : Bytes::Static(crate::app::KASPA_NG_LOGO_SVG)})
+        .maintain_aspect_ratio(true)
+        .max_size(logo_size)
+        .fit_to_exact_size(logo_size)
+        .shrink_to_fit()
+        .texture_options(TextureOptions::LINEAR)
+        .tint(Color32::from_f32(0.8))
+        .paint_at(ui, logo_rect);
+
+    egui::ScrollArea::vertical()
+        .id_source("overview_metrics")
+        .auto_shrink([false; 2])
+        .show(ui, |ui| {
+
+            CollapsingHeader::new(i18n("Market"))
+                .default_open(true)
+                .show(ui, |ui| {
+                    ui.label("TODO");
+                });
+
+            CollapsingHeader::new(i18n("Resources"))
+                .default_open(true)
+                .show(ui, |ui| {
+                    // egui::special_emojis
+                    // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
+                    ui.hyperlink_to_tab(
+                        format!("• {}",i18n("Kaspa NextGen on GitHub")),
+                        "https://github.com/aspectron/kaspa-ng"
+                    );
+                    ui.hyperlink_to_tab(
+                        format!("• {}",i18n("Rusty Kaspa on GitHub")),
+                        "https://github.com/kaspanet/rusty-kaspa",
+                    );
+                    ui.hyperlink_to_tab(
+                        format!("• {}",i18n("NPM Modules for NodeJS")),
+                        "https://www.npmjs.com/package/kaspa",
+                    );
+                    ui.hyperlink_to_tab(
+                        format!("• {}",i18n("WASM SDK for JavaScript and TypeScript")),
+                        "https://github.com/kaspanet/rusty-kaspa/wasm",
+                    );
+                    ui.hyperlink_to_tab(
+                        format!("• {}",i18n("Rust Wallet SDK")),
+                        "https://docs.rs/kaspa-wallet-core/0.0.4/kaspa_wallet_core/",
+                    );
+                    ui.hyperlink_to_tab(
+                        format!("• {}",i18n("Kaspa Discord")),
+                        "https://discord.com/invite/kS3SK5F36R",
+                    );
+                });
+
+            let version = env!("CARGO_PKG_VERSION");
+            let download = |platform: &str| { format!("https://github.com/aspectron/kaspa-ng/releases/download/{}/kaspa-ng-{}-{}.zip", version, version, platform) };
+            CollapsingHeader::new(i18n("Redistributables"))
+                .default_open(false)
+                .show(ui, |ui| {
+                    ["windows-x64", "linux-gnu-amd64", "macos-arm64"].into_iter().for_each(|platform| {
+                        Hyperlink::from_label_and_url(
+                            format!("• kaspa-ng-{}-{}.zip", version, platform),
+                            download(platform),
+                        ).open_in_new_tab(true).ui(ui);
+                    });
+                });
+
+            CollapsingHeader::new(i18n("Music"))
+                .default_open(true)
+                .show(ui, |ui| {
+                    ui.label("TODO");
+                });
+
+
+            CollapsingHeader::new(i18n("Build"))
+                .default_open(true)
+                .show(ui, |ui| {
+                    ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version()));
+                    ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
+                    ui.label(format!("rustc {}-{} {}  llvm {}", 
+                        crate::app::RUSTC_SEMVER,
+                        crate::app::RUSTC_COMMIT_HASH.chars().take(8).collect::<String>(),
+                        crate::app::RUSTC_CHANNEL,
+                        crate::app::RUSTC_LLVM_VERSION,
+                    ));
+                    ui.label(format!("architecture {}", 
+                        crate::app::CARGO_TARGET_TRIPLE
+                    ));
+                    ui.label("Codename: \"This is the way\"");
+                });
+
+
+            CollapsingHeader::new(i18n("License Information"))
+                .default_open(false)
+                .show(ui, |ui| {
+                    ui.vertical(|ui|{
+                        ui.label("Rusty Kaspa");
+                        ui.label("Copyright (c) 2023 Kaspa Developers");
+                        ui.label("License: ISC");
+                        ui.hyperlink_url_to_tab("https://github.com/kaspanet/rusty-kaspa");
+                        ui.label("");
+                        ui.label("Kaspa NG");
+                        ui.label("Copyright (c) 2023 ASPECTRON");
+                        ui.label("License: MIT or Apache 2.0");
+                        ui.hyperlink_url_to_tab("https://aspectron.com");
+                        ui.label("");
+                        ui.label("WORKFLOW-RS");
+                        ui.label("Copyright (c) 2023 ASPECTRON");
+                        ui.label("License: MIT");
+                        ui.hyperlink_url_to_tab("https://github.com/workflow-rs/workflow-rs");
+                        ui.label("");
+                        ui.label("EGUI");
+                        ui.label("Copyright (c) 2023 Rerun");
+                        ui.label("License: MIT or Apache 2.0");
+                        ui.hyperlink_url_to_tab("https://github.com/emilk/egui");
+                        ui.label("");
+                        ui.label("PHOSPHOR ICONS");
+                        ui.label("Copyright (c) 2023 ");
+                        ui.label("License: MIT");
+                        ui.hyperlink_url_to_tab("https://phosphoricons.com/");
+                        ui.label("");
+                        ui.label("Graphics Design");
+                        ui.label("Copyright (c) 2023 Rhubarb Media");
+                        ui.label("License: CC BY 4.0");
+                        ui.hyperlink_url_to_tab("https://rhubarbmedia.ca/");
+                        ui.label("");
+                    });
+                });
+
+                CollapsingHeader::new(i18n("Credits"))
+                .default_open(false)
+                .show(ui, |ui| {
+                    ui.vertical(|ui|{
+                        ui.label("Special thanks to the following people:");
+                        ui.horizontal_wrapped(|ui|{
+                            let mut nicks = [
+                                "142673",
+                                "Bubblegum Lightning",
+                                "coderofstuff",
+                                "CryptoK",
+                                "Elertan",
+                                "hashdag",
+                                "jablonx",
+                                "jwj",
+                                "lAmeR",
+                                "matoo",
+                                "msutton",
+                                "Rhubarbarian",
+                                "shaideshe",
+                                "someone235",
+                                "supertypo",
+                                "Tim",
+                                "Wolfie",
+                                "KaffinPX"
+                            ];
+                            nicks.sort();
+                            nicks.into_iter().for_each(|nick| {
+                                ui.label(format!("@{nick}"));
+                            });
+                        });
+                    });
+                });
+
+                CollapsingHeader::new(i18n("Donations"))
+                .default_open(true)
+                .show(ui, |ui| {
+                    ui.label("Please support Kaspa NG development");
+                    ui.label("kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x");
+                });
+        });
+
+
+
+
+
+
+
+
+
+    }
+
     fn render_graphs(&mut self, core: &mut Core, ui : &mut Ui) {
 
         // let mut metric_iter = [Metric::CpuUsage,                 

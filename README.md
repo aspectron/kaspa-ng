@@ -24,3 +24,16 @@ This project currently supports Chrome browser extension target, but this compon
 ```
 ./build-chrome
 ```
+
+<details>
+  <summary>Windows x64</summary>
+Windows build instructions
+</details>
+<details>
+  <summary>Linux</summary>
+Linux build instructions
+</details>
+<details>
+  <summary>Mac OS</summary>
+Mac OS build instructions
+</details>
