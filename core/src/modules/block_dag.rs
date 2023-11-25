@@ -90,11 +90,13 @@ impl ModuleT for BlockDag {
 
         ui.separator();
 
+        let mut reset_plot = false;
         let current_daa_score = core.state().current_daa_score().unwrap_or_default();
         if self.last_daa_score != current_daa_score {
 
             if !self.running {
                 self.running = true;
+                reset_plot = true;
                 self.daa_cursor = current_daa_score as f64;
             }
 
@@ -115,7 +117,7 @@ impl ModuleT for BlockDag {
         let pixels_per_daa = graph_width as f64 / default_daa_range;
         let bezier_steps = if pixels_per_daa < 2.0 { 2 } else { pixels_per_daa as usize / 3};
 
-        let plot = Plot::new("block_dag")
+        let mut plot = Plot::new("block_dag")
             .width(graph_width)
             .height(graph_height)
             .include_x(default_daa_max)
@@ -126,7 +128,6 @@ impl ModuleT for BlockDag {
             .y_axis_width(0)
             .show_axes([true, false])
             .show_grid(true)
-            // .allow_drag([true, false])
             .allow_drag([true, true])
             .allow_scroll(true)
             .allow_double_click_reset(true)
@@ -149,6 +150,13 @@ impl ModuleT for BlockDag {
                 format!("{name}\n{} DAA", x.trunc().separated_string())
             })                        
             ;
+
+        if reset_plot {
+            // As of egui 0.24, we need to tap auto bounds once
+            // when the plot is re-positioned to get it to track
+            // the manually set bounds.
+            plot = plot.auto_bounds_x().auto_bounds_y();
+        }
 
         let mut graph_settled = true;
         let mut lines_parent = Vec::new();
@@ -245,6 +253,7 @@ impl ModuleT for BlockDag {
     }
 
     fn deactivate(&mut self, _core: &mut Core) {
+        self.running = false;
         crate::runtime::runtime().block_dag_monitor_service().disable();
     }
 }

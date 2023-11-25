@@ -196,6 +196,14 @@ impl Runtime {
         Ok(())
     }
 
+    pub fn notify(&self, user_notification: UserNotification) {
+        self.inner
+            .application_events
+            .sender
+            .try_send(Events::Notify { user_notification })
+            .ok();
+    }
+
     pub fn spawn_task<F>(&self, task: F)
     where
         F: Future<Output = Result<()>> + Send + 'static,
@@ -207,7 +215,7 @@ impl Runtime {
                     .send(Events::Error(Box::new(err.to_string())))
                     .await
                     .unwrap();
-                println!("spawned task error: {:?}", err);
+                // println!("spawned task error: {:?}", err);
             }
         });
     }

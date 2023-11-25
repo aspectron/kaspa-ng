@@ -1,5 +1,6 @@
 use crate::result::Result;
 use cfg_if::cfg_if;
+use egui::ViewportBuilder;
 use kaspa_ng_core::runtime;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::api::WalletApi;
@@ -22,7 +23,7 @@ pub const RUSTC_LLVM_VERSION: &str = env!("VERGEN_RUSTC_LLVM_VERSION");
 pub const RUSTC_SEMVER: &str = env!("VERGEN_RUSTC_SEMVER");
 pub const CARGO_TARGET_TRIPLE: &str = env!("VERGEN_CARGO_TARGET_TRIPLE");
 // pub const CARGO_PROFILE: &str = env!("VERGEN_CARGO_PROFILE");
-pub const CODENAME: &str = "This is the way";
+pub const CODENAME: &str = "DNA";
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -32,7 +33,6 @@ cfg_if! {
         use kaspa_utils::fd_budget;
         use kaspa_core::signals::Signals;
         use clap::ArgAction;
-        use eframe::IconData;
         use crate::utils::*;
         use std::fs;
 
@@ -122,6 +122,29 @@ cfg_if! {
 
             runtime::panic::init_panic_handler();
 
+            // TODO - import from kaspad_lib
+            const DESIRED_DAEMON_SOFT_FD_LIMIT: u64 = 16 * 1024;
+            const MINIMUM_DAEMON_SOFT_FD_LIMIT: u64 = 4 * 1024;
+            match try_set_fd_limit(DESIRED_DAEMON_SOFT_FD_LIMIT) {
+                Ok(limit) => {
+                    if limit < MINIMUM_DAEMON_SOFT_FD_LIMIT {
+                        println!();
+                        println!("| Current OS file descriptor limit (soft FD limit) is set to {limit}");
+                        println!("| The kaspad node requires a setting of at least {DESIRED_DAEMON_SOFT_FD_LIMIT} to operate properly.");
+                        println!("| Please increase the limits using the following command:");
+                        println!("| ulimit -n {DESIRED_DAEMON_SOFT_FD_LIMIT}");
+                        println!();
+                    }
+                }
+                Err(err) => {
+                    println!();
+                    println!("| Unable to initialize the necessary OS file descriptor limit (soft FD limit) to: {}", err);
+                    println!("| The kaspad node requires a setting of at least {DESIRED_DAEMON_SOFT_FD_LIMIT} to operate properly.");
+                    println!();
+                }
+            }
+
+
             match parse_args() {
                 Args::Cli => {
                     use kaspa_cli_lib::*;
@@ -149,6 +172,8 @@ cfg_if! {
 
                     // Log to stderr (if you run with `RUST_LOG=debug`).
                     env_logger::init();
+
+                    set_log_level(LevelFilter::Info);
 
                     let mut settings = if reset_settings {
                         println!("Resetting kaspa-ng settings on user request...");
@@ -182,10 +207,12 @@ cfg_if! {
                     let runtime: Arc<Mutex<Option<runtime::Runtime>>> = Arc::new(Mutex::new(None));
                     let delegate = runtime.clone();
                     let native_options = eframe::NativeOptions {
-                        icon_data : IconData::try_from_png_bytes(KASPA_NG_ICON_256X256).ok(),
                         persist_window : true,
-                        initial_window_size : Some(egui::Vec2 { x : 1000.0, y : 600.0 }),
-                        // min_window_size : Some(egui::Vec2 { x : 1000.0, y : 600.0 }),
+                        viewport: ViewportBuilder::default()
+                            .with_resizable(true)
+                            .with_title(i18n("Kaspa NG"))
+                            .with_inner_size([1000.0,600.0])
+                            .with_icon(eframe::icon_data::from_png_bytes(KASPA_NG_ICON_256X256).unwrap()),
                         ..Default::default()
                     };
                     eframe::run_native(
@@ -317,6 +344,17 @@ cfg_if! {
             }
 
             Ok(())
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn try_set_fd_limit(limit: u64) -> std::io::Result<u64> {
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "windows")] {
+            Ok(rlimit::setmaxstdio(limit as u32)?.map(|v| v as u64))
+        } else if #[cfg(unix)] {
+            rlimit::increase_nofile_limit(limit)
         }
     }
 }

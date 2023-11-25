@@ -78,10 +78,6 @@ impl Overview {
             }
         });
 
-        if let Some(system) = runtime().system() {
-            system.render(ui);
-        }
-
         ui.add_space(48.);
     }
 
@@ -163,7 +159,10 @@ impl Overview {
                     ui.label("TODO");
                 });
 
-
+            if let Some(system) = runtime().system() {
+                system.render(ui);
+            }
+        
             CollapsingHeader::new(i18n("Build"))
                 .default_open(true)
                 .show(ui, |ui| {
@@ -178,7 +177,7 @@ impl Overview {
                     ui.label(format!("architecture {}", 
                         crate::app::CARGO_TARGET_TRIPLE
                     ));
-                    ui.label("Codename: \"This is the way\"");
+                    ui.label(format!("Codename: \"{}\"", crate::app::CODENAME));
                 });
 
 
@@ -223,42 +222,47 @@ impl Overview {
                 .default_open(false)
                 .show(ui, |ui| {
                     ui.vertical(|ui|{
-                        ui.label("Special thanks to the following people:");
-                        ui.horizontal_wrapped(|ui|{
-                            let mut nicks = [
-                                "142673",
-                                "Bubblegum Lightning",
-                                "coderofstuff",
-                                "CryptoK",
-                                "Elertan",
-                                "hashdag",
-                                "jablonx",
-                                "jwj",
-                                "lAmeR",
-                                "matoo",
-                                "msutton",
-                                "Rhubarbarian",
-                                "shaideshe",
-                                "someone235",
-                                "supertypo",
-                                "Tim",
-                                "Wolfie",
-                                "KaffinPX"
-                            ];
-                            nicks.sort();
-                            nicks.into_iter().for_each(|nick| {
-                                ui.label(format!("@{nick}"));
+                        ui.label("Special thanks Kaspa developers and the following community members:");
+                        // ui.horizontal(|ui|{
+                            ui.horizontal_wrapped(|ui|{
+                                ui.set_width(ui.available_width() - 64.);
+                                let mut nicks = [
+                                    "142673",
+                                    "Bape",
+                                    "Bubblegum Lightning",
+                                    "coderofstuff",
+                                    "CryptoK",
+                                    "Elertan",
+                                    "hashdag",
+                                    "jablonx",
+                                    "jwj",
+                                    "lAmeR",
+                                    "matoo",
+                                    "msutton",
+                                    "Rhubarbarian",
+                                    "shaideshe",
+                                    "someone235",
+                                    "supertypo",
+                                    "Tim",
+                                    "Wolfie",
+                                    "KaffinPX"
+                                ];
+                                nicks.sort();
+                                nicks.into_iter().for_each(|nick| {
+                                    ui.label(format!("@{nick}"));
+                                });
                             });
-                        });
+                            // ui.add_space(32.);
+                        // });
                     });
                 });
 
                 CollapsingHeader::new(i18n("Donations"))
-                .default_open(true)
-                .show(ui, |ui| {
-                    ui.label("Please support Kaspa NG development");
-                    ui.label("kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x");
-                });
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        ui.label("Please support Kaspa NG development");
+                        ui.label("kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x");
+                    });
         });
 
 

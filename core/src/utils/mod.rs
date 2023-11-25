@@ -82,24 +82,24 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
     job
 }
 
-type Handler<'panel> = Box<dyn FnOnce() + 'panel>;
+type Handler<'layout, Context> = Box<dyn FnOnce(&mut Context) + 'layout>;
 
 #[derive(Default)]
-pub struct CenterLayoutBuilder<'layout, W>
+pub struct CenterLayoutBuilder<'layout, W, Context>
 where
     W: Widget,
 {
-    pub list: Vec<(bool, W, Handler<'layout>)>,
+    pub list: Vec<(bool, W, Handler<'layout, Context>)>,
 }
 
-impl<'layout, W> CenterLayoutBuilder<'layout, W>
+impl<'layout, W, Context> CenterLayoutBuilder<'layout, W, Context>
 where
     W: Widget,
 {
     pub fn new() -> Self {
         Self { list: Vec::new() }
     }
-    pub fn add(mut self, widget: W, handler: impl FnOnce() + 'layout) -> Self {
+    pub fn add(mut self, widget: W, handler: impl FnOnce(&mut Context) + 'layout) -> Self {
         self.list.push((true, widget, Box::new(handler)));
         self
     }
@@ -107,13 +107,13 @@ where
         mut self,
         enabled: bool,
         widget: W,
-        handler: impl FnOnce() + 'layout,
+        handler: impl FnOnce(&mut Context) + 'layout,
     ) -> Self {
         self.list.push((enabled, widget, Box::new(handler)));
         self
     }
 
-    pub fn build(self, ui: &mut Ui) {
+    pub fn build(self, ui: &mut Ui, context: &mut Context) {
         let theme = theme();
         let button_size = theme.medium_button_size();
         let available_width = ui.available_width();
@@ -127,7 +127,7 @@ where
             .into_iter()
             .for_each(|(enabled, widget, handler)| {
                 if ui.add_enabled(enabled, widget).clicked() {
-                    handler();
+                    handler(context);
                 }
             });
     }

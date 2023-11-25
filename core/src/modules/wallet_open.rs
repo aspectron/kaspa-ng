@@ -5,8 +5,8 @@ use crate::imports::*;
 pub enum State {
     #[default]
     Select,
-    Unlock(Option<Arc<Error>>),
-    Unlocking,
+    Unlock { wallet_descriptor : WalletDescriptor, error : Option<Arc<Error>>},
+    Unlocking { wallet_descriptor : WalletDescriptor },
 }
 
 pub struct WalletOpen {
@@ -15,7 +15,7 @@ pub struct WalletOpen {
     wallet_secret: String,
     pub state: State,
     pub message: Option<String>,
-    selected_wallet: Option<String>,
+    // selected_wallet: Option<String>,
 }
 
 impl WalletOpen {
@@ -25,14 +25,18 @@ impl WalletOpen {
             wallet_secret: String::new(),
             state: State::Select,
             message: None,
-            selected_wallet: None,
+            // selected_wallet: None,
         }
     }
 
-    pub fn lock(&mut self) {
-        // Go to unlock page
-        self.state = State::Unlock(None);
+    pub fn open(&mut self, wallet_descriptor: WalletDescriptor) {
+        self.state = State::Unlock { wallet_descriptor, error : None};
     }
+
+    // pub fn lock(&mut self) {
+    //     // Go to unlock page
+    //     self.state = State::Unlock(None);
+    // }
 }
 
 impl ModuleT for WalletOpen {
@@ -46,7 +50,7 @@ impl ModuleT for WalletOpen {
 
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
             let size = egui::Vec2::new(200_f32, 40_f32);
-            let unlock_result = Payload::<Result<()>>::new("test");
+            let unlock_result = Payload::<Result<()>>::new("wallet_unlock_result");
 
             let text: &str = "Select a wallet to unlock";
 
@@ -59,14 +63,12 @@ impl ModuleT for WalletOpen {
                             ui.label(text);
                         })
                         .with_body(|this, ui| {
-                            for wallet in core.wallet_list.iter() {
-                                // let text = render_wallet_descriptor(wallet, ui);
-                                let text = wallet.filename.clone();
-
-                                // if ui.add_sized(size, egui::Button::new(wallet.filename.clone())).clicked() {
-                                if ui.add_sized(size, egui::Button::new(text)).clicked() {
-                                    this.selected_wallet = Some(wallet.filename.clone());
-                                    this.state = State::Unlock(None);
+                            for wallet_descriptor in core.wallet_list.iter() {
+                                if ui.add_sized(size, CompositeButton::new(
+                                    wallet_descriptor.title.as_deref().unwrap_or("NO NAME"),
+                                    wallet_descriptor.filename.clone(),
+                                )).clicked() {
+                                    this.state = State::Unlock { wallet_descriptor : wallet_descriptor.clone(), error : None };
                                 }
                             }
                             ui.label(" ");
@@ -86,7 +88,7 @@ impl ModuleT for WalletOpen {
                         .render(ui);
                 }
 
-                State::Unlock(error) => {
+                State::Unlock{wallet_descriptor, error} => {
                     // let width = ui.available_width();
                     // let theme = theme();
                     Panel::new(self)
@@ -99,7 +101,8 @@ impl ModuleT for WalletOpen {
                             // ui.label(" ");
                             ui.label(format!(
                                 "Opening wallet: \"{}\"",
-                                ctx.selected_wallet.as_ref().unwrap()
+                                // ctx.selected_wallet.as_ref().unwrap()
+                                wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str())
                             ));
                             ui.label(" ");
                             // ui.add_space(24.);
@@ -153,17 +156,13 @@ impl ModuleT for WalletOpen {
                                 );
                                 ctx.wallet_secret.zeroize();
                                 let wallet = ctx.runtime.wallet().clone();
-                                let wallet_name = ctx.selected_wallet.clone(); //.expect("Wallet name not set");
-
+                                let wallet_descriptor_delegate = wallet_descriptor.clone();
                                 spawn_with_result(&unlock_result, async move {
-                                    // let account_descriptors = 
-                                    wallet.wallet_open(wallet_secret, wallet_name, true, true).await?;
-                                    // TODO - load transactions
-                                    // wallet.accounts_activate(None).await?;
+                                    wallet.wallet_open(wallet_secret, Some(wallet_descriptor_delegate.filename), true, true).await?;
                                     Ok(())
                                 });
 
-                                ctx.state = State::Unlocking;
+                                ctx.state = State::Unlocking { wallet_descriptor };
                             }
 
                             ui.label(" ");
@@ -188,7 +187,7 @@ impl ModuleT for WalletOpen {
                     //         }
                     // });
                 }
-                State::Unlocking => {
+                State::Unlocking { wallet_descriptor } => {
                     ui.heading("Unlocking");
                     // ui.separator();
                     ui.label(" ");
@@ -207,7 +206,7 @@ impl ModuleT for WalletOpen {
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);
-                                self.state = State::Unlock(Some(Arc::new(err)));
+                                self.state = State::Unlock { wallet_descriptor, error : Some(Arc::new(err)) };
                             }
                         }
                         // ui.label(format!("Result: {:?}", result));

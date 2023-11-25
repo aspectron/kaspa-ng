@@ -34,10 +34,8 @@ pub use std::path::{Path, PathBuf};
 pub use std::pin::Pin;
 pub use std::rc::Rc;
 pub use std::str::FromStr;
-pub use std::sync::{
-    atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering},
-    OnceLock,
-};
+pub use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
+pub use std::sync::OnceLock;
 pub use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 pub use std::time::Duration;
 

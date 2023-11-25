@@ -6,6 +6,34 @@ use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, Wallet
 use kaspa_wallet_core::storage::interface::AccessContext;
 use kaspa_wallet_core::storage::{AccessContextT, AccountKind};
 
+pub enum MnemonicSize {
+    Words12,
+    Words24,
+}
+
+pub enum CreateAccountDescriptor {
+    Bip44, // derivation for the same private key
+    Bip32,
+    Legacy,
+    MultiSig,
+    Keypair,
+    // Keypair,
+    // MultiSig,
+}
+
+impl CreateAccountDescriptor {
+    fn describe(&self) -> (&'static str, &'static str) {
+        match self {
+            Self::Bip44 => ("BIP44", "BIP44"),
+            Self::Bip32 => ("BIP32", "BIP32"),
+            Self::Legacy => ("Legacy", "Legacy"),
+            Self::MultiSig => ("MultiSig", "MultiSig"),
+            Self::Keypair => ("Keypair", "Keypair"),
+        }
+    }
+}
+
+
 
 #[derive(Clone)]
 pub enum State {
@@ -91,6 +119,18 @@ impl ModuleT for AccountCreate {
             match self.state.clone() {
                 State::Start => {
 
+
+                    // let v= core.account_collection().map(|collection|{
+                    //     HashMap::from_iter(collection.iter().map(|account|{
+                    //         (account.descriptor().private_key_id(),account.clone())
+                    //         // println!("account: {}", account.title());
+                    //     }))
+                    // }).unwrap_or_default();
+
+                    // if let Some(account_collection) = core.account_collection() {
+                    // }
+
+
                     Panel::new(self)
                         .with_caption("Create Account")
                         .with_close_enabled(false, |_|{
@@ -99,6 +139,18 @@ impl ModuleT for AccountCreate {
                             // ui.add_space(64.);
                             ui.label("Please select an account type");
                             ui.label(" ");
+                        })
+                        .with_body(|_this,ui|{
+
+
+
+                            if ui.add(CompositeButton::new(
+                                "Create a new HD account",
+                                "BIP-44 "
+                            )).clicked() {
+                                
+                            }
+                            
                             // ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
                         })
                         .with_footer(|_this,ui| {

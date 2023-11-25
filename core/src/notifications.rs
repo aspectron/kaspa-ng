@@ -60,6 +60,11 @@ impl UserNotification {
         Self::new(UserNotifyKind::Basic, text)
     }
 
+    pub fn short(mut self) -> Self {
+        self.duration = Some(Duration::from_millis(1500));
+        self
+    }
+
     pub fn render(self, toasts: &mut Toasts) {
         match self.kind {
             UserNotifyKind::Info => {

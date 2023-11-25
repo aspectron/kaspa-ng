@@ -8,6 +8,7 @@ cfg_if! {
             pub cpu_brand : Option<String>,
             pub total_memory : u64,
             pub long_os_version : Option<String>,
+            pub fd_limit : i32,
         }
 
         impl Default for System {
@@ -32,12 +33,15 @@ cfg_if! {
                     .first()
                     .map(|cpu|(cpu.frequency(),cpu.brand().to_string())).unzip();
 
+                let fd_limit = kaspa_utils::fd_budget::limit();
+
                 Self {
                     cpu_physical_core_count,
                     cpu_frequency,
                     cpu_brand,
                     total_memory,
                     long_os_version,
+                    fd_limit,
                 }
             }
 
@@ -47,24 +51,19 @@ cfg_if! {
                 CollapsingHeader::new(i18n("System"))
                     .default_open(true)
                     .show(ui, |ui| {
-
-                        if let Some(cpu_physical_core_count) = self.cpu_physical_core_count {
-                            ui.horizontal(|ui| {
-                                if let Some(cpu_brand) = self.cpu_brand.as_ref() {
-                                    ui.label(cpu_brand.as_str());
-                                }
-                            });
-                            ui.horizontal(|ui| {
-                                let freq = self.cpu_frequency.map(|freq|format!(" @ {:.2} GHz", freq as f64 / 1000.0)).unwrap_or_default();
-                                ui.label(format!("{} CPU cores {freq}", cpu_physical_core_count));
-                            });
+                        if let Some(os) = self.long_os_version.clone() {
+                            ui.label(os);
                         }
 
-                        ui.horizontal(|ui| {
-                            let os = self.long_os_version.clone().unwrap_or_default();
-                            ui.label(format!("{} RAM {os}", as_data_size(self.total_memory as f64, false)));
-                        });
-
+                        if let Some(cpu_physical_core_count) = self.cpu_physical_core_count {
+                            if let Some(cpu_brand) = self.cpu_brand.as_ref() {
+                                ui.label(cpu_brand.clone()); //format!("{cpu_brand}"));
+                            }
+                            let freq = self.cpu_frequency.map(|freq|format!(" @ {:.2} GHz", freq as f64 / 1000.0)).unwrap_or_default();
+                            ui.label(format!("{} CPU cores {freq}", cpu_physical_core_count));
+                        }
+                        ui.label(format!("{} RAM", as_data_size(self.total_memory as f64, false)));
+                        ui.label(format!("File descriptors: {}", self.fd_limit.separated_string()));
                     });
             }
         }

@@ -1,11 +1,13 @@
+use kaspa_wallet_core::storage::AccountKind;
+
 use crate::imports::*;
 
-pub struct Context {
+pub struct AccountContext {
     qr: load::Bytes,
     receive_address: Address,
 }
 
-impl Context {
+impl AccountContext {
     pub fn new(descriptor: &AccountDescriptor) -> Option<Arc<Self>> {
         if let Some(receive_address) = descriptor.receive_address() {
             let qr = render_qrcode(&receive_address.to_string(), 128, 128);
@@ -33,7 +35,7 @@ struct Inner {
     balance: Mutex<Option<Balance>>,
     utxo_sizes: Mutex<Option<(usize, usize)>>,
     descriptor: Mutex<AccountDescriptor>,
-    context: Mutex<Option<Arc<Context>>>,
+    context: Mutex<Option<Arc<AccountContext>>>,
     transactions: Mutex<TransactionCollection>,
     total_transaction_count: AtomicU64,
     is_loading: AtomicBool,
@@ -41,7 +43,7 @@ struct Inner {
 
 impl Inner {
     fn new(descriptor: AccountDescriptor) -> Self {
-        let context = Context::new(&descriptor);
+        let context = AccountContext::new(&descriptor);
         Self {
             id: *descriptor.account_id(),
             balance: Mutex::new(None),
@@ -98,15 +100,13 @@ impl Account {
     //     Ok(self.inner.runtime.receive_address()?.into())
     // }
 
-    pub fn context(&self) -> Option<Arc<Context>> {
+    pub fn context(&self) -> Option<Arc<AccountContext>> {
         self.inner.context.lock().unwrap().clone()
     }
 
-    pub fn update(&self, descriptor: AccountDescriptor) -> Result<()> {
-        *self.inner.context.lock().unwrap() = Context::new(&descriptor);
+    pub fn update(&self, descriptor: AccountDescriptor) {
+        *self.inner.context.lock().unwrap() = AccountContext::new(&descriptor);
         *self.inner.descriptor.lock().unwrap() = descriptor;
-
-        Ok(())
     }
 
     pub fn update_balance(
@@ -167,3 +167,20 @@ impl std::fmt::Debug for Account {
 }
 
 pub type AccountCollection = Collection<AccountId, Account>;
+
+pub trait DescribeAccount {
+    fn describe(&self) -> (&'static str, &'static str);
+}
+
+impl DescribeAccount for AccountKind {
+    fn describe(&self) -> (&'static str, &'static str) {
+        match self {
+            AccountKind::Legacy => ("Legacy Account", "KDX, PWA (kaspanet.io)"),
+            AccountKind::Bip32 => ("Kaspa Core BIP32", "kaspawallet, kaspium"),
+            AccountKind::MultiSig => ("Multi-Signature", ""),
+            AccountKind::Keypair => ("Keypair", "secp256k1"),
+            AccountKind::Hardware => ("Hardware", ""),
+            _ => ("", ""),
+        }
+    }
+}

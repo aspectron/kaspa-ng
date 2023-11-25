@@ -88,6 +88,7 @@ kaspa-rpc-service.workspace = true
 kaspa-wrpc-server.workspace = true
 kaspad.workspace = true
 num_cpus.workspace = true
+rlimit.workspace = true
 sysinfo.workspace = true
 tokio.workspace = true
 

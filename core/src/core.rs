@@ -93,6 +93,7 @@ pub struct Core {
     discard_hint: bool,
     exception: Option<Exception>,
 
+    pub wallet_descriptor: Option<WalletDescriptor>,
     pub wallet_list: Vec<WalletDescriptor>,
     pub account_collection: Option<AccountCollection>,
     pub selected_account: Option<Account>,
@@ -301,6 +302,7 @@ impl Core {
             default_style,
             large_style,
 
+            wallet_descriptor: None,
             wallet_list: Vec::new(),
             account_collection: None,
             selected_account: None,
@@ -413,10 +415,6 @@ impl Core {
 }
 
 impl eframe::App for Core {
-    #[cfg(not(target_arch = "wasm32"))]
-    fn on_close_event(&mut self) -> bool {
-        true
-    }
 
     #[cfg(not(target_arch = "wasm32"))]
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
@@ -528,7 +526,7 @@ impl Core {
                     ui.menu_button("File", |ui| {
                         #[cfg(not(target_arch = "wasm32"))]
                         if ui.button("Quit").clicked() {
-                            _frame.close();
+                            ui.ctx().send_viewport_cmd(ViewportCommand::Close)
                         }
                         ui.separator();
                         ui.label(" ~ Debug Modules ~");
@@ -698,8 +696,6 @@ impl Core {
                 });
             }
 
-            self.module.status_bar(ui);
-
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if icons()
                     .sliders
@@ -811,6 +807,9 @@ impl Core {
                         ui.label("Starting...");
                     }
                 }
+
+                self.module.status_bar(ui);
+
                 // if self.settings.node.node_kind != KaspadNodeKind::Disable {
                 //     ui.label("Not Connected");
 
@@ -858,6 +857,8 @@ impl Core {
                     ui.separator();
                     ui.label(format!("DAA {}", current_daa_score.separated_string()));
                 }
+
+                self.module.status_bar(ui);
             }
             Status::Syncing { sync_status, peers } => {
                 ui.vertical(|ui| {
@@ -882,6 +883,8 @@ impl Core {
                                 status.render_text_state(ui);
                             }
                         }
+
+                        self.module.status_bar(ui);
                     });
 
                     if let Some(status) = sync_status.as_ref() {
@@ -908,14 +911,15 @@ impl Core {
                 self.metrics = Some(snapshot);
             }
             Events::Exit => {
-                // println!("bye!");
                 cfg_if! {
                     if #[cfg(not(target_arch = "wasm32"))] {
-                        _frame.close();
+                        _ctx.send_viewport_cmd(ViewportCommand::Close);
                     }
                 }
             }
-            Events::Error(_error) => {}
+            Events::Error(error) => {
+                runtime().notify(UserNotification::error(error.as_str()));
+            }
             Events::WalletList { wallet_list } => {
                 // println!("getting wallet list!, {:?}", wallet_list);
                 self.wallet_list = (*wallet_list).clone();
@@ -935,7 +939,9 @@ impl Core {
             //     //         .map(|account| (account.id(), account)).collect::<HashMap::<_,_>>()
             //     // );
             // }
-            Events::Notify { notification } => {
+            Events::Notify {
+                user_notification: notification,
+            } => {
                 notification.render(&mut self.toasts);
             }
             Events::Close { .. } => {}
@@ -1005,13 +1011,16 @@ impl Core {
                         self.discard_hint = false;
                     }
                     CoreWallet::WalletOpen {
+                        wallet_descriptor,
                         account_descriptors,
                     }
                     | CoreWallet::WalletReload {
+                        wallet_descriptor,
                         account_descriptors,
                     } => {
                         self.state.is_open = true;
 
+                        self.wallet_descriptor = wallet_descriptor;
                         let network_id = self.state.network_id.ok_or(Error::WalletOpenNetworkId)?;
                         let account_descriptors =
                             account_descriptors.ok_or(Error::WalletOpenAccountDescriptors)?;
@@ -1021,6 +1030,23 @@ impl Core {
                     CoreWallet::AccountActivation { ids: _ } => {
                         // TODO
                     }
+                    CoreWallet::AccountCreation { descriptor } => {
+                        if let Some(account_collection) = self.account_collection.as_mut() {
+                            account_collection.push(Account::from(descriptor));
+                            runtime().request_repaint();
+                            // if let Some(account) = account_collection.get(account_id) {
+                            //     account.update(descriptor);
+                            // }
+                        }
+                    }
+                    CoreWallet::AccountUpdate { descriptor } => {
+                        let account_id = descriptor.account_id();
+                        if let Some(account_collection) = self.account_collection.as_ref() {
+                            if let Some(account) = account_collection.get(account_id) {
+                                account.update(descriptor);
+                            }
+                        }
+                    }
                     CoreWallet::WalletError { message: _ } => {
                         // self.state.is_open = false;
                     }
@@ -1029,6 +1055,11 @@ impl Core {
                         self.hint = None;
                         self.state.is_open = false;
                         self.account_collection = None;
+                        self.wallet_descriptor = None;
+
+                        self.modules.clone().into_iter().for_each(|(_, module)| {
+                            module.reset(self);
+                        });
                     }
                     CoreWallet::AccountSelection { id: _ } => {
                         // self.selected_account = self.wallet().account().ok();
