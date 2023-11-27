@@ -22,7 +22,7 @@ pub enum CreateAccountDescriptor {
 }
 
 impl CreateAccountDescriptor {
-    fn describe(&self) -> (&'static str, &'static str) {
+    fn _describe(&self) -> (&'static str, &'static str) {
         match self {
             Self::Bip44 => ("BIP44", "BIP44"),
             Self::Bip32 => ("BIP32", "BIP32"),

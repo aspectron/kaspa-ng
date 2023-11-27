@@ -5,12 +5,23 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use workflow_core::prelude::DuplexChannel;
 
+/// Termination method with which to terminate the kaspad process.
+/// This should remain Sigkill until Kaspad learns to terminate
+/// rapidly during it's sync process.
+#[derive(Default, Debug, Clone, Eq, PartialEq)]
+enum TerminationMethod {
+    #[default]
+    Sigkill,
+    Sigterm,
+}
+
 struct Inner {
     path: Option<PathBuf>,
     is_running: Arc<AtomicBool>,
     pid: Mutex<Option<u32>>,
     service_events: Channel<KaspadServiceEvents>,
     task_ctl: DuplexChannel,
+    termination_method: TerminationMethod,
 }
 
 #[derive(Clone)]
@@ -27,6 +38,7 @@ impl Daemon {
                 pid: Mutex::new(None),
                 service_events: (*service_events).clone(),
                 task_ctl: DuplexChannel::oneshot(),
+                termination_method: TerminationMethod::default(),
             }),
         }
     }
@@ -38,11 +50,20 @@ impl Daemon {
     fn is_running(&self) -> bool {
         self.inner().is_running.load(Ordering::SeqCst)
     }
+
+    #[cfg(unix)]
+    fn sigterm(&self, pid: u32) {
+        use nix::sys::signal::Signal;
+        use nix::unistd::Pid;
+        if let Err(err) = nix::sys::signal::kill(Pid::from_raw(pid as i32), Signal::SIGTERM) {
+            println!("kaspad sigterm error: {:?}", err);
+        }
+    }
 }
 
 #[async_trait]
 impl super::Kaspad for Daemon {
-    async fn start(&self, config: Config) -> Result<()> {
+    async fn start(self: Arc<Self>, config: Config) -> Result<()> {
         let mut cmd = if let Some(path) = self.inner().path.clone() {
             Command::new(path)
         } else {
@@ -65,12 +86,27 @@ impl super::Kaspad for Daemon {
         let stdout_relay_sender = self.inner.service_events.sender.clone();
         let task_ctl = self.inner.task_ctl.clone();
 
+        let this = self.clone();
+
+        cfg_if::cfg_if! {
+            if #[cfg(unix)] {
+                let is_unix = true;
+            } else {
+                let is_unix = false;
+            }
+        }
+
         tokio::spawn(async move {
             loop {
                 select! {
                     _ = task_ctl.request.recv().fuse() => {
-                        if let Err(err) = child.start_kill() {
-                            println!("child start_kill error: {:?}", err);
+                        if this.inner.termination_method == TerminationMethod::Sigterm && is_unix {
+                            let pid = this.inner.pid.lock().unwrap();
+                            if let Some(pid) = *pid {
+                                this.sigterm(pid);
+                            }
+                        } else if let Err(err) = child.start_kill() {
+                            println!("kaspa daemon start_kill error: {:?}", err);
                         }
                     }
                     status = child.wait().fuse() => {
@@ -88,6 +124,7 @@ impl super::Kaspad for Daemon {
 
                     line = reader.next_line().fuse() => {
                         if let Ok(Some(line)) = line {
+                            // println!("kaspad: {}", line);
                             stdout_relay_sender.send(KaspadServiceEvents::Stdout { line }).await.unwrap();
                         }
                     }
@@ -100,7 +137,7 @@ impl super::Kaspad for Daemon {
         Ok(())
     }
 
-    async fn stop(&self) -> Result<()> {
+    async fn stop(self: Arc<Self>) -> Result<()> {
         if self.is_running() {
             self.inner.task_ctl.signal(()).await?;
         }

@@ -1,4 +1,5 @@
 use crate::imports::*;
+use kaspa_metrics::Metric;
 use kaspa_utils::networking::ContextualNetAddress;
 use kaspa_wallet_core::storage::local::storage::Storage;
 use kaspa_wrpc_client::WrpcEncoding;
@@ -68,7 +69,7 @@ impl KaspadNodeKind {
     pub fn describe(&self) -> &str {
         match self {
             KaspadNodeKind::Disable => i18n("Disable"),
-            KaspadNodeKind::Remote => i18n("Connect to Remote RPC"),
+            KaspadNodeKind::Remote => i18n("Connect to Remote"),
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedInProc => i18n("Integrated Node"),
             #[cfg(not(target_arch = "wasm32"))]
@@ -189,7 +190,7 @@ pub struct NodeSettings {
 
     pub network: Network,
     pub node_kind: KaspadNodeKind,
-    pub kaspad_daemon_binary: Option<String>,
+    pub kaspad_daemon_binary: String,
 }
 
 impl Default for NodeSettings {
@@ -231,7 +232,7 @@ impl Default for NodeSettings {
             network: Network::default(),
             // kaspad_node: KaspadNodeKind::InternalInProc,
             node_kind: KaspadNodeKind::default(),
-            kaspad_daemon_binary: None,
+            kaspad_daemon_binary: String::default(),
             //  {
             //     url: "".to_string(),
             // },
@@ -307,16 +308,20 @@ impl From<&NodeSettings> for RpcConfig {
 pub struct MetricsSettings {
     pub graph_columns: usize,
     pub graph_height: usize,
-    pub graph_duration: usize,
+    pub graph_range_from: usize,
+    pub graph_range_to: usize,
+    pub disabled: AHashSet<Metric>,
     // pub rows : usize,
 }
 
 impl Default for MetricsSettings {
     fn default() -> Self {
         Self {
-            graph_columns: 1,
-            graph_height: 96,
-            graph_duration: 15 * 60,
+            graph_columns: 3,
+            graph_height: 90,
+            graph_range_from: 0,
+            graph_range_to: 15 * 60,
+            disabled: AHashSet::default(),
             // rows : 5,
         }
     }

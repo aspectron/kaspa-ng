@@ -59,9 +59,6 @@ pub use egui_plot::{PlotPoint, PlotPoints};
 
 pub use crate::collection::Collection;
 pub use crate::core::Core;
-pub use crate::egui::extensions::*;
-pub use crate::egui::icon::{icons, Icon, IconSize, Icons};
-pub use crate::egui::theme::{theme, Theme};
 pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};

@@ -6,7 +6,7 @@ use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
 use kaspa_wallet_core::api::TransactionDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
-use kaspa_wallet_core::storage::{Binding, Hint};
+use kaspa_wallet_core::storage::{Binding, Hint, PrvKeyDataInfo};
 use std::borrow::Cow;
 use workflow_i18n::*;
 
@@ -75,6 +75,10 @@ impl State {
 }
 
 pub struct Core {
+    is_shutdown_pending: bool,
+    settings_storage_requested: bool,
+    last_settings_storage_request: Instant,
+
     runtime: Runtime,
     wallet: Arc<dyn WalletApi>,
     channel: ApplicationEventsChannel,
@@ -95,6 +99,7 @@ pub struct Core {
 
     pub wallet_descriptor: Option<WalletDescriptor>,
     pub wallet_list: Vec<WalletDescriptor>,
+    pub prv_key_data_map: HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>,
     pub account_collection: Option<AccountCollection>,
     pub selected_account: Option<Account>,
 }
@@ -113,7 +118,7 @@ impl Core {
 
         // ---
         fonts.font_data.insert(
-            "kng_mono".to_owned(),
+            "ubuntu_mono".to_owned(),
             // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
             // egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
             egui::FontData::from_static(include_bytes!(
@@ -131,7 +136,7 @@ impl Core {
             .families
             .entry(egui::FontFamily::Monospace)
             .or_default()
-            .insert(0, "kng_mono".to_owned());
+            .insert(0, "ubuntu_mono".to_owned());
 
         // ---
 
@@ -290,6 +295,9 @@ impl Core {
 
         let mut this = Self {
             runtime,
+            is_shutdown_pending: false,
+            settings_storage_requested: false,
+            last_settings_storage_request: Instant::now(),
             wallet,
             channel,
             deactivation: None,
@@ -304,6 +312,7 @@ impl Core {
 
             wallet_descriptor: None,
             wallet_list: Vec::new(),
+            prv_key_data_map: HashMap::new(),
             account_collection: None,
             selected_account: None,
 
@@ -333,6 +342,8 @@ impl Core {
             .expect("Unknown module");
 
         if self.module.type_id() != module.type_id() {
+            // crate::egui::clear_popup_states();
+
             let next = module.clone();
             self.stack.push_back(self.module.clone());
             self.deactivation = Some(self.module.clone());
@@ -367,6 +378,10 @@ impl Core {
 
     pub fn sender(&self) -> crate::channel::Sender<Events> {
         self.channel.sender.clone()
+    }
+
+    pub fn store_settings(&self) {
+        self.channel.sender.try_send(Events::StoreSettings).unwrap();
     }
 
     pub fn wallet(&self) -> &Arc<dyn WalletApi> {
@@ -415,9 +430,9 @@ impl Core {
 }
 
 impl eframe::App for Core {
-
     #[cfg(not(target_arch = "wasm32"))]
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        self.is_shutdown_pending = true;
         crate::runtime::halt();
         println!("{}", i18n("bye!"));
     }
@@ -430,6 +445,17 @@ impl eframe::App for Core {
             if let Err(err) = self.handle_events(event.clone(), ctx, frame) {
                 log_error!("error processing wallet runtime event: {}", err);
             }
+        }
+
+        if self.is_shutdown_pending {
+            return;
+        }
+
+        if self.settings_storage_requested
+            && self.last_settings_storage_request.elapsed() > Duration::from_secs(5)
+        {
+            self.settings_storage_requested = false;
+            self.settings.store_sync().unwrap();
         }
 
         // ctx.set_visuals(self.default_style.clone());
@@ -616,8 +642,10 @@ impl Core {
 
                 cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let dictionary = i18n::dictionary();
+                    // use egui_phosphor::light::TRANSLATE;
                     #[allow(clippy::useless_format)]
                     ui.menu_button(format!("{} ⏷", dictionary.current_title()), |ui| {
+                        // ui.menu_button(RichText::new(format!("{TRANSLATE} ⏷")).size(18.), |ui| {
                         dictionary
                             .enabled_languages()
                             .into_iter()
@@ -906,6 +934,10 @@ impl Core {
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
         match event {
+            Events::StoreSettings => {
+                self.settings_storage_requested = true;
+                self.last_settings_storage_request = Instant::now();
+            }
             Events::UpdateLogs => {}
             Events::Metrics { snapshot } => {
                 self.metrics = Some(snapshot);
@@ -913,6 +945,7 @@ impl Core {
             Events::Exit => {
                 cfg_if! {
                     if #[cfg(not(target_arch = "wasm32"))] {
+                        self.is_shutdown_pending = true;
                         _ctx.send_viewport_cmd(ViewportCommand::Close);
                     }
                 }
@@ -957,6 +990,11 @@ impl Core {
                 // self.select::<section::Account>();
             }
             Events::UnlockFailure { .. } => {}
+            Events::PrvKeyDataInfo {
+                prv_key_data_info_map,
+            } => {
+                self.prv_key_data_map = prv_key_data_info_map;
+            }
             Events::Wallet { event } => {
                 match *event {
                     CoreWallet::UtxoProcStart => {
@@ -987,7 +1025,7 @@ impl Core {
                         self.state.url = None;
                         self.state.network_id = None;
                         self.state.current_daa_score = None;
-                        self.metrics = None;
+                        self.metrics = Some(Box::default());
                     }
                     CoreWallet::UtxoIndexNotEnabled { url } => {
                         self.exception = Some(Exception::UtxoIndexNotEnabled { url });
@@ -1021,7 +1059,11 @@ impl Core {
                         self.state.is_open = true;
 
                         self.wallet_descriptor = wallet_descriptor;
-                        let network_id = self.state.network_id.ok_or(Error::WalletOpenNetworkId)?;
+                        // let network_id = self.state.network_id.ok_or(Error::WalletOpenNetworkId)?;
+                        let network_id = self
+                            .state
+                            .network_id
+                            .unwrap_or(self.settings.node.network.into());
                         let account_descriptors =
                             account_descriptors.ok_or(Error::WalletOpenAccountDescriptors)?;
                         self.load_accounts(network_id, account_descriptors)?;
@@ -1170,6 +1212,8 @@ impl Core {
         network_id: NetworkId,
         account_descriptors: Vec<AccountDescriptor>,
     ) -> Result<()> {
+        let application_events_sender = self.channel.sender.clone();
+
         let account_list = account_descriptors
             .into_iter()
             .map(Account::from)
@@ -1179,6 +1223,20 @@ impl Core {
 
         let runtime = self.runtime.clone();
         spawn(async move {
+            let prv_key_data_info_map = runtime
+                .wallet()
+                .prv_key_data_enumerate()
+                .await?
+                .clone()
+                .into_iter()
+                .map(|prv_key_data_info| (*prv_key_data_info.id(), prv_key_data_info))
+                .collect::<HashMap<_, _>>();
+            application_events_sender
+                .send(Events::PrvKeyDataInfo {
+                    prv_key_data_info_map,
+                })
+                .await?;
+
             let account_ids = account_list
                 .iter()
                 .map(|account| account.id())

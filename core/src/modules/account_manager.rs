@@ -57,6 +57,8 @@ enum Focus {
     Address,
     Amount,
     Fees,
+    WalletSecret,
+    PaymentSecret,
 }
 
 #[derive(Default)]
@@ -135,6 +137,7 @@ pub struct AccountManager {
 
     state: State,
     context : ManagerContext,
+    editor_size : Vec2,
 }
 
 impl AccountManager {
@@ -143,6 +146,7 @@ impl AccountManager {
             runtime,
             state: State::Select,
             context : ManagerContext::default(),
+            editor_size : Vec2::INFINITY,
         }
     }
 
@@ -155,6 +159,7 @@ impl ModuleT for AccountManager {
 
     fn reset(&mut self, _core: &mut Core) {
         self.context = ManagerContext::default();
+        self.state = State::Select;
     }
 
     fn render(
@@ -165,14 +170,12 @@ impl ModuleT for AccountManager {
         ui: &mut egui::Ui,
     ) {
         use egui_phosphor::light::{ARROW_CIRCLE_UP,ARROWS_DOWN_UP,QR_CODE};
-
-        let theme = theme();
+        let screen_rect = ui.ctx().screen_rect();
 
         let network_type = if let Some(network_id) = core.state().network_id() {
             network_id.network_type()
         } else {
-            ui.label("Network is not selected");
-            return;
+            core.settings.node.network.into()
         };
 
         let current_daa_score = core.state().current_daa_score();
@@ -239,7 +242,8 @@ impl ModuleT for AccountManager {
                     }
                     egui::popup::popup_above_or_below_widget(ui, current_wallet_selector_id, &response, AboveOrBelow::Below, |ui| {
                         ui.set_min_width(200.0);
-                        ui.label("Select a Wallet");
+                        ui.set_max_height(screen_rect.height() * 0.75);
+                        ui.label("Select Wallet");
                         ui.label("");
 
                         ScrollArea::vertical()
@@ -295,6 +299,7 @@ impl ModuleT for AccountManager {
                         }
                         egui::popup::popup_above_or_below_widget(ui, current_account_selector_id, &response, AboveOrBelow::Below, |ui| {
                             ui.set_min_width(200.0);
+                            ui.set_max_height(screen_rect.height() * 0.75);
                             ui.label("Select Account");
                             ui.label("");
 
@@ -340,7 +345,9 @@ impl ModuleT for AccountManager {
                         .id_source("overview_metrics")
                         .auto_shrink([false; 2])
                         .show(ui, |ui| {
-        
+
+                            self.editor_size = Vec2::new(ui.available_width() * 0.75, 32.);
+
                             ui.vertical_centered(|ui| {
 
                                 let account_context = if let Some(account_context) = account.context() {
@@ -349,6 +356,13 @@ impl ModuleT for AccountManager {
                                     ui.label("Account is missing context");
                                     return;
                                 };
+
+                                self.render_address(core, ui, &account, &account_context, network_type);
+
+                                if !core.state().is_synced() || !core.state().is_connected() {
+                                    self.render_network_state(core,ui);
+                                    return;
+                                }
 
                                 self.render_balance(core, ui, &account, &account_context, network_type);
 
@@ -365,47 +379,19 @@ impl ModuleT for AccountManager {
 
                                             // if let Some(response) = 
                                             CenterLayoutBuilder::new()
-                                                // .add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme.medium_button_size()), |(this, _):(&mut AccountManager, &mut Core)| {
-                                                // .add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme.medium_button_size()), |(this, _):(&mut AccountManager, &mut Core)| {
-                                                // .add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme.medium_button_size()), |(this, _):(&mut AccountManager, &mut Core)| {
-                                                .add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme.medium_button_size()), |(this, _):&mut (&mut AccountManager, &mut Core)| {
+                                                .add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme().medium_button_size()), |(this, _):&mut (&mut AccountManager, &mut Core)| {
                                                     this.context.action = Action::Estimating;
                                                     this.context.transaction_kind = TransactionKind::Send;
-                                                    // (Action::Estimating,TransactionKind::Send)
-                                                    // TransactionKind::Send
                                                 })
-                                                .add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme.medium_button_size()), |(this,_)| {
+                                                .add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme().medium_button_size()), |(this,_)| {
                                                     this.context.action = Action::Estimating;
                                                     this.context.transaction_kind = TransactionKind::Transfer;
-                                                    // (Action::Estimating,TransactionKind::Transfer)
-                                                    // TransactionKind::Transfer
                                                 })
-                                                .add(Button::new(format!("{} Request", QR_CODE)).min_size(theme.medium_button_size()), |(_,core)| {
+                                                .add(Button::new(format!("{} Request", QR_CODE)).min_size(theme().medium_button_size()), |(_,core)| {
                                                     core.select::<modules::Request>();
-                                                    // TransactionKind::Request
-                                                    // (Action::Estimating,TransactionKind::Transfer)
 
                                                 })
-                                                .build(ui,&mut (self,core));// {
-
-                                                // match response {
-                                                //     TransactionKind::Send => {
-                                                //         self.context.action = Action::Estimating;
-                                                //         self.context.transaction_kind = TransactionKind::Send;
-                                                //     }
-                                                //     TransactionKind::Transfer => {
-                                                //         self.context.action = Action::Estimating;
-                                                //         self.context.transaction_kind = TransactionKind::Transfer;
-                                                //     }
-                                                //     TransactionKind::Request => {
-                                                //         self.context.action = Action::Estimating;
-                                                //         self.context.transaction_kind = TransactionKind::Request;
-                                                //     }
-                                                //     _ => {}
-                                                // }
-                                                // }
-
-                                            
+                                                .build(ui,&mut (self,core));
                                         });
                                     });
 
@@ -468,6 +454,46 @@ impl ModuleT for AccountManager {
 
 impl AccountManager {
 
+    fn render_network_state(&mut self, core : &mut Core, ui: &mut Ui) {
+        use egui_phosphor::light::{CLOUD_SLASH,CLOUD_ARROW_DOWN};
+
+        ui.vertical_centered(|ui|{
+            ui.add_space(32.);
+            if !core.state().is_connected() {
+                ui.add_space(32.);
+                ui.label(
+                    RichText::new(CLOUD_SLASH)
+                        .size(theme().icon_size_large)
+                        .color(theme().icon_color_default)
+                );
+                ui.add_space(32.);
+                
+                ui.label("You are currently not connected to the Kaspa node.");
+            } else if !core.state().is_synced() {
+                
+                ui.add_space(32.);
+                ui.label(
+                    RichText::new(CLOUD_ARROW_DOWN)
+                        .size(theme().icon_size_large)
+                        .color(theme().icon_color_default)
+                );
+                ui.add_space(32.);
+
+                ui.label("The node is currently syncing with the Kaspa p2p network.");
+                ui.add_space(16.);
+                ui.label("Please wait for the node to sync or connect to a remote node.");
+            }
+            ui.add_space(32.);
+            ui.label("You can configure a remote connection in Settings");
+            ui.add_space(16.);
+            if ui.large_button("Go to Settings").clicked() {
+                core.select::<modules::Settings>();
+            }
+        });
+
+
+    }
+
     fn render_transactions(&mut self, ui: &mut Ui, _core : &mut Core, account : &Account, network_type : NetworkType, current_daa_score : Option<u64>) {
         egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
 
@@ -492,15 +518,19 @@ impl AccountManager {
             match &*descriptor {
                 AccountDescriptor::Bip32(descriptor) => {
                     descriptor.render(ui);
+                    ui.add_space(8.);
 
                     let mut address_kind : Option<NewAddressKind> = None;
-                    if ui.medium_button("Generate New Receive Address").clicked() {
-                        address_kind = Some(NewAddressKind::Receive);
-                    }
-                    if ui.medium_button("Generate New Change Address").clicked() {
-                        address_kind = Some(NewAddressKind::Change);
-                    }
                     
+                    ui.horizontal(|ui|{
+                        if ui.medium_button("Generate New Receive Address").clicked() {
+                            address_kind = Some(NewAddressKind::Receive);
+                        }
+                        if ui.medium_button("Generate New Change Address").clicked() {
+                            address_kind = Some(NewAddressKind::Change);
+                        }
+                    });
+
                     if let Some(address_kind) = address_kind {
                         let account_id = account.id();
                         spawn(async move {
@@ -533,10 +563,7 @@ impl AccountManager {
 
     }
 
-    fn render_balance(&mut self, _core: &mut Core, ui : &mut Ui, account : &Account, context : &account::AccountContext, network_type : NetworkType) {
-
-        let theme = theme();
-
+    fn render_address(&mut self, _core: &mut Core, ui : &mut Ui, _account : &Account, context : &account::AccountContext, _network_type : NetworkType) {
         use egui_phosphor::light::CLIPBOARD_TEXT;
         let address = format_address(context.address(), Some(8));
         if ui.add(Label::new(format!("Address: {address} {CLIPBOARD_TEXT}")).sense(Sense::click()))
@@ -551,11 +578,17 @@ impl AccountManager {
                 ui.output_mut(|o| o.copied_text = context.address().to_string());
                 runtime().notify(UserNotification::info("Address is copied to clipboard").short())
             }
+    }
+
+    fn render_balance(&mut self, _core: &mut Core, ui : &mut Ui, account : &Account, _context : &account::AccountContext, network_type : NetworkType) {
+
+        // let theme = theme();
+
         ui.add_space(10.);
 
         if let Some(balance) = account.balance() {
             ui.heading(
-                RichText::new(sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)).font(FontId::proportional(28.)).color(theme.balance_color)
+                RichText::new(sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)).font(FontId::proportional(28.)).color(theme().balance_color)
             );
             
             if balance.pending != 0 {
@@ -614,18 +647,10 @@ impl AccountManager {
 
     }
 
-    fn render_send_ui(&mut self, _core: &mut Core, ui: &mut egui::Ui, account : &Account, _context : &Arc<account::AccountContext>, network_type: NetworkType) {
+    fn render_estimation_ui(&mut self, _core: &mut Core, ui: &mut egui::Ui, _account : &Account, _context : &Arc<account::AccountContext>, network_type: NetworkType) -> bool {
+        use egui_phosphor::light::{CHECK, X};
 
-        let theme = theme();
-        let size = egui::Vec2::new(300_f32, 32_f32);
         let mut request_estimate = false;
-        // let mut request_send = false;
-
-        // println!("*** action: {:?}", self.context.action);
-
-        ui.add_space(8.);
-        ui.label("Sending funds");
-        ui.add_space(8.);
 
         TextEditor::new(
             &mut self.context.destination_address_string,
@@ -633,8 +658,9 @@ impl AccountManager {
             &mut self.context.focus,
             Focus::Address,
             |ui, text| {
+                ui.add_space(8.);
                 ui.label(egui::RichText::new("Enter destination address").size(12.).raised());
-                ui.add_sized(size, TextEdit::singleline(text)
+                ui.add_sized(self.editor_size, TextEdit::singleline(text)
                     .vertical_align(Align::Center))
             },
         )
@@ -674,8 +700,9 @@ impl AccountManager {
             &mut self.context.focus,
             Focus::Amount,
             |ui, text| {
+                ui.add_space(8.);
                 ui.label(egui::RichText::new("Enter KAS amount to send").size(12.).raised());
-                ui.add_sized(size, TextEdit::singleline(text)
+                ui.add_sized(self.editor_size, TextEdit::singleline(text)
                     .vertical_align(Align::Center))
             },
         )
@@ -692,6 +719,7 @@ impl AccountManager {
             }
         }
 
+        ui.add_space(8.);
         ui.checkbox(&mut self.context.enable_priority_fees,i18n("Include Priority Fees"));
 
         if self.context.enable_priority_fees {
@@ -700,8 +728,9 @@ impl AccountManager {
                 &mut self.context.focus,
                 Focus::Fees,
                 |ui, text| {
+                    ui.add_space(8.);
                     ui.label(egui::RichText::new("Enter priority fees").size(12.).raised());
-                    ui.add_sized(size, TextEdit::singleline(text)
+                    ui.add_sized(self.editor_size, TextEdit::singleline(text)
                         .vertical_align(Align::Center))
                 },
             )
@@ -714,11 +743,127 @@ impl AccountManager {
             .build(ui); 
         }
 
+        ui.add_space(8.);
+        let ready_to_send = match &*self.context.estimate.lock().unwrap() {
+            Status::GeneratorSummary(estimate) => {
+                if let Some(final_transaction_amount) = estimate.final_transaction_amount {
+                    ui.label(format!("Final Amount: {}", sompi_to_kaspa_string_with_suffix(final_transaction_amount + estimate.aggregated_fees, &network_type)));
+                }
+                ui.label(format!("Fees: {}", sompi_to_kaspa_string_with_suffix(estimate.aggregated_fees, &network_type)));
+                ui.label(format!("Transactions: {} UTXOs: {}", estimate.number_of_generated_transactions, estimate.aggregated_utxos));
+                
+                self.context.address_status == AddressStatus::Valid
+            }
+            Status::Error(error) => {
+                ui.label(RichText::new(error.to_string()).color(theme().error_color));
+                false
+            }
+            Status::None => {
+                ui.label("Please enter KAS amount to send");
+                false
+            }
+        };
+        ui.add_space(8.);
+
+        ui.horizontal(|ui| {
+            ui.vertical_centered(|ui|{
+                ui.horizontal(|ui| {
+                    CenterLayoutBuilder::new()
+                        .add_enabled(ready_to_send, Button::new(format!("{CHECK} Send")).min_size(theme().medium_button_size()), |this: &mut AccountManager| {
+                            this.context.action = Action::Sending;
+                        })
+                        .add(Button::new(format!("{X} Cancel")).min_size(theme().medium_button_size()), |this| {
+                            this.context.reset_send_state();
+                        })
+                        .build(ui, self)
+                });
+            });
+
+        });
+
+        request_estimate
+    }
+
+    fn render_passphrase_ui(&mut self, _core: &mut Core, ui: &mut egui::Ui, account : &Account, _context : &Arc<account::AccountContext>, _network_type: NetworkType) -> bool {
+        use egui_phosphor::light::{CHECK, X};
+
+        let requires_payment_passphrase = account.requires_bip39_passphrase();
+        let mut proceed_with_send = false;
+
+        let response = TextEditor::new(
+            &mut self.context.wallet_secret,
+            &mut self.context.focus,
+            Focus::WalletSecret,
+            |ui, text| {
+                ui.add_space(8.);
+                ui.label(egui::RichText::new("Enter wallet password").size(12.).raised());
+                ui.add_sized(self.editor_size, TextEdit::singleline(text)
+                    .password(true)
+                    .vertical_align(Align::Center))
+            },
+        )
+        .build(ui);
+
+        if response.text_edit_submit(ui) {
+            if account.requires_bip39_passphrase() {
+                self.context.focus = Focus::PaymentSecret;
+            } else if !self.context.wallet_secret.is_empty() {
+                proceed_with_send = true;
+            }
+        }
+
+        if requires_payment_passphrase {
+            let response = TextEditor::new(
+                &mut self.context.payment_secret,
+                &mut self.context.focus,
+                Focus::WalletSecret,
+                |ui, text| {
+                    ui.add_space(8.);
+                    ui.label(egui::RichText::new("Enter bip39 passphrase").size(12.).raised());
+                    ui.add_sized(self.editor_size, TextEdit::singleline(text)
+                        .password(true)
+                        .vertical_align(Align::Center))
+                },
+            )
+            .build(ui);
+
+            if response.text_edit_submit(ui) && !self.context.wallet_secret.is_empty() && !self.context.payment_secret.is_empty() {
+                proceed_with_send = true;
+            }
+    
+        }
+
+        let is_ready_to_send = !(self.context.wallet_secret.is_empty() || requires_payment_passphrase && self.context.payment_secret.is_empty());
+
+        ui.add_space(8.);
+        CenterLayoutBuilder::new()
+            .add_enabled(is_ready_to_send, Button::new(format!("{CHECK} Submit")).min_size(theme().medium_button_size()), |_this: &mut AccountManager| {
+                proceed_with_send = true;
+            })
+            .add(Button::new(format!("{X} Cancel")).min_size(theme().medium_button_size()), |this| {
+                this.context.action = Action::Estimating;
+            })
+            .build(ui,self);
+
+
+
+        proceed_with_send
+    }
+
+    fn render_send_ui(&mut self, core: &mut Core, ui: &mut egui::Ui, account : &Account, context : &Arc<account::AccountContext>, network_type: NetworkType) {
+
+        ui.add_space(8.);
+        ui.label("Sending funds");
+        ui.add_space(8.);
+
+
         let send_result = Payload::<Result<GeneratorSummary>>::new("send_result");
 
 
         match self.context.action {
             Action::Estimating => {
+
+                let request_estimate = self.render_estimation_ui(core, ui, account, context, network_type);
 
                 if request_estimate && self.update_user_args() {
 
@@ -762,141 +907,60 @@ impl AccountManager {
                     });
                 } 
 
-                let ready_to_send = match &*self.context.estimate.lock().unwrap() {
-                    Status::GeneratorSummary(estimate) => {
-                        if let Some(final_transaction_amount) = estimate.final_transaction_amount {
-                            ui.label(format!("Final Amount: {}", sompi_to_kaspa_string_with_suffix(final_transaction_amount + estimate.aggregated_fees, &network_type)));
-                        }
-                        ui.label(format!("Fees: {}", sompi_to_kaspa_string_with_suffix(estimate.aggregated_fees, &network_type)));
-                        ui.label(format!("Transactions: {} UTXOs: {}", estimate.number_of_generated_transactions, estimate.aggregated_utxos));
-                        
-                        self.context.address_status == AddressStatus::Valid
-                    }
-                    Status::Error(error) => {
-                        ui.label(RichText::new(error.to_string()).color(theme.error_color));
-                        false
-                    }
-                    Status::None => {
-                        ui.label("Please enter KAS amount to send");
-                        false
-                    }
-                };
-
-                ui.horizontal(|ui| {
-                    use egui_phosphor::light::{CHECK, X};
-                    ui.vertical_centered(|ui|{
-                        ui.horizontal(|ui| {
-                            // let mut reset_send_state = false;
-                            // if let Some(action) = 
-                            CenterLayoutBuilder::new()
-                                .add_enabled(ready_to_send, Button::new(format!("{CHECK} Send")).min_size(theme.medium_button_size()), |this: &mut AccountManager| {
-                                    this.context.action = Action::Sending;
-                                    // Action::Sending
-                                })
-                                .add(Button::new(format!("{X} Cancel")).min_size(theme.medium_button_size()), |this| {
-                                    println!("Clicking CANCEL");
-                                    // reset_send_state = true;
-                                    this.context.reset_send_state();
-
-                                    // Action::Reset
-                                })
-                                .build(ui, self)
-                                //  {
-                                //     println!("****** ACTION: {:?}", action);
-                                //     self.context.action = action;
-                                // }
-
-                            // if reset_send_state {
-                            //     self.context.reset_send_state();
-                            // }
-                        });
-                    });
-
-                });
             }
 
-            // Action::Reset => {
-            //     println!("Entering RESET");
-            //     self.context.reset_send_state();
-            //     self.context.action = Action::None;
-            // }
-
             Action::Sending => {
-                ui.label(egui::RichText::new("Enter wallet password").size(12.).raised());
 
-                let mut proceed_with_send = false;
-                let response = ui.add_sized(
-                    size,
-                    TextEdit::singleline(&mut self.context.wallet_secret)
-                        .password(true)
-                        .vertical_align(Align::Center),
-                );
-                if response.text_edit_submit(ui) {
-                    proceed_with_send = true;
-                } else {
-                    response.request_focus();
-                }
+                let proceed_with_send = self.render_passphrase_ui(core, ui, account, context, network_type);
 
-                ui.horizontal(|ui| {
+                if proceed_with_send {
 
-                    if ui.medium_button_enabled(!self.context.wallet_secret.is_empty(),"Send").clicked() {
-                        proceed_with_send = true;
-                    }
+                    let priority_fees_sompi = if self.context.enable_priority_fees {
+                        self.context.priority_fees_sompi
+                    } else { 0 };
 
-                    if proceed_with_send {
+                    let address = Address::try_from(self.context.destination_address_string.as_str()).expect("Invalid address");
+                    let account_id = account.id();
+                    let payment_output = PaymentOutput {
+                        address,
+                        amount: self.context.send_amount_sompi,
+                    };
+                    let wallet_secret = Secret::try_from(self.context.wallet_secret.clone()).expect("Invalid secret");
+                    let payment_secret = None;
 
-                        let priority_fees_sompi = if self.context.enable_priority_fees {
-                            self.context.priority_fees_sompi
-                        } else { 0 };
-    
-                        let address = Address::try_from(self.context.destination_address_string.as_str()).expect("Invalid address");
-                        let account_id = account.id();
-                        let payment_output = PaymentOutput {
-                            address,
-                            amount: self.context.send_amount_sompi,
+                    spawn_with_result(&send_result, async move {
+                        let request = AccountsSendRequest {
+                            // task_id: None,
+                            account_id,
+                            destination: payment_output.into(),
+                            wallet_secret,
+                            payment_secret,
+                            priority_fee_sompi: Fees::SenderPaysAll(priority_fees_sompi),
+                            payload: None,
                         };
-                        let wallet_secret = Secret::try_from(self.context.wallet_secret.clone()).expect("Invalid secret");
-                        let payment_secret = None;
-                        // let status = self.context.estimate.clone();
 
-                        spawn_with_result(&send_result, async move {
-                            let request = AccountsSendRequest {
-                                // task_id: None,
-                                account_id,
-                                destination: payment_output.into(),
-                                wallet_secret,
-                                payment_secret,
-                                priority_fee_sompi: Fees::SenderPaysAll(priority_fees_sompi),
-                                payload: None,
-                            };
-    
-                            let generator_summary = runtime().wallet().accounts_send_call(request).await?.generator_summary;
-                            // let result = match runtime().wallet().accounts_send_call(request).await;
-                            
-                            //  {
-                            //     Ok(_response) => {
-                            //         // println!("****** RESPONSE: {:?}", response);
-                            //         // *estimate.lock().unwrap() = Estimate::GeneratorSummary(response.generator_summary);
-                            //     }
-                            //     Err(error) => {
-                            //         *status.lock().unwrap() = Status::Error(error.to_string());
-                            //         // self.context.action = Action::Estimating;
-                            //         // println!("****** ERROR: {}", error);
-                            //         // *estimate.lock().unwrap() = Estimate::Error(error.to_string());
-                            //     }    
-                            // }
-    
-                            runtime().request_repaint();
-                            Ok(generator_summary)
-                        });
-                
-                        self.context.action = Action::Processing;
-                        // self.context.reset_send_state();
-                    }
-                    if ui.medium_button("Cancel").clicked() {
-                        self.context.reset_send_state();
-                    }
-                });
+                        let generator_summary = runtime().wallet().accounts_send_call(request).await?.generator_summary;
+                        // let result = match runtime().wallet().accounts_send_call(request).await;
+                        
+                        //  {
+                        //     Ok(_response) => {
+                        //         // println!("RESPONSE: {:?}", response);
+                        //         // *estimate.lock().unwrap() = Estimate::GeneratorSummary(response.generator_summary);
+                        //     }
+                        //     Err(error) => {
+                        //         *status.lock().unwrap() = Status::Error(error.to_string());
+                        //         // self.context.action = Action::Estimating;
+                        //         // println!("ERROR: {}", error);
+                        //         // *estimate.lock().unwrap() = Estimate::Error(error.to_string());
+                        //     }    
+                        // }
+
+                        runtime().request_repaint();
+                        Ok(generator_summary)
+                    });
+            
+                    self.context.action = Action::Processing;
+                }
 
             }
             Action::Processing => {
@@ -953,17 +1017,5 @@ impl AccountManager {
     fn user_error(&self, error : impl Into<String>) {
         *self.context.estimate.lock().unwrap() = Status::Error(error.into());
     }
-
-    // fn reset_send_state(&mut self) {
-    //     *self.context.estimate.lock().unwrap() = Estimate::None;
-    //     self.context.address_status = AddressStatus::None;
-    //     self.context.destination_address_string = String::default();
-    //     self.context.send_amount_text = String::default();
-    //     self.context.send_amount_sompi = 0;
-    //     self.context.action = Action::None;
-    //     self.context.focus = Focus::None;
-    //     self.context.wallet_secret.zeroize();
-    //     self.context.payment_secret.zeroize();
-    // }
 
 }

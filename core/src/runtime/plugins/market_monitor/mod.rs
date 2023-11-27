@@ -154,7 +154,7 @@ impl Plugin for MarketMonitorPlugin {
     }
 
     fn name(&self) -> &'static str {
-        "Market Monitor"
+        "market-monitor"
     }
 
     fn load(&self, settings: serde_json::Value) -> Result<()> {

@@ -121,6 +121,13 @@ impl Runtime {
     }
 
     pub async fn join_services(&self) {
+        // for service in self.services() {
+        // let name = service.name();
+        // println!("⚡ {name}");
+        // service.join().await.expect("service join failure");
+        // println!("💀 {name}");
+        // }
+
         let futures = self
             .services()
             .into_iter()

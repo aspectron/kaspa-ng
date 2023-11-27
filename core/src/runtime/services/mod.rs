@@ -22,6 +22,8 @@ pub use plugin_manager::PluginManagerService;
 /// running application services and communication between these services.
 #[async_trait]
 pub trait Service: Sync + Send {
+    fn name(&self) -> &'static str;
+
     /// Start the service
     async fn spawn(self: Arc<Self>) -> Result<()>;
 

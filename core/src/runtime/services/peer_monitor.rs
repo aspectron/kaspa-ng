@@ -40,6 +40,10 @@ impl PeerMonitorService {
 
 #[async_trait]
 impl Service for PeerMonitorService {
+    fn name(&self) -> &'static str {
+        "peer-monitor"
+    }
+
     async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
         self.rpc_api.lock().unwrap().replace(rpc_api.clone());
         Ok(())

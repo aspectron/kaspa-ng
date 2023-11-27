@@ -1,3 +1,5 @@
+use kaspa_metrics::MetricGroup;
+
 use crate::imports::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,6 +15,8 @@ pub struct Theme {
     pub medium_button_size: Vec2,
     pub large_button_size: Vec2,
     pub panel_footer_height: f32,
+
+    pub widget_spacing: f32,
     // pub panel_alert_icon_size : IconSize,
     // pub panel_icon_size : IconSize,
     pub error_color: Color32,
@@ -20,16 +24,20 @@ pub struct Theme {
     pub ack_color: Color32,
     pub nack_color: Color32,
 
+    pub icon_size_large: f32,
+    pub icon_color_default: Color32,
     pub status_icon_size: f32,
     pub progress_color: Color32,
     pub graph_frame_color: Color32,
     pub performance_graph_color: Color32,
     pub storage_graph_color: Color32,
     pub network_graph_color: Color32,
+    pub bandwidth_graph_color: Color32,
     pub blockdag_graph_color: Color32,
     pub node_log_font_size: f32,
     // pub panel_icon_size : f32,
     // pub panel_icon_padding : f32,
+    pub dagviz_new_block_fill_color: Color32,
     pub dagviz_block_fill_color: Color32,
     pub dagviz_block_stroke_color: Color32,
     pub dagviz_vspc_connect_color: Color32,
@@ -53,12 +61,16 @@ impl Default for Theme {
             large_button_size: Vec2::new(200_f32, 40_f32),
             panel_footer_height: 72_f32,
             panel_margin_size: 24_f32,
+
+            widget_spacing: 4_f32,
             // panel_error_icon_size : IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6.,0.)),
             error_color: Color32::from_rgb(255, 136, 136), //Color32::from_rgb(255, 0, 0),
             warning_color: egui::Color32::from_rgb(255, 255, 136),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
 
+            icon_size_large: 96_f32,
+            icon_color_default: Color32::from_rgb(255, 255, 255),
             status_icon_size: 18_f32,
             progress_color: Color32::from_rgb(21, 82, 71),
 
@@ -66,9 +78,11 @@ impl Default for Theme {
             performance_graph_color: Color32::from_rgb(186, 238, 255),
             storage_graph_color: Color32::from_rgb(255, 231, 186),
             network_graph_color: Color32::from_rgb(241, 255, 186),
+            bandwidth_graph_color: Color32::from_rgb(199, 196, 255),
             blockdag_graph_color: Color32::from_rgb(186, 255, 241),
             node_log_font_size: 15_f32,
 
+            dagviz_new_block_fill_color: Color32::from_rgb(220, 220, 220),
             dagviz_block_fill_color: Color32::from_rgb(0xAD, 0xD8, 0xE6),
             dagviz_block_stroke_color: Color32::from_rgb(15, 84, 77),
             dagviz_vspc_connect_color: Color32::from_rgb(23, 150, 137),
@@ -140,3 +154,19 @@ pub fn apply_theme(theme: Theme) {
 //         // THEME.clone().unwrap()
 //     }
 // }
+
+pub trait MetricGroupExtension {
+    fn to_color(&self) -> Color32;
+}
+
+impl MetricGroupExtension for MetricGroup {
+    fn to_color(&self) -> Color32 {
+        match self {
+            MetricGroup::System => theme().performance_graph_color,
+            MetricGroup::Storage => theme().storage_graph_color,
+            MetricGroup::Network => theme().network_graph_color,
+            MetricGroup::Bandwidth => theme().bandwidth_graph_color,
+            MetricGroup::BlockDAG => theme().blockdag_graph_color,
+        }
+    }
+}

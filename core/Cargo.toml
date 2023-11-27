@@ -79,6 +79,9 @@ features = [
 
 
 # -- native
+[target.'cfg(unix)'.dependencies]
+nix.workspace = true
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 clap.workspace = true
 ctrlc.workspace = true

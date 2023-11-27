@@ -269,3 +269,13 @@ where
         response
     }
 }
+
+pub trait WidgetSpacerExtension {
+    fn space(&mut self);
+}
+
+impl WidgetSpacerExtension for Ui {
+    fn space(&mut self) {
+        self.add_space(theme().widget_spacing);
+    }
+}

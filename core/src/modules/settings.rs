@@ -50,7 +50,7 @@ impl ModuleT for Settings {
         ui: &mut egui::Ui,
     ) {
 
-        let theme = theme();
+        // let theme = theme();
 
         // - wRPC JSON, wRPC BORSH, gRPC
         // - PUBLIC RPC LISTEN !
@@ -69,6 +69,8 @@ impl ModuleT for Settings {
         // - pub perf_metrics: bool,
         // - pub perf_metrics_interval_sec: u64,
 
+        #[allow(unused_variables)]
+        let half_width = ui.ctx().screen_rect().width() * 0.5;
         let mut node_settings_error = None;
 
         CollapsingHeader::new("Kaspa p2p Network & Node Connection")
@@ -90,50 +92,46 @@ impl ModuleT for Settings {
                     .show(ui, |ui| {
                         ui.horizontal_wrapped(|ui|{
                             KaspadNodeKind::iter().for_each(|node_kind| {
+                                #[cfg(not(target_arch = "wasm32"))] {
+                                    if !self.settings.developer_mode && matches!(*node_kind,KaspadNodeKind::IntegratedInProc|KaspadNodeKind::ExternalAsDaemon) {
+                                        return;
+                                    }
+                                }
                                 ui.radio_value(&mut self.settings.node.node_kind, *node_kind, node_kind.to_string());
                             });
                         });
 
+                        match self.settings.node.node_kind {
+                            KaspadNodeKind::Remote => {
 
-                        if self.settings.node.node_kind == KaspadNodeKind::Remote {
-
-
-
-                            // RANDOM, COMMUNITY NODES, CUSTOM
-                            // let mut wrpc_url = self.settings.node.wrpc_url.clone();
-                            ui.horizontal(|ui|{
-                                ui.label(i18n("wRPC Encoding:"));
-                                WrpcEncoding::iter().for_each(|encoding| {
-                                    ui.radio_value(&mut self.settings.node.wrpc_encoding, *encoding, encoding.to_string());
-                                });
-                            });
-
-
-                            ui.horizontal(|ui|{
-                                ui.label(i18n("wRPC URL:"));
-                                ui.add(TextEdit::singleline(&mut self.settings.node.wrpc_url));
-                                
-                            });
-
-                            if let Err(err) = KaspaRpcClient::parse_url(Some(self.settings.node.wrpc_url.clone()), self.settings.node.wrpc_encoding, self.settings.node.network.into()) {
-                                ui.label(
-                                    RichText::new(format!("{err}"))
-                                        .color(theme.warning_color),
-                                );
-                                node_settings_error = Some("Invalid wRPC URL");
-                                // return;
-                            }
+                            },
 
                             #[cfg(not(target_arch = "wasm32"))]
-                            ui.horizontal_wrapped(|ui|{
-                                ui.label("Recommended arguments for the remote node:");
-                                ui.code("kaspad --utxoindex --rpclisten-borsh=0.0.0.0");
-                                ui.label("If you are running locally, use");
-                                ui.code("--rpclisten-borsh=127.0.0.1.");
-                            });
-    
+                            KaspadNodeKind::IntegratedInProc => {
+                                ui.horizontal_wrapped(|ui|{
+                                    ui.set_max_width(half_width);
+                                    ui.label(i18n("Please note that the integrated mode is experimental and does not currently show the sync progress information."));
+                                });
+                            },
 
+                            #[cfg(not(target_arch = "wasm32"))]
+                            KaspadNodeKind::ExternalAsDaemon => {
+                                ui.horizontal(|ui|{
+                                    ui.label(i18n("Rusty Kaspa Daemon Path:"));
+                                    ui.add(TextEdit::singleline(&mut self.settings.node.kaspad_daemon_binary));
+                                });
+                                let path = std::path::PathBuf::from(&self.settings.node.kaspad_daemon_binary);
+                                if path.exists() && !path.is_file() {
+                                    ui.label(
+                                        RichText::new(format!("Rusty Kaspa Daemon not found at '{path}'", path = self.settings.node.kaspad_daemon_binary))
+                                            .color(theme().error_color),
+                                    );
+                                    node_settings_error = Some("Rusty Kaspa Daemon not found");
+                                }
+                            },
+                            _ => { }
                         }
+
                     });
 
                 if !self.grpc_network_interface.is_valid() {
@@ -143,6 +141,50 @@ impl ModuleT for Settings {
                 }
             });
 
+            if self.settings.node.node_kind == KaspadNodeKind::Remote {
+                CollapsingHeader::new("Remote p2p Node Configuration")
+                    .default_open(true)
+                    .show(ui, |ui| {
+
+                        // RANDOM, COMMUNITY NODES, CUSTOM
+                        // let mut wrpc_url = self.settings.node.wrpc_url.clone();
+                        ui.horizontal(|ui|{
+                            ui.label(i18n("wRPC Encoding:"));
+                            WrpcEncoding::iter().for_each(|encoding| {
+                                ui.radio_value(&mut self.settings.node.wrpc_encoding, *encoding, encoding.to_string());
+                            });
+                        });
+
+
+                        ui.horizontal(|ui|{
+                            ui.label(i18n("wRPC URL:"));
+                            ui.add(TextEdit::singleline(&mut self.settings.node.wrpc_url));
+                            
+                        });
+
+                        if let Err(err) = KaspaRpcClient::parse_url(Some(self.settings.node.wrpc_url.clone()), self.settings.node.wrpc_encoding, self.settings.node.network.into()) {
+                            ui.label(
+                                RichText::new(format!("{err}"))
+                                    .color(theme().warning_color),
+                            );
+                            node_settings_error = Some("Invalid wRPC URL");
+                            // return;
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        ui.horizontal_wrapped(|ui|{
+                            ui.set_max_width(half_width);
+                            ui.label("Recommended arguments for the remote node:");
+                            ui.code("kaspad --utxoindex --rpclisten-borsh=0.0.0.0");
+                            ui.label("If you are running locally, use");
+                            ui.code("--rpclisten-borsh=127.0.0.1.");
+                        });
+
+
+
+
+                    });
+            }
 
             #[cfg(not(target_arch = "wasm32"))]
             if self.settings.node.node_kind.is_config_capable() {
@@ -186,14 +228,18 @@ impl ModuleT for Settings {
             if let Some(error) = node_settings_error {
                 ui.label(
                     RichText::new(error.to_string())
-                        .color(theme.warning_color),
+                        .color(theme().warning_color),
                 );
+                ui.add_space(16.);
+                ui.label(i18n("Unable to change node settings until the problem is resolved."));
 
-                return;
-            }
+                ui.add_space(16.);
+                ui.separator();
 
-            if node_settings_error.is_none() {
+            } else if node_settings_error.is_none() {
                 if let Some(restart) = self.settings.node.compare(&core.settings.node) {
+
+                    ui.add_space(16.);
 
                     if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
                         match response {
@@ -219,15 +265,27 @@ impl ModuleT for Settings {
             }
 
             // ----------------------------
+            CollapsingHeader::new("Advanced")
+                .default_open(false)
+                .show(ui, |ui| {
 
-            if ui.button("Reset Settings").clicked() {
-                let settings = crate::settings::Settings::default();
-                settings.store_sync().unwrap();
-                #[cfg(target_arch = "wasm32")]
-                workflow_dom::utils::window().location().reload().ok();
-            }
+                    ui.vertical(|ui|{
+                        ui.checkbox(&mut self.settings.developer_mode, i18n("Developer Mode"));
+                        ui.label("Developer mode enables experimental features");
 
-            // if ui.button("Test Toast").clicked() {
+
+                        ui.separator();
+                        if ui.medium_button("Reset Settings").clicked() {
+                            let settings = crate::settings::Settings::default();
+                            settings.store_sync().unwrap();
+                            #[cfg(target_arch = "wasm32")]
+                            workflow_dom::utils::window().location().reload().ok();
+                        }
+                        
+                    });
+                });
+
+                // if ui.button("Test Toast").clicked() {
             //     self.runtime.try_send(Events::Notify {
             //         notification : UserNotification::info("Test Toast")
             //     }).unwrap();
@@ -236,15 +294,7 @@ impl ModuleT for Settings {
             // if ui.button("Test Panic").clicked() {
             //     panic!("Testing panic...");
             // }
+
     }
 }
 
-// if let Some(result) = spawn!(async move {
-
-//     println!("Spawn executing...");
-//     Ok(123)
-// }) {
-
-//     println!("Result {:?}", result);
-//     ui.label(format!("Result {:?}", result));
-// }

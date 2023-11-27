@@ -39,10 +39,17 @@ struct Inner {
     transactions: Mutex<TransactionCollection>,
     total_transaction_count: AtomicU64,
     is_loading: AtomicBool,
+    // for bip32 accounts only
+    bip39_passphrase: bool,
 }
 
 impl Inner {
     fn new(descriptor: AccountDescriptor) -> Self {
+        let bip39_passphrase = match &descriptor {
+            AccountDescriptor::Bip32(bip32) => bip32.bip39_passphrase,
+            _ => false,
+        };
+
         let context = AccountContext::new(&descriptor);
         Self {
             id: *descriptor.account_id(),
@@ -53,6 +60,7 @@ impl Inner {
             transactions: Mutex::new(TransactionCollection::default()),
             total_transaction_count: AtomicU64::new(0),
             is_loading: AtomicBool::new(true),
+            bip39_passphrase,
         }
     }
 }
@@ -85,6 +93,10 @@ impl Account {
 
     pub fn name_or_id(&self) -> String {
         self.descriptor().name_or_id()
+    }
+
+    pub fn requires_bip39_passphrase(&self) -> bool {
+        self.inner.bip39_passphrase
     }
 
     pub fn balance(&self) -> Option<Balance> {

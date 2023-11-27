@@ -8,7 +8,7 @@ use egui_plot::{
     Line,
     LineStyle,
     Plot,
-    PlotPoints, uniform_grid_spacer,
+    PlotPoints, uniform_grid_spacer, CoordinatesFormatter, Corner,
 };
 
 pub struct Metrics {
@@ -35,84 +35,182 @@ impl ModuleT for Metrics {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        let theme = theme();
+        // let theme = theme();
 
-        ui.heading("Node Metrics");
-        ui.separator();
+        let screen_rect_height = ui.ctx().screen_rect().height();
 
+        let mut store_settings = false;
+                            
         let mut graph_columns = core.settings.ux.metrics.graph_columns;
         let mut graph_height = core.settings.ux.metrics.graph_height;
-        let mut graph_duration = core.settings.ux.metrics.graph_duration;
-
-        ui.horizontal(|ui| {
-            ui.label("Columns:");
-            ui.add(
-                Slider::new(&mut graph_columns, 
-                    1..=8)
-                    .orientation(SliderOrientation::Horizontal)
-                    .step_by(1.)
-            );
-            ui.label("Graph Height:");
-            ui.add(
-                Slider::new(&mut graph_height, 
-                    1..=1200)
-                    .orientation(SliderOrientation::Horizontal)
-                    .suffix("px")
-            );
-            ui.label("Duration:");
-            ui.add(
-                Slider::new(&mut graph_duration, 
-                    15..=MAX_METRICS_SAMPLES)
-                    .logarithmic(true)
-                    .orientation(SliderOrientation::Horizontal)
-                    .custom_formatter(|v, _range| {
-                        format_duration(v as u64)
-                    })
-            );
-        });
-
-        if graph_columns != core.settings.ux.metrics.graph_columns 
-        || graph_height != core.settings.ux.metrics.graph_height 
-        || graph_duration != core.settings.ux.metrics.graph_duration {
-            core.settings.ux.metrics.graph_columns = graph_columns;
-            core.settings.ux.metrics.graph_height = graph_height;
-            core.settings.ux.metrics.graph_duration = graph_duration;
-            // TODO - post an application loop to relay to runtime
-            // so that we can combine multiple saves into one
-            core.settings.store_sync().ok();
-        }
+        #[allow(unused_mut)]
+        let mut graph_range_from = core.settings.ux.metrics.graph_range_from;
+        let mut graph_range_to = core.settings.ux.metrics.graph_range_to;
 
 
+        ui.horizontal(|ui|{
+            ui.heading("Node Metrics");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                PopupPanel::new(ui, "metrics_settings","Settings", |ui| {
+                    ui.add(
+                        Slider::new(&mut graph_columns, 1..=8)
+                            .text("Columns")
+                            .orientation(SliderOrientation::Horizontal)
+                            .step_by(1.)
+                    );
+                    ui.space();
+                    ui.add(
+                        Slider::new(&mut graph_height, 1..=1200)
+                            .text("Height")
+                            .orientation(SliderOrientation::Horizontal)
+                            .suffix("px")
+                    );
+                    // ui.label("From:");
+                    // ui.add(
+                    //     Slider::new(&mut graph_range_from, 0..=MAX_METRICS_SAMPLES)
+                    //         .text("From")
+                    //         .logarithmic(true)
+                    //         .orientation(SliderOrientation::Horizontal)
+                    //         .custom_formatter(|v, _range| {
+                    //             format_duration(v as u64)
+                    //         })
+                    // );
+                    // ui.label("To:");
+                    // ui.label("Duration:");
+                    // ui.space();
+                    // ui.add(
+                    //     Slider::new(&mut graph_range_to, 15..=MAX_METRICS_SAMPLES)
+                    //         .text("Duration")
+                    //         .logarithmic(true)
+                    //         .orientation(SliderOrientation::Horizontal)
+                    //         .custom_formatter(|v, _range| {
+                    //             format_duration(v as u64)
+                    //         })
+                    // );
 
-        egui::ScrollArea::vertical()
-            .id_source("node_metrics")
-            .auto_shrink([false; 2])
-            .show(ui, |ui| {
+                    ui.space();
+                    ui.separator();
+                    ScrollArea::vertical()
+                        .id_source("metrics_popup_selector")
+                        .auto_shrink([false;2])
+                        .show(ui, |ui| {
 
-                let view_width = ui.available_width() - 32.;
-                let graph_height = core.settings.ux.metrics.graph_height as f32;
-                let graph_width = view_width / core.settings.ux.metrics.graph_columns as f32;
-
-                if let Some(metrics) = core.metrics.as_ref() {
-
-                    let mut metric_iter = Metric::list().into_iter();
-
-                    let mut draw = true;
-                    while draw {
-                        ui.horizontal(|ui| {
-                            for _ in 0..core.settings.ux.metrics.graph_columns {
-                                if let Some(metric) = metric_iter.next() {
-                                    // let duration = 60 * 10; // 15 min (testing)
-                                    let duration = core.settings.ux.metrics.graph_duration;
-                                    self.render_metric(ui,metric,metrics,theme,duration,graph_width,graph_height);
-                                } else {
-                                    draw = false;
+                            ui.horizontal(|ui| {
+                                if ui.button(i18n("All")).clicked() {
+                                    core.settings.ux.metrics.disabled.clear();
                                 }
+
+                                if ui.button(i18n("None")).clicked() {
+                                    core.settings.ux.metrics.disabled = Metric::list().into_iter().collect::<AHashSet<_>>();
+                                }
+                                
+                                if ui.button(i18n("Key Perf.")).clicked() {
+                                    core.settings.ux.metrics.disabled = Metric::list().into_iter().filter(|metric|!metric.is_key_performance_metric()).collect::<AHashSet<_>>();
+                                }
+
+                            });
+
+                            ui.separator();
+
+                            for group in MetricGroup::list() {
+                                CollapsingHeader::new(i18n(group.title()))
+                                    .default_open(true)
+                                    .show(ui, |ui| {
+            
+                                        for metric in group.metrics() {
+                                            ui.space();
+                                            let mut state = !core.settings.ux.metrics.disabled.contains(&metric);
+                                            if ui.checkbox(&mut state, i18n(metric.title().0)).changed() {
+                                                if state {
+                                                    core.settings.ux.metrics.disabled.remove(&metric);
+                                                } else {
+                                                    core.settings.ux.metrics.disabled.insert(metric);
+                                                }
+                                                // core.store_settings();
+                                                store_settings = true;
+                                            }
+                                        }
+                                    });
                             }
                         });
-                    }
-                }
+
+                })
+                .with_height(screen_rect_height * 0.8)
+                .build(ui);
+
+                ui.separator();
+
+                ui.add(
+                    Slider::new(&mut graph_range_to, 15..=MAX_METRICS_SAMPLES)
+                        .logarithmic(true)
+                        .orientation(SliderOrientation::Horizontal)
+                        .custom_formatter(|v, _range| {
+                            format_duration(v as u64)
+                        })
+                );
+                ui.label("Duration:");
+
             });
+        });
+        
+        if graph_range_from > graph_range_to {
+            graph_range_to = graph_range_from + 15;
+        }
+
+        if store_settings
+        || graph_columns != core.settings.ux.metrics.graph_columns 
+        || graph_height != core.settings.ux.metrics.graph_height 
+        || graph_range_from != core.settings.ux.metrics.graph_range_from 
+        || graph_range_to != core.settings.ux.metrics.graph_range_to 
+        {
+            core.settings.ux.metrics.graph_columns = graph_columns;
+            core.settings.ux.metrics.graph_height = graph_height;
+            core.settings.ux.metrics.graph_range_from = graph_range_from;
+            core.settings.ux.metrics.graph_range_to = graph_range_to;
+            
+            core.store_settings();
+        }
+
+        ui.separator();
+
+        if let Some(metrics) = core.metrics.as_ref() {
+
+            egui::ScrollArea::vertical()
+                .id_source("node_metrics")
+                .auto_shrink([false; 2])
+                .show(ui, |ui| {
+
+                    let view_width = ui.available_width() - 32.;
+                    let graph_height = core.settings.ux.metrics.graph_height as f32;
+                    let graph_width = view_width / core.settings.ux.metrics.graph_columns as f32;
+
+                        let mut metric_iter = Metric::list().into_iter().filter(|metric| !core.settings.ux.metrics.disabled.contains(metric));
+                        let mut draw = true;
+                        while draw {
+                            ui.horizontal(|ui| {
+                                for _ in 0..core.settings.ux.metrics.graph_columns {
+                                    if let Some(metric) = metric_iter.next() {
+                                        let range_from = core.settings.ux.metrics.graph_range_from;
+                                        let range_to = core.settings.ux.metrics.graph_range_to;
+                                        self.render_metric(ui,metric,metrics,range_from..range_to,graph_width,graph_height);
+                                    } else {
+                                        draw = false;
+                                    }
+                                }
+                            });
+                        }
+                    // }
+                });
+        } else {
+            ui.vertical_centered(|ui| {
+
+                ui.style_mut().text_styles = core.large_style.text_styles.clone();
+
+                ui.label("Metrics are not available");
+                ui.add_space(32.);
+                ui.label("Please connect to kaspa p2p node");
+            });
+        }
 
     }
 }
@@ -125,19 +223,13 @@ impl Metrics {
         ui : &mut Ui, 
         metric : Metric, 
         metrics : &MetricsSnapshot, 
-        theme : &Theme, 
-        duration : usize, 
+        range : std::ops::Range<usize>,
         graph_width : f32, 
         graph_height : f32
     ) {
 
         let group = MetricGroup::from(metric);
-        let graph_color = match group {
-            MetricGroup::System => theme.performance_graph_color,
-            MetricGroup::Storage => theme.storage_graph_color,
-            MetricGroup::Network => theme.network_graph_color,
-            MetricGroup::BlockDAG => theme.blockdag_graph_color,
-        };
+        let graph_color = group.to_color();
 
         StripBuilder::new(ui)
             .size(Size::exact(graph_width))
@@ -156,11 +248,21 @@ impl Metrics {
                         let graph_data = {
                             let metrics_data = self.runtime.metrics_service().metrics_data();
                             let data = metrics_data.get(&metric).unwrap();
-                            let samples = if data.len() < duration { data.len() } else { duration };
-                            data[data.len()-samples..].to_vec()
+                            let mut start = range.start;
+                            let mut end = range.end;
+                            if start > data.len() {
+                                start = data.len();
+                            }
+                            if end > data.len() {
+                                end = data.len();
+                            }
+                            data[data.len()-end..data.len()-start].to_vec()
                         };
 
                         let mut plot = Plot::new(metric.as_str())
+                        // .link_axis(id, true, false)
+                        // .allow_boxed_zoom(true)
+                        // .allow_double_click_reset(true)
                             .legend(Legend::default())
                             .width(graph_width)
                             .height(graph_height)
@@ -170,6 +272,7 @@ impl Metrics {
                             .y_axis_width(4)
                             .show_axes(true)
                             .show_grid(true)
+                            // .allow_drag([true, false])
                             .allow_drag([false, false])
                             .allow_scroll(false)
                             .y_axis_formatter(move |y,_size,_range|{
@@ -200,6 +303,10 @@ impl Metrics {
                                     .format("%H:%M:%S")
                                 )
                             })                                                    
+                            .coordinates_formatter(Corner::LeftTop, CoordinatesFormatter::new(move |point,_| {
+                                let PlotPoint { x: _, y } = point;
+                                metric.format(*y, true, true)
+                            }))
                             ;
 
                         if [Metric::NodeCpuUsage].contains(&metric) {
@@ -241,7 +348,6 @@ fn calculate_grid_lines(base_step_size : f64) -> [f64; 3] {
     }
 
     while medium_grid < small_grid  {
-    // while medium_grid < base_step_size  {
         medium_grid *= 2.;
     }
 

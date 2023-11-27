@@ -30,7 +30,7 @@ impl InProc {
 
 #[async_trait]
 impl super::Kaspad for InProc {
-    async fn start(&self, config: Config) -> Result<()> {
+    async fn start(self: Arc<Self>, config: Config) -> Result<()> {
         let args = Args::try_from(config)?;
         println!("ARGS: {:#?}", args);
 
@@ -55,7 +55,7 @@ impl super::Kaspad for InProc {
         Ok(())
     }
 
-    async fn stop(&self) -> Result<()> {
+    async fn stop(self: Arc<Self>) -> Result<()> {
         if let Some(mut inner) = self.inner.lock().unwrap().take() {
             let (core, thread) = {
                 println!("*** TAKING RPC CORE SERVICE...");

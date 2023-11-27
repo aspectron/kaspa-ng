@@ -14,13 +14,29 @@ impl Request {
 impl ModuleT for Request {
     fn render(
         &mut self,
-        _core: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        ui.heading("Request");
-        ui.separator();
-        ui.label("This is the payment request page");
+
+        Panel::new(self)
+        .with_caption("Payment Request")
+        .with_back_enabled(core.has_stack(), |_|{
+            core.back();
+        })
+        // .with_close_enabled(core.has_stack(), |_| {
+        //     core.back();
+        // })
+        .with_header(|_ctx, _ui| {
+            // ui.label(text);
+        })
+        .with_body(|_this, ui| {
+
+            ui.label("");
+            ui.label("Payment request panel");
+            ui.label("");
+        })
+        .render(ui);
     }
 }

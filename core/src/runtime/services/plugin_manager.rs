@@ -128,6 +128,10 @@ impl PluginManagerService {
 
 #[async_trait]
 impl Service for PluginManagerService {
+    fn name(&self) -> &'static str {
+        "plugin-manager"
+    }
+
     async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
         let running_plugins = self.running_plugins();
         for plugin in running_plugins.into_iter() {

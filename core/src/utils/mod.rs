@@ -122,13 +122,15 @@ where
         let total_width = buttons_len * button_size.x + spacing * (buttons_len - 1.0);
         let margin = (available_width - total_width) * 0.5;
 
-        ui.add_space(margin);
-        self.list
-            .into_iter()
-            .for_each(|(enabled, widget, handler)| {
-                if ui.add_enabled(enabled, widget).clicked() {
-                    handler(context);
-                }
-            });
+        ui.horizontal(|ui| {
+            ui.add_space(margin);
+            self.list
+                .into_iter()
+                .for_each(|(enabled, widget, handler)| {
+                    if ui.add_enabled(enabled, widget).clicked() {
+                        handler(context);
+                    }
+                });
+        });
     }
 }

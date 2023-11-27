@@ -21,6 +21,7 @@ pub struct BlockDagMonitorService {
     is_enabled: Arc<AtomicBool>,
     is_connected: Arc<AtomicBool>,
     pub chain: Mutex<AHashMap<u64, DaaBucket>>,
+    pub new_blocks: Arc<Mutex<AHashSet<kaspa_consensus_core::Hash>>>,
     pub settings: Arc<BlockDagGraphSettings>,
 }
 
@@ -34,6 +35,7 @@ impl BlockDagMonitorService {
             listener_id: Mutex::new(None),
             notification_channel: Channel::<Notification>::unbounded(),
             chain: Mutex::new(AHashMap::new()),
+            new_blocks: Arc::new(Mutex::new(AHashSet::new())),
             is_enabled: Arc::new(AtomicBool::new(false)),
             is_connected: Arc::new(AtomicBool::new(false)),
             settings: Arc::new(BlockDagGraphSettings::default()),
@@ -98,10 +100,32 @@ impl BlockDagMonitorService {
             .try_send(BlockDagMonitorEvents::Settings(settings))
             .unwrap();
     }
+
+    pub fn new_blocks(&self) -> MutexGuard<'_, AHashSet<kaspa_consensus_core::Hash>> {
+        self.new_blocks.lock().unwrap()
+    }
+
+    fn update_new_blocks(&self, block: &Arc<RpcBlock>) {
+        let mut new_blocks = self.new_blocks.lock().unwrap();
+        new_blocks.insert(block.header.hash);
+        let parents = block
+            .header
+            .parents_by_level
+            .iter()
+            .flatten()
+            .collect::<Vec<_>>();
+        parents.iter().for_each(|hash| {
+            new_blocks.remove(hash);
+        });
+    }
 }
 
 #[async_trait]
 impl Service for BlockDagMonitorService {
+    fn name(&self) -> &'static str {
+        "block-dag-monitor"
+    }
+
     async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
         self.rpc_api.lock().unwrap().replace(rpc_api.clone());
         Ok(())
@@ -145,6 +169,8 @@ impl Service for BlockDagMonitorService {
                         match notification {
                             Notification::BlockAdded(block_added_notification) => {
                                 let block = block_added_notification.block.clone();
+
+                                self.update_new_blocks(&block);
 
                                 blocks_by_hash.insert(block.header.hash, block.clone());
 

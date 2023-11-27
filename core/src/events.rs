@@ -1,6 +1,6 @@
 use crate::imports::*;
 use kaspa_metrics::MetricsSnapshot;
-use kaspa_wallet_core::events as kaspa;
+use kaspa_wallet_core::{events as kaspa, storage::PrvKeyDataInfo};
 
 pub type ApplicationEventsChannel = crate::channel::Channel<Events>;
 
@@ -9,6 +9,7 @@ pub type ApplicationEventsChannel = crate::channel::Channel<Events>;
 
 #[derive(Clone)]
 pub enum Events {
+    StoreSettings,
     UpdateLogs,
     Metrics {
         snapshot: Box<MetricsSnapshot>,
@@ -19,6 +20,9 @@ pub enum Events {
     },
     Wallet {
         event: Box<kaspa::Events>,
+    },
+    PrvKeyDataInfo {
+        prv_key_data_info_map: HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>,
     },
     UnlockSuccess,
     UnlockFailure {

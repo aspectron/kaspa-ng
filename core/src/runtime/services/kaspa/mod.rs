@@ -31,8 +31,8 @@ cfg_if! {
 
         #[async_trait]
         pub trait Kaspad {
-            async fn start(&self, config : Config) -> Result<()>;
-            async fn stop(&self) -> Result<()>;
+            async fn start(self : Arc<Self>, config : Config) -> Result<()>;
+            async fn stop(self : Arc<Self>) -> Result<()>;
             // async fn halt(&self) -> Result<()>;
         }
 
@@ -43,7 +43,7 @@ cfg_if! {
             StartExternalAsDaemon { path: PathBuf, config: Config, network : Network },
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
             Stdout { line : String },
-            Stop,
+            Disable { network : Network },
             Exit,
         }
 
@@ -63,7 +63,7 @@ cfg_if! {
         #[derive(Debug)]
         pub enum KaspadServiceEvents {
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
-            Stop,
+            Disable { network : Network },
             Exit,
         }
 
@@ -126,6 +126,11 @@ impl KaspaService {
             #[cfg(not(target_arch = "wasm32"))]
             logs: Mutex::new(Vec::new()),
         }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn retain(&self, kaspad: Arc<dyn Kaspad + Send + Sync + 'static>) {
+        self.kaspad.lock().unwrap().replace(kaspad);
     }
 
     pub fn create_rpc_client(config: &RpcConfig, network: Network) -> Result<Rpc> {
@@ -310,6 +315,10 @@ impl KaspaService {
 
 #[async_trait]
 impl Service for KaspaService {
+    fn name(&self) -> &'static str {
+        "kaspa-service"
+    }
+
     async fn spawn(self: Arc<Self>) -> Result<()> {
         let this = self.clone();
         let wallet_events = this.wallet.multiplexer().channel();
@@ -363,9 +372,10 @@ impl Service for KaspaService {
                                 this.stop_all_services().await?;
 
                                 let kaspad = Arc::new(inproc::InProc::default());
-                                this.kaspad.lock().unwrap().replace(kaspad.clone());
+                                this.retain(kaspad.clone());
+                                // this.kaspad.lock().unwrap().replace(kaspad.clone());
 
-                                kaspad.start(config).await.unwrap();
+                                kaspad.clone().start(config).await.unwrap();
 
                                 let rpc_api = kaspad.rpc_core_services().expect("Unable to obtain inproc rpc api");
                                 let rpc_ctl = RpcCtl::new();
@@ -380,8 +390,8 @@ impl Service for KaspaService {
                                 self.stop_all_services().await?;
 
                                 let kaspad = Arc::new(daemon::Daemon::new(None, &this.service_events));
-                                this.kaspad.lock().unwrap().replace(kaspad.clone());
-                                kaspad.start(config).await.unwrap();
+                                this.retain(kaspad.clone());
+                                kaspad.clone().start(config).await.unwrap();
 
                                 let rpc_config = RpcConfig::Wrpc {
                                     url : None,
@@ -397,8 +407,9 @@ impl Service for KaspaService {
                                 self.stop_all_services().await?;
 
                                 let kaspad = Arc::new(daemon::Daemon::new(Some(path), &this.service_events));
-                                this.kaspad.lock().unwrap().replace(kaspad.clone());
-                                kaspad.start(config).await.unwrap();
+                                this.retain(kaspad.clone());
+
+                                kaspad.clone().start(config).await.unwrap();
 
                                 let rpc_config = RpcConfig::Wrpc {
                                     url : None,
@@ -418,8 +429,18 @@ impl Service for KaspaService {
                                 this.connect_rpc_client().await?;
                             },
 
-                            KaspadServiceEvents::Stop => {
+                            KaspadServiceEvents::Disable { network } => {
                                 self.stop_all_services().await?;
+
+                                if self.wallet().is_open() {
+                                    self.wallet().close().await.ok();
+                                }
+
+                                // re-apply network id to allow wallet
+                                // to be opened offline in disconnected
+                                // mode by changing network id in settings
+                                self.wallet()
+                                    .set_network_id(network.into()).ok();
                             }
 
                             KaspadServiceEvents::Exit => {
@@ -460,7 +481,7 @@ impl TryFrom<&NodeSettings> for KaspadServiceEvents {
 
                 match &node_settings.node_kind {
                     KaspadNodeKind::Disable => {
-                        Ok(KaspadServiceEvents::Stop)
+                        Ok(KaspadServiceEvents::Disable { network : node_settings.network })
                     }
                     KaspadNodeKind::IntegratedInProc => {
                         // let config = ;
@@ -470,7 +491,7 @@ impl TryFrom<&NodeSettings> for KaspadServiceEvents {
                         Ok(KaspadServiceEvents::StartInternalAsDaemon { config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::ExternalAsDaemon => {
-                        let path = node_settings.kaspad_daemon_binary.clone().ok_or(Error::MissingExternalKaspadBinary)?;
+                        let path = node_settings.kaspad_daemon_binary.clone();
                         Ok(KaspadServiceEvents::StartExternalAsDaemon { path : PathBuf::from(path), config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::Remote => {
@@ -482,7 +503,7 @@ impl TryFrom<&NodeSettings> for KaspadServiceEvents {
 
                 match &node_settings.node_kind {
                     KaspadNodeKind::Disable => {
-                        Ok(KaspadServiceEvents::Stop)
+                        Ok(KaspadServiceEvents::Disable { network : node_settings.network })
                     }
                     KaspadNodeKind::Remote => {
                         Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : node_settings.into(), network : node_settings.network })

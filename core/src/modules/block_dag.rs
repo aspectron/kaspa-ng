@@ -1,9 +1,9 @@
 use crate::imports::*;
 use egui_plot::{
-    // Legend,
     LineStyle,
     Plot,
     PlotPoints, Polygon, uniform_grid_spacer, Line, PlotBounds,
+    // Legend,
     // Corner
 };
 
@@ -16,8 +16,12 @@ pub struct BlockDag {
     plot_bounds : PlotBounds,
     bezier : bool,
     parent_levels : usize,
+    daa_offset : f64,
+    daa_range : f64,
     last_repaint : Instant,
     settings: BlockDagGraphSettings,
+    popup : bool,
+    background : bool,
 }
 
 impl BlockDag {
@@ -29,9 +33,13 @@ impl BlockDag {
             running : false, 
             plot_bounds : PlotBounds::NOTHING, 
             bezier : true, 
+            daa_offset : 8.0,
+            daa_range : 28.0,
             last_repaint : Instant::now(),
             parent_levels : 1,
             settings: BlockDagGraphSettings::default(),
+            popup : false,
+            background : false,
         }
     }
 }
@@ -60,35 +68,54 @@ impl ModuleT for BlockDag {
         let vspc_center = self.settings.vspc_center;
 
         ui.horizontal(|ui| {
-
             ui.heading("Block DAG");
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                ui.checkbox(&mut self.bezier, i18n("Bezier Curves"));
-                ui.separator();
-                ui.checkbox(&mut self.settings.vspc_center, i18n("Center VSPC"));
-                ui.separator();
-                ui.add(
-                    Slider::new(&mut self.parent_levels, 1..=50)
-                        .clamp_to_range(true)
-                        .text(i18n("Parent levels"))
-                        .step_by(1.0)
-                );
-                ui.separator();
-                ui.add(
-                    Slider::new(&mut self.settings.y_dist, 1.0..=100.0)
-                        .clamp_to_range(true)
-                        .text(i18n("Spread"))
-                        // .step_by(1.0)
-                );
-                // ui.separator();
-            
-                if y_dist != self.settings.y_dist || vspc_center != self.settings.vspc_center {
-                    runtime().block_dag_monitor_service().update_settings(self.settings.clone());
-                }
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                PopupPanel::new(ui, "block_dag_settings","Settings", |ui| {
+                    ui.add(
+                        Slider::new(&mut self.daa_range, 1.0..=100.0)
+                            .clamp_to_range(true)
+                            .text(i18n("DAA Range"))
+                    );
+                    ui.space();
+                    ui.add(
+                        Slider::new(&mut self.daa_offset, 1.0..=50.0)
+                            .clamp_to_range(true)
+                            .text(i18n("DAA Offset"))
+                            // .step_by(1.0)
+                    );
+                    ui.space();
+                    ui.add(
+                        Slider::new(&mut self.settings.y_dist, 1.0..=100.0)
+                            .clamp_to_range(true)
+                            .text(i18n("Spread"))
+                    );
+                    ui.space();
+                    ui.add(
+                        Slider::new(&mut self.parent_levels, 1..=50)
+                            .clamp_to_range(true)
+                            .text(i18n("Parent levels"))
+                            .step_by(1.0)
+                    );
+                    ui.space();
+                    ui.separator();
+                    ui.space();
+                    ui.horizontal_wrapped(|ui| {
+                        ui.checkbox(&mut self.settings.vspc_center, i18n("Center VSPC"));
+                        ui.space();
+                        ui.checkbox(&mut self.bezier, i18n("Bezier Curves"));
+                        ui.space();
+                        ui.checkbox(&mut self.background, i18n("Track in the background"));
+                    });
+                }).build(ui);
             });
         });
-
         ui.separator();
+
+        if y_dist != self.settings.y_dist || vspc_center != self.settings.vspc_center {
+            runtime().block_dag_monitor_service().update_settings(self.settings.clone());
+        }
+
 
         let mut reset_plot = false;
         let current_daa_score = core.state().current_daa_score().unwrap_or_default();
@@ -97,7 +124,7 @@ impl ModuleT for BlockDag {
             if !self.running {
                 self.running = true;
                 reset_plot = true;
-                self.daa_cursor = current_daa_score as f64;
+                self.daa_cursor = current_daa_score as f64 - 1.0;
             }
 
             self.last_daa_score = current_daa_score;
@@ -111,11 +138,10 @@ impl ModuleT for BlockDag {
         
         let graph_width = ui.available_width();
         let graph_height = ui.available_height();
-        let default_daa_min = self.daa_cursor -20.0;
-        let default_daa_max = self.daa_cursor + 8.0;
+        let default_daa_max = self.daa_cursor + self.daa_offset;
+        let default_daa_min = default_daa_max - self.daa_range;
         let default_daa_range = default_daa_max - default_daa_min;
         let pixels_per_daa = graph_width as f64 / default_daa_range;
-        let bezier_steps = if pixels_per_daa < 2.0 { 2 } else { pixels_per_daa as usize / 3};
 
         let mut plot = Plot::new("block_dag")
             .width(graph_width)
@@ -151,11 +177,10 @@ impl ModuleT for BlockDag {
             })                        
             ;
 
+        // kick it into gear when starting up
         if reset_plot {
-            // As of egui 0.24, we need to tap auto bounds once
-            // when the plot is re-positioned to get it to track
-            // the manually set bounds.
             plot = plot.auto_bounds_x().auto_bounds_y();
+            plot = plot.reset();
         }
 
         let mut graph_settled = true;
@@ -174,16 +199,15 @@ impl ModuleT for BlockDag {
         };
 
         let parent_levels = self.parent_levels.max(1);
-        // println!("parent_levels: {} pl: {}", parent_levels,self.parent_levels);
         let block_map : AHashMap<KaspaHash,(PlotPoint,bool)> = blocks.clone().into_iter().map(|(block, plot_point,vspc, _)|(block.header.hash,(plot_point,vspc))).collect();
+        let new_blocks = self.runtime.block_dag_monitor_service().new_blocks().clone();
         let polygons = blocks.iter().map(|(block, point, current_vspc, block_settled)| {
             if !block_settled {
                 graph_settled = false;
             }
 
             let PlotPoint { x, y } = *point;
-            // let parent_levels = &block.header.parents_by_level;
-            // for parent_hash in block.header.direct_parents() {
+
             for (level,parent_level) in block.header.parents_by_level.iter().enumerate() {
                 if level >= parent_levels {
                     break;
@@ -193,7 +217,11 @@ impl ModuleT for BlockDag {
                     if let Some(parent_point) = block_map.get(parent_hash) {
                         let (PlotPoint { x: parent_x, y: parent_y }, parent_vspc) = *parent_point;
                         let points = if self.bezier {
-                            bezier(x,y,parent_x,parent_y,bezier_steps,0.6) 
+                            // abs is not needed, but added just in case
+                            let x_len = (x - parent_x).abs();
+                            // x dist is sufficient... (let's save some cycles)
+                            let line_steps = (x_len * pixels_per_daa * 0.3) as usize;
+                            bezier(x,y,parent_x,parent_y,line_steps,0.6) 
                         } else {
                             [
                                 [x,y],
@@ -209,7 +237,6 @@ impl ModuleT for BlockDag {
                 }
             }
 
-            // let d = 1.5;
             let d = 1.5;
             let points: PlotPoints = [
                 [x+d*0.2, y+d],
@@ -218,15 +245,22 @@ impl ModuleT for BlockDag {
                 [x+d*0.2, y-d],
             ].to_vec().into();
         
+            let fill_color = if new_blocks.contains(&block.header.hash) {
+                theme.dagviz_new_block_fill_color
+            } else {
+                theme.dagviz_block_fill_color
+            };
+
             Polygon::new(points)
                 .name(block.header.hash.to_string())
-                .fill_color(theme.dagviz_block_fill_color)
+                .fill_color(fill_color)
                 .stroke(Stroke::new(1.0, theme.dagviz_block_stroke_color))
                 .style(LineStyle::Solid)
 
+            
         }).collect::<Vec<_>>();
 
-        let response = plot.show(ui, |plot_ui| {
+        let plot_response = plot.show(ui, |plot_ui| {
             lines_parent.into_iter().for_each(|line| {
                 plot_ui.line(line);
             });
@@ -242,9 +276,12 @@ impl ModuleT for BlockDag {
             runtime().request_repaint();
         } 
 
-        self.plot_bounds = *response.transform.bounds();
+        self.plot_bounds = *plot_response.transform.bounds();
         self.last_repaint = Instant::now();
-        // println!("plot_bounds: {:?}", self.plot_bounds);
+
+        if plot_response.response.clicked() {
+            self.popup = false;
+        }
 
     }
 
@@ -253,8 +290,10 @@ impl ModuleT for BlockDag {
     }
 
     fn deactivate(&mut self, _core: &mut Core) {
-        self.running = false;
-        crate::runtime::runtime().block_dag_monitor_service().disable();
+        if !self.background {
+            self.running = false;
+            crate::runtime::runtime().block_dag_monitor_service().disable();
+        }
     }
 }
 

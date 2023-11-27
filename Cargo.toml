@@ -93,27 +93,27 @@ kaspad = { path = "../rusty-kaspa/kaspad" }
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-# workflow-chrome = "0.8.1"
-# workflow-core = "0.8.1"
-# workflow-dom = "0.8.1"
-# workflow-http = "0.8.1"
-# workflow-i18n = { version = "0.8.1", features = ["preserve-order"] }
-# workflow-log = "0.8.1"
-# workflow-store = "0.8.1"
+# workflow-chrome = "0.9.0"
+# workflow-dom = "0.9.0"
+# workflow-http = "0.9.0"
+# workflow-log = "0.9.0"
+# workflow-store = "0.9.0"
+# workflow-core = { version = "0.9.0", features = ["no-unsafe-eval"] }
+# workflow-i18n = { version = "0.9.0", features = ["preserve-order"] }
 workflow-chrome = { path = "../workflow-rs/chrome" }
-workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
 workflow-dom = { path = "../workflow-rs/dom" }
 workflow-http = { path = "../workflow-rs/http" }
-workflow-i18n = { path = "../workflow-rs/i18n", features = ["preserve-order"] }
 workflow-log = { path = "../workflow-rs/log" }
 workflow-store = { path = "../workflow-rs/store" }
+workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
+workflow-i18n = { path = "../workflow-rs/i18n", features = ["preserve-order"] }
 # workflow-chrome = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
-# workflow-core = {  git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["no-unsafe-eval"] }
 # workflow-dom = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-http = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
-# workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["preserve-order"] }
 # workflow-log = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-store = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
+# workflow-core = {  git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["no-unsafe-eval"] }
+# workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["preserve-order"] }
 
 # ----------------------------------------
 # ----------------------------------------
@@ -135,6 +135,7 @@ futures = { version = "0.3" }
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
 js-sys = "0.3.64"
 log = "0.4"
+nix = "0.27.1"
 num_cpus = "1.15.0"
 pad = "0.1.6"
 qrcode = "0.12.0"

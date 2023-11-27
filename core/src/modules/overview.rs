@@ -317,12 +317,7 @@ impl Overview {
     fn render_graph(&mut self, ui : &mut Ui, metric : Metric, value : f64, theme : &Theme) {
 
         let group = MetricGroup::from(metric);
-        let graph_color = match group {
-            MetricGroup::System => theme.performance_graph_color,
-            MetricGroup::Storage => theme.storage_graph_color,
-            MetricGroup::Network => theme.network_graph_color,
-            MetricGroup::BlockDAG => theme.blockdag_graph_color,
-        };    
+        let graph_color = group.to_color();
 
         let graph_data = {
             let metrics_data = self.runtime.metrics_service().metrics_data();

@@ -61,7 +61,7 @@ impl MetricsService {
     }
 
     pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
-        let timestamp = snapshot.unixtime;
+        let timestamp = snapshot.unixtime_millis;
         let mut metrics_data = self.metrics_data.lock().unwrap();
         for metric in Metric::list().into_iter() {
             let dest = metrics_data.get_mut(&metric).unwrap();
@@ -91,6 +91,10 @@ impl MetricsService {
 
 #[async_trait]
 impl Service for MetricsService {
+    fn name(&self) -> &'static str {
+        "metrics-service"
+    }
+
     async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
         let this = self.clone();
         self.metrics

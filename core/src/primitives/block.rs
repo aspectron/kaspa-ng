@@ -67,6 +67,7 @@ impl DaaBucket {
 
     pub fn push(&mut self, block: DagBlock, settings: &BlockDagGraphSettings) {
         self.blocks.push(block);
+        self.reset(settings);
         self.update(settings);
     }
 

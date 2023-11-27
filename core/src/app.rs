@@ -1,6 +1,5 @@
 use crate::result::Result;
 use cfg_if::cfg_if;
-use egui::ViewportBuilder;
 use kaspa_ng_core::runtime;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::api::WalletApi;
@@ -208,7 +207,7 @@ cfg_if! {
                     let delegate = runtime.clone();
                     let native_options = eframe::NativeOptions {
                         persist_window : true,
-                        viewport: ViewportBuilder::default()
+                        viewport: egui::ViewportBuilder::default()
                             .with_resizable(true)
                             .with_title(i18n("Kaspa NG"))
                             .with_inner_size([1000.0,600.0])

@@ -41,6 +41,10 @@ impl RepaintService {
 
 #[async_trait]
 impl Service for RepaintService {
+    fn name(&self) -> &'static str {
+        "repaint-service"
+    }
+
     async fn spawn(self: Arc<Self>) -> Result<()> {
         let _application_events_sender = self.application_events.sender.clone();
         let interval = interval(Duration::from_millis(REPAINT_INTERVAL_MILLIS));

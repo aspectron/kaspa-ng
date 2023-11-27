@@ -1,5 +1,5 @@
 use crate::imports::*;
-use crate::egui::easy_mark::easy_mark;
+use crate::egui::easy_mark;
 pub struct Changelog {
     #[allow(dead_code)]
     runtime: Runtime,
@@ -19,7 +19,7 @@ impl Changelog {
 impl ModuleT for Changelog {
 
     fn style(&self) -> ModuleStyle {
-        ModuleStyle::Default
+        ModuleStyle::Large
     }
 
     fn render(
