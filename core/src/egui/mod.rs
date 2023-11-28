@@ -1,7 +1,6 @@
 // mod button;
-mod compositebutton;
-mod compositegraph;
-mod compositeicon;
+mod composite_button;
+mod composite_icon;
 mod easy_mark;
 mod extensions;
 mod icon;
@@ -9,9 +8,8 @@ mod network;
 mod popup;
 mod theme;
 
-pub use compositebutton::CompositeButton;
-pub use compositegraph::CompositeGraph;
-pub use compositeicon::CompositeIcon;
+pub use composite_button::CompositeButton;
+pub use composite_icon::CompositeIcon;
 pub use easy_mark::easy_mark;
 pub use extensions::*;
 pub use icon::{icons, Icon, IconSize, Icons};

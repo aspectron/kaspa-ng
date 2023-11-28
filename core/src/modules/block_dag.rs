@@ -50,9 +50,15 @@ impl ModuleT for BlockDag {
         ModuleStyle::Default
     }
 
-    fn status_bar(&self, ui : &mut Ui) {
+    fn status_bar(&self, core: &mut Core, ui : &mut Ui) {
         ui.separator();
-        ui.label("Double click on the graph to re-center...");
+        if !core.state().is_connected() {
+            ui.label(RichText::new(i18n("You must be connected to a node...")).color(theme().error_color));
+        } else if !core.state().is_synced() {
+            ui.label(RichText::new(i18n("Please wait for the node to sync...")).color(theme().warning_color));
+        } else {
+            ui.label(i18n("Double click on the graph to re-center..."));
+        }
     }
 
     fn render(
@@ -229,9 +235,9 @@ impl ModuleT for BlockDag {
                             ].into_iter().map(|pt|pt.into()).collect::<Vec<_>>()
                         };
                         if level == 0 && *current_vspc && parent_vspc {
-                            lines_vspc.push(Line::new(PlotPoints::Owned(points)).color(theme.dagviz_vspc_connect_color).style(LineStyle::Solid).width(3.0));
+                            lines_vspc.push(Line::new(PlotPoints::Owned(points)).color(theme.block_dag_vspc_connect_color).style(LineStyle::Solid).width(3.0));
                         } else {
-                            lines_parent.push(Line::new(PlotPoints::Owned(points)).color(theme.dagviz_parent_connect_color).style(LineStyle::Solid));
+                            lines_parent.push(Line::new(PlotPoints::Owned(points)).color(theme.block_dag_parent_connect_color).style(LineStyle::Solid));
                         }
                     }
                 }
@@ -246,15 +252,15 @@ impl ModuleT for BlockDag {
             ].to_vec().into();
         
             let fill_color = if new_blocks.contains(&block.header.hash) {
-                theme.dagviz_new_block_fill_color
+                theme.block_dag_new_block_fill_color
             } else {
-                theme.dagviz_block_fill_color
+                theme.block_dag_block_fill_color
             };
 
             Polygon::new(points)
                 .name(block.header.hash.to_string())
                 .fill_color(fill_color)
-                .stroke(Stroke::new(1.0, theme.dagviz_block_stroke_color))
+                .stroke(Stroke::new(1.0, theme.block_dag_block_stroke_color))
                 .style(LineStyle::Solid)
 
             
