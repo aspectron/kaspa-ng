@@ -688,12 +688,8 @@ impl Core {
             if !self.state().is_connected() {
                 self.render_connected_state(ui, Status::Disconnected);
             } else {
-                // let metrics = self.runtime.kaspa_service().metrics();
-                let peers = self
-                    .runtime
-                    .peer_monitor_service()
-                    .peer_info()
-                    .map(|peers| peers.len());
+                let peers = self.metrics.as_ref().map(|metrics| metrics.data.node_active_peers as usize);
+
                 let tps = self
                     .metrics
                     .as_ref()
@@ -763,10 +759,11 @@ impl Core {
         // });
     }
 
-    fn render_connected_state(&self, ui: &mut egui::Ui, state: Status) {
+    fn render_connected_state(&mut self, ui: &mut egui::Ui, state: Status) {
         //connected : bool, icon: &str, color : Color32) {
         let status_area_width = ui.available_width() - 24.;
         let status_icon_size = theme().status_icon_size;
+        let module = self.module.clone();
 
         match state {
             Status::Disconnected => {
@@ -836,7 +833,7 @@ impl Core {
                     }
                 }
 
-                self.module.status_bar(ui);
+                module.status_bar(self,ui);
 
                 // if self.settings.node.node_kind != KaspadNodeKind::Disable {
                 //     ui.label("Not Connected");
@@ -886,7 +883,7 @@ impl Core {
                     ui.label(format!("DAA {}", current_daa_score.separated_string()));
                 }
 
-                self.module.status_bar(ui);
+                module.status_bar(self,ui);
             }
             Status::Syncing { sync_status, peers } => {
                 ui.vertical(|ui| {
@@ -912,7 +909,7 @@ impl Core {
                             }
                         }
 
-                        self.module.status_bar(ui);
+                        module.status_bar(self,ui);
                     });
 
                     if let Some(status) = sync_status.as_ref() {
@@ -1008,7 +1005,7 @@ impl Core {
                     }
                     #[allow(unused_variables)]
                     CoreWallet::Connect { url, network_id } => {
-                        log_info!("Connected to {url:?} on network {network_id}");
+                        // log_info!("Connected to {url:?} on network {network_id}");
                         self.state.is_connected = true;
                         self.state.url = url;
                         self.state.network_id = Some(network_id);
