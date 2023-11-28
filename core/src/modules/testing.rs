@@ -1,5 +1,5 @@
 use crate::imports::*;
-use egui_plot::PlotPoint;
+// use egui_plot::PlotPoint;
 
 
 #[derive(Clone, Default)]
@@ -17,25 +17,25 @@ pub struct Testing {
     // pub message: Option<String>,
 
     text : String,
-    graph_data: Vec<PlotPoint>,
+    // graph_data: Vec<PlotPoint>,
 }
 
 impl Testing {
     pub fn new(runtime: Runtime) -> Self {
-        let now = workflow_core::time::unixtime_as_millis_f64();
-        let graph_data = vec![
-            PlotPoint::new(now + 1000.0, 1.5),
-            PlotPoint::new(now + 2000.0, 10.3),
-            PlotPoint::new(now + 4000.0, 4.5),
-            PlotPoint::new(now + 10000.0, 3.0),
-            PlotPoint::new(now + 16000.0, 2.5),
-            PlotPoint::new(now + 20000.0, 5.0),
-        ];
+        // let now = workflow_core::time::unixtime_as_millis_f64();
+        // let graph_data = vec![
+        //     PlotPoint::new(now + 1000.0, 1.5),
+        //     PlotPoint::new(now + 2000.0, 10.3),
+        //     PlotPoint::new(now + 4000.0, 4.5),
+        //     PlotPoint::new(now + 10000.0, 3.0),
+        //     PlotPoint::new(now + 16000.0, 2.5),
+        //     PlotPoint::new(now + 20000.0, 5.0),
+        // ];
         Self {
             runtime,
             // state: State::Select,
             // message: None,
-            graph_data,
+            // graph_data,
             text : "...".to_string(),
         }
     }
@@ -104,10 +104,10 @@ impl ModuleT for Testing {
                 self.text("icon 1 clicked");
             }
 
-            let graph = CompositeGraph::new("testing",&self.graph_data);
-            if ui.add(graph).clicked(){
-                self.text("graph clicked");
-            }
+            // let graph = CompositeGraph::new("testing",&self.graph_data);
+            // if ui.add(graph).clicked(){
+            //     self.text("graph clicked");
+            // }
 
 
 
