@@ -389,27 +389,30 @@ impl Overview {
                     });
 
                     let text = format!("{} {}", i18n(metric.title().1).to_uppercase(), metric.format(value, true, true));
-                    let rich_text = egui::RichText::new(text).size(10.).color(Color32::WHITE).raised();//.background_color(Color32::from_black_alpha(128));
-                    let label = Label::new(rich_text).wrap(false);
-                    let mut rect = plot_result.response.rect;
-                    rect.set_bottom(rect.top() + 12.);
-                    // rect.set_right(rect.left() + 12.);
-                    ui.put(rect, label);
-
+                    let rich_text_top = egui::RichText::new(&text).size(10.).color(Color32::WHITE);//.background_color(Color32::from_black_alpha(32));
+                    let rich_text_back = egui::RichText::new(text).size(10.).color(Color32::BLACK);
+                    let label_top = Label::new(rich_text_top).wrap(false);
+                    let label_back = Label::new(rich_text_back).wrap(false);
+                    let mut rect_top = plot_result.response.rect;
+                    rect_top.set_bottom(rect_top.top() + 12.);
+                    let mut rect_back = rect_top.clone();
+                    rect_back.set_center(rect_back.center()+vec2(0.8,0.8));
+                    ui.put(rect_back, label_back);
+                    ui.put(rect_top, label_top);
                     // plot_result.response.on_hover_text("Test 123");
                 });
         });
     }
 }
 
-const METRICS : [Metric;23] = [
+const METRICS : &[Metric] = &[
     Metric::NodeCpuUsage,
     Metric::NodeResidentSetSizeBytes,
     // Metric::VirtualMemorySizeBytes,
     Metric::NodeFileHandlesCount,
     Metric::NodeDiskIoReadBytes,
-    Metric::NodeDiskIoWriteBytes,
     Metric::NodeDiskIoReadPerSec,
+    Metric::NodeDiskIoWriteBytes,
     Metric::NodeDiskIoWritePerSec,
     // Metric::BorshLiveConnections,
     // Metric::BorshConnectionAttempts,
@@ -417,6 +420,10 @@ const METRICS : [Metric;23] = [
     // Metric::JsonLiveConnections,
     // Metric::JsonConnectionAttempts,
     // Metric::JsonHandshakeFailures,
+    Metric::NodeTotalBytesRx,
+    Metric::NodeTotalBytesRxPerSecond,
+    Metric::NodeTotalBytesTx,
+    Metric::NodeTotalBytesTxPerSecond,
     Metric::NodeActivePeers,
     Metric::NodeBlocksSubmittedCount,
     Metric::NodeHeadersProcessedCount,
@@ -427,6 +434,7 @@ const METRICS : [Metric;23] = [
     Metric::NodeMassProcessedCount,
     Metric::NodeDatabaseBlocksCount,
     Metric::NodeDatabaseHeadersCount,
+    Metric::NetworkMempoolSize,
     Metric::NetworkTransactionsPerSecond,
     Metric::NetworkTipHashesCount,
     Metric::NetworkDifficulty,
