@@ -7,6 +7,8 @@ use kaspa_rpc_core::RpcPeerInfo;
 pub const PEER_POLLING_INTERVAL_SECONDS: u64 = 1; // 1 sec
 
 pub enum PeerMonitorEvents {
+    Enable,
+    Disable,
     Exit,
 }
 
@@ -16,6 +18,7 @@ pub struct PeerMonitorService {
     pub task_ctl: Channel<()>,
     pub rpc_api: Mutex<Option<Arc<dyn RpcApi>>>,
     pub peer_info: Mutex<Option<Arc<Vec<RpcPeerInfo>>>>,
+    pub is_enabled : Arc<AtomicBool>,
 }
 
 impl PeerMonitorService {
@@ -26,6 +29,7 @@ impl PeerMonitorService {
             task_ctl: Channel::oneshot(),
             rpc_api: Mutex::new(None),
             peer_info: Mutex::new(None),
+            is_enabled: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -35,6 +39,20 @@ impl PeerMonitorService {
 
     pub fn peer_info(&self) -> Option<Arc<Vec<RpcPeerInfo>>> {
         self.peer_info.lock().unwrap().clone()
+    }
+
+    pub fn enable(&self) {
+        self.service_events
+            .sender
+            .try_send(PeerMonitorEvents::Enable)
+            .unwrap();
+    }
+
+    pub fn disable(&self) {
+        self.service_events
+            .sender
+            .try_send(PeerMonitorEvents::Disable)
+            .unwrap();
     }
 }
 
@@ -66,6 +84,10 @@ impl Service for PeerMonitorService {
         loop {
             select! {
                 _ = interval.next().fuse() => {
+                    if !self.is_enabled.load(Ordering::Relaxed) {
+                        continue;
+                    }
+
                     if let Some(rpc_api) = this.rpc_api() {
                         if let Ok(resp) = rpc_api.get_connected_peer_info().await {
                             this.peer_info.lock().unwrap().replace(Arc::new(resp.peer_info));
@@ -75,6 +97,12 @@ impl Service for PeerMonitorService {
                 msg = this.as_ref().service_events.receiver.recv().fuse() => {
                     if let Ok(event) = msg {
                         match event {
+                            PeerMonitorEvents::Enable => {
+                                self.is_enabled.store(true, Ordering::Relaxed);
+                            }
+                            PeerMonitorEvents::Disable => {
+                                self.is_enabled.store(false, Ordering::Relaxed);
+                            }
                             PeerMonitorEvents::Exit => {
                                 break;
                             }
