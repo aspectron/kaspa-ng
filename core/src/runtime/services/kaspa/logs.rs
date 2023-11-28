@@ -52,3 +52,18 @@ impl From<&Log> for RichText {
         text.font(FontId::monospace(theme().node_log_font_size))
     }
 }
+
+impl std::fmt::Display for Log {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let text = match self {
+            Log::Info(text) => text.to_owned(),
+            Log::Error(text) => text.to_owned(),
+            Log::Warning(text) => text.to_owned(),
+            Log::Debug(text) => text.to_owned(),
+            Log::Trace(text) => text.to_owned(),
+            Log::Processed(text) => text.to_owned(),
+        };
+
+        write!(f, "{}", text)
+    }
+}
