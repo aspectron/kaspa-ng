@@ -78,6 +78,15 @@ impl ModuleT for Node {
                 });
             
     }
+
+    fn activate(&mut self, _core: &mut Core) {
+        crate::runtime::runtime().peer_monitor_service().enable();
+    }
+
+    fn deactivate(&mut self, _core: &mut Core) {
+        crate::runtime::runtime().peer_monitor_service().disable();
+    }
+
 }
 
 fn render_peer(ui : &mut Ui, peer: &RpcPeerInfo) {
