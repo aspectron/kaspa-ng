@@ -128,138 +128,90 @@ impl<'panel, Context> Panel<'panel, Context> {
         let panel_margin_size = theme.panel_margin_size();
         let panel_width = ui.available_width();
         let inner_panel_width = panel_width - panel_margin_size * 2.;
-        // ui.add(|ui: &mut Ui|{
-        //     //let rect = Rect::from_min_max((0.0, 0.0).into(), (panel_width, 10.0).into());
-        //     let res = ui.allocate_response((panel_width, 10.0).into(), Sense::click());
-        //     ui.painter().rect(
-        //         res.rect,
-        //         Rounding::default(),
-        //         Color32::RED,
-        //         Stroke::default(),
-        //     );
 
-        //     res
-        // });
-        ui.horizontal(|ui| {
-            match self.back {
-                Some(back) if self.back_enabled => {
-                    // if icons()
-                    //     .back
-                    //     .render_with_options(ui, icon_size, self.back_active)
-                    //     .clicked()
-                    // {
-                    //     back(self.this);
-                    // }
-
-                    let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT)
-                        .icon_size(icon_size.inner.x)
-                        .padding(Some(icon_padding));
-                    if ui.add_enabled(self.back_active, icon).clicked() {
-                        back(self.this);
+        ui.vertical_centered(|ui| {
+            ui.horizontal(|ui| {
+                match self.back {
+                    Some(back) if self.back_enabled => {
+                        let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT)
+                            .icon_size(icon_size.inner.x)
+                            .padding(Some(icon_padding));
+                        if ui.add_enabled(self.back_active, icon).clicked() {
+                            back(self.this);
+                        }
+                    }
+                    _ => {
+                        ui.add_space(icon_size.outer_width());
                     }
                 }
-                _ => {
-                    ui.add_space(icon_size.outer_width());
+
+                if let Some(caption) = self.caption {
+                    let max_size = Vec2::new(
+                        panel_width - (icon_size.outer_width() + ui.spacing().item_spacing.x) * 2.,
+                        icon_size.outer_height(),
+                    );
+
+                    ui.add_sized(max_size, Label::new(WidgetText::from(caption).heading()));
                 }
-            }
 
-            if let Some(caption) = self.caption {
-                let max_size = Vec2::new(
-                    panel_width - (icon_size.outer_width() + ui.spacing().item_spacing.x) * 2.,
-                    icon_size.outer_height(),
-                );
-
-                ui.add_sized(max_size, Label::new(WidgetText::from(caption).heading()));
-            }
-
-            match self.close {
-                Some(close) if self.close_enabled => {
-                    // if icons()
-                    //     .close
-                    //     .render_with_options(ui, icon_size, self.close_active)
-                    //     .clicked()
-                    // {
-                    //     close(self.this);
-                    // }
-
-                    let icon = CompositeIcon::new(egui_phosphor::bold::X)
-                        .icon_size(icon_size.inner.x)
-                        .padding(Some(icon_padding));
-                    if ui.add_enabled(self.close_active, icon).clicked() {
-                        close(self.this);
+                match self.close {
+                    Some(close) if self.close_enabled => {
+                        let icon = CompositeIcon::new(egui_phosphor::bold::X)
+                            .icon_size(icon_size.inner.x)
+                            .padding(Some(icon_padding));
+                        if ui.add_enabled(self.close_active, icon).clicked() {
+                            close(self.this);
+                        }
+                    }
+                    _ => {
+                        ui.add_space(icon_size.outer_width());
                     }
                 }
-                _ => {
-                    ui.add_space(icon_size.outer_width());
-                }
-            }
-        });
-
-        if let Some(header) = self.header {
-            ui.add_space(24.);
-
-            ui.vertical_centered(|ui| {
-                ui.set_width(inner_panel_width);
-                header(self.this, ui);
             });
-        }
 
-        ui.add_space(24.);
+            if let Some(header) = self.header {
+                ui.add_space(24.);
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            ui.set_width(ui.available_width());
-
-            if let Some(body) = self.body {
                 ui.vertical_centered(|ui| {
                     ui.set_width(inner_panel_width);
-
-                    body(self.this, ui);
+                    header(self.this, ui);
                 });
             }
 
-            let padding = ui.available_height() - theme.panel_footer_height;
-            if padding > 0. {
-                ui.add_space(padding);
+            ui.add_space(24.);
+
+            egui::ScrollArea::vertical()
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+
+                    if let Some(body) = self.body {
+                        ui.vertical_centered(|ui| {
+                            ui.set_width(inner_panel_width);
+
+                            body(self.this, ui);
+                        });
+                    }
+
+                    let padding = ui.available_height() - theme.panel_footer_height;
+                    if padding > 0. {
+                        ui.add_space(padding);
+                    }
+                });
+
+            if let Some(footer) = self.footer {
+                footer(self.this, ui);
+            }
+
+            if let Some(handler) = self.handler {
+                let text = self.handler_text.as_deref();
+                if ui
+                    .large_button_enabled(self.handler_enabled, text.unwrap_or("Continue"))
+                    .clicked()
+                {
+                    handler(self.this);
+                }
             }
         });
-
-        if let Some(footer) = self.footer {
-            footer(self.this, ui);
-        }
-
-        if let Some(handler) = self.handler {
-            let text = self.handler_text.as_deref();
-            if ui
-                .large_button_enabled(self.handler_enabled, text.unwrap_or("Continue"))
-                .clicked()
-            {
-                handler(self.this);
-            }
-        }
     }
 }
-
-// macro_rules! phosphor {
-//     ($symbol:ident) => {
-//         Icon::new(egui_phosphor::regular::$symbol)
-//     };
-// }
-
-// struct Icons {
-//     pub back: Icon,
-//     pub close: Icon,
-// }
-
-// impl Default for Icons {
-//     fn default() -> Self {
-//         Self {
-//             back: phosphor!(ARROW_BEND_UP_LEFT),
-//             close: phosphor!(X),
-//         }
-//     }
-// }
-
-// fn icons() -> &'static Icons {
-//     static ICONS: OnceLock<Icons> = OnceLock::new();
-//     ICONS.get_or_init(Icons::default)
-// }

@@ -170,7 +170,7 @@ impl ModuleT for AccountManager {
         ui: &mut egui::Ui,
     ) {
         use egui_phosphor::light::{ARROW_CIRCLE_UP,ARROWS_DOWN_UP,QR_CODE};
-        let screen_rect = ui.ctx().screen_rect();
+        // let screen_rect = ui.ctx().screen_rect();
 
         let network_type = if let Some(network_id) = core.state().network_id() {
             network_id.network_type()
@@ -182,6 +182,8 @@ impl ModuleT for AccountManager {
 
         match self.state.clone() {
             State::Select => {
+                // core.apply_large_style(ui);
+                
                 if let Some(account_collection) = core.account_collection() {
                     if account_collection.is_empty() {
                         ui.label("Please create an account");
@@ -222,6 +224,7 @@ impl ModuleT for AccountManager {
             // }
 
             State::Overview { account } => {
+                let screen_rect_height = ui.ctx().screen_rect().height();
                 let width = ui.available_width();
 
                 ui.horizontal(|ui| {
@@ -233,21 +236,10 @@ impl ModuleT for AccountManager {
                         return;
                     };
 
-                    // let wallet_name = core.wallet_descriptor.as_ref().and_then(|descriptor|descriptor.title.clone()).as_deref().unwrap_or("NO NAME");
-                    let current_wallet_selector_id = ui.make_persistent_id("current_wallet_selector");
-                    let response = ui.add(Label::new(format!("Wallet: {} ⏷", wallet_name)).sense(Sense::click()));
-                    
-                    if response.clicked() {
-                        ui.memory_mut(|mem| mem.toggle_popup(current_wallet_selector_id));
-                    }
-                    egui::popup::popup_above_or_below_widget(ui, current_wallet_selector_id, &response, AboveOrBelow::Below, |ui| {
-                        ui.set_min_width(200.0);
-                        ui.set_max_height(screen_rect.height() * 0.75);
-                        ui.label("Select Wallet");
-                        ui.label("");
+                    PopupPanel::new(ui, "wallet_selector_popup",format!("Wallet: {}", wallet_name), |ui| {
 
                         ScrollArea::vertical()
-                            .id_source("popup_wallet_selector_scroll")
+                            .id_source("wallet_selector_popup_scroll")
                             .auto_shrink([true; 2])
                             .show(ui, |ui| {
 
@@ -287,24 +279,20 @@ impl ModuleT for AccountManager {
                             });
 
 
-                    });
+                    })
+                    .with_min_width(240.)
+                    .with_max_height(screen_rect_height * 0.8)
+                    .with_caption(true)
+                    .with_close_button(true)
+                    .with_pulldown_marker(true)
+                    .build(ui);
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        
-                        let current_account_selector_id = ui.make_persistent_id("current_account_selector");
-                        let response = ui.add(Label::new(format!("Account: {} ⏷", account.name_or_id())).sense(Sense::click()));
-                        
-                        if response.clicked() {
-                            ui.memory_mut(|mem| mem.toggle_popup(current_account_selector_id));
-                        }
-                        egui::popup::popup_above_or_below_widget(ui, current_account_selector_id, &response, AboveOrBelow::Below, |ui| {
-                            ui.set_min_width(200.0);
-                            ui.set_max_height(screen_rect.height() * 0.75);
-                            ui.label("Select Account");
-                            ui.label("");
+                        PopupPanel::new(ui, "account_selector_popup",format!("Account: {}", account.name_or_id()), |ui| {
+                            
 
                             egui::ScrollArea::vertical()
-                                .id_source("popup_account_selector_scroll")
+                                .id_source("account_selector_popup_scroll")
                                 .auto_shrink([true; 2])
                                 .show(ui, |ui| {
                 
@@ -331,12 +319,20 @@ impl ModuleT for AccountManager {
 
                                 });
 
-                        });
+                        })
+                        .with_min_width(240.)
+                        .with_max_height(screen_rect_height * 0.8)
+                        .with_caption(true)
+                        .with_close_button(true)    
+                        .with_pulldown_marker(true)
+                        .build(ui);
                         
                     });
                 });
 
                 SidePanel::left("account_manager_left").exact_width(width/2.).resizable(false).show_separator_line(true).show_inside(ui, |ui| {
+
+                    core.apply_mobile_style(ui);
 
                     ui.separator();
                     ui.add_space(8.);
@@ -375,9 +371,6 @@ impl ModuleT for AccountManager {
                                     ui.vertical_centered(|ui|{
                                         ui.horizontal(|ui| {
 
-
-
-                                            // if let Some(response) = 
                                             CenterLayoutBuilder::new()
                                                 .add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme().medium_button_size()), |(this, _):&mut (&mut AccountManager, &mut Core)| {
                                                     this.context.action = Action::Estimating;
@@ -453,6 +446,10 @@ impl ModuleT for AccountManager {
 }
 
 impl AccountManager {
+
+    // fn render_account_overview(&mut self, ui: &mut Ui, _core : &mut Core, account : &Account, network_type : NetworkType, current_daa_score : Option<u64>) {
+
+    // }
 
     fn render_network_state(&mut self, core : &mut Core, ui: &mut Ui) {
         use egui_phosphor::light::{CLOUD_SLASH,CLOUD_ARROW_DOWN};
@@ -576,7 +573,7 @@ impl AccountManager {
             // })
             .clicked() {
                 ui.output_mut(|o| o.copied_text = context.address().to_string());
-                runtime().notify(UserNotification::info("Address is copied to clipboard").short())
+                runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short())
             }
     }
 
@@ -749,7 +746,12 @@ impl AccountManager {
                 if let Some(final_transaction_amount) = estimate.final_transaction_amount {
                     ui.label(format!("Final Amount: {}", sompi_to_kaspa_string_with_suffix(final_transaction_amount + estimate.aggregated_fees, &network_type)));
                 }
-                ui.label(format!("Fees: {}", sompi_to_kaspa_string_with_suffix(estimate.aggregated_fees, &network_type)));
+                let fee_title = if self.context.priority_fees_sompi != 0 {
+                    "Network and Priority Fees:"
+                } else {
+                    "Network Fees:"
+                };
+                ui.label(format!("{} {}", fee_title, sompi_to_kaspa_string_with_suffix(estimate.aggregated_fees, &network_type)));
                 ui.label(format!("Transactions: {} UTXOs: {}", estimate.number_of_generated_transactions, estimate.aggregated_utxos));
                 
                 self.context.address_status == AddressStatus::Valid
@@ -771,6 +773,7 @@ impl AccountManager {
                     CenterLayoutBuilder::new()
                         .add_enabled(ready_to_send, Button::new(format!("{CHECK} Send")).min_size(theme().medium_button_size()), |this: &mut AccountManager| {
                             this.context.action = Action::Sending;
+                            this.context.focus = Focus::WalletSecret;
                         })
                         .add(Button::new(format!("{X} Cancel")).min_size(theme().medium_button_size()), |this| {
                             this.context.reset_send_state();
@@ -816,7 +819,7 @@ impl AccountManager {
             let response = TextEditor::new(
                 &mut self.context.payment_secret,
                 &mut self.context.focus,
-                Focus::WalletSecret,
+                Focus::PaymentSecret,
                 |ui, text| {
                     ui.add_space(8.);
                     ui.label(egui::RichText::new("Enter bip39 passphrase").size(12.).raised());

@@ -19,6 +19,7 @@ impl AsColor for TransactionType {
             TransactionType::External => Color32::from_rgb(162, 245, 187),
             TransactionType::Reorg => Color32::from_rgb(79, 64, 64),
             TransactionType::Batch => Color32::GRAY,
+            TransactionType::Stasis => Color32::GRAY,
         }
     }
 }

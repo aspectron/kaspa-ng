@@ -15,10 +15,6 @@ impl Logs {
 
 impl ModuleT for Logs {
 
-    // fn style(&self) -> ModuleStyle {
-    //     ModuleStyle::Default
-    // }
-
     fn render(
         &mut self,
         _core: &mut Core,
@@ -53,7 +49,7 @@ impl ModuleT for Logs {
             .clicked() {
                 let logs = self.runtime.kaspa_service().logs().iter().map(|log| log.to_string()).collect::<Vec<String>>().join("\n");
                 ui.output_mut(|o| o.copied_text = logs);
-                runtime().notify(UserNotification::info(i18n("Copied to clipboard")).short())
+                runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}",i18n("Copied to clipboard"))).short())
             }
     }
 }

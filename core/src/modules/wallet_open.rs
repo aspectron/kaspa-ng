@@ -40,6 +40,11 @@ impl WalletOpen {
 }
 
 impl ModuleT for WalletOpen {
+
+    fn style(&self) -> ModuleStyle {
+        ModuleStyle::Mobile
+    }
+
     fn render(
         &mut self,
         core: &mut Core,
@@ -48,176 +53,128 @@ impl ModuleT for WalletOpen {
         ui: &mut egui::Ui,
     ) {
 
-        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-            let size = egui::Vec2::new(200_f32, 40_f32);
-            let unlock_result = Payload::<Result<()>>::new("wallet_unlock_result");
+        let size = egui::Vec2::new(200_f32, 40_f32);
+        let unlock_result = Payload::<Result<()>>::new("wallet_unlock_result");
 
-            let text: &str = "Select a wallet to unlock";
+        let text: &str = "Select a wallet to unlock";
 
-            match self.state.clone() {
-                State::Select => {
-                    Panel::new(self)
-                        .with_caption("Select Wallet")
-                        .with_close_enabled(false, |_| {})
-                        .with_header(|_ctx, ui| {
-                            ui.label(text);
-                        })
-                        .with_body(|this, ui| {
-                            for wallet_descriptor in core.wallet_list.iter() {
-                                if ui.add_sized(size, CompositeButton::new(
-                                    wallet_descriptor.title.as_deref().unwrap_or("NO NAME"),
-                                    wallet_descriptor.filename.clone(),
-                                )).clicked() {
-                                    this.state = State::Unlock { wallet_descriptor : wallet_descriptor.clone(), error : None };
-                                }
-                            }
-                            ui.label(" ");
-                            ui.separator();
-                            ui.label(" ");
-                            if ui
-                                .large_button("Create new wallet")
-                                .clicked()
-                            {
-                                // wallet.get::<section::CreateWallet>().
-                                // wallet.select::<section::CreateWallet>(TypeId::of::<section::OpenWallet>());
-                                core.select::<modules::WalletCreate>();
-                            }
-
-                            ui.label(" ");
-                        })
-                        .render(ui);
-                }
-
-                State::Unlock{wallet_descriptor, error} => {
-                    // let width = ui.available_width();
-                    // let theme = theme();
-                    Panel::new(self)
-                        .with_caption("Unlock Wallet")
-                        .with_back(|ctx| {
-                            ctx.state = State::Select;
-                        })
-                        .with_close(|_ctx| {})
-                        .with_body(|ctx, ui| {
-                            // ui.label(" ");
-                            ui.label(format!(
-                                "Opening wallet: \"{}\"",
-                                // ctx.selected_wallet.as_ref().unwrap()
-                                wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str())
-                            ));
-                            ui.label(" ");
-                            // ui.add_space(24.);
-
-                            if let Some(err) = error {
-                                // ui.horizontal(|ui| {
-                                //     ui.vertical(|ui| {
-                                //         ui.horizontal(|ui| {
-                                //             ui.set_width(theme.error_icon_size.outer_width());
-                                //             icons().error.render(ui,&theme.error_icon_size,theme.error_color);
-                                //         });
-                                //     });
-                                //     ui.vertical(|ui| {
-                                //         // ui.set_width(width-theme.error_icon_size.outer_width());
-                                //         // ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
-                                //     });
-                                // });
-                                ui.label(
-                                    egui::RichText::new(err.to_string())
-                                        .color(egui::Color32::from_rgb(255, 120, 120)),
-                                );
-                                ui.label(" ");
-                            }
-
-                            ui.label("Enter your password to unlock your wallet");
-                            ui.label(" ");
-
-                            let mut unlock = false;
-
-                            let response = ui.add_sized(
-                                    size,
-                                    TextEdit::singleline(&mut ctx.wallet_secret)
-                                        .hint_text("Enter Password...")
-                                        .password(true)
-                                        .vertical_align(Align::Center),
-                                );
-                            // ui.memory().request_focus(resp.id);
-                            if response.text_edit_submit(ui) {
-                                unlock = true;
-                            } else {
-                                response.request_focus();
-                            }
-
-                            if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
-                                unlock = true;
-                            }
-
-                            if unlock {
-                                let wallet_secret = kaspa_wallet_core::secret::Secret::new(
-                                    ctx.wallet_secret.as_bytes().to_vec(),
-                                );
-                                ctx.wallet_secret.zeroize();
-                                let wallet = ctx.runtime.wallet().clone();
-                                let wallet_descriptor_delegate = wallet_descriptor.clone();
-                                spawn_with_result(&unlock_result, async move {
-                                    wallet.wallet_open(wallet_secret, Some(wallet_descriptor_delegate.filename), true, true).await?;
-                                    Ok(())
-                                });
-
-                                ctx.state = State::Unlocking { wallet_descriptor };
-                            }
-
-                            ui.label(" ");
-                        })
-                        // .with_footer(|ui|{
-                        //     if ui
-                        //         .add_sized(size, egui::Button::new("Select a different wallet"))
-                        //         .clicked() {
-                        //             self.state = State::Select;
-                        //         }
-                        // })
-                        .render(ui);
-
-                    // egui::ScrollArea::vertical()
-                    //     .id_source("unlock-wallet")
-                    //     .show(ui, |ui| {
-
-                    //     if ui
-                    //         .add_sized(size, egui::Button::new("Select a different wallet"))
-                    //         .clicked() {
-                    //             self.state = State::Select;
-                    //         }
-                    // });
-                }
-                State::Unlocking { wallet_descriptor } => {
-                    ui.heading("Unlocking");
-                    // ui.separator();
-                    ui.label(" ");
-                    ui.label("Unlocking wallet, please wait...");
-                    ui.label(" ");
-                    ui.add_space(64.);
-                    ui.add(egui::Spinner::new().size(92.));
-
-                    if let Some(result) = unlock_result.take() {
-                        match result {
-                            Ok(_) => {
-                                println!("Unlock success");
-                                // self.state = State::Unlock;
-                                core.select::<modules::AccountManager>();
-                                self.state = Default::default();
-                            }
-                            Err(err) => {
-                                println!("Unlock error: {}", err);
-                                self.state = State::Unlock { wallet_descriptor, error : Some(Arc::new(err)) };
+        match self.state.clone() {
+            State::Select => {
+                Panel::new(self)
+                    .with_caption("Select Wallet")
+                    .with_close_enabled(false, |_| {})
+                    .with_header(|_ctx, ui| {
+                        ui.label(text);
+                    })
+                    .with_body(|this, ui| {
+                        for wallet_descriptor in core.wallet_list.iter() {
+                            if ui.add_sized(size, CompositeButton::new(
+                                wallet_descriptor.title.as_deref().unwrap_or("NO NAME"),
+                                wallet_descriptor.filename.clone(),
+                            )).clicked() {
+                                this.state = State::Unlock { wallet_descriptor : wallet_descriptor.clone(), error : None };
                             }
                         }
-                        // ui.label(format!("Result: {:?}", result));
-                        // _ctx.value = result.unwrap();
-                        // Stage::Next
-                    } else {
-                        // Stage::Current
+                        ui.label(" ");
+                        ui.separator();
+                        ui.label(" ");
+                        if ui
+                            .large_button("Create new wallet")
+                            .clicked()
+                        {
+                            core.select::<modules::WalletCreate>();
+                        }
+
+                        ui.label(" ");
+                    })
+                    .render(ui);
+            }
+
+            State::Unlock{wallet_descriptor, error} => {
+                Panel::new(self)
+                    .with_caption("Unlock Wallet")
+                    .with_back(|ctx| {
+                        ctx.state = State::Select;
+                    })
+                    .with_body(|ctx, ui| {
+                        ui.label(format!(
+                            "Opening wallet: \"{}\"",
+                            wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str())
+                        ));
+                        ui.label(" ");
+
+                        if let Some(err) = error {
+                            ui.label(
+                                egui::RichText::new(err.to_string())
+                                    .color(egui::Color32::from_rgb(255, 120, 120)),
+                            );
+                            ui.label(" ");
+                        }
+
+                        ui.label(i18n("Enter the password to unlock your wallet"));
+                        ui.label(" ");
+
+                        let mut unlock = false;
+
+                        let response = ui.add_sized(
+                                size,
+                                TextEdit::singleline(&mut ctx.wallet_secret)
+                                    .password(true)
+                                    .vertical_align(Align::Center),
+                            );
+                        // ui.memory().request_focus(resp.id);
+                        if response.text_edit_submit(ui) {
+                            unlock = true;
+                        } else {
+                            response.request_focus();
+                        }
+
+                        if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
+                            unlock = true;
+                        }
+
+                        if unlock {
+                            let wallet_secret = kaspa_wallet_core::secret::Secret::new(
+                                ctx.wallet_secret.as_bytes().to_vec(),
+                            );
+                            ctx.wallet_secret.zeroize();
+                            let wallet = ctx.runtime.wallet().clone();
+                            let wallet_descriptor_delegate = wallet_descriptor.clone();
+                            spawn_with_result(&unlock_result, async move {
+                                wallet.wallet_open(wallet_secret, Some(wallet_descriptor_delegate.filename), true, true).await?;
+                                Ok(())
+                            });
+
+                            ctx.state = State::Unlocking { wallet_descriptor };
+                        }
+
+                        ui.label(" ");
+                    })
+                    .render(ui);
+            }
+            State::Unlocking { wallet_descriptor } => {
+                ui.heading("Unlocking");
+                ui.label(" ");
+                ui.label("Unlocking wallet, please wait...");
+                ui.label(" ");
+                ui.add_space(64.);
+                ui.add(egui::Spinner::new().size(92.));
+
+                if let Some(result) = unlock_result.take() {
+                    match result {
+                        Ok(_) => {
+                            println!("Unlock success");
+                            core.select::<modules::AccountManager>();
+                            self.state = Default::default();
+                        }
+                        Err(err) => {
+                            println!("Unlock error: {}", err);
+                            self.state = State::Unlock { wallet_descriptor, error : Some(Arc::new(err)) };
+                        }
                     }
                 }
             }
-        });
+        }
     }
 }
 
@@ -240,7 +197,6 @@ fn _render_wallet_descriptor(wallet: &WalletDescriptor, ui: &mut Ui) -> LayoutJo
             ..Default::default()
         },
     );
-    //  job.append(text, leading_space, format)
     job.append(
         "\n",
         0.0,

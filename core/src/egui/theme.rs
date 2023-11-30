@@ -15,6 +15,7 @@ pub struct Theme {
     pub medium_button_size: Vec2,
     pub large_button_size: Vec2,
     pub panel_footer_height: f32,
+    pub panel_editor_size: Vec2,
 
     pub widget_spacing: f32,
     // pub panel_alert_icon_size : IconSize,
@@ -61,6 +62,7 @@ impl Default for Theme {
             large_button_size: Vec2::new(200_f32, 40_f32),
             panel_footer_height: 72_f32,
             panel_margin_size: 24_f32,
+            panel_editor_size: Vec2::new(200_f32, 40_f32),
 
             widget_spacing: 4_f32,
             // panel_error_icon_size : IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6.,0.)),
@@ -126,13 +128,6 @@ static mut THEME: Option<Theme> = None;
 pub fn theme() -> &'static Theme {
     unsafe {
         THEME.get_or_insert_with(Theme::default)
-
-        // if THEME.is_none() {
-        //     THEME = Some(Rc::new(Theme {
-        //         icon_size : 20_f32,
-        //     }));
-        // }
-        // THEME.clone().unwrap()
     }
 }
 
@@ -141,19 +136,6 @@ pub fn apply_theme(theme: Theme) {
         THEME = Some(theme);
     }
 }
-
-// pub fn theme() -> Rc<Theme> {
-//     static mut THEME : Option<Rc<Theme>> = None;
-//     unsafe {
-//         THEME.get_or_insert_with(||Rc::new(Theme::default())).clone()
-//         // if THEME.is_none() {
-//         //     THEME = Some(Rc::new(Theme {
-//         //         icon_size : 20_f32,
-//         //     }));
-//         // }
-//         // THEME.clone().unwrap()
-//     }
-// }
 
 pub trait MetricGroupExtension {
     fn to_color(&self) -> Color32;

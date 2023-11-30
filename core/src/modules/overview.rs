@@ -37,9 +37,7 @@ impl ModuleT for Overview {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        // let width = ui.available_width();
-        let screen_rect = ui.ctx().screen_rect();
-        let width = screen_rect.width();
+        let width = ui.available_width();
 
         SidePanel::left("overview_left").exact_width(width/2.).resizable(false).show_separator_line(true).show_inside(ui, |ui| {
             // ui.label("Kaspa NG");
@@ -89,14 +87,16 @@ impl Overview {
         let top = 32.;
         let logo_rect = Rect::from_min_size(Pos2::new(left, top), logo_size);
 
-        Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.svg"), bytes : Bytes::Static(crate::app::KASPA_NG_LOGO_SVG)})
-        .maintain_aspect_ratio(true)
-        .max_size(logo_size)
-        .fit_to_exact_size(logo_size)
-        .shrink_to_fit()
-        .texture_options(TextureOptions::LINEAR)
-        .tint(Color32::from_f32(0.8))
-        .paint_at(ui, logo_rect);
+        if screen_rect.width() > 768.0 {
+            Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.svg"), bytes : Bytes::Static(crate::app::KASPA_NG_LOGO_SVG)})
+            .maintain_aspect_ratio(true)
+            .max_size(logo_size)
+            .fit_to_exact_size(logo_size)
+            .shrink_to_fit()
+            .texture_options(TextureOptions::LINEAR)
+            .tint(Color32::from_f32(0.8))
+            .paint_at(ui, logo_rect);
+        }
 
     egui::ScrollArea::vertical()
         .id_source("overview_metrics")
@@ -210,7 +210,7 @@ impl Overview {
                         ui.label("License: MIT");
                         ui.hyperlink_url_to_tab("https://phosphoricons.com/");
                         ui.label("");
-                        ui.label("Graphics Design");
+                        ui.label("Graphics Design (Illustration Art)");
                         ui.label("Copyright (c) 2023 Rhubarb Media");
                         ui.label("License: CC BY 4.0");
                         ui.hyperlink_url_to_tab("https://rhubarbmedia.ca/");
@@ -232,10 +232,15 @@ impl Overview {
                                     "Bubblegum Lightning",
                                     "coderofstuff",
                                     "CryptoK",
+                                    "Dhayse",
                                     "Elertan",
+                                    "Gennady Gorin",
                                     "hashdag",
+                                    "Helix",
+                                    "Helix",
                                     "jablonx",
                                     "jwj",
+                                    "KaffinPX",
                                     "lAmeR",
                                     "matoo",
                                     "msutton",
@@ -243,9 +248,9 @@ impl Overview {
                                     "shaideshe",
                                     "someone235",
                                     "supertypo",
+                                    "The AllFather",
                                     "Tim",
                                     "Wolfie",
-                                    "KaffinPX"
                                 ];
                                 nicks.sort();
                                 nicks.into_iter().for_each(|nick| {
@@ -277,16 +282,8 @@ impl Overview {
 
     fn render_graphs(&mut self, core: &mut Core, ui : &mut Ui) {
 
-        // let mut metric_iter = [Metric::CpuUsage,                 
-        //     Metric::DiskIoReadPerSec,
-        //     Metric::DiskIoWritePerSec,
-        //     Metric::Tps,
-        //     Metric::ChainBlockCounts,
-        // ].into_iter();
+        let mut metric_iter = METRICS.iter();
 
-        let mut metric_iter = METRICS.iter(); //Metric::list().into_iter();
-
-        // let last_connect_time = core.state().last_connect_time();
         if let Some(snapshot) = core.metrics.as_ref() {
             let theme = theme();
             let view_width = ui.available_width();
@@ -300,8 +297,6 @@ impl Overview {
                 ui.horizontal(|ui| {
                     for _ in 0..graph_columns {
                         if let Some(metric) = metric_iter.next() {
-                            // let duration = 60 * 10; // 15 min (testing)
-                            // let duration = core.settings.ux.metrics.graph_duration;
                             let value = snapshot.get(metric);
                             self.render_graph(ui,  *metric, value, theme);
                         } else {
@@ -361,24 +356,7 @@ impl Overview {
                         plot = plot.include_y(100.);
                     }
 
-                    // if [
-                    //     Metric::ResidentSetSizeBytes, 
-                    //     Metric::VirtualMemorySizeBytes,
-                    //     Metric::FdNum,
-                    //     // Metric::DiskIoReadBytes,
-                    //     // Metric::DiskIoWriteBytes,
-                    //     Metric::DiskIoReadPerSec,
-                    //     Metric::DiskIoWritePerSec,
-                    //     Metric::Tps,
-                    // ].contains(&metric) {
-                    //     plot = plot.include_y(100.);
-                    // }
-
-                    // let mut color = graph_color.linear_multiply(0.5);
-                    // let color = graph_color.linear_multiply(0.15);
                     let color = graph_color.gamma_multiply(0.5);
-                    // let color = graph_color;
-                    // color[3] = 250;
                     let line = Line::new(PlotPoints::Owned(graph_data))
                         .color(color)
                         .style(LineStyle::Solid)
@@ -395,11 +373,10 @@ impl Overview {
                     let label_back = Label::new(rich_text_back).wrap(false);
                     let mut rect_top = plot_result.response.rect;
                     rect_top.set_bottom(rect_top.top() + 12.);
-                    let mut rect_back = rect_top.clone();
+                    let mut rect_back = rect_top;
                     rect_back.set_center(rect_back.center()+vec2(0.8,0.8));
                     ui.put(rect_back, label_back);
                     ui.put(rect_top, label_top);
-                    // plot_result.response.on_hover_text("Test 123");
                 });
         });
     }

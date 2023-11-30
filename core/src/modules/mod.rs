@@ -15,6 +15,7 @@ kaspa_ng_macros::register_modules!(
         import,
         metrics,
         overview,
+        private_key_create,
         request,
         send,
         settings,
@@ -30,7 +31,7 @@ kaspa_ng_macros::register_modules!(
 kaspa_ng_macros::register_modules!(register_native_modules, [logs, node,]);
 
 pub enum ModuleStyle {
-    Large,
+    Mobile,
     Default,
 }
 
@@ -46,9 +47,13 @@ pub trait ModuleT: Downcast {
         None
     }
 
+    fn modal(&self) -> bool {
+        false
+    }
+
     fn style(&self) -> ModuleStyle {
-        ModuleStyle::Large
-        // ModuleStyle::Default
+        // ModuleStyle::Large
+        ModuleStyle::Default
     }
 
     fn status_bar(&self, _core: &mut Core, _ui: &mut Ui) {}
@@ -101,7 +106,7 @@ impl Module {
     }
 
     pub fn status_bar(&self, core: &mut Core, ui: &mut Ui) {
-        self.inner.module.borrow_mut().status_bar( core, ui)
+        self.inner.module.borrow_mut().status_bar(core, ui)
     }
 
     pub fn render(
@@ -114,8 +119,8 @@ impl Module {
         let mut module = self.inner.module.borrow_mut();
 
         match module.style() {
-            ModuleStyle::Large => {
-                ui.style_mut().text_styles = core.large_style.text_styles.clone();
+            ModuleStyle::Mobile => {
+                ui.style_mut().text_styles = core.mobile_style.text_styles.clone();
             }
             ModuleStyle::Default => {
                 ui.style_mut().text_styles = core.default_style.text_styles.clone();
@@ -143,6 +148,10 @@ impl Module {
             .borrow_mut()
             .name()
             .unwrap_or_else(|| self.inner.name.as_str())
+    }
+
+    pub fn modal(&self) -> bool {
+        self.inner.module.borrow_mut().modal()
     }
 
     pub fn type_id(&self) -> TypeId {

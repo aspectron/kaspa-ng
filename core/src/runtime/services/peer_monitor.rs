@@ -18,7 +18,7 @@ pub struct PeerMonitorService {
     pub task_ctl: Channel<()>,
     pub rpc_api: Mutex<Option<Arc<dyn RpcApi>>>,
     pub peer_info: Mutex<Option<Arc<Vec<RpcPeerInfo>>>>,
-    pub is_enabled : Arc<AtomicBool>,
+    pub is_enabled: Arc<AtomicBool>,
 }
 
 impl PeerMonitorService {
@@ -102,6 +102,7 @@ impl Service for PeerMonitorService {
                             }
                             PeerMonitorEvents::Disable => {
                                 self.is_enabled.store(false, Ordering::Relaxed);
+                                this.peer_info.lock().unwrap().take();
                             }
                             PeerMonitorEvents::Exit => {
                                 break;

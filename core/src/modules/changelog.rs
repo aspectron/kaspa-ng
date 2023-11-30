@@ -19,7 +19,7 @@ impl Changelog {
 impl ModuleT for Changelog {
 
     fn style(&self) -> ModuleStyle {
-        ModuleStyle::Large
+        ModuleStyle::Mobile
     }
 
     fn render(

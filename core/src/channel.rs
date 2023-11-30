@@ -1,31 +1,28 @@
+use crate::runtime::runtime;
 use workflow_core::channel::{
     unbounded, Receiver, RecvError, SendError, Sender as ChannelSender, TryRecvError, TrySendError,
 };
 
 #[derive(Debug, Clone)]
 pub struct Sender<T> {
-    ctx: Option<egui::Context>,
     sender: ChannelSender<T>,
 }
 
 impl<T> Sender<T> {
-    pub fn new(ctx: Option<egui::Context>, sender: ChannelSender<T>) -> Self {
-        Self { ctx, sender }
+    pub fn new(sender: ChannelSender<T>) -> Self {
+        Self { sender }
     }
 
     pub async fn send(&self, msg: T) -> Result<(), SendError<T>> {
         self.sender.send(msg).await?;
-        if let Some(ctx) = &self.ctx {
-            ctx.request_repaint();
-        }
+        runtime().request_repaint();
         Ok(())
     }
 
     pub fn try_send(&self, msg: T) -> Result<(), TrySendError<T>> {
         self.sender.try_send(msg)?;
-        if let Some(ctx) = &self.ctx {
-            ctx.request_repaint();
-        }
+        runtime().request_repaint();
+
         Ok(())
     }
 
@@ -45,10 +42,10 @@ pub struct Channel<T = ()> {
 }
 
 impl<T> Channel<T> {
-    pub fn unbounded(ctx: Option<egui::Context>) -> Self {
+    pub fn unbounded() -> Self {
         let (sender, receiver) = unbounded();
         Self {
-            sender: Sender::new(ctx, sender),
+            sender: Sender::new(sender),
             receiver,
         }
     }

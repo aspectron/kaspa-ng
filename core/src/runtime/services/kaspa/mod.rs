@@ -137,14 +137,9 @@ impl KaspaService {
         match config {
             RpcConfig::Wrpc { url, encoding } => {
                 // log_warning!("create_rpc_client - RPC URL: {:?}", url);
-
-                let url = KaspaRpcClient::parse_url(
-                    // url.as_ref().unwrap_or("127.0.0.1"), //Some(url.clone()),
-                    url.clone().or(Some("127.0.0.1".to_string())),
-                    *encoding,
-                    NetworkId::from(network).into(),
-                )?
-                .expect("Unable to parse RPC URL");
+                let url = url.clone().unwrap_or_else(|| "127.0.0.1".to_string());
+                let url =
+                    KaspaRpcClient::parse_url(url, *encoding, NetworkId::from(network).into())?;
 
                 let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
                     *encoding,

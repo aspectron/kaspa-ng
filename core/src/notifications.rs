@@ -32,31 +32,31 @@ impl Default for UserNotification {
 }
 
 impl UserNotification {
-    pub fn new(kind: UserNotifyKind, text: &str) -> Self {
+    pub fn new(kind: UserNotifyKind, text: impl Into<String>) -> Self {
         Self {
             kind,
-            message: text.to_string(),
+            message: text.into(),
             ..Default::default()
         }
     }
 
-    pub fn info(text: &str) -> Self {
+    pub fn info(text: impl Into<String>) -> Self {
         Self::new(UserNotifyKind::Info, text)
     }
 
-    pub fn warning(text: &str) -> Self {
+    pub fn warning(text: impl Into<String>) -> Self {
         Self::new(UserNotifyKind::Warning, text)
     }
 
-    pub fn error(text: &str) -> Self {
+    pub fn error(text: impl Into<String>) -> Self {
         Self::new(UserNotifyKind::Error, text)
     }
 
-    pub fn success(text: &str) -> Self {
+    pub fn success(text: impl Into<String>) -> Self {
         Self::new(UserNotifyKind::Success, text)
     }
 
-    pub fn basic(text: &str) -> Self {
+    pub fn basic(text: impl Into<String>) -> Self {
         Self::new(UserNotifyKind::Basic, text)
     }
 

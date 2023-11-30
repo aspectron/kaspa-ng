@@ -40,6 +40,7 @@ pub use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 pub use std::time::Duration;
 
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
+pub use workflow_core::enums::Describe;
 pub use workflow_core::extensions::is_not_empty::*;
 pub use workflow_core::task::interval;
 pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
@@ -59,6 +60,7 @@ pub use egui_plot::{PlotPoint, PlotPoints};
 
 pub use crate::collection::Collection;
 pub use crate::core::Core;
+pub use crate::device::Device;
 pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};
@@ -78,6 +80,7 @@ pub use crate::settings::{
     KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, PluginSettings,
     PluginSettingsMap, RpcConfig, Settings, UxSettings,
 };
+pub use crate::state::State;
+pub use crate::status::Status;
 pub use crate::utils::spawn;
-// #[macro_use]
 pub use crate::utils::*;

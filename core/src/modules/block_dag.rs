@@ -20,7 +20,6 @@ pub struct BlockDag {
     daa_range : f64,
     last_repaint : Instant,
     settings: BlockDagGraphSettings,
-    popup : bool,
     background : bool,
 }
 
@@ -38,7 +37,6 @@ impl BlockDag {
             last_repaint : Instant::now(),
             parent_levels : 1,
             settings: BlockDagGraphSettings::default(),
-            popup : false,
             background : false,
         }
     }
@@ -113,7 +111,12 @@ impl ModuleT for BlockDag {
                         ui.space();
                         ui.checkbox(&mut self.background, i18n("Track in the background"));
                     });
-                }).build(ui);
+                })
+                .with_min_width(240.)
+                .with_caption(true)
+                .with_close_button(true)
+                .with_pulldown_marker(true)
+                .build(ui);
             });
         });
         ui.separator();
@@ -284,10 +287,6 @@ impl ModuleT for BlockDag {
 
         self.plot_bounds = *plot_response.transform.bounds();
         self.last_repaint = Instant::now();
-
-        if plot_response.response.clicked() {
-            self.popup = false;
-        }
 
     }
 

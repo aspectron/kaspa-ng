@@ -2,17 +2,15 @@
 
 use crate::imports::*;
 use kaspa_bip32::Mnemonic;
+use kaspa_wallet_core::api::AccountsCreateRequest;
 use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
 use kaspa_wallet_core::storage::interface::AccessContext;
-use kaspa_wallet_core::storage::{AccessContextT, AccountKind};
+use kaspa_wallet_core::storage::{AccessContextT, AccountKind, PrvKeyDataInfo};
 
-pub enum MnemonicSize {
-    Words12,
-    Words24,
-}
 
-pub enum CreateAccountDescriptor {
-    Bip44, // derivation for the same private key
+#[derive(Clone)]
+pub enum CreateAccountKind {
+    Bip44, // Create a BIP44 account on an existing private key
     Bip32,
     Legacy,
     MultiSig,
@@ -21,19 +19,6 @@ pub enum CreateAccountDescriptor {
     // MultiSig,
 }
 
-impl CreateAccountDescriptor {
-    fn _describe(&self) -> (&'static str, &'static str) {
-        match self {
-            Self::Bip44 => ("BIP44", "BIP44"),
-            Self::Bip32 => ("BIP32", "BIP32"),
-            Self::Legacy => ("Legacy", "Legacy"),
-            Self::MultiSig => ("MultiSig", "MultiSig"),
-            Self::Keypair => ("Keypair", "Keypair"),
-        }
-    }
-}
-
-
 
 #[derive(Clone)]
 pub enum State {
@@ -41,6 +26,7 @@ pub enum State {
     PrivateKeyCreate,
     PrivateKeyConfirm,
     AccountName,
+    WalletSecret,
     PaymentSecret,
     CreateAccount,
     AccountError(Arc<Error>),
@@ -49,47 +35,62 @@ pub enum State {
     Finish(Arc<dyn KaspaAccount>),
 }
 
+#[derive(Clone)]
 pub enum CreationData {
+    Bip44 {
+        name : Option<String>,
+    },
     Bip32 {
         mnemonic: Option<Mnemonic>,
-        account: Arc<dyn KaspaAccount>,
+        // account: Arc<dyn KaspaAccount>,
     },
     Keypair {
         private_key: Secret,
-        account: Arc<dyn KaspaAccount>,
+        // account: Arc<dyn KaspaAccount>,
     },
     MultiSig {
         mnemonics: Vec<Mnemonic>,
-        account: Arc<dyn KaspaAccount>,
+        // account: Arc<dyn KaspaAccount>,
     },
 }
 
-impl CreationData {
-    pub fn account(&self) -> Arc<dyn KaspaAccount> {
-        match self {
-            Self::Bip32 { account, .. } => account.clone(),
-            Self::Keypair { account, .. } => account.clone(),
-            Self::MultiSig { account, .. } => account.clone(),
-        }
-    }
+// impl CreationData {
+//     pub fn account(&self) -> Arc<dyn KaspaAccount> {
+//         match self {
+//             Self::Bip32 { account, .. } => account.clone(),
+//             Self::Keypair { account, .. } => account.clone(),
+//             Self::MultiSig { account, .. } => account.clone(),
+//         }
+//     }
+// }
+
+#[derive(Default, Clone, Copy, Eq, PartialEq)]
+enum Focus {
+    #[default]
+    None,
+    AccountName,
+    WalletSecret,
+    PaymentSecret,
 }
 
 #[derive(Clone, Default)]
 struct Context {
-    _account_kind: Option<AccountKind>,
-    _account_name: String,
-    account_title: String,
+    prv_key_data_info : Option<Arc<PrvKeyDataInfo>>,
+    account_kind: Option<CreateAccountKind>,
     _create_private_key: bool,
-    enable_payment_secret: bool,
+    account_name: String,
+    // enable_payment_secret: bool,
+    wallet_secret : String,
     payment_secret: String,
-    payment_secret_confirm: String,
+    // payment_secret_confirm: String,
+    focus : Focus,
 }
 
 pub struct AccountCreate {
     #[allow(dead_code)]
     runtime: Runtime,
     // secret: String,
-    args: Context,
+    context: Context,
     pub state: State,
 }
 
@@ -99,12 +100,17 @@ impl AccountCreate {
             runtime,
             // secret: String::new(),
             state: State::Start,
-            args: Default::default(),
+            context: Default::default(),
         }
     }
 }
 
 impl ModuleT for AccountCreate {
+    fn modal(&self) -> bool { true }
+    fn style(&self) -> ModuleStyle {
+        ModuleStyle::Mobile
+    }
+
     fn render(
         &mut self,
         core: &mut Core,
@@ -112,27 +118,20 @@ impl ModuleT for AccountCreate {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+        // ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
 
-            let size = egui::Vec2::new(200_f32, 40_f32);
+            // let editor_size = egui::Vec2::new(200_f32, 40_f32);
 
             match self.state.clone() {
                 State::Start => {
 
-
-                    // let v= core.account_collection().map(|collection|{
-                    //     HashMap::from_iter(collection.iter().map(|account|{
-                    //         (account.descriptor().private_key_id(),account.clone())
-                    //         // println!("account: {}", account.title());
-                    //     }))
-                    // }).unwrap_or_default();
-
-                    // if let Some(account_collection) = core.account_collection() {
-                    // }
-
+                    let prv_key_data_map = core.prv_key_data_map.clone();
 
                     Panel::new(self)
                         .with_caption("Create Account")
+                        .with_back_enabled(core.has_stack(), |_this| {
+                            core.back();
+                        })
                         .with_close_enabled(false, |_|{
                         })
                         .with_header(|_ctx,ui| {
@@ -140,32 +139,35 @@ impl ModuleT for AccountCreate {
                             ui.label("Please select an account type");
                             ui.label(" ");
                         })
-                        .with_body(|_this,ui|{
+                        .with_body(|this,ui|{
 
+                            let margin = ui.available_width() * 0.5;
 
+                            for (_, prv_key_data_info) in prv_key_data_map.into_iter() {
+                                ui.add(Separator::default().horizontal().shrink(margin));
+                                ui.add_space(16.);
+                                ui.label(format!("Private Key: {}", prv_key_data_info.name_or_id()));
+                                ui.add_space(16.);
+                                if ui.add(CompositeButton::new(
+                                    "Kaspa Core HD account",
+                                    "BIP-44 "
+                                ))
+                                .clicked() {
+                                    this.context.prv_key_data_info = Some(prv_key_data_info.clone());
+                                    this.context.account_kind = Some(CreateAccountKind::Bip44);
+                                    this.state = State::AccountName;
+                                }
 
-                            if ui.add(CompositeButton::new(
-                                "Create a new HD account",
-                                "BIP-44 "
-                            )).clicked() {
-                                
+                                ui.add_space(16.);
                             }
-                            
-                            // ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
-                        })
-                        .with_footer(|_this,ui| {
-                            // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
-                            let size = theme().large_button_size;
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                                // this.state = State::WalletName;
-                            }
+
+                            ui.add(Separator::default().horizontal().shrink(margin));
+                            ui.add_space(16.);
+
                         })
                         .render(ui);
                 }
                 State::AccountName => {
-
-                    // TODO - check if wallet exists
-                    let _wallet_exists_result = Payload::<Result<bool>>::new("wallet_exists_result");
 
                     Panel::new(self)
                     .with_caption("Account Name")
@@ -176,75 +178,127 @@ impl ModuleT for AccountCreate {
                     })
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
-                        ui.label("Please specify the name of the wallet");
+                        ui.label("Please enter the account name");
                     })
                     .with_body(|this,ui| {
-                        ui.add_sized(
-                            size,
-                            TextEdit::singleline(&mut this.args.account_title)
-                                .hint_text("Account Name...")
-                                .vertical_align(Align::Center),
-                        );
+
+                        TextEditor::new(
+                            &mut this.context.account_name,
+                            &mut this.context.focus,
+                            Focus::AccountName,
+                            |ui, text| {
+                                // ui.add_space(8.);
+                                ui.label(RichText::new("Enter account name (optional)").size(12.).raised());
+                                ui.add_sized(theme().panel_editor_size, TextEdit::singleline(text)
+                                    .vertical_align(Align::Center))
+                            },
+                        ).submit(|_,focus| {
+                            this.state = State::WalletSecret;
+                            *focus = Focus::WalletSecret;
+                        })
+                        .build(ui);
+                
                     })
                     .with_footer(|this,ui| {
                         let size = theme().large_button_size;
                         if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                            this.state = State::AccountName;
+                            this.state = State::WalletSecret;
+                            this.context.focus = Focus::WalletSecret;
                         }
                     })
                     .render(ui);
                 }
 
 
-                State::PaymentSecret => {
+                State::WalletSecret => {
+
+                    let mut submit_via_editor = false;
+                    let mut submit_via_footer = false;
 
                     Panel::new(self)
-                        .with_caption("Payment & Recovery Password")
+                        .with_caption("Wallet Secret")
                         .with_back(|this| {
                             this.state = State::AccountName;
                         })
                         .with_close_enabled(false, |_|{
                         })
                         .with_header(|_ctx,ui| {
-                            ui.heading("Optional");
-                            ui.label(" ");
-                            ui.label("The optional payment & recovery password, if provided, will be required to \
-                                send payments. This password will also be required when recovering your wallet \
-                                in addition to your private key or mnemonic. If you loose this password, you will not \
-                                be able to use mnemonic to recover your wallet!");
+                            ui.label("Please enter the wallet secret");
                         })
                         .with_body(|this,ui| {
-                            ui.label(egui::RichText::new("ENTER YOUR PAYMENT PASSWORD").size(12.).raised());
-                            ui.add_sized(
-                                size,
-                                TextEdit::singleline(&mut this.args.payment_secret)
-                                    .hint_text("Payment password...")
-                                    .vertical_align(Align::Center),
-                            );
-
-                            ui.label(" ");
-                            ui.label(egui::RichText::new("VERIFY YOUR PAYMENT PASSWORD").size(12.).raised());
-
-                            ui.add_sized(
-                                size,
-                                TextEdit::singleline(&mut this.args.payment_secret_confirm)
-                                    .hint_text("Payment password...")
-                                    .vertical_align(Align::Center),
-                            );
-
-                            if this.args.payment_secret_confirm.is_not_empty() && this.args.payment_secret != this.args.payment_secret_confirm {
-                                ui.label(" ");
-                                ui.label(egui::RichText::new("Passwords do not match").color(egui::Color32::from_rgb(255, 120, 120)));
-                                ui.label(" ");
-                            } else {
-                                ui.label(" ");
-                            }
+                            TextEditor::new(
+                                &mut this.context.wallet_secret,
+                                &mut this.context.focus,
+                                Focus::WalletSecret,
+                                |ui, text| {
+                                    ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
+                                    ui.add_sized(theme().panel_editor_size, TextEdit::singleline(text)
+                                        .vertical_align(Align::Center)
+                                        .password(true))
+                                },
+                            ).submit(|text,_focus| {
+                                if !text.is_empty() {
+                                    submit_via_editor = true;
+                                }
+                            })
+                            .build(ui);
                         })
                         .with_footer(|this,ui| {
                             let size = theme().large_button_size;
-                            let ok = this.args.payment_secret == this.args.payment_secret_confirm;// && this.args.wallet_secret.len() > 0;
-                            if ui.add_enabled(ok, egui::Button::new("Continue").min_size(size)).clicked() {
-                                this.state = State::Start;
+                            let enabled = !this.context.wallet_secret.is_empty();
+                            if ui.add_enabled(enabled, egui::Button::new("Continue").min_size(size)).clicked() {
+                                submit_via_footer = true;
+                            }
+                        })
+                        .render(ui);
+
+                    if submit_via_editor || submit_via_footer {
+                        if let Some(prv_key_data_info) = self.context.prv_key_data_info.as_ref() {
+                            prv_key_data_info.requires_bip39_passphrase().then(||{
+                                self.state = State::PaymentSecret;
+                                self.context.focus = Focus::PaymentSecret;
+                            });
+                        } else {
+                            self.state = State::CreateAccount;
+                        }
+
+                    }
+                }
+
+                State::PaymentSecret => {
+                    Panel::new(self)
+                        .with_caption("BIP-39 Passphrase")
+                        .with_back(|this| {
+                            this.state = State::WalletSecret;
+                        })
+                        .with_close_enabled(false, |_|{
+                        })
+                        .with_header(|_ctx,ui| {
+                            ui.label(i18n("Your private key requires BIP39 passphrase, please enter it now."));
+                        })
+                        .with_body(|this,_ui| {
+                            TextEditor::new(
+                                &mut this.context.payment_secret,
+                                &mut this.context.focus,
+                                Focus::PaymentSecret,
+                                |ui, text| {
+                                    ui.label(egui::RichText::new("Enter your BIP39 passphrase").size(12.).raised());
+                                    ui.add_sized(theme().panel_editor_size, TextEdit::singleline(text)
+                                        .vertical_align(Align::Center)
+                                        .password(true))
+                                },
+                            ).submit(|text,focus| {
+                                if !text.is_empty() {
+                                    this.state = State::CreateAccount;
+                                    *focus = Focus::None;
+                                }
+                            });
+                        })
+                        .with_footer(|this,ui| {
+                            let size = theme().large_button_size;
+                            let enabled = !this.context.payment_secret.is_empty();
+                            if ui.add_enabled(enabled, Button::new("Continue").min_size(size)).clicked() {
+                                this.state = State::CreateAccount;
                             }
                         })
                         .render(ui);
@@ -274,68 +328,44 @@ impl ModuleT for AccountCreate {
                     })
                     .render(ui);
 
-                    let args = self.args.clone();
-                    let wallet_create_result = Payload::<Result<Arc<CreationData>>>::new("wallet_create_result");
-                    if !wallet_create_result.is_pending() {
+                    let args = self.context.clone();
+                    // let prv_key_data_info = args.prv_key_data_info.clone().unwrap();
+                    let account_create_result = Payload::<Result<AccountDescriptor>>::new("wallet_create_result");
+                    if !account_create_result.is_pending() {
 
-                        // TODO CREATE WALLET !
-                        let _wallet = self.runtime.wallet().clone();
-                        spawn_with_result(&wallet_create_result, async move {
+                        let wallet = self.runtime.wallet().clone();
+                        spawn_with_result(&account_create_result, async move {
 
-                            if args.enable_payment_secret && args.payment_secret.is_empty() {
-                                return Err(Error::custom("Payment secret is empty"));
-                            }
+                            let account_name = args.account_name.trim();
+                            let account_name = (!account_name.is_empty()).then_some(account_name.to_string());
+                            let account_kind = AccountKind::Bip32;
+                            let wallet_secret = Secret::from(args.wallet_secret);
+                            let payment_secret = args.prv_key_data_info.as_ref().and_then(|secret| {
+                                secret.requires_bip39_passphrase().then_some(Secret::from(args.payment_secret))
+                            });
 
-                            // if args.enable_phishing_hint && args.phishing_hint.is_empty() {
-                            //     return Err(Error::custom("Phishing hint is empty"));
-                            // }
+                            let prv_key_data_id = args.prv_key_data_info.as_ref().unwrap().id();
 
-                            // let wallet_secret = Secret::from(args.wallet_secret);
-                            // let payment_secret = args.enable_payment_secret.then_some(Secret::from(args.payment_secret));
+                            let account_args = AccountCreateArgs {
+                                account_name,
+                                account_kind,
+                                wallet_secret,
+                                payment_secret,
+                            };
 
-                            // // suspend commits for multiple operations
-                            // wallet.store().batch().await?;
-
-                            // let account_kind = AccountKind::Bip32;
-                            // let wallet_args = WalletCreateArgs::new(
-                            //     args.wallet_title.is_not_empty().then_some(args.wallet_title),
-                            //     args.wallet_filename.is_not_empty().then_some(args.wallet_filename),
-                            //     args.enable_phishing_hint.then_some(args.phishing_hint.into()), 
-                            //     wallet_secret.clone(),
-                            //     false
-                            // );
-                            // let prv_key_data_args = PrvKeyDataCreateArgs::new(
-                            //     None, 
-                            //     wallet_secret.clone(), 
-                            //     payment_secret.clone()
-                            // );
-                            // let account_args = AccountCreateArgs::new(
-                            //     args.account_name.is_not_empty().then_some(args.account_name), 
-                            //     args.account_title.is_not_empty().then_some(args.account_title), 
-                            //     account_kind, 
-                            //     wallet_secret.clone(), 
-                            //     payment_secret.clone(),
-                            // );
-                            // let _descriptor = wallet.create_wallet(wallet_args).await?;
-                            // let (prv_key_data_id, mnemonic) = wallet.create_prv_key_data(prv_key_data_args).await?;
-                            // let account = wallet.create_bip32_account(prv_key_data_id, account_args).await?;
-
-                            // // flush data to storage
-                            // let access_ctx: Arc<dyn AccessContextT> = Arc::new(AccessContext::new(wallet_secret));
-                            // wallet.store().flush(&access_ctx).await?;
-
-                            // Ok((Arc::new(mnemonic), account))
-
-                            unimplemented!()
+                            Ok(wallet.accounts_create(*prv_key_data_id, account_args).await?)
                         });
                     }
 
-                    if let Some(result) = wallet_create_result.take() {
+                    if let Some(result) = account_create_result.take() {
                         match result {
-                            Ok(creation_data) => {
+                            Ok(descriptor) => {
                                 println!("Account created successfully");
-                                self.state = State::PresentMnemonic(creation_data);
-                                // wallet.get_mut::<section::Account>().select(Some(creation_dataaccount));
+                                let account = Account::from(descriptor);
+                                core.account_collection.as_mut().expect("account collection").push_unchecked(account.clone());
+                                core.get_mut::<modules::AccountManager>().select(Some(account));
+                                core.select::<modules::AccountManager>();
+
                             }
                             Err(err) => {
                                 println!("Account creation error: {}", err);
@@ -343,11 +373,9 @@ impl ModuleT for AccountCreate {
                             }
                         }
                     }
-
                 }
 
                 State::AccountError(err) => {
-
                     Panel::new(self)
                     .with_caption("Error")
                     .with_header(move |this,ui| {
@@ -356,7 +384,7 @@ impl ModuleT for AccountCreate {
                         ui.label(egui::RichText::new("Error creating account").color(egui::Color32::from_rgb(255, 120, 120)));
                         ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
 
-                        if ui.add_sized(size, egui::Button::new("Restart")).clicked() {
+                        if ui.add_sized(theme().panel_editor_size, egui::Button::new("Restart")).clicked() {
                             this.state = State::Start;
                         }
                     })
@@ -410,51 +438,53 @@ impl ModuleT for AccountCreate {
 
                 }
 
-                State::ConfirmMnemonic(creation_data) => {
-                    let creation_data_back = creation_data.clone();
-                    Panel::new(self)
-                        .with_caption("Confirm Mnemonic")
-                        .with_back(move |this|{
-                            this.state = State::PresentMnemonic(creation_data_back);
-                        })
-                        .with_header(|_this,ui| {
-                            ui.label("Please validate your mnemonic");
-                        })
-                        .with_footer(move |this,ui| {
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                                this.state = State::Finish(creation_data.account());
-                            }
-                        })
-                        .render(ui);
+                State::ConfirmMnemonic(_creation_data) => {
+                    unimplemented!();
+                    // let creation_data_back = creation_data.clone();
+                    // Panel::new(self)
+                    //     .with_caption("Confirm Mnemonic")
+                    //     .with_back(move |this|{
+                    //         this.state = State::PresentMnemonic(creation_data_back);
+                    //     })
+                    //     .with_header(|_this,ui| {
+                    //         ui.label("Please validate your mnemonic");
+                    //     })
+                    //     .with_footer(move |this,ui| {
+                    //         if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                    //             this.state = State::Finish(creation_data.account());
+                    //         }
+                    //     })
+                    //     .render(ui);
                 }
 
-                State::Finish(account) => {
+                State::Finish(_account) => {
+                    unimplemented!();
 
-                    Panel::new(self)
-                        .with_caption("Account Created")
-                        .with_body(|_this,ui| {
-                            ui.label(" ");
-                            ui.label("Your account has been created and is ready to use.");
-                            ui.label(" ");
-                        })
-                        .with_footer(move |this,ui| {
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                                this.state = State::Start;
+                    // Panel::new(self)
+                    //     .with_caption("Account Created")
+                    //     .with_body(|_this,ui| {
+                    //         ui.label(" ");
+                    //         ui.label("Your account has been created and is ready to use.");
+                    //         ui.label(" ");
+                    //     })
+                    //     .with_footer(move |this,ui| {
+                    //         if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                    //             this.state = State::Start;
 
-                                // TODO - add account to wallet ^^^
-                                let descriptor = account.descriptor().unwrap();
-                                let account = Account::from(descriptor);
-                                core.account_collection.as_mut().unwrap().push(account.clone());
+                    //             // TODO - add account to wallet ^^^
+                    //             let descriptor = account.descriptor().unwrap();
+                    //             let account = Account::from(descriptor);
+                    //             core.account_collection.as_mut().unwrap().push(account.clone());
 
-                                core.select::<modules::AccountManager>();
-                                core.get_mut::<modules::AccountManager>().select(Some(account));
-                            }
-                        })
-                        .render(ui);
+                    //             core.select::<modules::AccountManager>();
+                    //             core.get_mut::<modules::AccountManager>().select(Some(account));
+                    //         }
+                    //     })
+                    //     .render(ui);
                 }
 
             }
 
-        });
+        // });
     }
 }

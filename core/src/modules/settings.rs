@@ -162,13 +162,12 @@ impl ModuleT for Settings {
                             
                         });
 
-                        if let Err(err) = KaspaRpcClient::parse_url(Some(self.settings.node.wrpc_url.clone()), self.settings.node.wrpc_encoding, self.settings.node.network.into()) {
+                        if let Err(err) = KaspaRpcClient::parse_url(self.settings.node.wrpc_url.clone(), self.settings.node.wrpc_encoding, self.settings.node.network.into()) {
                             ui.label(
                                 RichText::new(format!("{err}"))
                                     .color(theme().warning_color),
                             );
                             node_settings_error = Some("Invalid wRPC URL");
-                            // return;
                         }
 
                         #[cfg(not(target_arch = "wasm32"))]
@@ -249,7 +248,7 @@ impl ModuleT for Settings {
                                 core.settings = self.settings.clone();
                                 core.settings.store_sync().unwrap();
                                 if restart {
-                                    println!("NODE INTERFACE UPDATE: {:?}", self.settings.node);
+                                    // println!("NODE INTERFACE UPDATE: {:?}", self.settings.node);
                                     self.runtime.kaspa_service().update_services(&self.settings.node);
                                     // println!("TODO - restart");
                                 }

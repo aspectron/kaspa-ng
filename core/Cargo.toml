@@ -47,6 +47,7 @@ futures.workspace = true
 js-sys.workspace = true
 log.workspace = true
 pad.workspace = true
+passwords.workspace = true
 qrcode.workspace = true
 ritehash.workspace = true
 separator.workspace = true

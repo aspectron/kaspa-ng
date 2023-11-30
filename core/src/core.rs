@@ -1,6 +1,4 @@
 use crate::imports::*;
-use crate::runtime::Runtime;
-use crate::sync::SyncStatus;
 use egui::load::Bytes;
 use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
@@ -10,85 +8,26 @@ use kaspa_wallet_core::storage::{Binding, Hint, PrvKeyDataInfo};
 use std::borrow::Cow;
 use workflow_i18n::*;
 
-enum Status {
-    Connected {
-        current_daa_score: Option<u64>,
-        peers: Option<usize>,
-        #[allow(dead_code)]
-        tps: Option<f64>,
-    },
-    Disconnected,
-    Syncing {
-        sync_status: Option<SyncStatus>,
-        peers: Option<usize>,
-    },
-}
-
 pub enum Exception {
     UtxoIndexNotEnabled { url: Option<String> },
-}
-
-#[derive(Default)]
-pub struct State {
-    is_open: bool,
-    is_connected: bool,
-    is_synced: Option<bool>,
-    sync_state: Option<SyncState>,
-    server_version: Option<String>,
-    url: Option<String>,
-    network_id: Option<NetworkId>,
-    current_daa_score: Option<u64>,
-}
-
-impl State {
-    pub fn is_open(&self) -> bool {
-        self.is_open
-    }
-
-    pub fn is_connected(&self) -> bool {
-        self.is_connected
-    }
-
-    pub fn is_synced(&self) -> bool {
-        self.is_synced.unwrap_or(false) || matches!(self.sync_state, Some(SyncState::Synced))
-    }
-
-    pub fn sync_state(&self) -> &Option<SyncState> {
-        &self.sync_state
-    }
-
-    pub fn server_version(&self) -> &Option<String> {
-        &self.server_version
-    }
-
-    pub fn url(&self) -> &Option<String> {
-        &self.url
-    }
-
-    pub fn network_id(&self) -> &Option<NetworkId> {
-        &self.network_id
-    }
-
-    pub fn current_daa_score(&self) -> Option<u64> {
-        self.current_daa_score
-    }
 }
 
 pub struct Core {
     is_shutdown_pending: bool,
     settings_storage_requested: bool,
     last_settings_storage_request: Instant,
+    device: Device,
 
     runtime: Runtime,
     wallet: Arc<dyn WalletApi>,
-    channel: ApplicationEventsChannel,
+    application_events_channel: ApplicationEventsChannel,
     deactivation: Option<Module>,
     module: Module,
     stack: VecDeque<Module>,
     modules: HashMap<TypeId, Module>,
     pub settings: Settings,
     pub toasts: Toasts,
-    pub large_style: egui::Style,
+    pub mobile_style: egui::Style,
     pub default_style: egui::Style,
     pub metrics: Option<Box<MetricsSnapshot>>,
 
@@ -111,99 +50,8 @@ impl Core {
         runtime: crate::runtime::Runtime,
         mut settings: Settings,
     ) -> Self {
-        let mut fonts = egui::FontDefinitions::default();
-        egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Bold);
-        egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
-        egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
-
-        // ---
-        fonts.font_data.insert(
-            "ubuntu_mono".to_owned(),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
-            egui::FontData::from_static(include_bytes!(
-                "../../resources/fonts/UbuntuMono/UbuntuMono-Regular.ttf"
-            )),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSansMono-Regular.ttf")),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSansMono-Light.ttf")),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/SourceCodePro-Regular.ttf")),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/SourceCodePro-Light.ttf")),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/RobotoMono-Regular.ttf")),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/RobotoMono-Light.ttf")),
-        );
-
-        fonts
-            .families
-            .entry(egui::FontFamily::Monospace)
-            .or_default()
-            .insert(0, "ubuntu_mono".to_owned());
-
-        // ---
-
-        // #[cfg(windows)]
-        // {
-        //     let font_file = {
-        //         // c:/Windows/Fonts/msyh.ttc
-        //         let mut font_path = PathBuf::from(std::env::var("SystemRoot").ok()?);
-        //         font_path.push("Fonts");
-        //         font_path.push("msyh.ttc");
-        //         font_path.to_str()?.to_string().replace("\\", "/")
-        //     };
-        //     Some(font_file)
-        // }
-
-        // "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
-        // "/System/Library/Fonts/Hiragino Sans GB.ttc"
-
-        // ---
-        // fonts.font_data.insert(
-        //     "test_font".to_owned(),
-        //     // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
-        //     egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
-        // );
-
-        // fonts
-        //     .families
-        //     .entry(egui::FontFamily::Proportional)
-        //     .or_default()
-        //     .insert(0, "test_font".to_owned());
-
-        // ---
-
-        // #[cfg(target_os = "macos")]
-        // if let Ok(font) = std::fs::read("/System/Library/Fonts/Hiragino Sans GB.ttc") {
-
-        //     fonts.font_data.insert(
-        //         "hiragino-sans-gb".to_owned(),
-        //         // egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
-        //         egui::FontData::from_owned(font),
-        //     );
-
-        //     fonts
-        //         .families
-        //         .entry(egui::FontFamily::Proportional)
-        //         .or_default()
-        //         // .insert(0, "hiragino".to_owned());
-        //         .push("hiragino-sans-gb".to_owned());
-        // }
-
-        #[cfg(target_os = "linux")]
-        if let Ok(font) = std::fs::read("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc") {
-            fonts.font_data.insert(
-                "noto-sans-cjk".to_owned(),
-                // egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
-                egui::FontData::from_owned(font),
-            );
-
-            fonts
-                .families
-                .entry(egui::FontFamily::Proportional)
-                .or_default()
-                // .insert(0, "hiragino".to_owned());
-                .push("noto-sans-cjk".to_owned());
-        }
-
-        cc.egui_ctx.set_fonts(fonts);
+        crate::fonts::init_fonts(cc);
+        egui_extras::install_image_loaders(&cc.egui_ctx);
 
         let mut default_style = (*cc.egui_ctx.style()).clone();
 
@@ -215,9 +63,9 @@ impl Core {
             },
         );
 
-        let mut large_style = (*cc.egui_ctx.style()).clone();
+        let mut mobile_style = (*cc.egui_ctx.style()).clone();
 
-        large_style.text_styles.insert(
+        mobile_style.text_styles.insert(
             TextStyle::Name("CompositeButtonSubtext".into()),
             FontId {
                 size: 12.0,
@@ -226,24 +74,22 @@ impl Core {
         );
 
         // println!("style: {:?}", style.text_styles);
-        large_style.text_styles.insert(
+        mobile_style.text_styles.insert(
             egui::TextStyle::Heading,
             egui::FontId::new(22.0, egui::FontFamily::Proportional),
         );
-        large_style.text_styles.insert(
+        mobile_style.text_styles.insert(
             egui::TextStyle::Body,
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
-        large_style.text_styles.insert(
+        mobile_style.text_styles.insert(
             egui::TextStyle::Button,
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
-        large_style.text_styles.insert(
+        mobile_style.text_styles.insert(
             egui::TextStyle::Monospace,
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
-
-        egui_extras::install_image_loaders(&cc.egui_ctx);
 
         // cc.egui_ctx.set_style(style);
 
@@ -290,7 +136,7 @@ impl Core {
                 .clone();
         }
 
-        let channel = runtime.application_events().clone();
+        let application_events_channel = runtime.application_events().clone();
         let wallet = runtime.wallet().clone();
 
         let mut this = Self {
@@ -298,8 +144,10 @@ impl Core {
             is_shutdown_pending: false,
             settings_storage_requested: false,
             last_settings_storage_request: Instant::now(),
+            device: Device::default(),
+
             wallet,
-            channel,
+            application_events_channel,
             deactivation: None,
             module,
             modules: modules.clone(),
@@ -308,7 +156,7 @@ impl Core {
             toasts: Toasts::default(),
             // status_bar_message: None,
             default_style,
-            large_style,
+            mobile_style,
 
             wallet_descriptor: None,
             wallet_list: Vec::new(),
@@ -342,8 +190,6 @@ impl Core {
             .expect("Unknown module");
 
         if self.module.type_id() != module.type_id() {
-            // crate::egui::clear_popup_states();
-
             let next = module.clone();
             self.stack.push_back(self.module.clone());
             self.deactivation = Some(self.module.clone());
@@ -353,15 +199,8 @@ impl Core {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 let type_id = self.module.type_id();
-
                 crate::runtime::services::kaspa::update_logs_flag()
                     .store(type_id == TypeId::of::<modules::Logs>(), Ordering::Relaxed);
-                // crate::runtime::kaspa::update_metrics_flag().store(
-                //     type_id == TypeId::of::<modules::Overview>()
-                //         || type_id == TypeId::of::<modules::Metrics>()
-                //         || type_id == TypeId::of::<modules::Node>(),
-                //     Ordering::Relaxed,
-                // );
             }
         }
     }
@@ -377,11 +216,14 @@ impl Core {
     }
 
     pub fn sender(&self) -> crate::channel::Sender<Events> {
-        self.channel.sender.clone()
+        self.application_events_channel.sender.clone()
     }
 
     pub fn store_settings(&self) {
-        self.channel.sender.try_send(Events::StoreSettings).unwrap();
+        self.application_events_channel
+            .sender
+            .try_send(Events::StoreSettings)
+            .unwrap();
     }
 
     pub fn wallet(&self) -> &Arc<dyn WalletApi> {
@@ -402,6 +244,18 @@ impl Core {
 
     pub fn modules(&self) -> &HashMap<TypeId, Module> {
         &self.modules
+    }
+
+    pub fn metrics(&self) -> &Option<Box<MetricsSnapshot>> {
+        &self.metrics
+    }
+
+    pub fn module(&self) -> &Module {
+        &self.module
+    }
+
+    pub fn device(&self) -> &Device {
+        &self.device
     }
 
     pub fn get<T>(&self) -> Ref<'_, T>
@@ -441,7 +295,7 @@ impl eframe::App for Core {
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // println!("update...");
-        for event in self.channel.iter() {
+        for event in self.application_events_channel.iter() {
             if let Err(err) = self.handle_events(event.clone(), ctx, frame) {
                 log_error!("error processing wallet runtime event: {}", err);
             }
@@ -457,6 +311,20 @@ impl eframe::App for Core {
             self.settings_storage_requested = false;
             self.settings.store_sync().unwrap();
         }
+
+        ctx.input(|input| {
+            input.events.iter().for_each(|event| {
+                if let Event::Key {
+                    key,
+                    pressed,
+                    modifiers,
+                    repeat,
+                } = event
+                {
+                    self.handle_keyboard_events(*key, *pressed, modifiers, *repeat);
+                }
+            });
+        });
 
         // ctx.set_visuals(self.default_style.clone());
         let mut current_visuals = ctx.style().visuals.clone(); //.widgets.noninteractive;
@@ -493,22 +361,53 @@ impl eframe::App for Core {
             }
         }
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            self.render_menu(ui, frame);
-        });
-        // });
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            self.render_status(ui);
-            egui::warn_if_debug_build(ui);
-        });
+        if !self.module.modal() {
+            egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+                self.render_menu(ui, frame);
+            });
+        }
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            self.module.clone().render(self, ctx, frame, ui);
+        if self.device().is_portrait() || self.device().is_mobile() {
+            if !self.device().is_mobile() {
+                egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+                    Status::new(self).render(ui);
+                    egui::warn_if_debug_build(ui);
+                });
+            }
 
-            // if self.settings.splash_screen && runtime().uptime().as_secs() < 30 {
-            //     self.render_splash(ui);
-            // }
-        });
+            let width = (ctx.screen_rect().width() - 390.) * 0.5;
+
+            SidePanel::right("portrait_right")
+                .exact_width(width)
+                .resizable(false)
+                .show_separator_line(true)
+                .frame(Frame::default().fill(Color32::BLACK))
+                .show(ctx, |_ui| {});
+            SidePanel::left("portrait_left")
+                .exact_width(width)
+                .resizable(false)
+                .show_separator_line(true)
+                .frame(Frame::default().fill(Color32::BLACK))
+                .show(ctx, |_ui| {});
+
+            CentralPanel::default().show(ctx, |ui| {
+                egui::TopBottomPanel::bottom("mobile_bottom_panel").show_inside(ui, |ui| {
+                    Status::new(self).render(ui);
+                });
+
+                self.module.clone().render(self, ctx, frame, ui);
+            });
+        } else {
+            egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+                Status::new(self).render(ui);
+                // self.render_status(ui);
+                egui::warn_if_debug_build(ui);
+            });
+
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.module.clone().render(self, ctx, frame, ui);
+            });
+        }
 
         // if false {
         //     egui::Window::new("Window").show(ctx, |ui| {
@@ -664,13 +563,23 @@ impl Core {
 
                     // let theme = theme();
 
-                    // let icon_size = theme.panel_icon_size();
-                    let icon = CompositeIcon::new(egui_phosphor::bold::MOON).icon_size(18.);
-                    // .padding(Some(icon_padding));
-                    // if ui.add_enabled(true, icon).clicked() {
-                    if ui.add(icon).clicked() {
-                        // close(self.this);
-                    }
+                    PopupPanel::new(
+                        ui,
+                        "display_settings",
+                        egui_phosphor::light::MONITOR,
+                        |ui| {
+                            ui.label("hello world");
+                        },
+                    )
+                    .build(ui);
+
+                    // // let icon_size = theme.panel_icon_size();
+                    // let icon = CompositeIcon::new(egui_phosphor::light::MONITOR).icon_size(18.);
+                    // // .padding(Some(icon_padding));
+                    // // if ui.add_enabled(true, icon).clicked() {
+                    // if ui.add(icon).clicked() {
+                    //     // close(self.this);
+                    // }
 
                     // if ui.button("Theme").clicked() {
                     //     self.select::<modules::Logs>();
@@ -680,248 +589,6 @@ impl Core {
             });
         });
         // ui.spacing()
-    }
-
-    fn render_status(&mut self, ui: &mut egui::Ui) {
-        egui::menu::bar(ui, |ui| {
-            // ui.horizontal(|ui| {
-            if !self.state().is_connected() {
-                self.render_connected_state(ui, Status::Disconnected);
-            } else {
-                let peers = self.metrics.as_ref().map(|metrics| metrics.data.node_active_peers as usize);
-
-                let tps = self
-                    .metrics
-                    .as_ref()
-                    .map(|metrics| metrics.network_transactions_per_second);
-                ui.horizontal(|ui| {
-                    if self.state().is_synced() {
-                        self.render_connected_state(
-                            ui,
-                            Status::Connected {
-                                current_daa_score: self.state().current_daa_score(),
-                                peers,
-                                tps,
-                            },
-                        );
-                    } else {
-                        self.render_connected_state(
-                            ui,
-                            Status::Syncing {
-                                sync_status: self
-                                    .state()
-                                    .sync_state
-                                    .as_ref()
-                                    .map(SyncStatus::try_from),
-                                peers,
-                            },
-                        );
-                    }
-                });
-            }
-
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if icons()
-                    .sliders
-                    .render_with_options(ui, &IconSize::new(Vec2::splat(20.)), true)
-                    .clicked()
-                {
-                    self.select::<modules::Settings>();
-                }
-            });
-        });
-    }
-
-    fn render_peers(&self, ui: &mut egui::Ui, peers: Option<usize>) {
-        let status_icon_size = theme().status_icon_size;
-
-        let peers = peers.unwrap_or(0);
-        if peers != 0 {
-            ui.label(format!("{} peers", peers));
-        } else {
-            ui.label(
-                RichText::new(egui_phosphor::light::CLOUD_SLASH)
-                    .size(status_icon_size)
-                    .color(Color32::LIGHT_RED),
-            );
-            ui.label(RichText::new("No peers").color(Color32::LIGHT_RED));
-        }
-    }
-
-    fn render_network_selector(&self, ui: &mut Ui) {
-        ui.label(self.settings.node.network.to_string());
-        // ui.menu_button(self.settings.node.network.to_string(), |ui| {
-        //     Network::iter().for_each(|network| {
-        //         if ui.button(network.to_string()).clicked() {
-        //             ui.close_menu();
-        //         }
-        //     });
-        // });
-    }
-
-    fn render_connected_state(&mut self, ui: &mut egui::Ui, state: Status) {
-        //connected : bool, icon: &str, color : Color32) {
-        let status_area_width = ui.available_width() - 24.;
-        let status_icon_size = theme().status_icon_size;
-        let module = self.module.clone();
-
-        match state {
-            Status::Disconnected => {
-                ui.add_space(4.);
-
-                match self.settings.node.node_kind {
-                    KaspadNodeKind::Disable => {
-                        ui.label(
-                            RichText::new(egui_phosphor::light::PLUGS)
-                                .size(status_icon_size)
-                                .color(Color32::LIGHT_RED),
-                        );
-                        ui.separator();
-                        ui.label("Not Connected");
-                    }
-                    KaspadNodeKind::Remote => {
-                        ui.label(
-                            RichText::new(egui_phosphor::light::TREE_STRUCTURE)
-                                .size(status_icon_size)
-                                .color(Color32::LIGHT_RED),
-                        );
-                        ui.separator();
-                        // ui.label("Connecting...");
-
-                        match self.settings.node.node_kind {
-                            KaspadNodeKind::Remote => {
-                                match KaspaRpcClient::parse_url(
-                                    Some(self.settings.node.wrpc_url.clone()),
-                                    self.settings.node.wrpc_encoding,
-                                    self.settings.node.network.into(),
-                                ) {
-                                    Ok(url) => {
-                                        ui.label(format!(
-                                            "Connecting to {} ...",
-                                            url.unwrap_or("?".to_string())
-                                        ));
-                                    }
-                                    Err(err) => {
-                                        ui.label(
-                                            RichText::new(format!(
-                                                "Error connecting to {}: {err}",
-                                                self.settings.node.wrpc_url
-                                            ))
-                                            .color(theme().warning_color),
-                                        );
-                                    }
-                                }
-                            }
-                            _ => {
-                                ui.label("Connecting...");
-                            }
-                        }
-                    }
-                    #[cfg(not(target_arch = "wasm32"))]
-                    _ => {
-                        ui.vertical(|ui| {
-                            ui.add_space(2.);
-                            ui.add(egui::Spinner::new());
-                        });
-                        // ui.label(
-                        //     RichText::new(egui_phosphor::light::PLUGS)
-                        //         .size(status_icon_size)
-                        //         .color(Color32::LIGHT_RED),
-                        // );
-                        ui.separator();
-                        ui.label("Starting...");
-                    }
-                }
-
-                module.status_bar(self,ui);
-
-                // if self.settings.node.node_kind != KaspadNodeKind::Disable {
-                //     ui.label("Not Connected");
-
-                // } else {
-                //     ui.label("Not Connected");
-                // }
-            }
-
-            Status::Connected {
-                current_daa_score,
-                peers,
-                tps: _,
-            } => {
-                ui.add_space(4.);
-                ui.label(
-                    RichText::new(egui_phosphor::light::CPU)
-                        .size(status_icon_size)
-                        .color(Color32::LIGHT_GREEN),
-                );
-                //.on_hover_text(format!("Uptime: "));
-                ui.separator();
-                // if peers.unwrap_or(0) != 0 {
-                // ui.label("ONLINE");
-                // } else {
-                ui.label("CONNECTED").on_hover_ui(|ui| {
-                    ui.horizontal(|ui| {
-                        // ui.label("Connected to ");
-                        ui.label(self.settings.node.wrpc_url.clone());
-                    });
-                });
-                // }
-                ui.separator();
-                self.render_network_selector(ui);
-                // ui.menu_button(self.settings.node.network.to_string(), |ui| {
-                //     Network::iter().for_each(|network| {
-                //         if ui.button(network.to_string()).clicked() {
-                //             ui.close_menu();
-                //         }
-                //     });
-                // });
-
-                ui.separator();
-                self.render_peers(ui, peers);
-                if let Some(current_daa_score) = current_daa_score {
-                    ui.separator();
-                    ui.label(format!("DAA {}", current_daa_score.separated_string()));
-                }
-
-                module.status_bar(self,ui);
-            }
-            Status::Syncing { sync_status, peers } => {
-                ui.vertical(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.add_space(4.);
-                        ui.label(
-                            RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN)
-                                .size(status_icon_size)
-                                .color(Color32::YELLOW),
-                        );
-                        ui.separator();
-                        ui.label("CONNECTED");
-                        ui.separator();
-                        self.render_network_selector(ui);
-
-                        // ui.label(self.settings.node.network.to_string());
-                        ui.separator();
-                        self.render_peers(ui, peers);
-                        if let Some(status) = sync_status.as_ref() {
-                            if !status.synced {
-                                ui.separator();
-                                status.render_text_state(ui);
-                            }
-                        }
-
-                        module.status_bar(self,ui);
-                    });
-
-                    if let Some(status) = sync_status.as_ref() {
-                        if !status.synced {
-                            status
-                                .progress_bar()
-                                .map(|bar| ui.add(bar.desired_width(status_area_width)));
-                        }
-                    }
-                });
-            }
-        }
     }
 
     pub fn handle_events(
@@ -951,41 +618,16 @@ impl Core {
                 runtime().notify(UserNotification::error(error.as_str()));
             }
             Events::WalletList { wallet_list } => {
-                // println!("getting wallet list!, {:?}", wallet_list);
                 self.wallet_list = (*wallet_list).clone();
                 self.wallet_list.sort();
-                // self.wallet_list.sort_by(|a, b| {
-                //     // a.title.partial_cmp(&b.title).unwrap()
-                //     a.filename.partial_cmp(&b.filename).unwrap()
-                // });
             }
-            // Events::AccountList { account_list } => {
-            //     self.account_collection = Some((*account_list).into());
-            //     // self.account_list = Some((*account_list).clone());
-            //     // self.account_map = Some(
-            //     //     (*account_list)
-            //     //         .clone()
-            //     //         .into_iter()
-            //     //         .map(|account| (account.id(), account)).collect::<HashMap::<_,_>>()
-            //     // );
-            // }
             Events::Notify {
                 user_notification: notification,
             } => {
                 notification.render(&mut self.toasts);
             }
             Events::Close { .. } => {}
-            // Events::Send { .. } => { },
-            // Events::Deposit { .. } => { },
-
-            // Events::TryUnlock(_secret) => {
-            //     let mut unlock = wallet.get_mut::<section::Unlock>();
-            //     unlock.message = Some("Error unlocking wallet...".to_string());
-            //     unlock.lock();
-            // },
-            Events::UnlockSuccess => {
-                // self.select::<section::Account>();
-            }
+            Events::UnlockSuccess => {}
             Events::UnlockFailure { .. } => {}
             Events::PrvKeyDataInfo {
                 prv_key_data_info_map,
@@ -994,11 +636,7 @@ impl Core {
             }
             Events::Wallet { event } => {
                 match *event {
-                    CoreWallet::UtxoProcStart => {
-
-                        // println!("UtxoProcStart...");
-                        // self.wallet_list();
-                    }
+                    CoreWallet::UtxoProcStart => {}
                     CoreWallet::UtxoProcStop => {}
                     CoreWallet::UtxoProcError { message: _ } => {
                         // terrorln!(this,"{err}");
@@ -1066,18 +704,8 @@ impl Core {
                         self.load_accounts(network_id, account_descriptors)?;
                         // self.update_account_list();
                     }
-                    CoreWallet::AccountActivation { ids: _ } => {
-                        // TODO
-                    }
-                    CoreWallet::AccountCreation { descriptor } => {
-                        if let Some(account_collection) = self.account_collection.as_mut() {
-                            account_collection.push(Account::from(descriptor));
-                            runtime().request_repaint();
-                            // if let Some(account) = account_collection.get(account_id) {
-                            //     account.update(descriptor);
-                            // }
-                        }
-                    }
+                    CoreWallet::AccountActivation { ids: _ } => {}
+                    CoreWallet::AccountCreation { descriptor: _ } => {}
                     CoreWallet::AccountUpdate { descriptor } => {
                         let account_id = descriptor.account_id();
                         if let Some(account_collection) = self.account_collection.as_ref() {
@@ -1086,10 +714,7 @@ impl Core {
                             }
                         }
                     }
-                    CoreWallet::WalletError { message: _ } => {
-                        // self.state.is_open = false;
-                    }
-                    // CoreWallet::WalletReady => {}
+                    CoreWallet::WalletError { message: _ } => {}
                     CoreWallet::WalletClose => {
                         self.hint = None;
                         self.state.is_open = false;
@@ -1100,12 +725,12 @@ impl Core {
                             module.reset(self);
                         });
                     }
-                    CoreWallet::AccountSelection { id: _ } => {
-                        // self.selected_account = self.wallet().account().ok();
-                    }
+                    CoreWallet::AccountSelection { id: _ } => {}
                     CoreWallet::DAAScoreChange { current_daa_score } => {
                         self.state.current_daa_score.replace(current_daa_score);
                     }
+                    // Ignore stasis notifications
+                    CoreWallet::Stasis { record: _ } => {}
                     // This notification is for a UTXO change, which is
                     // a part of the Outgoing transaction, we ignore it.
                     CoreWallet::Change { record: _ } => {}
@@ -1169,7 +794,7 @@ impl Core {
                     } => {
                         if let Some(account_collection) = &self.account_collection {
                             if let Some(account) = account_collection.get(&id.into()) {
-                                println!("*** updating account balance: {}", id);
+                                // println!("*** updating account balance: {}", id);
                                 account.update_balance(
                                     balance,
                                     mature_utxo_size,
@@ -1185,7 +810,7 @@ impl Core {
                         }
                     }
                 }
-            } // _ => unimplemented!()
+            }
         }
 
         Ok(())
@@ -1209,7 +834,7 @@ impl Core {
         network_id: NetworkId,
         account_descriptors: Vec<AccountDescriptor>,
     ) -> Result<()> {
-        let application_events_sender = self.channel.sender.clone();
+        let application_events_sender = self.application_events_channel.sender.clone();
 
         let account_list = account_descriptors
             .into_iter()
@@ -1284,32 +909,56 @@ impl Core {
         Ok(())
     }
 
-    fn _init_fonts(&self, egui_ctx: &egui::Context) {
-        let mut fonts = egui::FontDefinitions::default();
+    fn handle_keyboard_events(
+        &mut self,
+        key: Key,
+        pressed: bool,
+        modifiers: &Modifiers,
+        _repeat: bool,
+    ) {
+        if !pressed {
+            return;
+        }
 
-        // Install my own font (maybe supporting non-latin characters).
-        // .ttf and .otf files supported.
-        fonts.font_data.insert(
-            "my_font".to_owned(),
-            egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
-        );
+        if modifiers.ctrl || modifiers.mac_cmd {
+            match key {
+                Key::O => {
+                    self.select::<modules::WalletOpen>();
+                }
+                Key::N => {
+                    self.select::<modules::WalletCreate>();
+                }
+                Key::M => {
+                    self.device.is_mobile = !self.device.is_mobile;
+                }
+                Key::P => {
+                    self.device.is_portrait = !self.device.is_portrait;
+                }
+                _ => {}
+            }
+        }
 
-        // Put my font first (highest priority) for proportional text:
-        fonts
-            .families
-            .entry(egui::FontFamily::Proportional)
-            .or_default()
-            .insert(0, "open_sans".to_owned());
-        // .insert(0, "my_font".to_owned());
+        if (modifiers.ctrl || modifiers.mac_cmd) && modifiers.shift {
+            match key {
+                Key::T => {
+                    self.select::<modules::Testing>();
+                }
+                Key::M => {
+                    self.device.is_mobile = !self.device.is_mobile;
+                }
+                Key::P => {
+                    self.device.is_portrait = !self.device.is_portrait;
+                }
+                _ => {}
+            }
+        }
+    }
 
-        // Put my font as last fallback for monospace:
-        // fonts
-        //     .families
-        //     .entry(egui::FontFamily::Monospace)
-        //     .or_default()
-        //     .push("my_font".to_owned());
+    pub fn apply_mobile_style(&self, ui: &mut Ui) {
+        ui.style_mut().text_styles = self.mobile_style.text_styles.clone();
+    }
 
-        // Tell egui to use these fonts:
-        egui_ctx.set_fonts(fonts);
+    pub fn apply_default_style(&self, ui: &mut Ui) {
+        ui.style_mut().text_styles = self.default_style.text_styles.clone();
     }
 }

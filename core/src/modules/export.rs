@@ -1,39 +1,101 @@
+
+#[allow(unused_imports)]
+use kaspa_wallet_core::api::PrvKeyDataGetRequest;
+
 use crate::imports::*;
 
 #[derive(Clone)]
 pub enum State {
     Select,
-    Unlock(Option<String>),
-    Unlocking,
+    SelectPrvKey,
+    Export { error : Option<Arc<Error>> },
+    Exporting,
+    Mnemonic,
+    Transportable,
 }
+
+#[derive(Default, Clone, Copy, Eq, PartialEq)]
+enum Focus {
+    #[default]
+    None,
+    WalletSecret,
+    PaymentSecret,
+}
+
+#[derive(Clone, Copy, Describe)]
+pub enum ExportKind {
+    // #[default]
+    // None,
+    Transportable,
+    Mnemonic,
+}
+
+impl ExportKind {
+    pub fn info(&self) -> (&'static str,&'static str) {
+        match self {
+            Self::Mnemonic => ("Private Key Mnemonic","Private key mnemonic stored in this wallet"),
+            Self::Transportable => ("Transportable", "Encrypted hex encoded data easily importable into another instance of KaspaNG"),
+        }
+    }
+}
+
+pub enum ExportResult {
+    Transportable(Arc<Vec<u8>>),
+    Mnemonic(String),
+}
+
+
+#[derive(Clone, Default)]
+struct Context {
+    prv_key_data_id : Option<PrvKeyDataId>,
+    // account_kind: Option<CreateAccountKind>,
+    // _create_private_key: bool,
+    // account_name: String,
+    // enable_payment_secret: bool,
+    wallet_secret : String,
+    payment_secret: String,
+    // payment_secret_confirm: String,
+    focus : Focus,
+    kind : Option<ExportKind>,
+}
+
+
 
 pub struct Export {
     #[allow(dead_code)]
     runtime: Runtime,
-    secret: String,
+    // wallet_secret: String,
+    // payment_secret: String,
     pub state: State,
     pub message: Option<String>,
-
-    selected_wallet: Option<String>,
+    context : Context,
+    // kind: Option<ExportKind>,
+    // prv_key_data_id : Option<PrvKeyDataId>,
+    // focus : Focus,
 }
 
 impl Export {
     pub fn new(runtime: Runtime) -> Self {
         Self {
             runtime,
-            secret: String::new(),
+            // wallet_secret: String::new(),
+            // payment_secret: String::new(),
             state: State::Select,
             message: None,
-            selected_wallet: None,
+            // kind: None,
+            // prv_key_data_id: None,
+            // focus : Focus::None,
+            context : Default::default(),
+            // selected_wallet: None,
         }
-    }
-
-    pub fn lock(&mut self) {
-        self.state = State::Unlock(None);
     }
 }
 
 impl ModuleT for Export {
+    fn style(&self) -> ModuleStyle {
+        ModuleStyle::Mobile
+    }
+
     fn render(
         &mut self,
         core: &mut Core,
@@ -42,128 +104,282 @@ impl ModuleT for Export {
         ui: &mut egui::Ui,
     ) {
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-            let size = egui::Vec2::new(200_f32, 40_f32);
-            let unlock_result = Payload::<Result<()>>::new("test");
+            // let size = egui::Vec2::new(200_f32, 40_f32);
+            let export_result = Payload::<Result<()>>::new("wallet_export_result");
 
             match self.state.clone() {
+
                 State::Select => {
-                    ui.heading("Select Wallet");
-                    ui.label(" ");
-                    ui.label("Select a wallet to unlock");
-                    ui.label(" ");
-                    // ui.add_space(32.);
+                    let prv_key_data_list = core.prv_key_data_map.values().cloned().collect::<Vec<_>>();
 
-                    egui::ScrollArea::vertical()
-                        .id_source("wallet-list")
-                        .show(ui, |ui| {
-                            ui.set_width(ui.available_width());
+                    let mut submit = false;
+                    Panel::new(self)
+                        .with_caption("Export")
+                        .with_back_enabled(core.has_stack(),|_this| {
+                            // this.state = State::KeySelection;
+                            core.back();
+                        })
+                        // .with_close_enabled(false, |_|{
+                        // })
+                        .with_header(|_ctx,ui| {
+                            ui.add_space(64.);
+                            ui.label("Please select the type of export");
+                            // ui.label("");
+                        })
+                        .with_body(|this,ui| {
+                            // ui.label("(You can import additional private keys later, once the wallet has been created)");
 
-                            for wallet in core.wallet_list.iter() {
-                                if ui
-                                    .add_sized(size, egui::Button::new(wallet.filename.clone()))
-                                    .clicked()
-                                {
-                                    self.selected_wallet = Some(wallet.filename.clone());
-                                    self.state = State::Unlock(None);
+                            for kind in ExportKind::list() {
+                                let (name,info) = kind.info();
+                                ui.horizontal(|ui| {
+                                    if ui.large_button(name).clicked() {
+                                        this.context.kind = Some(kind);
+                                        submit = true;
+                                    }
+                                    ui.add_space(8.);
+                                    ui.label(info);
+                                    ui.add_space(16.);
+                                });
+                            }
+
+
+                            // // ui.vertical(|ui| {
+                            //     if ui.large_button("Private Key Mnemonic").clicked() {
+                            //         this.context.kind = Some(ExportKind::Mnemonic);
+                            //         submit = true;
+                            //     }
+                            //     ui.add_space(8.);
+                            //     ui.label("Private key mnemonic stored in this wallet");
+                            //     ui.add_space(16.);
+
+                            //     if ui.large_button("Transportable").clicked() {
+                            //         this.context.kind = Some(ExportKind::Transportable);
+                            //         submit = true;
+                            //     }
+                            //     ui.add_space(8.);
+                            //     ui.label("Portable encrypted hex-encoded data importable into another KaspaNG instance");
+                            //     ui.add_space(16.);
+                            // // });
+
+
+                        })
+                        .with_footer(|_this,_ui| {
+                        })
+                        .render(ui);
+
+                        if submit {
+                            match self.context.kind {
+                                Some(ExportKind::Mnemonic) => {
+                                    self.state = State::SelectPrvKey;
+                                }
+                                Some(ExportKind::Transportable) => {
+                                    self.state = State::Export { error : None };
+                                }
+                                None => {
+                                    panic!("Invalid export kind")
                                 }
                             }
-                        });
+                            self.state = State::Export { error : None };
+                            self.context.focus = Focus::WalletSecret;
+                        }
                 }
-                State::Unlock(message) => {
-                    ui.heading("Unlock Wallet");
 
-                    egui::ScrollArea::vertical()
-                        .id_source("unlock-wallet")
-                        .show(ui, |ui| {
-                            ui.label(" ");
-                            ui.label(format!(
-                                "Opening wallet: \"{}\"",
-                                self.selected_wallet.as_ref().unwrap()
-                            ));
-                            ui.label(" ");
+                State::SelectPrvKey => {
+                    let prv_key_data_list = core.prv_key_data_map.values().cloned().collect::<Vec<_>>();
 
-                            if let Some(message) = message {
-                                ui.label(" ");
+                    let mut submit = false;
+                    Panel::new(self)
+                        .with_caption("Export")
+                        .with_back_enabled(core.has_stack(),|_this| {
+                            // this.state = State::KeySelection;
+                            core.back();
+                        })
+                        // .with_close_enabled(false, |_|{
+                        // })
+                        .with_header(|_ctx,ui| {
+                            ui.add_space(64.);
+                            ui.label("Please select the type of export");
+                            // ui.label("");
+                        })
+                        .with_body(|this,ui| {
+                            // ui.label("(You can import additional private keys later, once the wallet has been created)");
 
-                                // ui.label(format!("Error: {}",message));
+                            ui.label("");
+                            ui.label("Please select private key to export");
+                            ui.label("");
 
+                            for prv_key_data_info in prv_key_data_list.into_iter() {
+                                if ui.large_button(prv_key_data_info.name_or_id()).clicked() {
+                                    this.context.prv_key_data_id = Some(*prv_key_data_info.id());
+                                    submit = true;
+                                }
+                                ui.label("");
+                            }
+
+                        })
+                        .with_footer(|_this,_ui| {
+                        })
+                        .render(ui);
+
+                        if submit {
+                            self.state = State::Export { error : None };
+                            self.context.focus = Focus::WalletSecret;
+                        }
+
+                }
+
+                State::Export{error} => {
+
+                    // let mut submit_via_editor = false;
+                    // let mut submit_via_footer = false;
+
+                    Panel::new(self)
+                        .with_caption("Unlock Wallet")
+                        .with_back(|this| {
+                            this.state = State::Select;
+                        })
+                        .with_body(|this, ui| {
+                            // ui.label(format!(
+                            //     "Opening wallet: \"{}\"",
+                            //     wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str())
+                            // ));
+                            // ui.label(" ");
+
+                            if let Some(err) = error {
                                 ui.label(
-                                    egui::RichText::new("Error unlocking wallet")
+                                    egui::RichText::new(err.to_string())
                                         .color(egui::Color32::from_rgb(255, 120, 120)),
                                 );
-                                ui.label(
-                                    egui::RichText::new(message)
-                                        .color(egui::Color32::from_rgb(255, 120, 120)),
-                                );
-
                                 ui.label(" ");
                             }
 
-                            ui.label("Enter your password to unlock your wallet");
+                            ui.label(i18n("Enter the password for your wallet"));
                             ui.label(" ");
 
-                            ui.add_sized(
-                                size,
-                                TextEdit::singleline(&mut self.secret)
-                                    .hint_text("Enter Password...")
-                                    .password(true)
-                                    .vertical_align(Align::Center),
-                            );
+                            let mut execute = false;
 
-                            if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
-                                let secret = kaspa_wallet_core::secret::Secret::new(
-                                    self.secret.as_bytes().to_vec(),
+                            // let response = ui.add_sized(
+                            //         size,
+                            //         TextEdit::singleline(&mut ctx.wallet_secret)
+                            //             // .hint_text("Enter Password...")
+                            //             .password(true)
+                            //             .vertical_align(Align::Center),
+                            //     );
+                            // // ui.memory().request_focus(resp.id);
+                            // if response.text_edit_submit(ui) {
+                            //     unlock = true;
+                            // } else {
+                            //     response.request_focus();
+                            // }
+
+                            TextEditor::new(
+                                &mut this.context.wallet_secret,
+                                &mut this.context.focus,
+                                Focus::WalletSecret,
+                                |ui, text| {
+                                    ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
+                                    ui.add_sized(theme().panel_editor_size, TextEdit::singleline(text)
+                                        .vertical_align(Align::Center)
+                                        .password(true))
+                                },
+                            ).submit(|text,_focus| {
+                                if !text.is_empty() {
+                                    execute = true;
+                                }
+                            })
+                            .build(ui);
+
+                            if ui.large_button_enabled(this.context.wallet_secret.is_not_empty(),"Continue").clicked() {
+                                execute = true;
+                            }
+
+                            if execute {
+
+
+
+                                let wallet_secret = kaspa_wallet_core::secret::Secret::new(
+                                    this.context.wallet_secret.as_bytes().to_vec(),
                                 );
-                                self.secret.zeroize();
-                                let wallet = self.runtime.wallet();//.clone();
-                                let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
+                                this.context.wallet_secret.zeroize();
+                                let wallet = this.runtime.wallet().clone();
+                                let prv_key_data_id = this.context.prv_key_data_id;
+                                let export_kind = this.context.kind;
+                                // let wallet_descriptor_delegate = wallet_descriptor.clone();
+                                spawn_with_result(&export_result, async move {
+                                    // wallet.wallet_open(wallet_secret, Some(wallet_descriptor_delegate.filename), true, true).await?;
 
-                                spawn_with_result(&unlock_result, async move {
-                                    wallet.wallet_open(secret, wallet_name, true, true).await?;
+                                    match export_kind {
+                                        Some(ExportKind::Mnemonic) => {
+                                            // wallet.export_mnemonic(prv_key_data_id.unwrap(), wallet_secret).await?;
+
+                                            if let Some(prv_key_data_id) = prv_key_data_id {
+                                                let result = wallet.prv_key_data_get(prv_key_data_id, wallet_secret).await?;
+                                                // let prv_key_data = wallet.prv_key_data(prv_key_data_id).await?;
+                                                // let mnemonic = prv_key_data.mnemonic().await?;
+                                                // println!("mnemonic: {}", mnemonic);
+                                            }
+
+                                        }
+                                        Some(ExportKind::Transportable) => {
+                                            // wallet.export_transportable(prv_key_data_id.unwrap(), wallet_secret).await?;
+                                        }
+                                        None => {
+                                            panic!("Invalid export kind")
+                                        }
+                                    }
+
+
                                     Ok(())
                                 });
 
-                                self.state = State::Unlocking;
+                                this.state = State::Exporting;
                             }
 
                             ui.label(" ");
-
-                            if ui
-                                .add_sized(size, egui::Button::new("Select a different wallet"))
-                                .clicked()
-                            {
-                                self.state = State::Select;
-                            }
-                        });
+                        })
+                        .render(ui);
                 }
-                State::Unlocking => {
-                    ui.heading("Unlocking");
-                    // ui.separator();
+                State::Exporting => {
+                    ui.heading("Exporting");
                     ui.label(" ");
-                    ui.label("Unlocking wallet, please wait...");
+                    ui.label("Exporting... please wait...");
                     ui.label(" ");
                     ui.add_space(64.);
                     ui.add(egui::Spinner::new().size(92.));
 
-                    if let Some(result) = unlock_result.take() {
+                    if let Some(result) = export_result.take() {
                         match result {
                             Ok(_) => {
-                                println!("Unlock success");
-                                // self.state = State::Unlock;
-                                core.select::<modules::AccountManager>();
+                                // println!("Export success");
+                                // self.state = Default::default();
+                                match self.context.kind {
+                                    Some(ExportKind::Mnemonic) => {
+                                        self.state = State::Mnemonic;
+                                    }
+                                    Some(ExportKind::Transportable) => {
+                                        self.state = State::Transportable;
+                                    }
+                                    None => {
+                                        panic!("Invalid export kind")
+                                    }
+                                }
                             }
                             Err(err) => {
                                 println!("Unlock error: {}", err);
-                                self.state = State::Unlock(Some(err.to_string()));
+                                self.state = State::Export { error : Some(Arc::new(err)) };
                             }
                         }
-                        // ui.label(format!("Result: {:?}", result));
-                        // _ctx.value = result.unwrap();
-                        // Stage::Next
-                    } else {
-                        // Stage::Current
                     }
                 }
+
+                State::Mnemonic => {
+                    ui.label("mnemonic goes here");
+                }
+                
+                State::Transportable => {
+                    ui.label("transportable goes here");
+                }
+
             }
         });
     }

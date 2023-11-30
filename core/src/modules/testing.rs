@@ -1,3 +1,5 @@
+use kaspa_bip32::{Mnemonic,WordCount};
+
 use crate::imports::*;
 // use egui_plot::PlotPoint;
 
@@ -16,8 +18,10 @@ pub struct Testing {
     // pub state: State,
     // pub message: Option<String>,
 
-    text : String,
+    // text : String,
     // graph_data: Vec<PlotPoint>,
+
+    mnemonic_presenter_context : MnemonicPresenterContext,
 }
 
 impl Testing {
@@ -31,12 +35,19 @@ impl Testing {
         //     PlotPoint::new(now + 16000.0, 2.5),
         //     PlotPoint::new(now + 20000.0, 5.0),
         // ];
+
+        // let m = Mnemonic::create_random().unwrap();
+        // let phrase = m.phrase();
+
+        let mnemonic_presenter_context = MnemonicPresenterContext::default();
+
         Self {
             runtime,
             // state: State::Select,
             // message: None,
             // graph_data,
-            text : "...".to_string(),
+            // text : "...".to_string(),
+            mnemonic_presenter_context,
         }
     }
 
@@ -45,9 +56,9 @@ impl Testing {
     //     self.state = State::Unlock(None);
     // }
 
-    fn text(&mut self, text : &str) {
-        self.text = text.to_string();
-    }
+    // fn text(&mut self, text : &str) {
+    //     self.text = text.to_string();
+    // }
 }
 
 impl ModuleT for Testing {
@@ -57,6 +68,37 @@ impl ModuleT for Testing {
     }
 
     fn render(
+        &mut self,
+        _core: &mut Core,
+        _ctx: &egui::Context,
+        _frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
+        egui::ScrollArea::vertical()
+            .id_source("test_mnemonic_size_scroll")
+            .auto_shrink([true; 2])
+            .show(ui, |ui| {
+
+        // Mnemonic::create_random(12, Language::English).unwrap();
+            let m = Mnemonic::random(WordCount::Words12,Default::default()).unwrap();
+            let phrase = m.phrase();
+            // MnemonicView::new(phrase.to_string()).render(ui);
+            // ui.horizontal(|ui|{
+
+                ui.vertical_centered(|ui|{
+                    ui.label("Hello World");
+                });
+                MnemonicPresenter::new(phrase, &mut self.mnemonic_presenter_context).render(ui);
+                ui.vertical_centered(|ui|{
+                    ui.label("Goodbye World");
+                });
+            // });
+        });
+        // self.mnemonic_presenter_context.render(ui);
+    }
+}
+impl Testing {
+    fn _render_v1(
         &mut self,
         _core: &mut Core,
         _ctx: &egui::Context,
@@ -74,7 +116,7 @@ impl ModuleT for Testing {
         // @surinder - moved to Wallet::new()
         // ui.style_mut().text_styles.insert(TextStyle::Name("CompositeButtonSubtext".into()), FontId { size: 12.0, family: FontFamily::Proportional });
         
-        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |_ui| {
             // let size = egui::Vec2::new(200_f32, 40_f32);
             // let unlock_result = Payload::<Result<()>>::new("test");
 
@@ -95,14 +137,14 @@ impl ModuleT for Testing {
             // });
 
 
-            ui.add_space(64.);
-            ui.label("Interaction tests (click on controls below)");
-            ui.label(self.text.clone());
+            // ui.add_space(64.);
+            // ui.label("Interaction tests (click on controls below)");
+            // ui.label(self.text.clone());
 
-            let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
-            if ui.add(icon).clicked(){
-                self.text("icon 1 clicked");
-            }
+            // let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT);
+            // if ui.add(icon).clicked(){
+            //     self.text("icon 1 clicked");
+            // }
 
             // let graph = CompositeGraph::new("testing",&self.graph_data);
             // if ui.add(graph).clicked(){
@@ -126,24 +168,24 @@ impl ModuleT for Testing {
             //     self.text("icon 3 clicked");
             // }
 
-            let btn = CompositeButton::image_and_text(
-                Image::new(egui::include_image!("../images/icon.svg")).fit_to_exact_size(Vec2 { x: 50.0, y: 50.0 }),
-                "We’ve taken Lorem Ipsum to the next level with our HTML-Ipsum tool",
-            "Secondary text,It’s perfect for showcasing design work as it should look"
-            );
+            // let btn = CompositeButton::image_and_text(
+            //     Image::new(egui::include_image!("../images/icon.svg")).fit_to_exact_size(Vec2 { x: 50.0, y: 50.0 }),
+            //     "We’ve taken Lorem Ipsum to the next level with our HTML-Ipsum tool",
+            // "Secondary text,It’s perfect for showcasing design work as it should look"
+            // );
             
-            if ui.add(btn).clicked(){
-                self.text("button 1 clicked");
-            }
+            // if ui.add(btn).clicked(){
+            //     self.text("button 1 clicked");
+            // }
 
-            let btn = CompositeButton::image(
-                Image::new(egui::include_image!("../images/icon.svg")).fit_to_exact_size(Vec2 { x: 70.0, y: 70.0 })
-            ).secondary_text(
-                "Secondary text, It’s perfect for showcasing design work as it should look"
-            ).padding(Some(Vec2 { x: 10.0, y: 10.0 }));
-            if ui.add(btn).clicked() {
-                self.text("button 2 clicked");
-            }
+            // let btn = CompositeButton::image(
+            //     Image::new(egui::include_image!("../images/icon.svg")).fit_to_exact_size(Vec2 { x: 70.0, y: 70.0 })
+            // ).secondary_text(
+            //     "Secondary text, It’s perfect for showcasing design work as it should look"
+            // ).padding(Some(Vec2 { x: 10.0, y: 10.0 }));
+            // if ui.add(btn).clicked() {
+            //     self.text("button 2 clicked");
+            // }
             
 
             /*

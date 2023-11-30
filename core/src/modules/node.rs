@@ -68,6 +68,11 @@ impl ModuleT for Node {
                                             render_peer(ui, peer);
                                         });
                                     });
+                            } else if core.metrics.as_ref().map(|m| m.data.node_active_peers).unwrap_or_default() > 0 {
+                                ui.horizontal(|ui| {
+                                    ui.spinner();
+                                    ui.label("Updating...");
+                                });
                             } else {
                                 ui.colored_label(theme().warning_color, i18n("No peers"));
                             }

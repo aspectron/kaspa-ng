@@ -64,7 +64,7 @@ impl Server {
 
         let wallet_server = Arc::new(WalletServer::new(wallet.clone()));
 
-        let _application_events = ApplicationEventsChannel::unbounded(None);
+        let _application_events = ApplicationEventsChannel::unbounded();
         // let kaspa = Arc::new(KaspaService::new(application_events.clone(), &settings));
         // let runtime = Runtime::new(&[kaspa.clone()]);
 
