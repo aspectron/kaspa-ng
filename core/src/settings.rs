@@ -71,7 +71,7 @@ impl KaspadNodeKind {
             KaspadNodeKind::Disable => i18n("Disables node connectivity (Offline Mode)."),
             KaspadNodeKind::Remote => i18n("Connects to a Remote Rusty Kaspa Node via wRPC."),
             #[cfg(not(target_arch = "wasm32"))]
-            KaspadNodeKind::IntegratedInProc => i18n("The node runs as a part of the Kaspa-NG application process.\n This reduces communication overhead (experimental)."),
+            KaspadNodeKind::IntegratedInProc => i18n("The node runs as a part of the Kaspa-NG application process. This reduces communication overhead (experimental)."),
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedAsDaemon => i18n("The node is spawned as a child daemon process (recommended)."),
             #[cfg(not(target_arch = "wasm32"))]

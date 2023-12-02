@@ -56,7 +56,7 @@ cfg_if! {
             #[allow(unused)]
             use clap::{arg, command, Arg, Command};
 
-            if std::env::var("KASPA_NG_NODE").is_ok() {
+            if std::env::args().any(|arg| arg == "--daemon") || std::env::var("KASPA_NG_DAEMON").is_ok() {
                 Args::Kaspad { args : Box::new(parse_kaspad_args()) }
             } else {
 

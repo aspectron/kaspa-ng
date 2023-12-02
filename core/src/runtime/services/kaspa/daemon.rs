@@ -73,7 +73,7 @@ impl super::Kaspad for Daemon {
 
         let cmd = cmd
             .args(config)
-            .env("KASPA_NG_NODE", "1")
+            .env("KASPA_NG_DAEMON", "1")
             .stdout(Stdio::piped());
 
         let is_running = self.inner().is_running.clone();
