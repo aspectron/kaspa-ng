@@ -1,13 +1,9 @@
 use crate::imports::*;
-// pub use futures::{future::FutureExt, select, Future};
-// use kaspa_rpc_core::RpcPeerInfo;
-
-// pub const PEER_POLLING_INTERVAL: usize = 1; // 1 sec
-
-// use crate::runtime::plugins::Plugin;
 use crate::runtime::plugins::*;
 
 pub enum PluginManagerEvents {
+    Start(Arc<dyn Plugin>),
+    Stop(Arc<dyn Plugin>),
     Exit,
 }
 
@@ -15,13 +11,9 @@ pub struct PluginManagerService {
     pub application_events: ApplicationEventsChannel,
     pub service_events: Channel<PluginManagerEvents>,
     pub task_ctl: Channel<()>,
-    // pub rpc_api: Mutex<Option<Arc<dyn RpcApi>>>,
-    // pub peer_info: Mutex<Option<Arc<Vec<RpcPeerInfo>>>>,
     pub plugins: Arc<Vec<Arc<dyn Plugin>>>,
-    // pub plugins_running : HashMap<String,AtomicBool>,
     pub plugin_settings: Mutex<PluginSettingsMap>,
-    pub is_running_map: HashMap<String, AtomicBool>,
-    // pub is_enabled_map: HashMap<String, AtomicBool>,
+    pub running_plugins: HashMap<String, AtomicBool>,
 }
 
 impl PluginManagerService {
@@ -29,6 +21,11 @@ impl PluginManagerService {
         let plugins: Vec<Arc<dyn Plugin>> = vec![Arc::new(MarketMonitorPlugin::new(
             application_events.clone(),
         ))];
+
+        let running_plugins = plugins
+            .iter()
+            .map(|plugin| (plugin.ident().to_string(), AtomicBool::new(false)))
+            .collect::<HashMap<_, _>>();
 
         // let plugins: Vec<PluginContainer> = plugins
         //     .into_iter()
@@ -41,16 +38,16 @@ impl PluginManagerService {
             task_ctl: Channel::oneshot(),
             plugins: Arc::new(plugins),
             plugin_settings: Mutex::new(settings.plugins.clone().unwrap_or_default()),
-            is_running_map: HashMap::new(),
+            running_plugins,
             // is_enabled_map: HashMap::new(),
         }
     }
 
     pub fn is_running(&self, plugin: &Arc<dyn Plugin>) -> bool {
-        self.is_running_map
+        self.running_plugins
             .get(plugin.ident())
             .map(|is_running| is_running.load(Ordering::Relaxed))
-            .unwrap_or(false)
+            .expect("is_running(): no such plugin")
     }
 
     pub fn is_enabled(&self, plugin: &Arc<dyn Plugin>) -> bool {
@@ -60,6 +57,19 @@ impl PluginManagerService {
             .get(plugin.ident())
             .map(|settings| settings.enabled)
             .unwrap_or(false)
+    }
+
+    pub fn enable(&self, plugin: &Arc<dyn Plugin>, enabled: bool) {
+        if let Some(plugin_settings) = self.plugin_settings.lock().unwrap().get_mut(plugin.ident())
+        {
+            plugin_settings.enabled = enabled;
+        }
+
+        // - TODO - START PLUGIN IF NOT RUNNING
+        // - TODO - START PLUGIN IF NOT RUNNING
+        // - TODO - START PLUGIN IF NOT RUNNING
+        // - TODO - START PLUGIN IF NOT RUNNING
+        // - TODO - START PLUGIN IF NOT RUNNING
     }
 
     pub fn plugins(&self) -> &Arc<Vec<Arc<dyn Plugin>>> {
@@ -158,11 +168,42 @@ impl Service for PluginManagerService {
     }
 
     async fn spawn(self: Arc<Self>) -> Result<()> {
+        let this = self.clone();
+        let _application_events_sender = self.application_events.sender.clone();
+
+        loop {
+            select! {
+
+                msg = this.service_events.recv().fuse() => {
+                    if let Ok(event) = msg {
+                        match event {
+                            PluginManagerEvents::Start(_plugin) => {
+                            }
+                            PluginManagerEvents::Stop(_plugin) => {
+                            }
+                            PluginManagerEvents::Exit => {
+                                break;
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        this.task_ctl.send(()).await.unwrap();
+
         Ok(())
     }
 
     fn terminate(self: Arc<Self>) {
         self.terminate_plugins();
+
+        self.service_events
+            .sender
+            .try_send(PluginManagerEvents::Exit)
+            .unwrap();
     }
 
     async fn join(self: Arc<Self>) -> Result<()> {

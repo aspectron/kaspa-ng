@@ -9,14 +9,17 @@ cfg_if! {
     }
 }
 
+pub mod channel;
+pub mod device;
 pub mod payload;
 pub mod plugins;
 pub mod services;
 pub mod system;
-pub use payload::Payload;
-pub use services::Service;
 use services::*;
 use system::*;
+pub use device::Device;
+pub use payload::Payload;
+pub use services::Service;
 
 pub struct Inner {
     // services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
@@ -32,6 +35,7 @@ pub struct Inner {
     is_running: Arc<AtomicBool>,
     start_time: Instant,
     system: Option<System>,
+    device: Device,
 }
 
 /// Runtime is a core component of the Kaspa NG application responsible for
@@ -87,6 +91,7 @@ impl Runtime {
                 start_time: Instant::now(),
 
                 system: Some(system),
+                device: Device::default(),
             }),
         };
 
@@ -101,6 +106,10 @@ impl Runtime {
 
     pub fn system(&self) -> &Option<System> {
         &self.inner.system
+    }
+
+    pub fn device(&self) -> &Device {
+        &self.inner.device
     }
 
     pub fn start_services(&self) {
@@ -122,10 +131,10 @@ impl Runtime {
 
     pub async fn join_services(&self) {
         // for service in self.services() {
-        // let name = service.name();
-        // println!("⚡ {name}");
-        // service.join().await.expect("service join failure");
-        // println!("💀 {name}");
+        //  let name = service.name();
+        //  println!("⚡ {name}");
+        //  service.join().await.expect("service join failure");
+        //  println!("💀 {name}");
         // }
 
         let futures = self

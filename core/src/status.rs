@@ -1,6 +1,6 @@
 use crate::imports::*;
-use kaspa_metrics::MetricsSnapshot;
 use crate::sync::SyncStatus;
+use kaspa_metrics::MetricsSnapshot;
 
 enum ConnectionStatus {
     Connected {
@@ -38,7 +38,7 @@ impl<'core> Status<'core> {
     }
 
     fn device(&self) -> &Device {
-        self.core.device()
+        runtime().device()
     }
 
     fn metrics(&self) -> &Option<Box<MetricsSnapshot>> {
@@ -47,7 +47,6 @@ impl<'core> Status<'core> {
 
     pub fn render(&mut self, ui: &mut egui::Ui) {
         menu::bar(ui, |ui| {
-
             if !self.state().is_connected() {
                 self.render_connected_state(ui, ConnectionStatus::Disconnected);
             } else {
@@ -86,7 +85,7 @@ impl<'core> Status<'core> {
                 });
             }
 
-            if !self.module().modal() && !self.device().is_portrait() {
+            if !self.module().modal() && !self.device().is_singular_layout() {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if icons()
                         .sliders
@@ -199,10 +198,9 @@ impl<'core> Status<'core> {
                     }
                 }
 
-                if !self.device().is_portrait() {
+                if !self.device().is_singular_layout() {
                     module.status_bar(self.core, ui);
                 }
-
             }
 
             ConnectionStatus::Connected {
@@ -233,7 +231,7 @@ impl<'core> Status<'core> {
                 //     });
                 // });
 
-                if !self.device().is_portrait() {
+                if !self.device().is_singular_layout() {
                     ui.separator();
                     self.render_peers(ui, peers);
                     if let Some(current_daa_score) = current_daa_score {
@@ -258,7 +256,7 @@ impl<'core> Status<'core> {
                         ui.separator();
                         self.render_network_selector(ui);
 
-                        if !self.device().is_portrait() {
+                        if !self.device().is_singular_layout() {
                             ui.separator();
                             self.render_peers(ui, peers);
                             if let Some(status) = sync_status.as_ref() {

@@ -1,3 +1,5 @@
+use egui::text::TextWrapping;
+
 use crate::imports::*;
 
 pub enum Confirm {
@@ -31,28 +33,16 @@ pub trait UiExtension {
         nack: impl Into<WidgetText>,
     ) -> Option<Confirm>;
     fn confirm_medium_apply_cancel(&mut self, align: Align) -> Option<Confirm>;
-    //  {
-    //     self.confirm_medium(
-    //         align,
-    //         icon_with_text(self, egui_phosphor::light::CHECK, "Apply"),
-    //         icon_with_text(self, egui_phosphor::light::X,"Cancel")
-    //     )
-    // }
 }
 
 impl UiExtension for Ui {
-    // fn medium_button(&mut self, text: impl Into<WidgetText>) -> Response {
-    //     self.add_sized(theme().medium_button_size(), Button::new(text))
-    // }
     fn medium_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
             Button::new(text).min_size(theme().medium_button_size()),
         )
     }
-    // fn large_button(&mut self, text: impl Into<WidgetText>) -> Response {
-    //     self.add_sized(theme().large_button_size(), Button::new(text))
-    // }
+
     fn large_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
@@ -95,8 +85,6 @@ impl UiExtension for Ui {
             align,
             format!("{} {}", egui_phosphor::light::CHECK, "Apply"),
             format!("{} {}", egui_phosphor::light::X, "Cancel"),
-            // icon_with_text(self, egui_phosphor::light::CHECK, theme.ack_color, "Apply"),
-            // icon_with_text(self, egui_phosphor::light::X,theme.nack_color, "Cancel")
         )
     }
 }
@@ -110,9 +98,19 @@ pub struct LayoutJobBuilder {
 }
 
 impl LayoutJobBuilder {
-    pub fn new(leading: f32, font_id: Option<FontId>) -> Self {
+    pub fn new(width: f32, leading: f32, font_id: Option<FontId>) -> Self {
+        let job = LayoutJob {
+            wrap: TextWrapping {
+                max_width: width,
+                max_rows: 1,
+                break_anywhere: true,
+                overflow_character: Some('…'),
+            },
+            ..Default::default()
+        };
+
         Self {
-            job: LayoutJob::default(),
+            job,
             leading,
             font_id,
             ..Default::default()

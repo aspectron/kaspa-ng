@@ -1,9 +1,5 @@
 use crate::imports::*;
 use std::fmt::Display;
-pub enum PanelEvents {
-    Back,
-    Close,
-}
 
 type ActionFn<'panel, Context> = Box<dyn FnOnce(&mut Context) + 'panel>;
 type RenderFn<'panel, Context> = Box<dyn FnOnce(&mut Context, &mut Ui) + 'panel>;

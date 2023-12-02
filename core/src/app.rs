@@ -92,8 +92,6 @@ cfg_if! {
                     ;
 
                     let matches = cmd.get_matches();
-                    // println!("matches: {:#?}", matches);
-
                     if matches.subcommand_matches("cli").is_some() {
                         Args::Cli
                     } else if let Some(matches) = matches.subcommand_matches("i18n") {
@@ -107,8 +105,8 @@ cfg_if! {
                             std::process::exit(1);
                         }
                     } else {
-                        let reset_settings = matches.get_one::<bool>("reset-settings").cloned().unwrap_or(false);
                         let disable = matches.get_one::<bool>("disable").cloned().unwrap_or(false);
+                        let reset_settings = matches.get_one::<bool>("reset-settings").cloned().unwrap_or(false);
 
                         Args::Kng { reset_settings, disable }
                     }

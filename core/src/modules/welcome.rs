@@ -60,8 +60,8 @@ impl ModuleT for Welcome {
                                 KaspadNodeKind::IntegratedAsDaemon,
                                 // KaspadNodeKind::ExternalAsDaemon,
                                 // KaspadNodeKind::IntegratedInProc,
-                            ].iter().for_each(|node| {
-                                ui.radio_value(&mut self.settings.node.node_kind, *node, node.describe());
+                            ].iter().for_each(|node_kind| {
+                                ui.radio_value(&mut self.settings.node.node_kind, *node_kind, node_kind.to_string()).on_hover_text_at_pointer(node_kind.describe());
                             });
                         });
                     });

@@ -60,22 +60,20 @@ pub use egui_plot::{PlotPoint, PlotPoints};
 
 pub use crate::collection::Collection;
 pub use crate::core::Core;
-pub use crate::device::Device;
 pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};
+pub use crate::menu::Menu;
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
 pub use crate::network::Network;
 pub use crate::notifications::{UserNotification, UserNotifyKind};
-pub use crate::panel::Panel;
 pub use crate::primitives::{
     Account, AccountCollection, BlockDagGraphSettings, DaaBucket, DagBlock, Transaction,
     TransactionCollection,
 };
-pub use crate::prompt::{cascade, with_secret};
 pub use crate::result::Result;
-pub use crate::runtime::{runtime, spawn, spawn_with_result, Payload, Runtime, Service};
+pub use crate::runtime::{runtime, spawn, spawn_with_result, Device, Payload, Runtime, Service};
 pub use crate::settings::{
     KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, PluginSettings,
     PluginSettingsMap, RpcConfig, Settings, UxSettings,

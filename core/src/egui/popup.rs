@@ -11,6 +11,7 @@ pub struct PopupPanel<'panel> {
     with_caption: bool,
     with_close_button: bool,
     with_pulldown_marker: bool,
+    close_on_interaction: bool,
 }
 
 impl<'panel> PopupPanel<'panel> {
@@ -31,6 +32,7 @@ impl<'panel> PopupPanel<'panel> {
             with_caption: false,
             with_close_button: false,
             with_pulldown_marker: false,
+            close_on_interaction: false,
         }
     }
 
@@ -59,6 +61,11 @@ impl<'panel> PopupPanel<'panel> {
         self
     }
 
+    pub fn with_close_on_interaction(mut self, close_on_interaction: bool) -> Self {
+        self.close_on_interaction = close_on_interaction;
+        self
+    }
+
     pub fn build(&mut self, ui: &mut Ui) {
         let title = self.title.clone();
         let content = self.content.take().unwrap();
@@ -79,49 +86,56 @@ impl<'panel> PopupPanel<'panel> {
         // ignores clicks inside of its area allowing the panel to
         // persist while the user interacts with it and closing
         // once triggered via `mem.close_popup()` or clicking outside of it.
-        popup_above_or_below_widget_local(ui, self.id, &response, AboveOrBelow::Below, |ui| {
-            if let Some(width) = self.min_width {
-                ui.set_min_width(width);
-            }
+        popup_above_or_below_widget_local(
+            ui,
+            self.id,
+            &response,
+            AboveOrBelow::Below,
+            self.close_on_interaction,
+            |ui| {
+                if let Some(width) = self.min_width {
+                    ui.set_min_width(width);
+                }
 
-            if let Some(height) = self.max_height {
-                ui.set_max_height(height);
-            }
+                if let Some(height) = self.max_height {
+                    ui.set_max_height(height);
+                }
 
-            if self.with_caption {
-                ui.horizontal(|ui| {
-                    ui.label(title);
+                if self.with_caption {
+                    ui.horizontal(|ui| {
+                        ui.label(title);
 
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        use egui_phosphor::light::X;
-                        if ui
-                            .add(Label::new(RichText::new(X).size(16.)).sense(Sense::click()))
-                            .clicked()
-                        {
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            use egui_phosphor::light::X;
+                            if ui
+                                .add(Label::new(RichText::new(X).size(16.)).sense(Sense::click()))
+                                .clicked()
+                            {
+                                ui.memory_mut(|mem| mem.close_popup());
+                            }
+                        });
+                    });
+
+                    ui.separator();
+                    ui.space();
+                }
+
+                content(ui);
+
+                if self.with_close_button {
+                    ui.space();
+                    ui.separator();
+
+                    ui.add_space(8.);
+                    ui.vertical_centered(|ui| {
+                        if ui.medium_button("Close").clicked() {
                             ui.memory_mut(|mem| mem.close_popup());
                         }
                     });
-                });
-
-                ui.separator();
-                ui.space();
-            }
-
-            content(ui);
-
-            if self.with_close_button {
-                ui.space();
-                ui.separator();
-
-                ui.add_space(8.);
-                ui.vertical_centered(|ui| {
-                    if ui.medium_button("Close").clicked() {
-                        ui.memory_mut(|mem| mem.close_popup());
-                    }
-                });
-                ui.add_space(8.);
-            }
-        });
+                    ui.add_space(8.);
+                }
+            },
+        );
     }
 }
 
@@ -130,6 +144,7 @@ pub fn popup_above_or_below_widget_local<R>(
     popup_id: Id,
     widget_response: &Response,
     above_or_below: AboveOrBelow,
+    close_on_interaction: bool,
     add_contents: impl FnOnce(&mut Ui) -> R,
 ) -> Option<R> {
     if ui.memory(|mem| mem.is_popup_open(popup_id)) {
@@ -158,9 +173,14 @@ pub fn popup_above_or_below_widget_local<R>(
                     })
                     .inner
             });
-        // .inner;
+
+            
         let mut close_popup = false;
-        if ui.input(|i| i.key_pressed(Key::Escape)) || widget_response.clicked_elsewhere() {
+        if close_on_interaction {
+            if ui.input(|i| i.key_pressed(Key::Escape)) || widget_response.clicked_elsewhere() {
+                close_popup = true;
+            }
+        } else if ui.input(|i| i.key_pressed(Key::Escape)) || widget_response.clicked_elsewhere() {
             let response = inner.response;
             ui.ctx().input(|i| {
                 let pointer = &i.pointer;

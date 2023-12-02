@@ -1,4 +1,5 @@
 use crate::imports::*;
+use crate::mobile::MobileMenu;
 use egui::load::Bytes;
 use egui_notify::Toasts;
 use kaspa_metrics::MetricsSnapshot;
@@ -16,7 +17,6 @@ pub struct Core {
     is_shutdown_pending: bool,
     settings_storage_requested: bool,
     last_settings_storage_request: Instant,
-    device: Device,
 
     runtime: Runtime,
     wallet: Arc<dyn WalletApi>,
@@ -27,20 +27,21 @@ pub struct Core {
     modules: HashMap<TypeId, Module>,
     pub settings: Settings,
     pub toasts: Toasts,
+    screenshot: Option<Arc<ColorImage>>,
     pub mobile_style: egui::Style,
     pub default_style: egui::Style,
-    pub metrics: Option<Box<MetricsSnapshot>>,
 
     state: State,
     hint: Option<Hint>,
     discard_hint: bool,
     exception: Option<Exception>,
 
+    pub metrics: Option<Box<MetricsSnapshot>>,
     pub wallet_descriptor: Option<WalletDescriptor>,
     pub wallet_list: Vec<WalletDescriptor>,
     pub prv_key_data_map: HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>,
     pub account_collection: Option<AccountCollection>,
-    pub selected_account: Option<Account>,
+    // pub selected_account: Option<Account>,
 }
 
 impl Core {
@@ -114,17 +115,10 @@ impl Core {
             }
         };
 
-        let mut module = if settings.developer_mode {
-            modules
-                .get(&TypeId::of::<modules::Testing>())
-                .unwrap()
-                .clone()
-        } else {
-            modules
-                .get(&TypeId::of::<modules::Overview>())
-                .unwrap()
-                .clone()
-        };
+        let mut module = modules
+            .get(&TypeId::of::<modules::Overview>())
+            .unwrap()
+            .clone();
 
         if settings.version != env!("CARGO_PKG_VERSION") {
             settings.version = env!("CARGO_PKG_VERSION").to_string();
@@ -144,7 +138,6 @@ impl Core {
             is_shutdown_pending: false,
             settings_storage_requested: false,
             last_settings_storage_request: Instant::now(),
-            device: Device::default(),
 
             wallet,
             application_events_channel,
@@ -154,6 +147,7 @@ impl Core {
             stack: VecDeque::new(),
             settings: settings.clone(),
             toasts: Toasts::default(),
+            screenshot: None,
             // status_bar_message: None,
             default_style,
             mobile_style,
@@ -162,8 +156,7 @@ impl Core {
             wallet_list: Vec::new(),
             prv_key_data_map: HashMap::new(),
             account_collection: None,
-            selected_account: None,
-
+            // selected_account: None,
             metrics: None,
             state: Default::default(),
             hint: None,
@@ -184,10 +177,11 @@ impl Core {
     where
         T: 'static,
     {
-        let module = self
-            .modules
-            .get(&TypeId::of::<T>())
-            .expect("Unknown module");
+        self.select_with_type_id(TypeId::of::<T>());
+    }
+
+    pub fn select_with_type_id(&mut self, type_id: TypeId) {
+        let module = self.modules.get(&type_id).expect("Unknown module");
 
         if self.module.type_id() != module.type_id() {
             let next = module.clone();
@@ -215,7 +209,7 @@ impl Core {
         }
     }
 
-    pub fn sender(&self) -> crate::channel::Sender<Events> {
+    pub fn sender(&self) -> crate::runtime::channel::Sender<Events> {
         self.application_events_channel.sender.clone()
     }
 
@@ -252,10 +246,6 @@ impl Core {
 
     pub fn module(&self) -> &Module {
         &self.module
-    }
-
-    pub fn device(&self) -> &Device {
-        &self.device
     }
 
     pub fn get<T>(&self) -> Ref<'_, T>
@@ -324,6 +314,12 @@ impl eframe::App for Core {
                     self.handle_keyboard_events(*key, *pressed, modifiers, *repeat);
                 }
             });
+
+            for event in &input.raw.events {
+                if let Event::Screenshot { image, .. } = event {
+                    self.screenshot = Some(image.clone());
+                }
+            }
         });
 
         // ctx.set_visuals(self.default_style.clone());
@@ -361,42 +357,69 @@ impl eframe::App for Core {
             }
         }
 
-        if !self.module.modal() {
+        let device = runtime().device();
+
+        if !self.module.modal() && !device.is_singular_layout() {
             egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-                self.render_menu(ui, frame);
+                Menu::new(self).render(ui);
+                // self.render_menu(ui, frame);
             });
         }
 
-        if self.device().is_portrait() || self.device().is_mobile() {
-            if !self.device().is_mobile() {
+        if device.is_singular_layout() {
+            if !device.is_mobile() {
                 egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                     Status::new(self).render(ui);
                     egui::warn_if_debug_build(ui);
                 });
             }
 
-            let width = (ctx.screen_rect().width() - 390.) * 0.5;
+            let device_width = 390.0;
+            let margin_width = (ctx.screen_rect().width() - device_width) * 0.5;
 
             SidePanel::right("portrait_right")
-                .exact_width(width)
+                .exact_width(margin_width)
                 .resizable(false)
                 .show_separator_line(true)
                 .frame(Frame::default().fill(Color32::BLACK))
                 .show(ctx, |_ui| {});
             SidePanel::left("portrait_left")
-                .exact_width(width)
+                .exact_width(margin_width)
                 .resizable(false)
                 .show_separator_line(true)
                 .frame(Frame::default().fill(Color32::BLACK))
                 .show(ctx, |_ui| {});
 
-            CentralPanel::default().show(ctx, |ui| {
-                egui::TopBottomPanel::bottom("mobile_bottom_panel").show_inside(ui, |ui| {
-                    Status::new(self).render(ui);
-                });
+            CentralPanel::default()
+                .frame(
+                    Frame::default()
+                        .fill(ctx.style().visuals.panel_fill),
+                )
+                .show(ctx, |ui| {
+                    ui.set_max_width(device_width);
 
-                self.module.clone().render(self, ctx, frame, ui);
-            });
+                    egui::TopBottomPanel::bottom("mobile_bottom_panel").show_inside(ui, |ui| {
+                        Status::new(self).render(ui);
+                    });
+
+                    if device.is_mobile() {
+                        egui::TopBottomPanel::bottom("mobile_menu_panel")
+                            .show_inside(ui, |ui| {
+                                MobileMenu::new(self).render(ui);
+                            });
+                    }
+
+                    egui::CentralPanel::default()
+                        .frame(
+                            Frame::default()
+                                .inner_margin(0.)
+                                .outer_margin(4.)
+                                .fill(ctx.style().visuals.panel_fill),
+                        )
+                        .show_inside(ui, |ui| {
+                            self.module.clone().render(self, ctx, frame, ui);
+                        });
+                });
         } else {
             egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                 Status::new(self).render(ui);
@@ -421,6 +444,41 @@ impl eframe::App for Core {
         if let Some(module) = self.deactivation.take() {
             module.deactivate(self);
         }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(screenshot) = self.screenshot.as_ref() {
+            if let Some(mut path) = rfd::FileDialog::new().save_file() {
+                path.set_extension("png");
+                let screen_rect = ctx.screen_rect();
+                let pixels_per_point = ctx.pixels_per_point();
+                let screenshot = screenshot.clone();
+                let sender = self.sender();
+                std::thread::Builder::new()
+                    .name("screenshot".to_string())
+                    .spawn(move || {
+                        let image = screenshot.region(&screen_rect, Some(pixels_per_point));
+                        image::save_buffer(
+                            &path,
+                            image.as_raw(),
+                            image.width() as u32,
+                            image.height() as u32,
+                            image::ColorType::Rgba8,
+                        )
+                        .unwrap();
+
+                        sender
+                            .try_send(Events::Notify {
+                                user_notification: UserNotification::success(format!(
+                                    "Capture saved to\n{}",
+                                    path.to_string_lossy()
+                                )),
+                            })
+                            .unwrap()
+                    })
+                    .expect("Unable to spawn screenshot thread");
+                self.screenshot.take();
+            }
+        }
     }
 }
 
@@ -444,152 +502,6 @@ impl Core {
         .paint_at(ui, logo_rect);
     }
 
-    fn render_menu(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
-        egui::menu::bar(ui, |ui| {
-            ui.columns(2, |cols| {
-                cols[0].horizontal(|ui| {
-                    ui.menu_button("File", |ui| {
-                        #[cfg(not(target_arch = "wasm32"))]
-                        if ui.button("Quit").clicked() {
-                            ui.ctx().send_viewport_cmd(ViewportCommand::Close)
-                        }
-                        ui.separator();
-                        ui.label(" ~ Debug Modules ~");
-                        ui.label(" ");
-
-                        // let mut modules = self.modules.values().cloned().collect::<Vec<_>>();
-
-                        let (tests, mut modules): (Vec<_>, Vec<_>) = self
-                            .modules
-                            .values()
-                            .cloned()
-                            .partition(|module| module.name().starts_with('~'));
-
-                        tests.into_iter().for_each(|module| {
-                            if ui.button(module.name()).clicked() {
-                                self.module = module; //.type_id();
-                                ui.close_menu();
-                            }
-                        });
-
-                        ui.label(" ");
-
-                        modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
-                        modules.into_iter().for_each(|module| {
-                            // let SectionInner { name,type_id, .. } = section.inner;
-                            if ui.button(module.name()).clicked() {
-                                self.module = module; //.type_id();
-                                ui.close_menu();
-                            }
-                        });
-                    });
-
-                    ui.separator();
-                    if ui.button("Overview").clicked() {
-                        self.select::<modules::Overview>();
-                    }
-                    ui.separator();
-                    if ui.button("Wallet").clicked() {
-                        if self.state().is_open() {
-                            self.select::<modules::AccountManager>();
-                        } else {
-                            self.select::<modules::WalletOpen>();
-                        }
-                    }
-                    ui.separator();
-                    // if ui.button(icon_with_text(ui, egui_phosphor::light::GEAR, Color32::WHITE, "Settings")).clicked() {
-                    //     self.select::<modules::Settings>();
-                    // }
-                    // ui.separator();
-                    // if ui.button(RichText::new(format!("{} Settings",egui_phosphor::light::GEAR))).clicked() {
-                    if ui.button("Settings").clicked() {
-                        self.select::<modules::Settings>();
-                    }
-
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        ui.separator();
-                        if ui.button("Node").clicked() {
-                            self.select::<modules::Node>();
-                        }
-                    }
-
-                    ui.separator();
-                    if ui.button("Metrics").clicked() {
-                        self.select::<modules::Metrics>();
-                    }
-
-                    ui.separator();
-                    if ui.button("Block DAG").clicked() {
-                        self.select::<modules::BlockDag>();
-                    }
-
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        ui.separator();
-                        if ui.button("Logs").clicked() {
-                            self.select::<modules::Logs>();
-                        }
-                    }
-
-                    // ui.separator();
-                    // if ui.button("About").clicked() {
-                    //     self.select::<modules::About>();
-                    // }
-                    ui.separator();
-                });
-
-                cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let dictionary = i18n::dictionary();
-                    // use egui_phosphor::light::TRANSLATE;
-                    #[allow(clippy::useless_format)]
-                    ui.menu_button(format!("{} ⏷", dictionary.current_title()), |ui| {
-                        // ui.menu_button(RichText::new(format!("{TRANSLATE} ⏷")).size(18.), |ui| {
-                        dictionary
-                            .enabled_languages()
-                            .into_iter()
-                            .for_each(|(code, lang)| {
-                                if ui.button(lang).clicked() {
-                                    self.settings.language_code = code.to_string();
-                                    dictionary
-                                        .activate_language_code(code)
-                                        .expect("Unable to activate language");
-                                    ui.close_menu();
-                                }
-                            });
-                    });
-
-                    ui.separator();
-
-                    // let theme = theme();
-
-                    PopupPanel::new(
-                        ui,
-                        "display_settings",
-                        egui_phosphor::light::MONITOR,
-                        |ui| {
-                            ui.label("hello world");
-                        },
-                    )
-                    .build(ui);
-
-                    // // let icon_size = theme.panel_icon_size();
-                    // let icon = CompositeIcon::new(egui_phosphor::light::MONITOR).icon_size(18.);
-                    // // .padding(Some(icon_padding));
-                    // // if ui.add_enabled(true, icon).clicked() {
-                    // if ui.add(icon).clicked() {
-                    //     // close(self.this);
-                    // }
-
-                    // if ui.button("Theme").clicked() {
-                    //     self.select::<modules::Logs>();
-                    // }
-                    ui.separator();
-                });
-            });
-        });
-        // ui.spacing()
-    }
 
     pub fn handle_events(
         &mut self,
@@ -729,6 +641,8 @@ impl Core {
                     CoreWallet::DAAScoreChange { current_daa_score } => {
                         self.state.current_daa_score.replace(current_daa_score);
                     }
+                    // Ignore scan notifications
+                    CoreWallet::Scan { record: _ } => {}
                     // Ignore stasis notifications
                     CoreWallet::Stasis { record: _ } => {}
                     // This notification is for a UTXO change, which is
@@ -786,20 +700,11 @@ impl Core {
                         }
                     },
 
-                    CoreWallet::Balance {
-                        balance,
-                        id,
-                        mature_utxo_size,
-                        pending_utxo_size,
-                    } => {
+                    CoreWallet::Balance { balance, id } => {
                         if let Some(account_collection) = &self.account_collection {
                             if let Some(account) = account_collection.get(&id.into()) {
                                 // println!("*** updating account balance: {}", id);
-                                account.update_balance(
-                                    balance,
-                                    mature_utxo_size,
-                                    pending_utxo_size,
-                                )?;
+                                account.update_balance(balance)?;
                             } else {
                                 log_error!("unable to find account {}", id);
                             }
@@ -929,10 +834,10 @@ impl Core {
                     self.select::<modules::WalletCreate>();
                 }
                 Key::M => {
-                    self.device.is_mobile = !self.device.is_mobile;
+                    runtime().device().toggle_mobile();
                 }
                 Key::P => {
-                    self.device.is_portrait = !self.device.is_portrait;
+                    runtime().device().toggle_portrait();
                 }
                 _ => {}
             }
@@ -944,10 +849,10 @@ impl Core {
                     self.select::<modules::Testing>();
                 }
                 Key::M => {
-                    self.device.is_mobile = !self.device.is_mobile;
+                    runtime().device().toggle_mobile();
                 }
                 Key::P => {
-                    self.device.is_portrait = !self.device.is_portrait;
+                    runtime().device().toggle_portrait();
                 }
                 _ => {}
             }

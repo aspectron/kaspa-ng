@@ -33,7 +33,6 @@ struct Inner {
     // runtime: Arc<dyn runtime::Account>,
     id: AccountId,
     balance: Mutex<Option<Balance>>,
-    utxo_sizes: Mutex<Option<(usize, usize)>>,
     descriptor: Mutex<AccountDescriptor>,
     context: Mutex<Option<Arc<AccountContext>>>,
     transactions: Mutex<TransactionCollection>,
@@ -54,7 +53,6 @@ impl Inner {
         Self {
             id: *descriptor.account_id(),
             balance: Mutex::new(None),
-            utxo_sizes: Mutex::new(None),
             descriptor: Mutex::new(descriptor),
             context: Mutex::new(context),
             transactions: Mutex::new(TransactionCollection::default()),
@@ -103,10 +101,6 @@ impl Account {
         self.inner.balance.lock().unwrap().clone()
     }
 
-    pub fn utxo_sizes(&self) -> Option<(usize, usize)> {
-        *self.inner.utxo_sizes.lock().unwrap()
-    }
-
     // pub fn address(&self) -> Result<String> {
     //     self.inner.context.lock().unwrap().receive_address
     //     Ok(self.inner.runtime.receive_address()?.into())
@@ -121,14 +115,8 @@ impl Account {
         *self.inner.descriptor.lock().unwrap() = descriptor;
     }
 
-    pub fn update_balance(
-        &self,
-        balance: Option<Balance>,
-        mature_utxo_size: usize,
-        pending_utxo_size: usize,
-    ) -> Result<()> {
+    pub fn update_balance(&self, balance: Option<Balance>) -> Result<()> {
         *self.inner.balance.lock().unwrap() = balance;
-        *self.inner.utxo_sizes.lock().unwrap() = Some((mature_utxo_size, pending_utxo_size));
 
         Ok(())
     }

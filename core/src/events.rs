@@ -2,10 +2,7 @@ use crate::imports::*;
 use kaspa_metrics::MetricsSnapshot;
 use kaspa_wallet_core::{events as kaspa, storage::PrvKeyDataInfo};
 
-pub type ApplicationEventsChannel = crate::channel::Channel<Events>;
-
-// impl Notify {
-// }
+pub type ApplicationEventsChannel = crate::runtime::channel::Channel<Events>;
 
 #[derive(Clone)]
 pub enum Events {

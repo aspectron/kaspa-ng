@@ -5,6 +5,8 @@ use crate::imports::*;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Theme {
+    pub visuals: Visuals,
+
     pub kaspa_color: Color32,
     pub hyperlink_color: Color32,
     pub node_data_color: Color32,
@@ -18,8 +20,6 @@ pub struct Theme {
     pub panel_editor_size: Vec2,
 
     pub widget_spacing: f32,
-    // pub panel_alert_icon_size : IconSize,
-    // pub panel_icon_size : IconSize,
     pub error_color: Color32,
     pub warning_color: Color32,
     pub ack_color: Color32,
@@ -36,8 +36,6 @@ pub struct Theme {
     pub bandwidth_graph_color: Color32,
     pub network_graph_color: Color32,
     pub node_log_font_size: f32,
-    // pub panel_icon_size : f32,
-    // pub panel_icon_padding : f32,
     pub block_dag_new_block_fill_color: Color32,
     pub block_dag_block_fill_color: Color32,
     pub block_dag_block_stroke_color: Color32,
@@ -48,14 +46,14 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         Self {
+            visuals: Visuals::light(),
+            // visuals: Visuals::dark(),
             kaspa_color: Color32::from_rgb(58, 221, 190),
             // hyperlink_color: Color32::from_rgb(58, 221, 190),
             hyperlink_color: Color32::from_rgb(141, 184, 178),
             // node_data_color : Color32::from_rgb(217, 233,230),
             node_data_color: Color32::WHITE,
             balance_color: Color32::WHITE,
-            // node_data_color : Color32::from_rgb(151, 209, 198),
-            // panel_icon_size : IconSize::new(26.,36.),
             panel_icon_size: IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6., 0.)),
             error_icon_size: IconSize::new(Vec2::splat(64.)).with_padding(Vec2::new(6., 6.)),
             medium_button_size: Vec2::new(100_f32, 30_f32),
@@ -65,8 +63,7 @@ impl Default for Theme {
             panel_editor_size: Vec2::new(200_f32, 40_f32),
 
             widget_spacing: 4_f32,
-            // panel_error_icon_size : IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6.,0.)),
-            error_color: Color32::from_rgb(255, 136, 136), //Color32::from_rgb(255, 0, 0),
+            error_color: Color32::from_rgb(255, 136, 136),
             warning_color: egui::Color32::from_rgb(255, 255, 136),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
@@ -89,9 +86,6 @@ impl Default for Theme {
             block_dag_block_stroke_color: Color32::from_rgb(15, 84, 77),
             block_dag_vspc_connect_color: Color32::from_rgb(23, 150, 137),
             block_dag_parent_connect_color: Color32::from_rgba_premultiplied(0xAD, 0xD8, 0xE6, 220),
-            // network_graph_color: Color32::from_rgb(58, 221, 190),
-            // graph_color: Color32::from_rgb(21, 82, 71),
-            // panel_icon_size : IconSize::new(Vec2::splat(26.),Vec2::new(36.,26.)),
         }
     }
 }
@@ -113,10 +107,6 @@ impl Theme {
         self.large_button_size
     }
 
-    // pub fn panel_icon_padding(&self) -> f32 {
-    //     self.panel_icon_padding
-    // }
-
     pub fn apply(&self, visuals: &mut Visuals) {
         // let visuals = ui.visuals_mut();
         visuals.hyperlink_color = self.hyperlink_color;
@@ -126,9 +116,7 @@ impl Theme {
 static mut THEME: Option<Theme> = None;
 #[inline(always)]
 pub fn theme() -> &'static Theme {
-    unsafe {
-        THEME.get_or_insert_with(Theme::default)
-    }
+    unsafe { THEME.get_or_insert_with(Theme::default) }
 }
 
 pub fn apply_theme(theme: Theme) {

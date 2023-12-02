@@ -30,7 +30,7 @@ cfg_if! {
                 match self {
                     KaspadNodeKind::Disable => write!(f, "Disabled"),
                     KaspadNodeKind::Remote => write!(f, "Remote"),
-                    KaspadNodeKind::IntegratedInProc => write!(f, "Integrated"),
+                    KaspadNodeKind::IntegratedInProc => write!(f, "Integrated Node"),
                     KaspadNodeKind::IntegratedAsDaemon => write!(f, "Integrated Daemon"),
                     KaspadNodeKind::ExternalAsDaemon => write!(f, "External Daemon"),
                 }
@@ -68,14 +68,14 @@ impl KaspadNodeKind {
 
     pub fn describe(&self) -> &str {
         match self {
-            KaspadNodeKind::Disable => i18n("Disable"),
-            KaspadNodeKind::Remote => i18n("Connect to Remote"),
+            KaspadNodeKind::Disable => i18n("Disables node connectivity (Offline Mode)."),
+            KaspadNodeKind::Remote => i18n("Connects to a Remote Rusty Kaspa Node via wRPC."),
             #[cfg(not(target_arch = "wasm32"))]
-            KaspadNodeKind::IntegratedInProc => i18n("Integrated Node"),
+            KaspadNodeKind::IntegratedInProc => i18n("The node runs as a part of the Kaspa-NG application process.\n This reduces communication overhead (experimental)."),
             #[cfg(not(target_arch = "wasm32"))]
-            KaspadNodeKind::IntegratedAsDaemon => i18n("Integrated Daemon"),
+            KaspadNodeKind::IntegratedAsDaemon => i18n("The node is spawned as a child daemon process (recommended)."),
             #[cfg(not(target_arch = "wasm32"))]
-            KaspadNodeKind::ExternalAsDaemon => i18n("External Daemon"),
+            KaspadNodeKind::ExternalAsDaemon => i18n("A binary at another location is spawned a child process (experimental, for development purposes only)."),
         }
     }
 
@@ -342,6 +342,7 @@ pub struct UxSettings {
 // pub type PluginSettings = HashMap<String, serde_json::Value>;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct PluginSettings {
     pub enabled: bool,               //HashMap<String, bool>,
     pub settings: serde_json::Value, //HashMap<String, serde_json::Value>,
@@ -349,13 +350,37 @@ pub struct PluginSettings {
 
 pub type PluginSettingsMap = HashMap<String, PluginSettings>;
 
+#[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct DeveloperSettings {
+    pub enable: bool,
+    pub enable_screen_capture: bool,
+    pub disable_password_restrictions: bool,
+    pub enable_experimental_features: bool,
+}
+
+impl DeveloperSettings {
+    pub fn enable_screen_capture(&self) -> bool {
+        self.enable && self.enable_screen_capture
+    }
+
+    pub fn disable_password_restrictions(&self) -> bool {
+        self.enable && self.disable_password_restrictions
+    }
+
+    pub fn enable_experimental_features(&self) -> bool {
+        self.enable && self.enable_experimental_features
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
     pub initialized: bool,
     pub splash_screen: bool,
     pub version: String,
-    pub developer_mode: bool,
+    // pub developer_mode: bool,
+    pub developer: DeveloperSettings,
     pub node: NodeSettings,
     pub ux: UxSettings,
     pub language_code: String,
@@ -375,12 +400,13 @@ impl Default for Settings {
 
             splash_screen: true,
             version: "0.0.0".to_string(),
-            developer_mode: false,
+            // developer_mode: false,
+            developer: DeveloperSettings::default(),
             node: NodeSettings::default(),
             ux: UxSettings::default(),
             language_code: "en".to_string(),
             theme: "Dark".to_string(),
-            enable_plugins: false,
+            enable_plugins: true,
             plugins: Some(PluginSettingsMap::default()),
         }
     }
@@ -394,7 +420,6 @@ fn storage() -> Result<Storage> {
 
 impl Settings {
     pub async fn store(&self) -> Result<()> {
-        workflow_log::log_info!("AAAA SSSSS");
         let storage = storage()?;
         storage.ensure_dir().await?;
         workflow_store::fs::write_json(storage.filename(), self).await?;

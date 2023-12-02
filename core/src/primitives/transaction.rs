@@ -1,5 +1,4 @@
 use crate::imports::*;
-use egui::collapsing_header::CollapsingState;
 use kaspa_consensus_core::tx::{TransactionInput, TransactionOutpoint, TransactionOutput};
 use kaspa_wallet_core::storage::{
     transaction::{TransactionData, UtxoRecord},
@@ -129,6 +128,11 @@ impl Transaction {
         _include_utxos: bool,
         largest: Option<u64>,
     ) {
+        let ppp = ui.ctx().pixels_per_point();
+        // println!("ppp: {}", ppp);
+        let width = ui.available_width() / ppp;
+        // println!("width: {}", width);
+
         let Context { record, maturity } = &*self.context();
         // let record = context.record; // self.record();
         // let maturity = context.maturity;
@@ -142,7 +146,10 @@ impl Transaction {
         let ps2k = |sompi| padded_sompi_to_kaspa_string_with_suffix(sompi, &network_type, padding);
         let s2k = |sompi| sompi_to_kaspa_string_with_suffix(sompi, &network_type);
 
-        let block_daa_score = format!("@{} DAA", record.block_daa_score().separated_string());
+        let timestamp = record
+            .unixtime_as_locale_string()
+            .unwrap_or_else(|| format!("@{} DAA", record.block_daa_score().separated_string()));
+        let block_daa_score = record.block_daa_score().separated_string();
         let transaction_id = record.id().to_string();
         // let short_id = transaction_id.chars().take(10).collect::<String>() + "...";
         // let suffix = kaspa_suffix(&network_type);
@@ -167,6 +174,10 @@ impl Transaction {
                 utxo_entries,
                 aggregate_input_value,
             }
+            | TransactionData::Stasis {
+                utxo_entries,
+                aggregate_input_value,
+            }
             | TransactionData::Incoming {
                 utxo_entries,
                 aggregate_input_value,
@@ -176,7 +187,7 @@ impl Transaction {
                 aggregate_input_value,
             } => {
                 let aggregate_input_value = ps2k(*aggregate_input_value);
-                let mut job = LayoutJobBuilder::new(8.0, Some(font_id_header.clone()))
+                let mut job = LayoutJobBuilder::new(width, 8.0, Some(font_id_header.clone()))
                     .with_icon_font(icon_font_id);
                 job = job.icon(
                     egui_phosphor::light::ARROW_SQUARE_RIGHT,
@@ -196,10 +207,10 @@ impl Transaction {
                 }
 
                 job = job
-                    .text(block_daa_score.as_str(), default_color)
+                    .text(timestamp.as_str(), default_color)
                     .text(&aggregate_input_value, TransactionType::Incoming.as_color());
 
-                // ui.collapsable(&transaction_id, false, |ui,state| {
+                // ui.LayoutJobBuilder::new(width,8.0(&transaction_id, false, |ui,state| {
                 //     ui.horizontal( |ui| {
 
                 //         let icon = RichText::new(egui_phosphor::light::ARROW_SQUARE_RIGHT).color(TransactionType::Incoming.as_color());
@@ -239,10 +250,17 @@ impl Transaction {
                     .icon(paint_header_icon)
                     .default_open(false)
                     .show(ui, |ui| {
-                        let text = LayoutJobBuilder::new(8.0, Some(font_id_content.clone())).text(
-                            &format!("Transaction id: {}", shorten(&transaction_id)),
-                            default_color,
-                        );
+                        let width = 32.; //ui.available_width() / ppp;
+
+                        let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
+                            .text(
+                                &format!("Transaction id: {}", shorten(&transaction_id)),
+                                default_color,
+                            );
+                        ui.label(text);
+
+                        let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
+                            .text(&format!("DAA: {}", block_daa_score), default_color);
                         ui.label(text);
 
                         utxo_entries.iter().for_each(|utxo_entry| {
@@ -259,13 +277,15 @@ impl Transaction {
                                 .map(|addr| addr.to_string())
                                 .unwrap_or_else(|| "n/a".to_string());
 
-                            let text = LayoutJobBuilder::new(8.0, Some(font_id_content.clone()))
-                                .text(&address, default_color);
+                            let text =
+                                LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
+                                    .text(&address, default_color);
                             ui.label(text);
 
                             // ui.label(address);
                             if *is_coinbase {
                                 let text = LayoutJobBuilder::new(
+                                    width,
                                     8.0,
                                     Some(font_id_content.clone()),
                                 )
@@ -274,6 +294,7 @@ impl Transaction {
                                 // ui.label(format!("{} {amount} {suffix} COINBASE UTXO", ""));
                             } else {
                                 let text = LayoutJobBuilder::new(
+                                    width,
                                     8.0,
                                     Some(font_id_content.clone()),
                                 )
@@ -281,11 +302,12 @@ impl Transaction {
                                 ui.label(text);
                             }
 
-                            let text = LayoutJobBuilder::new(8.0, Some(font_id_content.clone()))
-                                .text(
-                                    &format!("Script: {}", script_public_key.script_as_hex()),
-                                    default_color,
-                                );
+                            let text =
+                                LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
+                                    .text(
+                                        &format!("Script: {}", script_public_key.script_as_hex()),
+                                        default_color,
+                                    );
                             ui.label(text);
 
                             // let job = job
@@ -309,10 +331,10 @@ impl Transaction {
                 // });
 
                 let job = if let Some(payment_value) = payment_value {
-                    let mut job = LayoutJobBuilder::new(8.0, Some(font_id_header.clone()))
+                    let mut job = LayoutJobBuilder::new(width, 8.0, Some(font_id_header.clone()))
                         .with_icon_font(icon_font_id);
 
-                    // LayoutJobBuilder::new(8.0, Some(font_id.clone()))
+                    // LayoutJobBuilder::new(width,8.0, Some(font_id.clone()))
 
                     job = job
                         // .text("SEND", TransactionType::Outgoing.as_color())
@@ -320,7 +342,7 @@ impl Transaction {
                             egui_phosphor::light::ARROW_SQUARE_LEFT,
                             TransactionType::Outgoing.as_color(),
                         )
-                        .text(block_daa_score.as_str(), default_color)
+                        .text(timestamp.as_str(), default_color)
                         // .text(short_id.as_str(), default_color)
                         .text(
                             &ps2k(*payment_value + *fees),
@@ -336,7 +358,7 @@ impl Transaction {
                     //     transaction.inputs.len(),
                     //     transaction.outputs.len(),
                 } else {
-                    LayoutJobBuilder::new(16.0, Some(font_id_header.clone()))
+                    LayoutJobBuilder::new(width, 16.0, Some(font_id_header.clone()))
                         .text("Sweep:", default_color)
                         .text(&sompi_to_kaspa_string(*aggregate_input_value), strong_color)
                         .text("Fees:", default_color)
@@ -413,13 +435,19 @@ impl Transaction {
                     });
                 }
                 collapsing_header.show(ui, |ui| {
-                    let text = LayoutJobBuilder::new(8.0, Some(font_id_content.clone())).text(
-                        &format!("Transaction id: {}", shorten(&transaction_id)),
-                        default_color,
-                    );
+                    let width = ui.available_width() - 64.0;
+
+                    let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
+                        .text(
+                            &format!("Transaction id: {}", shorten(&transaction_id)),
+                            default_color,
+                        );
+                    ui.label(text);
+                    let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
+                        .text(&format!("DAA: {}", block_daa_score), default_color);
                     ui.label(text);
 
-                    let text = LayoutJobBuilder::new(8.0, Some(font_id_content.clone()))
+                    let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
                         .text("Fees:", default_color)
                         .text(
                             &sompi_to_kaspa_string(*fees),
@@ -437,10 +465,11 @@ impl Transaction {
                     // transaction.inputs.len(),
                     // transaction.outputs.len(),
 
-                    let text = LayoutJobBuilder::new(16.0, Some(font_id_content.clone())).text(
-                        &format!("{} UTXO inputs", transaction.inputs.len()),
-                        default_color,
-                    );
+                    let text = LayoutJobBuilder::new(width, 16.0, Some(font_id_content.clone()))
+                        .text(
+                            &format!("{} UTXO inputs", transaction.inputs.len()),
+                            default_color,
+                        );
                     ui.label(text);
 
                     for input in transaction.inputs.iter() {
@@ -464,10 +493,11 @@ impl Transaction {
                         ui.label(text);
                     }
 
-                    let text = LayoutJobBuilder::new(16.0, Some(font_id_content.clone())).text(
-                        &format!("{} UTXO outputs:", transaction.outputs.len()),
-                        default_color,
-                    );
+                    let text = LayoutJobBuilder::new(width, 16.0, Some(font_id_content.clone()))
+                        .text(
+                            &format!("{} UTXO outputs:", transaction.outputs.len()),
+                            default_color,
+                        );
                     ui.label(text);
 
                     for output in transaction.outputs.iter() {
@@ -544,8 +574,9 @@ pub fn padded_sompi_to_kaspa_string_with_suffix(
 }
 
 pub fn shorten(s: impl Into<String>) -> String {
-    let s: String = s.into();
-    s.chars().take(10).collect::<String>() + "..."
+    s.into()
+    // let s: String = s.into();
+    // s.chars().take(10).collect::<String>() + "..."
 }
 
 pub fn paint_header_icon(ui: &mut Ui, openness: f32, response: &Response) {
@@ -572,46 +603,4 @@ pub fn paint_header_icon(ui: &mut Ui, openness: f32, response: &Response) {
         visuals.fg_stroke.color,
         Stroke::NONE,
     ));
-}
-
-pub trait CollapsingExtension {
-    // fn collapsing(&mut self, id: impl Into<String>) -> CollapsingState;
-    fn collapsable<HeaderRet, BodyRet>(
-        &mut self,
-        id: impl Into<String>,
-        default_open: bool,
-        heading: impl FnOnce(&mut Ui, &mut bool) -> HeaderRet,
-        body: impl FnOnce(&mut Ui) -> BodyRet,
-    );
-}
-
-impl CollapsingExtension for Ui {
-    fn collapsable<HeaderRet, BodyRet>(
-        &mut self,
-        id: impl Into<String>,
-        default_open: bool,
-        heading: impl FnOnce(&mut Ui, &mut bool) -> HeaderRet,
-        body: impl FnOnce(&mut Ui) -> BodyRet,
-    ) {
-        let id: String = id.into();
-        let id = self.make_persistent_id(id);
-        let previous_state = CollapsingState::load(self.ctx(), id)
-            .map(|state| state.is_open())
-            .unwrap_or_default();
-        let mut state = previous_state;
-        let header = CollapsingState::load_with_default_open(self.ctx(), id, default_open);
-        header
-            .show_header(self, |ui| heading(ui, &mut state))
-            .body(body);
-
-        // if selected != self.selected {
-        if state != previous_state {
-            if let Some(mut state) = CollapsingState::load(self.ctx(), id) {
-                // println!("CLICK");
-                state.toggle(self);
-                state.store(self.ctx());
-                // state.mark_changed();
-            }
-        }
-    }
 }

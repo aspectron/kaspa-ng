@@ -103,11 +103,12 @@ impl MarketMonitorPlugin {
             task_ctl: Channel::oneshot(),
             is_enabled: AtomicBool::new(false),
             provider: Mutex::new(MarketDataProvider::default()),
-            currencies: Mutex::new(None),
+            // ------
+            currencies: Mutex::new(Some(vec!["usd".to_string()])),
+            // ------
+            // currencies: Mutex::new(None),
             available_currencies: Mutex::new(None),
             market_price_list: Mutex::new(None),
-            // rpc_api: Mutex::new(None),
-            // peer_info: Mutex::new(None),
         }
     }
 
@@ -154,7 +155,7 @@ impl Plugin for MarketMonitorPlugin {
     }
 
     fn name(&self) -> &'static str {
-        "market-monitor"
+        "Market Monitor"
     }
 
     fn load(&self, settings: serde_json::Value) -> Result<()> {
@@ -189,6 +190,7 @@ impl Plugin for MarketMonitorPlugin {
         loop {
             select! {
                 _ = interval.next().fuse() => {
+                    println!("Updating market price list...");
                     this.update_market_price_list().await?;
                 },
 
@@ -225,5 +227,7 @@ impl Plugin for MarketMonitorPlugin {
 
     fn render(&self, ui: &mut Ui) {
         ui.label("Market Monitor");
+
+        ui.label("TODO - Add Market Monitor Settings");
     }
 }
