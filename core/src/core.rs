@@ -391,10 +391,7 @@ impl eframe::App for Core {
                 .show(ctx, |_ui| {});
 
             CentralPanel::default()
-                .frame(
-                    Frame::default()
-                        .fill(ctx.style().visuals.panel_fill),
-                )
+                .frame(Frame::default().fill(ctx.style().visuals.panel_fill))
                 .show(ctx, |ui| {
                     ui.set_max_width(device_width);
 
@@ -403,10 +400,9 @@ impl eframe::App for Core {
                     });
 
                     if device.is_mobile() {
-                        egui::TopBottomPanel::bottom("mobile_menu_panel")
-                            .show_inside(ui, |ui| {
-                                MobileMenu::new(self).render(ui);
-                            });
+                        egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(ui, |ui| {
+                            MobileMenu::new(self).render(ui);
+                        });
                     }
 
                     egui::CentralPanel::default()
@@ -501,7 +497,6 @@ impl Core {
         // .tint(Color32::from_f32(0.9_f32))
         .paint_at(ui, logo_rect);
     }
-
 
     pub fn handle_events(
         &mut self,

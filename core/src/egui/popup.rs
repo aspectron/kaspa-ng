@@ -174,7 +174,6 @@ pub fn popup_above_or_below_widget_local<R>(
                     .inner
             });
 
-            
         let mut close_popup = false;
         if close_on_interaction {
             if ui.input(|i| i.key_pressed(Key::Escape)) || widget_response.clicked_elsewhere() {
