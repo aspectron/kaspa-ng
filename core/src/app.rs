@@ -7,8 +7,8 @@ use std::sync::Arc;
 use workflow_i18n::*;
 use workflow_log::*;
 
-#[allow(unused)]
-pub const KASPA_NG_ICON_256X256: &[u8] = include_bytes!("../../resources/icons/icon-256.png");
+// #[allow(unused)]
+pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
 pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-ng.svg");
 pub const I18N_EMBEDDED: &str = include_str!("../../resources/i18n/i18n.json");
 pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
@@ -21,12 +21,16 @@ pub const RUSTC_HOST_TRIPLE: &str = env!("VERGEN_RUSTC_HOST_TRIPLE");
 pub const RUSTC_LLVM_VERSION: &str = env!("VERGEN_RUSTC_LLVM_VERSION");
 pub const RUSTC_SEMVER: &str = env!("VERGEN_RUSTC_SEMVER");
 pub const CARGO_TARGET_TRIPLE: &str = env!("VERGEN_CARGO_TARGET_TRIPLE");
-// pub const CARGO_PROFILE: &str = env!("VERGEN_CARGO_PROFILE");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const CODENAME: &str = "DNA";
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
-        use kaspad_lib::daemon::create_core;
+        use kaspad_lib::daemon::{
+            create_core,
+            DESIRED_DAEMON_SOFT_FD_LIMIT,
+            MINIMUM_DAEMON_SOFT_FD_LIMIT
+        };
         use kaspad_lib::args::Args as NodeArgs;
         use kaspad_lib::args::parse_args as parse_kaspad_args;
         use kaspa_utils::fd_budget;
@@ -37,9 +41,9 @@ cfg_if! {
 
         #[derive(Debug)]
         enum I18n {
-
             Import,
             Export,
+            Reset,
         }
 
         enum Args {
@@ -62,29 +66,31 @@ cfg_if! {
 
                 let cmd = Command::new("kaspa-ng")
 
-                    .about(format!("kaspa-ng v{}-{GIT_DESCRIBE} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version()))
+                    .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version()))
                     .arg(arg!(--disable "Disable node services when starting"))
+                    .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon"))
                     .arg(
                         Arg::new("reset-settings")
                         .long("reset-settings")
                         .action(ArgAction::SetTrue)
                         .help("Reset kaspa-ng settings")
                     )
-
                     .subcommand(
                         Command::new("i18n").hide(true)
                         .about("kaspa-ng i18n user interface translation")
                         .subcommand(
                             Command::new("import")
-                            // .help("import i18n data")
-                            .about("import JSON files suffixed with language codes (*_en.json, *_de.json, etc.)")
+                                .about("import JSON files suffixed with language codes (*_en.json, *_de.json, etc.)")
                         )
                         .subcommand(
                             Command::new("export")
-                            .about("export default 'en' translations as JSON")
+                                .about("export default 'en' translations as JSON")
+                        )
+                        .subcommand(
+                            Command::new("reset")
+                                .about("reset i18n data file")
                         )
                     )
-
                     .subcommand(
                         Command::new("cli")
                             .about("Run kaspa-ng as rusty-kaspa cli wallet")
@@ -99,6 +105,8 @@ cfg_if! {
                             Args::I18n { op : I18n::Import }
                         } else if let Some(_matches) = matches.subcommand_matches("export") {
                             Args::I18n { op : I18n::Export }
+                        } else if let Some(_matches) = matches.subcommand_matches("reset") {
+                            Args::I18n { op : I18n::Reset }
                         } else {
                             println!();
                             println!("please specify a valid i18n subcommand");
@@ -119,9 +127,6 @@ cfg_if! {
 
             runtime::panic::init_panic_handler();
 
-            // TODO - import from kaspad_lib
-            const DESIRED_DAEMON_SOFT_FD_LIMIT: u64 = 16 * 1024;
-            const MINIMUM_DAEMON_SOFT_FD_LIMIT: u64 = 4 * 1024;
             match try_set_fd_limit(DESIRED_DAEMON_SOFT_FD_LIMIT) {
                 Ok(limit) => {
                     if limit < MINIMUM_DAEMON_SOFT_FD_LIMIT {
@@ -209,7 +214,7 @@ cfg_if! {
                             .with_resizable(true)
                             .with_title(i18n("Kaspa NG"))
                             .with_inner_size([1000.0,600.0])
-                            .with_icon(eframe::icon_data::from_png_bytes(KASPA_NG_ICON_256X256).unwrap()),
+                            .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, FitTo::Size(256,256))),
                         ..Default::default()
                     };
                     eframe::run_native(
@@ -308,6 +313,12 @@ cfg_if! {
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
         fn manage_i18n(op : I18n) -> Result<()> {
+            if matches!(op, I18n::Reset) {
+                println!("resetting i18n data file");
+                i18n::create(i18n_storage_file()?)?;
+                return Ok(());
+            }
+
             let i18n_json_file = i18n_storage_file()?;
             let i18n_json_file_store = i18n_storage_file()?;
             i18n::Builder::new("en", "en")
@@ -338,6 +349,7 @@ cfg_if! {
                         Ok(fs::write(&target_folder, json_data)?)
                     })?;
                 }
+                _ => unreachable!()
             }
 
             Ok(())

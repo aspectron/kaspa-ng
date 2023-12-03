@@ -1,6 +1,6 @@
 use crate::imports::*;
 
-type PopupHandler<'panel> = Box<dyn FnOnce(&mut Ui) + 'panel>;
+type PopupHandler<'panel> = Box<dyn FnOnce(&mut Ui, &mut bool) + 'panel>;
 
 pub struct PopupPanel<'panel> {
     id: Id,
@@ -19,7 +19,7 @@ impl<'panel> PopupPanel<'panel> {
         ui: &mut Ui,
         id: impl Into<String>,
         title: impl Into<String>,
-        content: impl FnOnce(&mut Ui) + 'panel,
+        content: impl FnOnce(&mut Ui, &mut bool) + 'panel,
     ) -> Self {
         let id = ui.make_persistent_id(id.into());
 
@@ -120,7 +120,8 @@ impl<'panel> PopupPanel<'panel> {
                     ui.space();
                 }
 
-                content(ui);
+                let mut close_popup = false;
+                content(ui, &mut close_popup);
 
                 if self.with_close_button {
                     ui.space();
@@ -129,10 +130,14 @@ impl<'panel> PopupPanel<'panel> {
                     ui.add_space(8.);
                     ui.vertical_centered(|ui| {
                         if ui.medium_button("Close").clicked() {
-                            ui.memory_mut(|mem| mem.close_popup());
+                            close_popup = true;
                         }
                     });
                     ui.add_space(8.);
+                }
+
+                if close_popup {
+                    ui.memory_mut(|mem| mem.close_popup());
                 }
             },
         );

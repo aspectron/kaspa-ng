@@ -61,6 +61,7 @@ wasm-bindgen.workspace = true
 zeroize.workspace = true
 
 egui.workspace = true
+epaint.workspace = true
 egui_plot.workspace = true
 egui_extras.workspace = true
 chrono.workspace = true

@@ -49,6 +49,7 @@ pub use workflow_log::*;
 
 pub use ahash::{AHashMap, AHashSet};
 pub use pad::{Alignment, PadStr};
+pub use slug::slugify;
 pub use zeroize::Zeroize;
 
 pub use egui::epaint::{
@@ -76,7 +77,7 @@ pub use crate::result::Result;
 pub use crate::runtime::{runtime, spawn, spawn_with_result, Device, Payload, Runtime, Service};
 pub use crate::settings::{
     KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, PluginSettings,
-    PluginSettingsMap, RpcConfig, Settings, UxSettings,
+    PluginSettingsMap, RpcConfig, Settings, UserInterfaceSettings,
 };
 pub use crate::state::State;
 pub use crate::status::Status;

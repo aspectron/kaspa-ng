@@ -83,7 +83,7 @@ impl SyncStatus {
     }
 
     pub fn progress_bar(&self) -> Option<egui::ProgressBar> {
-        let progress_color = theme().progress_color;
+        let progress_color = theme_color().progress_color;
         if let Some(progress_bar_percentage) = self.progress_bar_percentage {
             if let Some(progress_bar_text) = &self.progress_bar_text {
                 Some(

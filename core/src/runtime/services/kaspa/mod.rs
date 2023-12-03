@@ -112,7 +112,7 @@ impl KaspaService {
                 }
             }
         } else {
-            log_warning!("Node settings are not initialized");
+            // log_warning!("Node settings are not initialized");
         }
 
         Self {

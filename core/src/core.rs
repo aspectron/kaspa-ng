@@ -7,6 +7,7 @@ use kaspa_wallet_core::api::TransactionDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint, PrvKeyDataInfo};
 use std::borrow::Cow;
+#[allow(unused_imports)]
 use workflow_i18n::*;
 
 pub enum Exception {
@@ -42,6 +43,7 @@ pub struct Core {
     pub prv_key_data_map: HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>,
     pub account_collection: Option<AccountCollection>,
     // pub selected_account: Option<Account>,
+    pub release: Option<Release>,
 }
 
 impl Core {
@@ -90,6 +92,12 @@ impl Core {
         mobile_style.text_styles.insert(
             egui::TextStyle::Monospace,
             egui::FontId::new(18.0, egui::FontFamily::Proportional),
+        );
+
+        apply_theme_by_name(
+            &cc.egui_ctx,
+            settings.user_interface.theme_color.as_str(),
+            settings.user_interface.theme_style.as_str(),
         );
 
         // cc.egui_ctx.set_style(style);
@@ -162,6 +170,8 @@ impl Core {
             hint: None,
             discard_hint: false,
             exception: None,
+
+            release: None,
         };
 
         modules.values().for_each(|module| {
@@ -169,6 +179,17 @@ impl Core {
         });
 
         this.wallet_update_list();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        spawn(async move {
+            use workflow_core::task::sleep;
+
+            loop {
+                println!("Checking version...");
+                let _ = check_version().await;
+                sleep(Duration::from_secs(60 * 60 * 6)).await;
+            }
+        });
 
         this
     }
@@ -322,24 +343,21 @@ impl eframe::App for Core {
             }
         });
 
-        // ctx.set_visuals(self.default_style.clone());
-        let mut current_visuals = ctx.style().visuals.clone(); //.widgets.noninteractive;
+        // - TODO - TOAST BACKGROUND
+        // ---
+        let current_visuals = ctx.style().visuals.clone(); //.widgets.noninteractive;
         let mut visuals = current_visuals.clone();
-        // visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0, Color32::from_rgb(0, 0, 0));
         visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(0, 0, 0);
-
-        cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                visuals.interact_cursor = Some(CursorIcon::PointingHand);
-            }
-        }
-
-        // visuals.bg_fill = egui::Color32::from_rgb(0, 0, 0);
         ctx.set_visuals(visuals);
         self.toasts.show(ctx);
-
-        theme().apply(&mut current_visuals);
         ctx.set_visuals(current_visuals);
+        // ---
+
+        // cfg_if! {
+        //     if #[cfg(target_arch = "wasm32")] {
+        //         visuals.interact_cursor = Some(CursorIcon::PointingHand);
+        //     }
+        // }
 
         if !self.settings.initialized {
             cfg_if! {
@@ -443,36 +461,41 @@ impl eframe::App for Core {
 
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(screenshot) = self.screenshot.as_ref() {
-            if let Some(mut path) = rfd::FileDialog::new().save_file() {
-                path.set_extension("png");
-                let screen_rect = ctx.screen_rect();
-                let pixels_per_point = ctx.pixels_per_point();
-                let screenshot = screenshot.clone();
-                let sender = self.sender();
-                std::thread::Builder::new()
-                    .name("screenshot".to_string())
-                    .spawn(move || {
-                        let image = screenshot.region(&screen_rect, Some(pixels_per_point));
-                        image::save_buffer(
-                            &path,
-                            image.as_raw(),
-                            image.width() as u32,
-                            image.height() as u32,
-                            image::ColorType::Rgba8,
-                        )
-                        .unwrap();
+            match rfd::FileDialog::new().save_file() {
+                Some(mut path) => {
+                    path.set_extension("png");
+                    let screen_rect = ctx.screen_rect();
+                    let pixels_per_point = ctx.pixels_per_point();
+                    let screenshot = screenshot.clone();
+                    let sender = self.sender();
+                    std::thread::Builder::new()
+                        .name("screenshot".to_string())
+                        .spawn(move || {
+                            let image = screenshot.region(&screen_rect, Some(pixels_per_point));
+                            image::save_buffer(
+                                &path,
+                                image.as_raw(),
+                                image.width() as u32,
+                                image.height() as u32,
+                                image::ColorType::Rgba8,
+                            )
+                            .unwrap();
 
-                        sender
-                            .try_send(Events::Notify {
-                                user_notification: UserNotification::success(format!(
-                                    "Capture saved to\n{}",
-                                    path.to_string_lossy()
-                                )),
-                            })
-                            .unwrap()
-                    })
-                    .expect("Unable to spawn screenshot thread");
-                self.screenshot.take();
+                            sender
+                                .try_send(Events::Notify {
+                                    user_notification: UserNotification::success(format!(
+                                        "Capture saved to\n{}",
+                                        path.to_string_lossy()
+                                    )),
+                                })
+                                .unwrap()
+                        })
+                        .expect("Unable to spawn screenshot thread");
+                    self.screenshot.take();
+                }
+                None => {
+                    self.screenshot.take();
+                }
             }
         }
     }
@@ -505,6 +528,16 @@ impl Core {
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
         match event {
+            Events::ThemeChange => {
+                if let Some(account_collection) = self.account_collection.as_ref() {
+                    account_collection
+                        .iter()
+                        .for_each(|account| account.update_theme());
+                }
+            }
+            Events::VersionUpdate(release) => {
+                self.release = Some(release);
+            }
             Events::StoreSettings => {
                 self.settings_storage_requested = true;
                 self.last_settings_storage_request = Instant::now();

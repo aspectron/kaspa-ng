@@ -44,22 +44,24 @@ impl<'manager> Overview<'manager> {
                         self.render_qr(core, ui, rc);
 
                         ui.vertical_centered(|ui|{
+                        
+                            ui.add_space(8.);
                             ui.horizontal(|ui| {
 
                                 let mut layout = CenterLayoutBuilder::new();
                                 
-                                layout = layout.add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme().medium_button_size()), |(this, _):&mut (&mut Overview<'_>, &mut Core)| {
+                                layout = layout.add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme_style().medium_button_size()), |(this, _):&mut (&mut Overview<'_>, &mut Core)| {
                                     this.context.action = Action::Estimating;
                                     this.context.transaction_kind = TransactionKind::Send;
                                 });
 
                                 if core.account_collection().as_ref().map(|collection|collection.len()).unwrap_or(0) > 1 {
-                                    layout = layout.add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme().medium_button_size()), |(this,_)| {
+                                    layout = layout.add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme_style().medium_button_size()), |(this,_)| {
                                         this.context.action = Action::Estimating;
                                         this.context.transaction_kind = TransactionKind::Transfer;
                                     });
                                 }
-                                layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme().medium_button_size()), |(_,core)| {
+                                layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme_style().medium_button_size()), |(_,core)| {
                                     core.select::<modules::Request>();
 
                                 });
@@ -82,8 +84,8 @@ impl<'manager> Overview<'manager> {
                 ui.add_space(32.);
                 ui.label(
                     RichText::new(CLOUD_SLASH)
-                        .size(theme().icon_size_large)
-                        .color(theme().icon_color_default)
+                        .size(theme_style().icon_size_large)
+                        .color(theme_color().icon_color_default)
                 );
                 ui.add_space(32.);
                 
@@ -93,8 +95,8 @@ impl<'manager> Overview<'manager> {
                 ui.add_space(32.);
                 ui.label(
                     RichText::new(CLOUD_ARROW_DOWN)
-                        .size(theme().icon_size_large)
-                        .color(theme().icon_color_default)
+                        .size(theme_style().icon_size_large)
+                        .color(theme_color().icon_color_default)
                 );
                 ui.add_space(32.);
 
@@ -139,7 +141,7 @@ impl<'manager> Overview<'manager> {
 
         if let Some(balance) = account.balance() {
             ui.heading(
-                RichText::new(sompi_to_kaspa_string_with_suffix(balance.mature, network_type)).font(FontId::proportional(28.)).color(theme().balance_color)
+                RichText::new(sompi_to_kaspa_string_with_suffix(balance.mature, network_type)).font(FontId::proportional(28.)).color(theme_color().balance_color)
             );
             
             if balance.pending != 0 {
@@ -311,7 +313,7 @@ impl<'manager> Overview<'manager> {
                 self.context.address_status == AddressStatus::Valid
             }
             EstimatorStatus::Error(error) => {
-                ui.label(RichText::new(error.to_string()).color(theme().error_color));
+                ui.label(RichText::new(error.to_string()).color(theme_color().error_color));
                 false
             }
             EstimatorStatus::None => {
@@ -325,11 +327,11 @@ impl<'manager> Overview<'manager> {
             ui.vertical_centered(|ui|{
                 ui.horizontal(|ui| {
                     CenterLayoutBuilder::new()
-                        .add_enabled(ready_to_send, Button::new(format!("{CHECK} Send")).min_size(theme().medium_button_size()), |this: &mut Overview<'_>| {
+                        .add_enabled(ready_to_send, Button::new(format!("{CHECK} Send")).min_size(theme_style().medium_button_size()), |this: &mut Overview<'_>| {
                             this.context.action = Action::Sending;
                             this.context.focus = Focus::WalletSecret;
                         })
-                        .add(Button::new(format!("{X} Cancel")).min_size(theme().medium_button_size()), |this| {
+                        .add(Button::new(format!("{X} Cancel")).min_size(theme_style().medium_button_size()), |this| {
                             this.context.reset_send_state();
                         })
                         .build(ui, self)
@@ -396,10 +398,10 @@ impl<'manager> Overview<'manager> {
 
         ui.add_space(8.);
         CenterLayoutBuilder::new()
-            .add_enabled(is_ready_to_send, Button::new(format!("{CHECK} Submit")).min_size(theme().medium_button_size()), |_this: &mut Overview<'_>| {
+            .add_enabled(is_ready_to_send, Button::new(format!("{CHECK} Submit")).min_size(theme_style().medium_button_size()), |_this: &mut Overview<'_>| {
                 proceed_with_send = true;
             })
-            .add(Button::new(format!("{X} Cancel")).min_size(theme().medium_button_size()), |this| {
+            .add(Button::new(format!("{X} Cancel")).min_size(theme_style().medium_button_size()), |this| {
                 this.context.action = Action::Estimating;
             })
             .build(ui,self);

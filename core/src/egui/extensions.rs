@@ -39,14 +39,14 @@ impl UiExtension for Ui {
     fn medium_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
-            Button::new(text).min_size(theme().medium_button_size()),
+            Button::new(text).min_size(theme_style().medium_button_size()),
         )
     }
 
     fn large_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
-            Button::new(text).min_size(theme().large_button_size()),
+            Button::new(text).min_size(theme_style().large_button_size()),
         )
     }
 
@@ -62,7 +62,7 @@ impl UiExtension for Ui {
                 ui.add_space(
                     ui.available_width()
                         - 16.
-                        - (theme().medium_button_size.x + ui.spacing().item_spacing.x) * 2.,
+                        - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x) * 2.,
                 );
             }
 
@@ -274,6 +274,6 @@ pub trait WidgetSpacerExtension {
 
 impl WidgetSpacerExtension for Ui {
     fn space(&mut self) {
-        self.add_space(theme().widget_spacing);
+        self.add_space(theme_style().widget_spacing);
     }
 }

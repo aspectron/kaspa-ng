@@ -51,9 +51,9 @@ impl ModuleT for BlockDag {
     fn status_bar(&self, core: &mut Core, ui : &mut Ui) {
         ui.separator();
         if !core.state().is_connected() {
-            ui.label(RichText::new(i18n("You must be connected to a node...")).color(theme().error_color));
+            ui.label(RichText::new(i18n("You must be connected to a node...")).color(theme_color().error_color));
         } else if !core.state().is_synced() {
-            ui.label(RichText::new(i18n("Please wait for the node to sync...")).color(theme().warning_color));
+            ui.label(RichText::new(i18n("Please wait for the node to sync...")).color(theme_color().warning_color));
         } else {
             ui.label(i18n("Double click on the graph to re-center..."));
         }
@@ -66,19 +66,20 @@ impl ModuleT for BlockDag {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        let theme = theme();
+        let theme_color = theme_color();
 
         let y_dist = self.settings.y_dist;
-        let vspc_center = self.settings.vspc_center;
+        let vspc_center = self.settings.center_vspc;
 
         ui.horizontal(|ui| {
             ui.heading("Block DAG");
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                PopupPanel::new(ui, "block_dag_settings","Settings", |ui| {
+                PopupPanel::new(ui, "block_dag_settings","Settings", |ui, _| {
                     ui.add(
-                        Slider::new(&mut self.daa_range, 1.0..=100.0)
+                        Slider::new(&mut self.daa_range, 1.0..=self.settings.graph_length_daa as f64)
                             .clamp_to_range(true)
+                            .logarithmic(true)
                             .text(i18n("DAA Range"))
                     );
                     ui.space();
@@ -105,7 +106,13 @@ impl ModuleT for BlockDag {
                     ui.separator();
                     ui.space();
                     ui.horizontal_wrapped(|ui| {
-                        ui.checkbox(&mut self.settings.vspc_center, i18n("Center VSPC"));
+                        ui.checkbox(&mut self.settings.center_vspc, i18n("Center VSPC"));
+                        ui.space();
+                        ui.checkbox(&mut self.settings.show_vspc, i18n("Show VSPC"));
+                        ui.space();
+                        ui.checkbox(&mut self.settings.show_grid, i18n("Show Grid"));
+                        ui.space();
+                        ui.checkbox(&mut self.settings.show_daa, i18n("Show DAA"));
                         ui.space();
                         ui.checkbox(&mut self.bezier, i18n("Bezier Curves"));
                         ui.space();
@@ -121,7 +128,7 @@ impl ModuleT for BlockDag {
         });
         ui.separator();
 
-        if y_dist != self.settings.y_dist || vspc_center != self.settings.vspc_center {
+        if y_dist != self.settings.y_dist || vspc_center != self.settings.center_vspc {
             runtime().block_dag_monitor_service().update_settings(self.settings.clone());
         }
 
@@ -161,8 +168,8 @@ impl ModuleT for BlockDag {
             .include_y(-15.)
             .data_aspect(0.2)
             .y_axis_width(0)
-            .show_axes([true, false])
-            .show_grid(true)
+            .show_axes([self.settings.show_daa, false])
+            .show_grid(self.settings.show_grid)
             .allow_drag([true, true])
             .allow_scroll(true)
             .allow_double_click_reset(true)
@@ -199,13 +206,22 @@ impl ModuleT for BlockDag {
         let daa_margin = 10;
         let daa_min = self.plot_bounds.min()[0] as u64 - daa_margin;
         let daa_max = self.plot_bounds.max()[0] as u64 + daa_margin;
+        
         let blocks = if let Ok(mut daa_buckets) = self.runtime.block_dag_monitor_service().chain.lock() {
             daa_buckets.iter_mut().filter_map(|(daa_score,bucket)| {
-                (*daa_score > daa_min || *daa_score < daa_max).then_some(bucket)
+                (*daa_score > daa_min && *daa_score < daa_max).then_some(bucket)
             }).flat_map(DaaBucket::render).collect::<Vec<_>>()
         } else {
             return;
         };
+
+        // let separators = if let Ok(separators) = self.runtime.block_dag_monitor_service().separators.lock() {
+        //     separators.iter().filter_map(|daa_score| {
+        //         (*daa_score > daa_min || *daa_score < daa_max).then_some(*daa_score)
+        //     }).collect::<Vec<_>>()
+        // } else {
+        //     return;
+        // };
 
         let parent_levels = self.parent_levels.max(1);
         let block_map : AHashMap<KaspaHash,(PlotPoint,bool)> = blocks.clone().into_iter().map(|(block, plot_point,vspc, _)|(block.header.hash,(plot_point,vspc))).collect();
@@ -237,10 +253,10 @@ impl ModuleT for BlockDag {
                                 [parent_x, parent_y],
                             ].into_iter().map(|pt|pt.into()).collect::<Vec<_>>()
                         };
-                        if level == 0 && *current_vspc && parent_vspc {
-                            lines_vspc.push(Line::new(PlotPoints::Owned(points)).color(theme.block_dag_vspc_connect_color).style(LineStyle::Solid).width(3.0));
+                        if self.settings.show_vspc && level == 0 && *current_vspc && parent_vspc {
+                            lines_vspc.push(Line::new(PlotPoints::Owned(points)).color(theme_color.block_dag_vspc_connect_color).style(LineStyle::Solid).width(3.0));
                         } else {
-                            lines_parent.push(Line::new(PlotPoints::Owned(points)).color(theme.block_dag_parent_connect_color).style(LineStyle::Solid));
+                            lines_parent.push(Line::new(PlotPoints::Owned(points)).color(theme_color.block_dag_parent_connect_color).style(LineStyle::Solid));
                         }
                     }
                 }
@@ -255,21 +271,33 @@ impl ModuleT for BlockDag {
             ].to_vec().into();
         
             let fill_color = if new_blocks.contains(&block.header.hash) {
-                theme.block_dag_new_block_fill_color
+                theme_color.block_dag_new_block_fill_color
             } else {
-                theme.block_dag_block_fill_color
+                theme_color.block_dag_block_fill_color
             };
 
             Polygon::new(points)
                 .name(block.header.hash.to_string())
                 .fill_color(fill_color)
-                .stroke(Stroke::new(1.0, theme.block_dag_block_stroke_color))
+                .stroke(Stroke::new(1.0, theme_color.block_dag_block_stroke_color))
                 .style(LineStyle::Solid)
 
             
         }).collect::<Vec<_>>();
 
+        // let lines_separators = separators.iter().map(|daa_score| {
+        //     let x = *daa_score as f64;
+        //     let points: PlotPoints = [
+        //         [x, 0.0 - y_dist],
+        //         [x, 0.0 + y_dist],
+        //     ].to_vec().into();
+        //     Line::new(points).color(theme_color.block_dag_separator_color).style(LineStyle::Dotted { spacing: 0.75 })
+        // }).collect::<Vec<_>>();
+
         let plot_response = plot.show(ui, |plot_ui| {
+            // lines_separators.into_iter().for_each(|line| {
+            //     plot_ui.line(line);
+            // });
             lines_parent.into_iter().for_each(|line| {
                 plot_ui.line(line);
             });
@@ -290,14 +318,14 @@ impl ModuleT for BlockDag {
 
     }
 
-    fn activate(&mut self, _core: &mut Core) {
-        crate::runtime::runtime().block_dag_monitor_service().enable();
+    fn activate(&mut self, core: &mut Core) {
+        crate::runtime::runtime().block_dag_monitor_service().enable(core.state().current_daa_score().map(|score|score - 2));
     }
 
-    fn deactivate(&mut self, _core: &mut Core) {
+    fn deactivate(&mut self, core: &mut Core) {
         if !self.background {
             self.running = false;
-            crate::runtime::runtime().block_dag_monitor_service().disable();
+            crate::runtime::runtime().block_dag_monitor_service().disable(core.state().current_daa_score());
         }
     }
 }

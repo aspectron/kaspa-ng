@@ -327,17 +327,25 @@ impl Default for MetricsSettings {
     }
 }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct UxSettings {
+pub struct UserInterfaceSettings {
+    pub theme_color: String,
+    pub theme_style: String,
+    pub scale: f32,
     pub metrics: MetricsSettings,
 }
 
-// impl Default for UxSettings {
-//     fn default() -> Self {
-//         Self {}
-//     }
-// }
+impl Default for UserInterfaceSettings {
+    fn default() -> Self {
+        Self {
+            theme_color: "Dark".to_string(),
+            theme_style: "Rounded".to_string(),
+            scale: 1.0,
+            metrics: MetricsSettings::default(),
+        }
+    }
+}
 
 // pub type PluginSettings = HashMap<String, serde_json::Value>;
 
@@ -382,9 +390,8 @@ pub struct Settings {
     // pub developer_mode: bool,
     pub developer: DeveloperSettings,
     pub node: NodeSettings,
-    pub ux: UxSettings,
+    pub user_interface: UserInterfaceSettings,
     pub language_code: String,
-    pub theme: String,
     pub enable_plugins: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plugins: Option<PluginSettingsMap>,
@@ -403,9 +410,8 @@ impl Default for Settings {
             // developer_mode: false,
             developer: DeveloperSettings::default(),
             node: NodeSettings::default(),
-            ux: UxSettings::default(),
+            user_interface: UserInterfaceSettings::default(),
             language_code: "en".to_string(),
-            theme: "Dark".to_string(),
             enable_plugins: true,
             plugins: Some(PluginSettingsMap::default()),
         }

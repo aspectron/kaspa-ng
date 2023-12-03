@@ -14,6 +14,10 @@ mod arglist;
 pub use arglist::*;
 mod color;
 pub use color::*;
+mod image;
+pub use image::*;
+mod version;
+pub use version::*;
 
 #[macro_export]
 macro_rules! spawn {
@@ -114,8 +118,7 @@ where
     }
 
     pub fn build(self, ui: &mut Ui, context: &mut Context) {
-        let theme = theme();
-        let button_size = theme.medium_button_size();
+        let button_size = theme_style().medium_button_size();
         let available_width = ui.available_width();
         let buttons_len = self.list.len() as f32;
         let spacing = ui.spacing().item_spacing.x;

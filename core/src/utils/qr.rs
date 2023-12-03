@@ -9,8 +9,8 @@ pub fn render_qrcode(text: &str, width: usize, height: usize) -> String {
 
     code.render::<svg::Color<'_>>()
         .min_dimensions(width as u32, height as u32)
-        .dark_color(svg::Color("#ffffff"))
-        .light_color(svg::Color("#00000000"))
+        .light_color(svg::Color(theme_color().qr_background.to_hex().as_str()))
+        .dark_color(svg::Color(theme_color().qr_foreground.to_hex().as_str()))
         .build()
         .to_string()
 }

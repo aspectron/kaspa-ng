@@ -13,12 +13,12 @@ pub trait AsColor {
 impl AsColor for TransactionType {
     fn as_color(&self) -> Color32 {
         match self {
-            TransactionType::Incoming => Color32::from_rgb(162, 245, 187),
-            TransactionType::Outgoing => Color32::from_rgb(245, 162, 162),
-            TransactionType::External => Color32::from_rgb(162, 245, 187),
-            TransactionType::Reorg => Color32::from_rgb(79, 64, 64),
-            TransactionType::Batch => Color32::GRAY,
-            TransactionType::Stasis => Color32::GRAY,
+            TransactionType::Incoming => theme_color().transaction_incoming,
+            TransactionType::Outgoing => theme_color().transaction_outgoing,
+            TransactionType::External => theme_color().transaction_external,
+            TransactionType::Reorg => theme_color().transaction_reorg,
+            TransactionType::Batch => theme_color().transaction_batch,
+            TransactionType::Stasis => theme_color().transaction_stasis,
         }
     }
 }
@@ -154,11 +154,8 @@ impl Transaction {
         // let short_id = transaction_id.chars().take(10).collect::<String>() + "...";
         // let suffix = kaspa_suffix(&network_type);
 
-        let (default_color, strong_color) = if ui.visuals().dark_mode {
-            (Color32::LIGHT_GRAY, Color32::WHITE) //Color32::from_rgb(125, 125, 125))
-        } else {
-            (Color32::DARK_GRAY, Color32::BLACK)
-        };
+        let default_color = theme_color().default_color;
+        let strong_color = theme_color().strong_color;
 
         let font_id_header = FontId::monospace(15.0);
         let font_id_content = FontId::monospace(15.0);

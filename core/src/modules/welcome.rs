@@ -89,17 +89,42 @@ impl ModuleT for Welcome {
                                 });
 
                             ui.add_space(16.);
-                            ui.label("Theme:");
+                            ui.label("Theme Color:");
 
-                            egui::ComboBox::from_id_source("theme_selector")
-                                .selected_text("Dark")
+                            let mut theme_color = self.settings.user_interface.theme_color.clone();
+                            egui::ComboBox::from_id_source("theme_color_selector")
+                                .selected_text(theme_color.as_str())
                                 .show_ui(ui, |ui| {
                                     ui.style_mut().wrap = Some(false);
                                     ui.set_min_width(60.0);
-                                    ["Dark","Light"].into_iter().for_each(|theme| {
-                                        ui.selectable_value(&mut self.settings.theme, theme.to_string(), theme);
+                                    theme_colors().keys().for_each(|name| {
+                                        ui.selectable_value(&mut theme_color, name.to_string(), name);
                                     });
                                 });
+                                
+                            if theme_color != self.settings.user_interface.theme_color {
+                                self.settings.user_interface.theme_color = theme_color;
+                                apply_theme_color_by_name(ui.ctx(), self.settings.user_interface.theme_color.clone());
+                            }
+
+                            ui.add_space(16.);
+                            ui.label("Theme Style:");
+
+                            let mut theme_style = self.settings.user_interface.theme_style.clone();
+                            egui::ComboBox::from_id_source("theme_style_selector")
+                                .selected_text(theme_style.as_str())
+                                .show_ui(ui, |ui| {
+                                    ui.style_mut().wrap = Some(false);
+                                    ui.set_min_width(60.0);
+                                    theme_styles().keys().for_each(|name| {
+                                        ui.selectable_value(&mut theme_style, name.to_string(), name);
+                                    });
+                                });
+                                
+                            if theme_style != self.settings.user_interface.theme_style {
+                                self.settings.user_interface.theme_style = theme_style;
+                                apply_theme_style_by_name(ui.ctx(), self.settings.user_interface.theme_style.clone());
+                            }
                         });        
                     });
 
@@ -108,7 +133,7 @@ impl ModuleT for Welcome {
                     ui.add_space(
                         ui.available_width()
                             - 16.
-                            - (theme().medium_button_size.x + ui.spacing().item_spacing.x),
+                            - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x),
                     );
                     if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, "Apply")).clicked() {
                         let mut settings = self.settings.clone();

@@ -74,7 +74,7 @@ impl ModuleT for Node {
                                     ui.label("Updating...");
                                 });
                             } else {
-                                ui.colored_label(theme().warning_color, i18n("No peers"));
+                                ui.colored_label(theme_color().warning_color, i18n("No peers"));
                             }
 
                         });
@@ -96,7 +96,7 @@ impl ModuleT for Node {
 
 fn render_peer(ui : &mut Ui, peer: &RpcPeerInfo) {
 
-    let color = theme().node_data_color;
+    let color = theme_color().node_data_color;
 
     CollapsingHeader::new(peer.id.to_string())
         .default_open(true)

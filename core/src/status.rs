@@ -100,7 +100,7 @@ impl<'core> Status<'core> {
     }
 
     fn render_peers(&self, ui: &mut egui::Ui, peers: Option<usize>) {
-        let status_icon_size = theme().status_icon_size;
+        let status_icon_size = theme_style().status_icon_size;
 
         let peers = peers.unwrap_or(0);
         if peers != 0 {
@@ -109,9 +109,9 @@ impl<'core> Status<'core> {
             ui.label(
                 RichText::new(egui_phosphor::light::CLOUD_SLASH)
                     .size(status_icon_size)
-                    .color(Color32::LIGHT_RED),
+                    .color(theme_color().error_color),
             );
-            ui.label(RichText::new("No peers").color(Color32::LIGHT_RED));
+            ui.label(RichText::new("No peers").color(theme_color().error_color));
         }
     }
 
@@ -129,7 +129,7 @@ impl<'core> Status<'core> {
     fn render_connected_state(&mut self, ui: &mut egui::Ui, state: ConnectionStatus) {
         //connected : bool, icon: &str, color : Color32) {
         let status_area_width = ui.available_width() - 24.;
-        let status_icon_size = theme().status_icon_size;
+        let status_icon_size = theme_style().status_icon_size;
         let module = self.module().clone();
 
         match state {
@@ -141,7 +141,7 @@ impl<'core> Status<'core> {
                         ui.label(
                             RichText::new(egui_phosphor::light::PLUGS)
                                 .size(status_icon_size)
-                                .color(Color32::LIGHT_RED),
+                                .color(theme_color().error_color),
                         );
                         ui.separator();
                         ui.label("Not Connected");
@@ -150,7 +150,7 @@ impl<'core> Status<'core> {
                         ui.label(
                             RichText::new(egui_phosphor::light::TREE_STRUCTURE)
                                 .size(status_icon_size)
-                                .color(Color32::LIGHT_RED),
+                                .color(theme_color().error_color),
                         );
                         ui.separator();
                         // ui.label("Connecting...");
@@ -172,7 +172,7 @@ impl<'core> Status<'core> {
                                                 "Error connecting to {}: {err}",
                                                 settings.node.wrpc_url
                                             ))
-                                            .color(theme().warning_color),
+                                            .color(theme_color().warning_color),
                                         );
                                     }
                                 }
@@ -212,7 +212,7 @@ impl<'core> Status<'core> {
                 ui.label(
                     RichText::new(egui_phosphor::light::CPU)
                         .size(status_icon_size)
-                        .color(Color32::LIGHT_GREEN),
+                        .color(theme_color().connected_color),
                 );
                 ui.separator();
                 ui.label("CONNECTED").on_hover_ui(|ui| {

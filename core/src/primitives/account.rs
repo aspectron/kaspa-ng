@@ -101,6 +101,11 @@ impl Account {
         self.inner.balance.lock().unwrap().clone()
     }
 
+    pub fn update_theme(&self) {
+        let descriptor = self.descriptor().clone();
+        *self.inner.context.lock().unwrap() = AccountContext::new(&descriptor);
+    }
+
     // pub fn address(&self) -> Result<String> {
     //     self.inner.context.lock().unwrap().receive_address
     //     Ok(self.inner.runtime.receive_address()?.into())

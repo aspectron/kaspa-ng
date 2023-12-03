@@ -79,7 +79,7 @@ impl Overview {
         ui.add_space(48.);
     }
 
-    fn render_details(&mut self, _core: &mut Core, ui : &mut Ui) {
+    fn render_details(&mut self, core: &mut Core, ui : &mut Ui) {
 
         let screen_rect = ui.ctx().screen_rect();
         let logo_size = vec2(648., 994.,) * 0.25;
@@ -115,7 +115,7 @@ impl Overview {
                     // egui::special_emojis
                     // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
                     ui.hyperlink_to_tab(
-                        format!("• {}",i18n("Kaspa NextGen on GitHub")),
+                        format!("• {}",i18n("Kaspa NG on GitHub")),
                         "https://github.com/aspectron/kaspa-ng"
                     );
                     ui.hyperlink_to_tab(
@@ -140,29 +140,44 @@ impl Overview {
                     );
                 });
 
-            let version = env!("CARGO_PKG_VERSION");
-            let download = |platform: &str| { format!("https://github.com/aspectron/kaspa-ng/releases/download/{}/kaspa-ng-{}-{}.zip", version, version, platform) };
-            CollapsingHeader::new(i18n("Redistributables"))
-                .default_open(false)
-                .show(ui, |ui| {
-                    ["windows-x64", "linux-gnu-amd64", "macos-arm64"].into_iter().for_each(|platform| {
-                        Hyperlink::from_label_and_url(
-                            format!("• kaspa-ng-{}-{}.zip", version, platform),
-                            download(platform),
-                        ).open_in_new_tab(true).ui(ui);
-                    });
-                });
+            if let Some(release) = core.release.as_ref() {
+                if release.version == crate::app::VERSION {
+                    CollapsingHeader::new(i18n("Redistributables"))
+                        .id_source("redistributables")
+                        .default_open(false)
+                        .show(ui, |ui| {
+                            release.assets.iter().for_each(|asset| {
+                                Hyperlink::from_label_and_url(
+                                    format!("• {}", asset.name),
+                                    asset.browser_download_url.clone(),
+                                ).open_in_new_tab(true).ui(ui);
+                            });
+                        });
+                } else {
+                    CollapsingHeader::new(RichText::new(format!("{} {}",i18n("Update Available to version"), release.version)).color(theme_color().alert_color).strong())
+                        .id_source("redistributables-update")
+                        .default_open(true)
+                        .show(ui, |ui| {
 
-            CollapsingHeader::new(i18n("Music"))
-                .default_open(true)
-                .show(ui, |ui| {
-                    ui.label("TODO");
-                });
+                            if let Some(html_url) = &release.html_url {
+                                Hyperlink::from_label_and_url(
+                                    format!("• {} {}", i18n("GitHub Release"), release.version),
+                                    html_url,
+                                ).open_in_new_tab(true).ui(ui);
+                            }
 
-            if let Some(system) = runtime().system() {
-                system.render(ui);
+                            release.assets.iter().for_each(|asset| {
+                                Hyperlink::from_label_and_url(
+                                    format!("• {}", asset.name),
+                                    asset.browser_download_url.clone(),
+                                ).open_in_new_tab(true).ui(ui);
+                            });
+
+                        });
+
+                }
             }
-        
+
             CollapsingHeader::new(i18n("Build"))
                 .default_open(true)
                 .show(ui, |ui| {
@@ -177,10 +192,12 @@ impl Overview {
                     ui.label(format!("architecture {}", 
                         crate::app::CARGO_TARGET_TRIPLE
                     ));
-                    ui.label(format!("Codename: \"{}\"", crate::app::CODENAME));
                 });
 
-
+            if let Some(system) = runtime().system() {
+                system.render(ui);
+            }
+    
             CollapsingHeader::new(i18n("License Information"))
                 .default_open(false)
                 .show(ui, |ui| {
@@ -193,7 +210,7 @@ impl Overview {
                         ui.label("Kaspa NG");
                         ui.label("Copyright (c) 2023 ASPECTRON");
                         ui.label("License: MIT or Apache 2.0");
-                        ui.hyperlink_url_to_tab("https://aspectron.com");
+                        ui.hyperlink_url_to_tab("https://github.com/aspectron/kaspa-ng");
                         ui.label("");
                         ui.label("WORKFLOW-RS");
                         ui.label("Copyright (c) 2023 ASPECTRON");
@@ -210,7 +227,7 @@ impl Overview {
                         ui.label("License: MIT");
                         ui.hyperlink_url_to_tab("https://phosphoricons.com/");
                         ui.label("");
-                        ui.label("Graphics Design (Illustration Art)");
+                        ui.label("Illustration Art");
                         ui.label("Copyright (c) 2023 Rhubarb Media");
                         ui.label("License: CC BY 4.0");
                         ui.hyperlink_url_to_tab("https://rhubarbmedia.ca/");
@@ -236,7 +253,6 @@ impl Overview {
                                     "Elertan",
                                     "Gennady Gorin",
                                     "hashdag",
-                                    "Helix",
                                     "Helix",
                                     "jablonx",
                                     "jwj",
@@ -266,7 +282,11 @@ impl Overview {
                     .default_open(true)
                     .show(ui, |ui| {
                         ui.label("Please support Kaspa NG development");
-                        ui.label("kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x");
+                        // if ui.link("kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x").clicked() {
+                        let donation_address = "kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x";
+                        if ui.link(format_address(&Address::try_from(donation_address).unwrap(), Some(12))).clicked() {
+                            println!("link clicked...");
+                        }
                     });
         });
 
@@ -285,7 +305,6 @@ impl Overview {
         let mut metric_iter = METRICS.iter();
 
         if let Some(snapshot) = core.metrics.as_ref() {
-            let theme = theme();
             let view_width = ui.available_width();
             if view_width < 200. {
                 return;
@@ -298,7 +317,7 @@ impl Overview {
                     for _ in 0..graph_columns {
                         if let Some(metric) = metric_iter.next() {
                             let value = snapshot.get(metric);
-                            self.render_graph(ui,  *metric, value, theme);
+                            self.render_graph(ui,  *metric, value);
                         } else {
                             draw = false;
                         }
@@ -309,7 +328,7 @@ impl Overview {
 
     }
 
-    fn render_graph(&mut self, ui : &mut Ui, metric : Metric, value : f64, theme : &Theme) {
+    fn render_graph(&mut self, ui : &mut Ui, metric : Metric, value : f64) {
 
         let group = MetricGroup::from(metric);
         let graph_color = group.to_color();
@@ -328,56 +347,61 @@ impl Overview {
 
         
         ui.vertical(|ui|{
+            let frame = 
             Frame::none()
-                // .fill(theme.performance_graph_color)
-                .stroke(Stroke::new(1.0, theme.graph_frame_color))
-                .inner_margin(4.)
+                // .fill(Color32::from_rgb(240,240,240))
+                .stroke(Stroke::new(1.0, theme_color().graph_frame_color))
+                // .inner_margin(4.)
+                .inner_margin(Margin { left: 3., right: 3., top: 4., bottom: 4. })
                 .outer_margin(8.)
-                .rounding(8.)
-                .show(ui, |ui| {
+                // .rounding(8.)
+                .rounding(6.);
 
-                    let mut plot = Plot::new(metric.as_str())
-                        .legend(Legend::default())
-                        .width(128.)
-                        .height(32.)
-                        .auto_bounds_x()
-                        .auto_bounds_y()
-                        .set_margin_fraction(vec2(0.0,0.0) )
-                        .show_axes(false)
-                        .show_grid(false)
-                        .allow_drag([false, false])
-                        .allow_scroll(false)
-                        .show_background(false)
-                        .show_x(false)
-                        .show_y(false)
-                        ;
+            frame.show(ui, |ui| {
 
-                    if [Metric::NodeCpuUsage].contains(&metric) {
-                        plot = plot.include_y(100.);
-                    }
+                let mut plot = Plot::new(metric.as_str())
+                    .legend(Legend::default())
+                    .width(128.)
+                    .height(32.)
+                    .auto_bounds_x()
+                    .auto_bounds_y()
+                    .set_margin_fraction(vec2(0.0,0.0) )
+                    .show_axes(false)
+                    .show_grid(false)
+                    .allow_drag([false, false])
+                    .allow_scroll(false)
+                    .show_background(false)
+                    .show_x(false)
+                    .show_y(false)
+                    ;
 
-                    let color = graph_color.gamma_multiply(0.5);
-                    let line = Line::new(PlotPoints::Owned(graph_data))
-                        .color(color)
-                        .style(LineStyle::Solid)
-                        .fill(0.0);
+                if [Metric::NodeCpuUsage].contains(&metric) {
+                    plot = plot.include_y(100.);
+                }
 
-                    let plot_result = plot.show(ui, |plot_ui| {
-                        plot_ui.line(line);
-                    });
+                // let color = graph_color.gamma_multiply(0.5);
+                let line = Line::new(PlotPoints::Owned(graph_data))
+                    // .color(color)
+                    .color(graph_color)
+                    .style(LineStyle::Solid)
+                    .fill(0.0);
 
-                    let text = format!("{} {}", i18n(metric.title().1).to_uppercase(), metric.format(value, true, true));
-                    let rich_text_top = egui::RichText::new(&text).size(10.).color(Color32::WHITE);//.background_color(Color32::from_black_alpha(32));
-                    let rich_text_back = egui::RichText::new(text).size(10.).color(Color32::BLACK);
-                    let label_top = Label::new(rich_text_top).wrap(false);
-                    let label_back = Label::new(rich_text_back).wrap(false);
-                    let mut rect_top = plot_result.response.rect;
-                    rect_top.set_bottom(rect_top.top() + 12.);
-                    let mut rect_back = rect_top;
-                    rect_back.set_center(rect_back.center()+vec2(0.8,0.8));
-                    ui.put(rect_back, label_back);
-                    ui.put(rect_top, label_top);
+                let plot_result = plot.show(ui, |plot_ui| {
+                    plot_ui.line(line);
                 });
+
+                let text = format!("{} {}", i18n(metric.title().1).to_uppercase(), metric.format(value, true, true));
+                let rich_text_top = egui::RichText::new(&text).size(10.).color(theme_color().raised_text_color);
+                let rich_text_back = egui::RichText::new(text).size(10.).color(theme_color().raised_text_shadow);
+                let label_top = Label::new(rich_text_top).wrap(false);
+                let label_back = Label::new(rich_text_back).wrap(false);
+                let mut rect_top = plot_result.response.rect;
+                rect_top.set_bottom(rect_top.top() + 12.);
+                let mut rect_back = rect_top;
+                rect_back.set_center(rect_back.center()+vec2(0.8,0.8));
+                ui.put(rect_back, label_back);
+                ui.put(rect_top, label_top);
+            });
         });
     }
 }

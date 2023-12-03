@@ -41,17 +41,17 @@ impl ModuleT for Metrics {
 
         let mut store_settings = false;
                             
-        let mut graph_columns = core.settings.ux.metrics.graph_columns;
-        let mut graph_height = core.settings.ux.metrics.graph_height;
+        let mut graph_columns = core.settings.user_interface.metrics.graph_columns;
+        let mut graph_height = core.settings.user_interface.metrics.graph_height;
         #[allow(unused_mut)]
-        let mut graph_range_from = core.settings.ux.metrics.graph_range_from;
-        let mut graph_range_to = core.settings.ux.metrics.graph_range_to;
+        let mut graph_range_from = core.settings.user_interface.metrics.graph_range_from;
+        let mut graph_range_to = core.settings.user_interface.metrics.graph_range_to;
 
 
         ui.horizontal(|ui|{
             ui.heading("Node Metrics");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                PopupPanel::new(ui, "metrics_settings","Settings", |ui| {
+                PopupPanel::new(ui, "metrics_settings","Settings", |ui, _| {
                     ui.add(
                         Slider::new(&mut graph_columns, 1..=8)
                             .text("Columns")
@@ -97,15 +97,15 @@ impl ModuleT for Metrics {
 
                             ui.horizontal(|ui| {
                                 if ui.button(i18n("All")).clicked() {
-                                    core.settings.ux.metrics.disabled.clear();
+                                    core.settings.user_interface.metrics.disabled.clear();
                                 }
 
                                 if ui.button(i18n("None")).clicked() {
-                                    core.settings.ux.metrics.disabled = Metric::list().into_iter().collect::<AHashSet<_>>();
+                                    core.settings.user_interface.metrics.disabled = Metric::list().into_iter().collect::<AHashSet<_>>();
                                 }
                                 
                                 if ui.button(i18n("Key Perf.")).clicked() {
-                                    core.settings.ux.metrics.disabled = Metric::list().into_iter().filter(|metric|!metric.is_key_performance_metric()).collect::<AHashSet<_>>();
+                                    core.settings.user_interface.metrics.disabled = Metric::list().into_iter().filter(|metric|!metric.is_key_performance_metric()).collect::<AHashSet<_>>();
                                 }
 
                             });
@@ -119,12 +119,12 @@ impl ModuleT for Metrics {
             
                                         for metric in group.metrics() {
                                             ui.space();
-                                            let mut state = !core.settings.ux.metrics.disabled.contains(&metric);
+                                            let mut state = !core.settings.user_interface.metrics.disabled.contains(&metric);
                                             if ui.checkbox(&mut state, i18n(metric.title().0)).changed() {
                                                 if state {
-                                                    core.settings.ux.metrics.disabled.remove(&metric);
+                                                    core.settings.user_interface.metrics.disabled.remove(&metric);
                                                 } else {
-                                                    core.settings.ux.metrics.disabled.insert(metric);
+                                                    core.settings.user_interface.metrics.disabled.insert(metric);
                                                 }
                                                 // core.store_settings();
                                                 store_settings = true;
@@ -162,15 +162,15 @@ impl ModuleT for Metrics {
         }
 
         if store_settings
-        || graph_columns != core.settings.ux.metrics.graph_columns 
-        || graph_height != core.settings.ux.metrics.graph_height 
-        || graph_range_from != core.settings.ux.metrics.graph_range_from 
-        || graph_range_to != core.settings.ux.metrics.graph_range_to 
+        || graph_columns != core.settings.user_interface.metrics.graph_columns 
+        || graph_height != core.settings.user_interface.metrics.graph_height 
+        || graph_range_from != core.settings.user_interface.metrics.graph_range_from 
+        || graph_range_to != core.settings.user_interface.metrics.graph_range_to 
         {
-            core.settings.ux.metrics.graph_columns = graph_columns;
-            core.settings.ux.metrics.graph_height = graph_height;
-            core.settings.ux.metrics.graph_range_from = graph_range_from;
-            core.settings.ux.metrics.graph_range_to = graph_range_to;
+            core.settings.user_interface.metrics.graph_columns = graph_columns;
+            core.settings.user_interface.metrics.graph_height = graph_height;
+            core.settings.user_interface.metrics.graph_range_from = graph_range_from;
+            core.settings.user_interface.metrics.graph_range_to = graph_range_to;
             
             core.store_settings();
         }
@@ -185,17 +185,17 @@ impl ModuleT for Metrics {
                 .show(ui, |ui| {
 
                     let view_width = ui.available_width() - 32.;
-                    let graph_height = core.settings.ux.metrics.graph_height as f32;
-                    let graph_width = view_width / core.settings.ux.metrics.graph_columns as f32;
+                    let graph_height = core.settings.user_interface.metrics.graph_height as f32;
+                    let graph_width = view_width / core.settings.user_interface.metrics.graph_columns as f32;
 
-                        let mut metric_iter = Metric::list().into_iter().filter(|metric| !core.settings.ux.metrics.disabled.contains(metric));
+                        let mut metric_iter = Metric::list().into_iter().filter(|metric| !core.settings.user_interface.metrics.disabled.contains(metric));
                         let mut draw = true;
                         while draw {
                             ui.horizontal(|ui| {
-                                for _ in 0..core.settings.ux.metrics.graph_columns {
+                                for _ in 0..core.settings.user_interface.metrics.graph_columns {
                                     if let Some(metric) = metric_iter.next() {
-                                        let range_from = core.settings.ux.metrics.graph_range_from;
-                                        let range_to = core.settings.ux.metrics.graph_range_to;
+                                        let range_from = core.settings.user_interface.metrics.graph_range_from;
+                                        let range_to = core.settings.user_interface.metrics.graph_range_to;
                                         self.render_metric(ui,metric,metrics,range_from..range_to,graph_width,graph_height);
                                     } else {
                                         draw = false;

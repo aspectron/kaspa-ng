@@ -49,7 +49,7 @@ impl From<&Log> for RichText {
             Log::Processed(text) => RichText::from(text).color(egui::Color32::LIGHT_GREEN),
         };
 
-        text.font(FontId::monospace(theme().node_log_font_size))
+        text.font(FontId::monospace(theme_style().node_log_font_size))
     }
 }
 

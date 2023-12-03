@@ -189,7 +189,7 @@ impl ModuleT for AccountCreate {
                             |ui, text| {
                                 // ui.add_space(8.);
                                 ui.label(RichText::new("Enter account name (optional)").size(12.).raised());
-                                ui.add_sized(theme().panel_editor_size, TextEdit::singleline(text)
+                                ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center))
                             },
                         ).submit(|_,focus| {
@@ -200,7 +200,7 @@ impl ModuleT for AccountCreate {
                 
                     })
                     .with_footer(|this,ui| {
-                        let size = theme().large_button_size;
+                        let size = theme_style().large_button_size;
                         if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                             this.state = State::WalletSecret;
                             this.context.focus = Focus::WalletSecret;
@@ -232,7 +232,7 @@ impl ModuleT for AccountCreate {
                                 Focus::WalletSecret,
                                 |ui, text| {
                                     ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
-                                    ui.add_sized(theme().panel_editor_size, TextEdit::singleline(text)
+                                    ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center)
                                         .password(true))
                                 },
@@ -244,7 +244,7 @@ impl ModuleT for AccountCreate {
                             .build(ui);
                         })
                         .with_footer(|this,ui| {
-                            let size = theme().large_button_size;
+                            let size = theme_style().large_button_size;
                             let enabled = !this.context.wallet_secret.is_empty();
                             if ui.add_enabled(enabled, egui::Button::new("Continue").min_size(size)).clicked() {
                                 submit_via_footer = true;
@@ -283,7 +283,7 @@ impl ModuleT for AccountCreate {
                                 Focus::PaymentSecret,
                                 |ui, text| {
                                     ui.label(egui::RichText::new("Enter your BIP39 passphrase").size(12.).raised());
-                                    ui.add_sized(theme().panel_editor_size, TextEdit::singleline(text)
+                                    ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center)
                                         .password(true))
                                 },
@@ -295,7 +295,7 @@ impl ModuleT for AccountCreate {
                             });
                         })
                         .with_footer(|this,ui| {
-                            let size = theme().large_button_size;
+                            let size = theme_style().large_button_size;
                             let enabled = !this.context.payment_secret.is_empty();
                             if ui.add_enabled(enabled, Button::new("Continue").min_size(size)).clicked() {
                                 this.state = State::CreateAccount;
@@ -384,7 +384,7 @@ impl ModuleT for AccountCreate {
                         ui.label(egui::RichText::new("Error creating account").color(egui::Color32::from_rgb(255, 120, 120)));
                         ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
 
-                        if ui.add_sized(theme().panel_editor_size, egui::Button::new("Restart")).clicked() {
+                        if ui.add_sized(theme_style().panel_editor_size, egui::Button::new("Restart")).clicked() {
                             this.state = State::Start;
                         }
                     })

@@ -159,7 +159,7 @@ impl ModuleT for PrivateKeyCreate {
                         })
                         .with_footer(|_this,ui| {
                             // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
-                            let size = theme().large_button_size;
+                            let size = theme_style().large_button_size;
                             if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                                 // this.state = State::WalletName;
                             }
@@ -191,7 +191,7 @@ impl ModuleT for PrivateKeyCreate {
                         );
                     })
                     .with_footer(|this,ui| {
-                        let size = theme().large_button_size;
+                        let size = theme_style().large_button_size;
                         if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                             this.state = State::AccountName;
                         }
@@ -245,7 +245,7 @@ impl ModuleT for PrivateKeyCreate {
                             }
                         })
                         .with_footer(|this,ui| {
-                            let size = theme().large_button_size;
+                            let size = theme_style().large_button_size;
                             let ok = this.args.payment_secret == this.args.payment_secret_confirm;// && this.args.wallet_secret.len() > 0;
                             if ui.add_enabled(ok, egui::Button::new("Continue").min_size(size)).clicked() {
                                 this.state = State::Start;

@@ -36,7 +36,7 @@ impl ModuleT for Logs {
                 }
             });
 
-        let copy_to_clipboard = Button::new(format!(" {CLIPBOARD_TEXT} "));
+        let copy_to_clipboard = Button::new(RichText::new(format!(" {CLIPBOARD_TEXT} ")).size(20.));
 
         let screen_rect = ui.ctx().screen_rect();
         let button_rect = Rect::from_min_size(

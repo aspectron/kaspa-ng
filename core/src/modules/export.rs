@@ -278,7 +278,7 @@ impl ModuleT for Export {
                                 Focus::WalletSecret,
                                 |ui, text| {
                                     ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
-                                    ui.add_sized(theme().panel_editor_size, TextEdit::singleline(text)
+                                    ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center)
                                         .password(true))
                                 },

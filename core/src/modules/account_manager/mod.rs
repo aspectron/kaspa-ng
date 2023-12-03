@@ -194,7 +194,7 @@ impl ModuleT for AccountManager {
         ui: &mut egui::Ui,
     ) {
         if let Err(err) = self.render_state(core, ui) {
-            ui.colored_label(theme().error_color, err.to_string());
+            ui.colored_label(theme_color().error_color, err.to_string());
         }
     }
 

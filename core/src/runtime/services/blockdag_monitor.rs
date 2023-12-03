@@ -7,7 +7,7 @@ use kaspa_rpc_core::{RpcBlock, VirtualChainChangedNotification};
 pub enum BlockDagMonitorEvents {
     Enable,
     Disable,
-    Settings(BlockDagGraphSettings),
+    Settings(Arc<BlockDagGraphSettings>),
     Exit,
 }
 
@@ -21,8 +21,9 @@ pub struct BlockDagMonitorService {
     is_enabled: Arc<AtomicBool>,
     is_connected: Arc<AtomicBool>,
     pub chain: Mutex<AHashMap<u64, DaaBucket>>,
+    pub separators: Mutex<Vec<u64>>,
     pub new_blocks: Arc<Mutex<AHashSet<kaspa_consensus_core::Hash>>>,
-    pub settings: Arc<BlockDagGraphSettings>,
+    pub settings: Mutex<Arc<BlockDagGraphSettings>>,
 }
 
 impl BlockDagMonitorService {
@@ -35,10 +36,11 @@ impl BlockDagMonitorService {
             listener_id: Mutex::new(None),
             notification_channel: Channel::<Notification>::unbounded(),
             chain: Mutex::new(AHashMap::new()),
+            separators: Mutex::new(Vec::new()),
             new_blocks: Arc::new(Mutex::new(AHashSet::new())),
             is_enabled: Arc::new(AtomicBool::new(false)),
             is_connected: Arc::new(AtomicBool::new(false)),
-            settings: Arc::new(BlockDagGraphSettings::default()),
+            settings: Mutex::new(Arc::new(BlockDagGraphSettings::default())),
         }
     }
 
@@ -80,24 +82,47 @@ impl BlockDagMonitorService {
         self.rpc_api.lock().unwrap().clone()
     }
 
-    pub fn enable(&self) {
+    pub fn enable(&self, _current_daa_score: Option<u64>) {
         self.service_events
             .sender
             .try_send(BlockDagMonitorEvents::Enable)
             .unwrap();
+        // if let Some(current_daa_score) = current_daa_score {
+        //     self._update_separators(current_daa_score);
+        // }
     }
 
-    pub fn disable(&self) {
+    pub fn disable(&self, _current_daa_score: Option<u64>) {
         self.service_events
             .sender
             .try_send(BlockDagMonitorEvents::Disable)
             .unwrap();
+        // if let Some(current_daa_score) = current_daa_score {
+        //     self._update_separators(current_daa_score);
+        // }
+    }
+
+    fn _update_separators(&self, current_daa_score: u64) {
+        let graph_length_daa = self.settings.lock().unwrap().graph_length_daa as u64;
+        let mut separators = self.separators.lock().unwrap();
+        while let Some(first) = separators.first() {
+            if *first < (current_daa_score - graph_length_daa) {
+                separators.remove(0);
+            } else {
+                break;
+            }
+        }
+        separators.push(current_daa_score);
+    }
+
+    pub fn separators(&self) -> MutexGuard<'_, Vec<u64>> {
+        self.separators.lock().unwrap()
     }
 
     pub fn update_settings(&self, settings: BlockDagGraphSettings) {
         self.service_events
             .sender
-            .try_send(BlockDagMonitorEvents::Settings(settings))
+            .try_send(BlockDagMonitorEvents::Settings(Arc::new(settings)))
             .unwrap();
     }
 
@@ -160,7 +185,7 @@ impl Service for BlockDagMonitorService {
         let mut blocks_by_hash: AHashMap<kaspa_consensus_core::Hash, Arc<RpcBlock>> =
             AHashMap::default();
 
-        let mut settings = (*self.settings).clone();
+        let mut settings = (*self.settings.lock().unwrap()).clone();
         loop {
             select! {
 
@@ -260,6 +285,7 @@ impl Service for BlockDagMonitorService {
                                 break;
                             }
                             BlockDagMonitorEvents::Settings(new_settings) => {
+                                *self.settings.lock().unwrap() = new_settings.clone();
                                 settings = new_settings;
                                 let mut chain = self.chain.lock().unwrap();
                                 for bucket in chain.values_mut() {

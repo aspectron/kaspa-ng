@@ -127,20 +127,88 @@ impl<'core> Menu<'core> {
                         ui,
                         "display_settings",
                         egui_phosphor::light::MONITOR,
-                        |ui| {
-                            ui.label("hello world");
+                        |ui, close_popup| {
+                            // ui.horizontal(|ui| {
+                            //     ui.label("Font Size");
+                            //     ui.add(
+                            //         egui::DragValue::new(&mut self.core.settings.font_size)
+                            //             .speed(0.1)
+                            //             .clamp_range(0.5..=2.0),
+                            //     );
+                            // });
 
-                            if ui.button("Change").clicked() {
-                                ui.ctx().set_visuals(Visuals::light());
-                            }
+                            // ui.horizontal(|ui| {
+                            //     ui.label("Text Scale");
+                            //     ui.add(
+                            // egui::DragValue::new(&mut self.core.settings.text_scale)
+                            //             .speed(0.1)
+                            //             .clamp_range(0.5..=2.0),
+                            //     );
+                            // });
+
+                            ui.horizontal(|ui| {
+                                ui.label("Theme Color");
+
+                                let current_theme_color_name = theme_color().name();
+                                ui.menu_button(format!("{} ⏷", current_theme_color_name), |ui| {
+                                    theme_colors().keys().for_each(|name| {
+                                        if name.as_str() != current_theme_color_name
+                                            && ui.button(name).clicked()
+                                        {
+                                            apply_theme_color_by_name(ui.ctx(), name);
+                                            self.core.settings.user_interface.theme_color =
+                                                name.to_string();
+                                            self.core.store_settings();
+                                            ui.close_menu();
+                                        }
+                                    });
+                                });
+                            });
+
+                            ui.horizontal(|ui| {
+                                ui.label("Theme Style");
+
+                                let current_theme_style_name = theme_style().name();
+                                ui.menu_button(format!("{} ⏷", current_theme_style_name), |ui| {
+                                    theme_styles().keys().for_each(|name| {
+                                        if name.as_str() != current_theme_style_name
+                                            && ui.button(name).clicked()
+                                        {
+                                            apply_theme_style_by_name(ui.ctx(), name);
+                                            self.core.settings.user_interface.theme_style =
+                                                name.to_string();
+                                            self.core.store_settings();
+                                            ui.close_menu();
+                                        }
+                                    });
+                                });
+                            });
+
+                            // if ui.button("Change").clicked() {
+                            //     if theme().name == "Light" {
+                            //         apply_theme(ui, Theme::dark());
+                            //     } else {
+                            //         apply_theme(ui, Theme::light());
+                            //     }
+                            //     // ui.ctx().set_visuals(Visuals::light());
+                            // }
 
                             if self.core.settings.developer.enable_screen_capture() {
                                 ui.add_space(8.);
-                                use egui_phosphor::thin::CAMERA;
-                                if ui.button(CAMERA).clicked() {
-                                    ui.ctx()
-                                        .send_viewport_cmd(egui::ViewportCommand::Screenshot);
-                                }
+                                ui.vertical_centered(|ui| {
+                                    use egui_phosphor::light::CAMERA;
+                                    if ui
+                                        .add_sized(
+                                            vec2(32., 32.),
+                                            Button::new(RichText::new(CAMERA).size(20.)),
+                                        )
+                                        .clicked()
+                                    {
+                                        *close_popup = true;
+                                        ui.ctx()
+                                            .send_viewport_cmd(egui::ViewportCommand::Screenshot);
+                                    }
+                                });
                             }
                         },
                     )

@@ -119,7 +119,7 @@ impl ModuleT for Settings {
                                 if path.exists() && !path.is_file() {
                                     ui.label(
                                         RichText::new(format!("Rusty Kaspa Daemon not found at '{path}'", path = self.settings.node.kaspad_daemon_binary))
-                                            .color(theme().error_color),
+                                            .color(theme_color().error_color),
                                     );
                                     node_settings_error = Some("Rusty Kaspa Daemon not found");
                                 }
@@ -160,7 +160,7 @@ impl ModuleT for Settings {
                         if let Err(err) = KaspaRpcClient::parse_url(self.settings.node.wrpc_url.clone(), self.settings.node.wrpc_encoding, self.settings.node.network.into()) {
                             ui.label(
                                 RichText::new(format!("{err}"))
-                                    .color(theme().warning_color),
+                                    .color(theme_color().warning_color),
                             );
                             node_settings_error = Some("Invalid wRPC URL");
                         }
@@ -222,7 +222,7 @@ impl ModuleT for Settings {
             if let Some(error) = node_settings_error {
                 ui.label(
                     RichText::new(error.to_string())
-                        .color(theme().warning_color),
+                        .color(theme_color().warning_color),
                 );
                 ui.add_space(16.);
                 ui.label(i18n("Unable to change node settings until the problem is resolved."));
@@ -237,6 +237,7 @@ impl ModuleT for Settings {
                     if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
                         match response {
                             Confirm::Ack => {
+
                                 core.settings = self.settings.clone();
                                 core.settings.store_sync().unwrap();
                                 if restart {
@@ -245,6 +246,7 @@ impl ModuleT for Settings {
                             },
                             Confirm::Nack => {
                                 self.settings = core.settings.clone();
+                                self.grpc_network_interface = NetworkInterfaceEditor::try_from(&self.settings.node.grpc_network_interface).unwrap();
                             }
                         }
                     }

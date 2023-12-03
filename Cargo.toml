@@ -27,6 +27,7 @@ kaspa-ng-macros = { version = "0.1.0", path = "macros/" }
 # ___________________
 
 egui = "0.24.0"
+epaint = "0.24.0"
 egui_plot = "0.24.0"
 egui_extras = { version = "0.24.0", features = ["svg","image"] }
 eframe = { version = "0.24.0", default-features = false, features = [

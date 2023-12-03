@@ -32,7 +32,8 @@ impl<'render> MnemonicPresenter<'render> {
     pub fn render(&mut self, ui: &mut Ui) {
         ui.vertical_centered(|ui| {
             ui.label(
-                RichText::new("Never share your mnemonic with anyone!").color(Color32::LIGHT_RED),
+                RichText::new("Never share your mnemonic with anyone!")
+                    .color(theme_color().alert_color),
             );
             ui.separator();
             ui.label(" ");

@@ -6,7 +6,10 @@ pub struct BlockDagGraphSettings {
     pub y_scale: f64,
     pub y_dist: f64,
     pub graph_length_daa: usize,
-    pub vspc_center: bool,
+    pub center_vspc: bool,
+    pub show_vspc: bool,
+    pub show_daa: bool,
+    pub show_grid: bool,
 }
 
 impl Default for BlockDagGraphSettings {
@@ -16,7 +19,10 @@ impl Default for BlockDagGraphSettings {
             // y_dist: 70.0,
             y_dist: 7.0,
             graph_length_daa: 1024,
-            vspc_center: false,
+            center_vspc: false,
+            show_vspc: true,
+            show_daa: true,
+            show_grid: true,
         }
     }
 }
@@ -75,7 +81,7 @@ impl DaaBucket {
         if let Some(block) = self.blocks.iter_mut().find(|b| b.data.header.hash == hash) {
             block.vspc = flag;
             block.settled = false;
-            if flag && settings.vspc_center {
+            if flag && settings.center_vspc {
                 block.dst_y = 0.0;
             } else {
                 block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
@@ -92,7 +98,7 @@ impl DaaBucket {
         let y_distance = settings.y_dist;
         let len = self.blocks.len();
         if let Some(mut vspc_idx) = self.blocks.iter().position(|block| block.vspc) {
-            if settings.vspc_center && len > 2 {
+            if settings.center_vspc && len > 2 {
                 let mid = len / 2;
                 if vspc_idx != mid {
                     self.blocks.swap(vspc_idx, mid);
@@ -103,7 +109,7 @@ impl DaaBucket {
                 }
             }
 
-            let vspc_y = if settings.vspc_center {
+            let vspc_y = if settings.center_vspc {
                 0.0
             } else {
                 self.blocks
@@ -138,7 +144,7 @@ impl DaaBucket {
         self.blocks.iter_mut().for_each(|block| {
             // block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
             block.settled = false;
-            if block.vspc && settings.vspc_center {
+            if block.vspc && settings.center_vspc {
                 block.dst_y = 0.0;
             } else {
                 block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);

@@ -70,11 +70,12 @@ impl NetworkInterfaceEditor {
                     if self.custom.is_empty() {
                         ui.label(
                             RichText::new("Please enter custom interface address: IP[:PORT]")
-                                .color(Color32::LIGHT_YELLOW),
+                                .color(theme_color().warning_color),
                         );
                     } else if let Err(err) = ContextualNetAddress::from_str(self.custom.as_str()) {
                         ui.label(
-                            RichText::new(format!("Error: {}", err)).color(Color32::LIGHT_RED),
+                            RichText::new(format!("Error: {}", err))
+                                .color(theme_color().error_color),
                         );
                     }
                 });
