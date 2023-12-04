@@ -52,13 +52,14 @@ impl<'manager> Overview<'manager> {
                                 
                                 layout = layout.add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme_style().medium_button_size()), |(this, _):&mut (&mut Overview<'_>, &mut Core)| {
                                     this.context.action = Action::Estimating;
-                                    this.context.transaction_kind = TransactionKind::Send;
+                                    this.context.transaction_kind = Some(TransactionKind::Send);
+                                    this.context.focus.next(Focus::Address);
                                 });
 
                                 if core.account_collection().as_ref().map(|collection|collection.len()).unwrap_or(0) > 1 {
                                     layout = layout.add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme_style().medium_button_size()), |(this,_)| {
                                         this.context.action = Action::Estimating;
-                                        this.context.transaction_kind = TransactionKind::Transfer;
+                                        this.context.transaction_kind = Some(TransactionKind::Transfer);
                                     });
                                 }
                                 layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme_style().medium_button_size()), |(_,core)| {
@@ -198,12 +199,43 @@ impl<'manager> Overview<'manager> {
 
     }
 
-    fn render_estimation_ui(&mut self, _core: &mut Core, ui: &mut egui::Ui, rc: &RenderContext<'_>) -> bool {
-        use egui_phosphor::light::{CHECK, X};
-
+    fn render_transfer_account_selector(&mut self, core: &mut Core, ui: &mut egui::Ui, rc: &RenderContext<'_>) {
         let RenderContext { network_type, .. } = rc;
 
-        let mut request_estimate = false;
+
+        PopupPanel::new(ui, "transfer_selector_popup",|ui|{ ui.button("Select Account XYZ ⏷") }, |ui, _| {
+
+            egui::ScrollArea::vertical()
+                .id_source("transfer_selector_popup_scroll")
+                .auto_shrink([true; 2])
+                .show(ui, |ui| {
+
+                    if let Some(account_collection) = core.account_collection() {
+                        account_collection.iter().for_each(|account| {
+                            if ui
+                                .large_button(format!("{}\n{}", account.name_or_id(),account.balance().map(|balance|sompi_to_kaspa_string_with_suffix(balance.mature, network_type)).unwrap_or("N/A".to_string())))
+                                .clicked()
+                            {
+                                
+                            }
+                        });
+                    }
+
+                });
+
+        })
+        .with_min_width(240.)
+        // .with_max_height(max_height)
+        // .with_caption(true)
+        // .with_close_button(true)    
+        // .with_pulldown_marker(true)
+        .with_close_on_interaction(true)
+        .build(ui);
+    }
+
+    fn render_address_input(&mut self, _core: &mut Core, ui: &mut egui::Ui, rc: &RenderContext<'_>) {
+        let RenderContext { network_type, .. } = rc;
+
 
         TextEditor::new(
             &mut self.context.destination_address_string,
@@ -233,7 +265,8 @@ impl<'manager> Overview<'manager> {
             }
         })
         .submit(|_, focus|{
-            *focus = Focus::Amount;
+            // *focus = Some(Focus::Amount);
+            focus.next(Focus::Amount);
         })
         .build(ui);
         
@@ -248,13 +281,35 @@ impl<'manager> Overview<'manager> {
             }
         }
 
+
+
+
+    }
+
+    fn render_estimation_ui(&mut self, core: &mut Core, ui: &mut egui::Ui, rc: &RenderContext<'_>) -> bool {
+        use egui_phosphor::light::{CHECK, X};
+
+        let RenderContext { network_type, .. } = rc;
+
+        let mut request_estimate = false;
+
+        match self.context.transaction_kind.as_ref().unwrap() {
+            TransactionKind::Send => {
+                self.render_address_input(core, ui, rc);
+            }
+            TransactionKind::Transfer => {
+                self.render_transfer_account_selector(core, ui, rc);
+                ui.label("TODO - Transfer funds - select account");
+            }
+        }
+
         let response = TextEditor::new(
             &mut self.context.send_amount_text,
             &mut self.context.focus,
             Focus::Amount,
             |ui, text| {
                 ui.add_space(8.);
-                ui.label(egui::RichText::new("Enter KAS amount to send").size(12.).raised());
+                ui.label(egui::RichText::new(format!("Enter {} amount to send", kaspa_suffix(network_type))).size(12.).raised());
                 ui.add_sized(self.editor_size, TextEdit::singleline(text)
                     .vertical_align(Align::Center))
             },
@@ -266,14 +321,21 @@ impl<'manager> Overview<'manager> {
 
         if response.text_edit_submit(ui) {
             if self.context.enable_priority_fees {
-                self.context.focus = Focus::Fees;
+                self.context.focus.next(Focus::Fees);
             } else if self.update_user_args() {
                 self.context.action = Action::Sending;
+                self.context.focus.next(Focus::WalletSecret);
             }
         }
 
         ui.add_space(8.);
-        ui.checkbox(&mut self.context.enable_priority_fees,i18n("Include Priority Fees"));
+        if ui.checkbox(&mut self.context.enable_priority_fees,i18n("Include Priority Fees")).changed() {
+            if self.context.enable_priority_fees {
+                self.context.focus.next(Focus::Fees);
+            } else {
+                self.context.focus.next(Focus::Amount);
+            }
+        }
 
         if self.context.enable_priority_fees {
             TextEditor::new(
@@ -329,7 +391,7 @@ impl<'manager> Overview<'manager> {
                     CenterLayoutBuilder::new()
                         .add_enabled(ready_to_send, Button::new(format!("{CHECK} Send")).min_size(theme_style().medium_button_size()), |this: &mut Overview<'_>| {
                             this.context.action = Action::Sending;
-                            this.context.focus = Focus::WalletSecret;
+                            this.context.focus.next(Focus::WalletSecret);
                         })
                         .add(Button::new(format!("{X} Cancel")).min_size(theme_style().medium_button_size()), |this| {
                             this.context.reset_send_state();
@@ -367,7 +429,7 @@ impl<'manager> Overview<'manager> {
 
         if response.text_edit_submit(ui) {
             if account.requires_bip39_passphrase() {
-                self.context.focus = Focus::PaymentSecret;
+                self.context.focus.next(Focus::PaymentSecret);
             } else if !self.context.wallet_secret.is_empty() {
                 proceed_with_send = true;
             }
@@ -403,6 +465,7 @@ impl<'manager> Overview<'manager> {
             })
             .add(Button::new(format!("{X} Cancel")).min_size(theme_style().medium_button_size()), |this| {
                 this.context.action = Action::Estimating;
+                this.context.focus.next(Focus::Amount);
             })
             .build(ui,self);
 

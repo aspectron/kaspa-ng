@@ -11,13 +11,13 @@ impl WalletMenu {
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, max_height: f32) {
 
         let wallet_name = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
-            wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str())
+            wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str()).to_string()
         } else {
             ui.label("Missing wallet descriptor");
             return;
         };
 
-        PopupPanel::new(ui, "wallet_selector_popup",format!("Wallet: {}", wallet_name), |ui, _| {
+        PopupPanel::new(ui, "wallet_selector_popup",|ui|{ ui.add(Label::new(format!("{} {} ⏷", i18n("Wallet:"), wallet_name)).sense(Sense::click())) }, |ui, _| {
 
             ScrollArea::vertical()
                 .id_source("wallet_selector_popup_scroll")
@@ -61,9 +61,10 @@ impl WalletMenu {
         })
         .with_min_width(240.)
         .with_max_height(max_height)
-        .with_caption(true)
-        .with_close_button(true)
-        .with_pulldown_marker(true)
+        // .with_caption("Wallet")
+        // .with_close_button(true)
+        // .with_pulldown_marker(true)
+        .with_close_on_interaction(true)
         .build(ui);
 
     }
@@ -77,7 +78,7 @@ impl AccountMenu {
     }
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, account_manager : &mut AccountManager, rc : &RenderContext<'_>, max_height: f32) {
         let RenderContext { account, network_type, .. } = rc;
-        PopupPanel::new(ui, "account_selector_popup",format!("Account: {}", account.name_or_id()), |ui, _| {
+        PopupPanel::new(ui, "account_selector_popup",|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), account.name_or_id())).sense(Sense::click())) }, |ui, close| {
 
             egui::ScrollArea::vertical()
                 .id_source("account_selector_popup_scroll")
@@ -86,10 +87,10 @@ impl AccountMenu {
 
                     if let Some(account_collection) = core.account_collection() {
                         account_collection.iter().for_each(|account| {
-                            if ui
-                                .button(format!("Select {}\n{}", account.name_or_id(),account.balance().map(|balance|sompi_to_kaspa_string_with_suffix(balance.mature, network_type)).unwrap_or("N/A".to_string())))
-                                .clicked()
-                            {
+                            if ui.add(CompositeButton::new(
+                                account.name_or_id(),
+                                account.balance().map(|balance|sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)).unwrap_or("N/A".to_string())),
+                            ).clicked() {
                                 account_manager.state = AccountManagerState::Overview {
                                     account: account.clone(),
                                 };
@@ -101,6 +102,7 @@ impl AccountMenu {
                         ui.label("");
                         use egui_phosphor::light::FOLDER_NOTCH_PLUS;
                         if ui.medium_button(format!("{FOLDER_NOTCH_PLUS} Create New Account")).clicked() {
+                            *close = true;
                             core.select::<modules::AccountCreate>();
                         }
                     }
@@ -110,9 +112,9 @@ impl AccountMenu {
         })
         .with_min_width(240.)
         .with_max_height(max_height)
-        .with_caption(true)
-        .with_close_button(true)    
-        .with_pulldown_marker(true)
+        // .with_caption("Accounts")
+        // .with_close_button(true)    
+        .with_close_on_interaction(true)
         .build(ui);
     }
 }
@@ -126,7 +128,7 @@ impl ToolsMenu {
     }
     pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, _account_manager : &mut AccountManager, _rc : &RenderContext<'_>, max_height: f32) {
 
-        PopupPanel::new(ui, "tools_popup",i18n("Tools"), |ui, _| {
+        PopupPanel::new(ui, "tools_popup",|ui|{ ui.add(Label::new(i18n("Tools ⏷")).sense(Sense::click())) }, |ui, _| {
 
             egui::ScrollArea::vertical()
                 .id_source("tools_popup_scroll")
@@ -164,7 +166,6 @@ impl ToolsMenu {
         })
         .with_min_width(240.)
         .with_max_height(max_height)
-        .with_pulldown_marker(true)
         .with_close_on_interaction(true)
         .build(ui);
     }

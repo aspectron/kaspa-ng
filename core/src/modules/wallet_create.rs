@@ -7,7 +7,7 @@ use passwords::analyzer;
 use passwords::scorer;
 use kaspa_bip32::WordCount;
 
-#[derive(Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
 enum Focus {
     #[default]
     None,
@@ -81,7 +81,7 @@ pub struct WalletCreate {
     context: Context,
     pub state: State,
     pub origin: Option<TypeId>,
-    focus : Focus,
+    focus : FocusManager<Focus>,
 }
 
 impl WalletCreate {
@@ -91,7 +91,7 @@ impl WalletCreate {
             state: State::Start,
             context: Default::default(),
             origin: None,
-            focus: Focus::None,
+            focus: FocusManager::default(),
         }
     }
 }
@@ -190,11 +190,11 @@ impl ModuleT for WalletCreate {
 
                     if import {
                         self.state = State::ImportSelection;
-                        self.focus = Focus::None;
+                        self.focus.clear();
 
                     } else if submit {
                         self.state = State::WalletName;
-                        self.focus = Focus::WalletName;
+                        self.focus.next(Focus::WalletName);
                     }
 
             }
@@ -254,7 +254,7 @@ impl ModuleT for WalletCreate {
 
                     if submit {
                         self.state = State::WalletName;
-                        self.focus = Focus::WalletName;
+                        self.focus.next(Focus::WalletName);
                     }
             }
 
@@ -296,7 +296,7 @@ impl ModuleT for WalletCreate {
                         .submit(|text,focus| {
                             if text.is_not_empty() {
                                 this.state = State::AccountName;
-                                *focus = Focus::AccountName;
+                                focus.next(Focus::AccountName);
                             }
                         })
                         .build(ui);
@@ -315,7 +315,7 @@ impl ModuleT for WalletCreate {
                     .with_footer(|this,ui| {
                         if ui.large_button_enabled(this.context.wallet_name.is_not_empty(), "Continue").clicked() {
                             this.state = State::AccountName;
-                            this.focus = Focus::AccountName;
+                            this.focus.next(Focus::AccountName);
                         }
 
                     })
@@ -326,7 +326,7 @@ impl ModuleT for WalletCreate {
                     .with_caption("Default Account Name")
                     .with_back(|this| {
                         this.state = State::WalletName;
-                        this.focus = Focus::WalletName;
+                        this.focus.next(Focus::WalletName);
                     })
                     .with_close_enabled(false, |_|{
                     })
@@ -352,7 +352,7 @@ impl ModuleT for WalletCreate {
                         )
                         .submit(|_text,focus| {
                             this.state = State::PhishingHint;
-                            *focus = Focus::PhishingHint;
+                            focus.next(Focus::PhishingHint);
                         })
                         .build(ui);
 
@@ -362,7 +362,7 @@ impl ModuleT for WalletCreate {
                         let text = if this.context.account_name.is_not_empty() { "Continue" } else { "Skip" };
                         if ui.large_button(i18n(text)).clicked() {
                             this.state = State::PhishingHint;
-                            this.focus = Focus::PhishingHint;
+                            this.focus.next(Focus::PhishingHint);
                         }
                         // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
                         //     this.state = State::PhishingHint;
@@ -376,7 +376,7 @@ impl ModuleT for WalletCreate {
                     .with_caption("Phishing Hint")
                     .with_back(|this| {
                         this.state = State::AccountName;
-                        this.focus = Focus::AccountName;
+                        this.focus.next(Focus::AccountName);
                     })
                     .with_close_enabled(false, |_|{
                     })
@@ -405,7 +405,7 @@ impl ModuleT for WalletCreate {
                         )
                         .submit(|_text,focus| {
                             this.state = State::WalletSecret;
-                            *focus = Focus::WalletSecret;
+                            focus.next(Focus::WalletSecret);
                         })
                         .build(ui);
 
@@ -413,7 +413,7 @@ impl ModuleT for WalletCreate {
                     .with_footer(|this,ui| {
                         if ui.large_button("Continue").clicked() {
                             this.state = State::WalletSecret;
-                            this.focus = Focus::WalletSecret;
+                            this.focus.next(Focus::WalletSecret);
                         }
                     })
                     // .with_handler(|this| {
@@ -428,7 +428,7 @@ impl ModuleT for WalletCreate {
                     .with_caption("Wallet Encryption Password")
                     .with_back(|this| {
                         this.state = State::PhishingHint;
-                        this.focus = Focus::PhishingHint;
+                        this.focus.next(Focus::PhishingHint);
                     })
                     .with_close_enabled(false, |_|{
                     })
@@ -457,7 +457,7 @@ impl ModuleT for WalletCreate {
                             change = true;
                         })
                         .submit(|_text,focus| {
-                            *focus = Focus::WalletSecretConfirm;
+                            focus.next(Focus::WalletSecretConfirm);
                             if this.context.wallet_secret_confirm.is_not_empty() {
                                 submit = true;
                             }
@@ -479,7 +479,7 @@ impl ModuleT for WalletCreate {
                         )
                         .submit(|_text,focus| {
                             if this.context.wallet_secret.is_empty() {
-                                *focus = Focus::WalletSecret;
+                                focus.next(Focus::WalletSecret);
                             } else {
                                 submit = true;
                             }
@@ -531,7 +531,7 @@ impl ModuleT for WalletCreate {
 
                         if submit {
                             this.state = State::PaymentSecret;
-                            this.focus = Focus::PaymentSecret;
+                            this.focus.next(Focus::PaymentSecret);
                         }
                     })
                     .with_footer(|this,ui| {
@@ -539,7 +539,7 @@ impl ModuleT for WalletCreate {
                         let enabled = this.context.wallet_secret == this.context.wallet_secret_confirm && this.context.wallet_secret.is_not_empty();
                         if ui.large_button_enabled(enabled && !is_weak, "Continue").clicked() {
                             this.state = State::PaymentSecret;
-                            this.focus = Focus::PaymentSecret;
+                            this.focus.next(Focus::PaymentSecret);
                         }
                     })
                     .render(ui);
@@ -551,7 +551,7 @@ impl ModuleT for WalletCreate {
                     .with_caption("Payment & Recovery Password")
                     .with_back(|this| {
                         this.state = State::WalletSecret;
-                        this.focus = Focus::WalletSecret;
+                        this.focus.next(Focus::WalletSecret);
                     })
                     .with_close_enabled(false, |_|{
                     })
@@ -591,7 +591,7 @@ impl ModuleT for WalletCreate {
                             })
                             .submit(|text,focus| {
                                 if text.is_not_empty() {
-                                    *focus = Focus::PaymentSecretConfirm;
+                                    focus.next(Focus::PaymentSecretConfirm);
                                 } else {
                                     submit = true;
                                 }
@@ -658,7 +658,7 @@ impl ModuleT for WalletCreate {
 
                             if submit {
                                 this.state = State::CreateWalletConfirm;
-                                this.focus = Focus::None;
+                                this.focus.clear();
                             }
                         }
                     })
@@ -668,11 +668,11 @@ impl ModuleT for WalletCreate {
                             let enabled = this.context.wallet_secret == this.context.wallet_secret_confirm && this.context.wallet_secret.is_not_empty();
                             if ui.large_button_enabled(enabled && !is_weak, "Continue").clicked() {
                                 this.state = State::CreateWalletConfirm;
-                                this.focus = Focus::None;
+                                this.focus.clear();
                             }
                         } else if ui.large_button_enabled(true, "Skip").clicked() {
                             this.state = State::CreateWalletConfirm;
-                            this.focus = Focus::None;
+                            this.focus.clear();
                         }
 
                     })

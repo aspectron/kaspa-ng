@@ -51,7 +51,7 @@ impl ModuleT for Metrics {
         ui.horizontal(|ui|{
             ui.heading("Node Metrics");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                PopupPanel::new(ui, "metrics_settings","Settings", |ui, _| {
+                PopupPanel::new(ui, "metrics_settings",|ui|{ ui.label("Settings ⏷") }, |ui, _| {
                     ui.add(
                         Slider::new(&mut graph_columns, 1..=8)
                             .text("Columns")
@@ -137,9 +137,8 @@ impl ModuleT for Metrics {
                 })
                 .with_min_width(240.)
                 .with_max_height(screen_rect_height * 0.8)
-                .with_caption(true)
+                .with_caption("Settings")
                 .with_close_button(true)
-                .with_pulldown_marker(true)
                 .build(ui);
 
                 ui.separator();

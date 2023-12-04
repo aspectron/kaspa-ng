@@ -126,7 +126,9 @@ impl<'core> Menu<'core> {
                     PopupPanel::new(
                         ui,
                         "display_settings",
-                        egui_phosphor::light::MONITOR,
+                        |ui| {
+                            ui.add(Label::new(egui_phosphor::light::MONITOR).sense(Sense::click()))
+                        },
                         |ui, close_popup| {
                             // ui.horizontal(|ui| {
                             //     ui.label("Font Size");

@@ -52,17 +52,15 @@ impl Action {
     }
 }
 
-#[derive(Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 enum TransactionKind {
-    #[default]
-    None,
     Send,
     Transfer,
 }
 
 
 
-#[derive(Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
 enum Focus {
     #[default]
     None,
@@ -101,8 +99,8 @@ pub struct ManagerContext {
     estimate : Arc<Mutex<EstimatorStatus>>,
     address_status : AddressStatus,
     action : Action,
-    transaction_kind : TransactionKind,
-    focus : Focus,
+    transaction_kind : Option<TransactionKind>,
+    focus : FocusManager<Focus>,
     wallet_secret : String,
     payment_secret : String,
 }
@@ -127,8 +125,8 @@ impl ManagerContext {
         *self.estimate.lock().unwrap() = EstimatorStatus::None;
         self.address_status = AddressStatus::None;
         self.action = Action::None;
-        self.transaction_kind = TransactionKind::None;
-        self.focus = Focus::None;
+        self.transaction_kind = None;
+        self.focus.clear();
         self.wallet_secret.zeroize();
         self.payment_secret.zeroize();
     }
@@ -244,29 +242,30 @@ impl AccountManager {
                     core.select::<modules::WalletOpen>();
                 } else if let Some(account_collection) = core.account_collection() {
                     if account_collection.is_empty() {
-                        ui.label("Please create an account");
+                        Panel::new(self)
+                            .with_body(|_this, ui| {
+                                ui.label("Please create an account");
+                            }).render(ui);
                     } else if account_collection.len() == 1 {
                         self.select(Some(account_collection.first().unwrap().clone()));
-                        // self.state = AccountManagerState::Overview {
-                        //     account: account_collection.first().unwrap().clone(),
-                        // };
                     } else {
-                        ui.heading("Select Account");
-                        ui.separator();
-    
-                        account_collection.iter().for_each(|account| {
-                            if ui
-                                .button(format!("Select {}", account.name_or_id()))
-                                .clicked()
-                            {
-                                self.select(Some(account.clone()));
-                                if runtime().device().is_singular_layout() {
-                                    self.section = AccountManagerSection::Overview;
-                                } else {
-                                    self.section = AccountManagerSection::Transactions;
-                                }
-                            }
-                        });
+                        Panel::new(self)
+                            .with_caption("Select Account")
+                            .with_body(|this, ui| {
+                                account_collection.iter().for_each(|account| {
+                                    if ui.add_sized(theme_style().large_button_size(), CompositeButton::new(
+                                        account.name_or_id(),
+                                        account.balance().map(|balance|sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)).unwrap_or("N/A".to_string())),
+                                    ).clicked() {
+                                        this.select(Some(account.clone()));
+                                        if runtime().device().is_singular_layout() {
+                                            this.section = AccountManagerSection::Overview;
+                                        } else {
+                                            this.section = AccountManagerSection::Transactions;
+                                        }
+                                    }
+                                });
+                            }).render(ui);
                     }
 
                 } else {

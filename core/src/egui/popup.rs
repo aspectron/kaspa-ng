@@ -1,16 +1,21 @@
 use crate::imports::*;
 
+type PopupWidget<'panel> = Box<dyn FnOnce(&mut Ui) -> Response + 'panel>;
 type PopupHandler<'panel> = Box<dyn FnOnce(&mut Ui, &mut bool) + 'panel>;
 
 pub struct PopupPanel<'panel> {
     id: Id,
-    title: String,
+    // title: String,
     min_width: Option<f32>,
     max_height: Option<f32>,
-    content: Option<PopupHandler<'panel>>,
-    with_caption: bool,
+    widget: PopupWidget<'panel>,
+    content: PopupHandler<'panel>,
+    // widget: Option<PopupWidget<'panel>>,
+    // content: Option<PopupHandler<'panel>>,
+    // with_caption: bool,
+    caption: Option<String>,
     with_close_button: bool,
-    with_pulldown_marker: bool,
+    // with_pulldown_marker: bool,
     close_on_interaction: bool,
 }
 
@@ -18,20 +23,25 @@ impl<'panel> PopupPanel<'panel> {
     pub fn new(
         ui: &mut Ui,
         id: impl Into<String>,
-        title: impl Into<String>,
+        // title: impl Into<String>,
+        widget: impl FnOnce(&mut Ui) -> Response + 'panel,
         content: impl FnOnce(&mut Ui, &mut bool) + 'panel,
     ) -> Self {
         let id = ui.make_persistent_id(id.into());
 
         Self {
             id,
-            title: title.into(),
+            // title: title.into(),
             min_width: None,
             max_height: None,
-            content: Some(Box::new(content)),
-            with_caption: false,
+            // widget: Some(Box::new(widget)),
+            // content: Some(Box::new(content)),
+            widget: Box::new(widget),
+            content: Box::new(content),
+            // with_caption: false,
+            caption: None,
             with_close_button: false,
-            with_pulldown_marker: false,
+            // with_pulldown_marker: false,
             close_on_interaction: false,
         }
     }
@@ -46,8 +56,12 @@ impl<'panel> PopupPanel<'panel> {
         self
     }
 
-    pub fn with_caption(mut self, caption: bool) -> Self {
-        self.with_caption = caption;
+    // pub fn with_caption(mut self, caption: bool) -> Self {
+    //     self.with_caption = caption;
+    //     self
+    // }
+    pub fn with_caption(mut self, caption: impl Into<String>) -> Self {
+        self.caption = Some(caption.into());
         self
     }
 
@@ -56,29 +70,30 @@ impl<'panel> PopupPanel<'panel> {
         self
     }
 
-    pub fn with_pulldown_marker(mut self, pulldown_marker: bool) -> Self {
-        self.with_pulldown_marker = pulldown_marker;
-        self
-    }
+    // pub fn with_pulldown_marker(mut self, pulldown_marker: bool) -> Self {
+    //     self.with_pulldown_marker = pulldown_marker;
+    //     self
+    // }
 
     pub fn with_close_on_interaction(mut self, close_on_interaction: bool) -> Self {
         self.close_on_interaction = close_on_interaction;
         self
     }
 
-    pub fn build(&mut self, ui: &mut Ui) {
-        let title = self.title.clone();
-        let content = self.content.take().unwrap();
-        // let response = ui.add(Label::new(format!("{} ⏷", title)).sense(Sense::click()));
-        let text = if self.with_pulldown_marker {
-            format!("{} ⏷", title)
-        } else {
-            title.clone()
-        };
+    pub fn build(self, ui: &mut Ui) {
+        // let title = self.title.clone();
+        // let content = self.content.take().unwrap();
+        // // let response = ui.add(Label::new(format!("{} ⏷", title)).sense(Sense::click()));
+        // let text = if self.with_pulldown_marker {
+        //     format!("{} ⏷", title)
+        // } else {
+        //     title.clone()
+        // };
 
-        let response = ui.add(Label::new(text).sense(Sense::click()));
-
+        // let response = ui.add(Label::new(text).sense(Sense::click()));
+        let response = (self.widget)(ui);
         if response.clicked() {
+            // if response.clicked() {
             ui.memory_mut(|mem| mem.toggle_popup(self.id));
         }
 
@@ -101,9 +116,9 @@ impl<'panel> PopupPanel<'panel> {
                     ui.set_max_height(height);
                 }
 
-                if self.with_caption {
+                if let Some(caption) = self.caption {
                     ui.horizontal(|ui| {
-                        ui.label(title);
+                        ui.label(caption);
 
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             use egui_phosphor::light::X;
@@ -121,7 +136,7 @@ impl<'panel> PopupPanel<'panel> {
                 }
 
                 let mut close_popup = false;
-                content(ui, &mut close_popup);
+                (self.content)(ui, &mut close_popup);
 
                 if self.with_close_button {
                     ui.space();

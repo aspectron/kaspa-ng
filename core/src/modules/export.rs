@@ -14,7 +14,7 @@ pub enum State {
     Transportable,
 }
 
-#[derive(Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
 enum Focus {
     #[default]
     None,
@@ -45,7 +45,7 @@ pub enum ExportResult {
 }
 
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 struct Context {
     prv_key_data_id : Option<PrvKeyDataId>,
     // account_kind: Option<CreateAccountKind>,
@@ -55,7 +55,7 @@ struct Context {
     wallet_secret : String,
     payment_secret: String,
     // payment_secret_confirm: String,
-    focus : Focus,
+    focus : FocusManager<Focus>,
     kind : Option<ExportKind>,
 }
 
@@ -180,7 +180,7 @@ impl ModuleT for Export {
                                 }
                             }
                             self.state = State::Export { error : None };
-                            self.context.focus = Focus::WalletSecret;
+                            self.context.focus.next(Focus::WalletSecret);
                         }
                 }
 
@@ -223,7 +223,7 @@ impl ModuleT for Export {
 
                         if submit {
                             self.state = State::Export { error : None };
-                            self.context.focus = Focus::WalletSecret;
+                            self.context.focus.next(Focus::WalletSecret);
                         }
 
                 }

@@ -64,7 +64,7 @@ pub enum CreationData {
 //     }
 // }
 
-#[derive(Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
 enum Focus {
     #[default]
     None,
@@ -74,6 +74,7 @@ enum Focus {
 }
 
 #[derive(Clone, Default)]
+// #[derive(Default)]
 struct Context {
     prv_key_data_info : Option<Arc<PrvKeyDataInfo>>,
     account_kind: Option<CreateAccountKind>,
@@ -83,7 +84,6 @@ struct Context {
     wallet_secret : String,
     payment_secret: String,
     // payment_secret_confirm: String,
-    focus : Focus,
 }
 
 pub struct AccountCreate {
@@ -92,6 +92,7 @@ pub struct AccountCreate {
     // secret: String,
     context: Context,
     pub state: State,
+    focus : FocusManager<Focus>,
 }
 
 impl AccountCreate {
@@ -100,6 +101,7 @@ impl AccountCreate {
             runtime,
             // secret: String::new(),
             state: State::Start,
+            focus: FocusManager::default(),
             context: Default::default(),
         }
     }
@@ -168,45 +170,47 @@ impl ModuleT for AccountCreate {
                         .render(ui);
                 }
                 State::AccountName => {
+println!("rendering account name...");
 
                     Panel::new(self)
-                    .with_caption("Account Name")
-                    .with_back(|this| {
-                        this.state = State::Start;
-                    })
-                    .with_close_enabled(false, |_|{
-                    })
-                    .with_header(|_ctx,ui| {
-                        ui.add_space(64.);
-                        ui.label("Please enter the account name");
-                    })
-                    .with_body(|this,ui| {
-
-                        TextEditor::new(
-                            &mut this.context.account_name,
-                            &mut this.context.focus,
-                            Focus::AccountName,
-                            |ui, text| {
-                                // ui.add_space(8.);
-                                ui.label(RichText::new("Enter account name (optional)").size(12.).raised());
-                                ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
-                                    .vertical_align(Align::Center))
-                            },
-                        ).submit(|_,focus| {
-                            this.state = State::WalletSecret;
-                            *focus = Focus::WalletSecret;
+                        .with_caption("Account Name")
+                        .with_back(|this| {
+                            this.state = State::Start;
                         })
-                        .build(ui);
-                
-                    })
-                    .with_footer(|this,ui| {
-                        let size = theme_style().large_button_size;
-                        if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                            this.state = State::WalletSecret;
-                            this.context.focus = Focus::WalletSecret;
-                        }
-                    })
-                    .render(ui);
+                        .with_close_enabled(false, |_|{
+                        })
+                        .with_header(|_ctx,ui| {
+                            ui.add_space(64.);
+                            ui.label("Please enter the account name");
+                        })
+                        .with_body(|this,ui| {
+
+                            TextEditor::new(
+                                &mut this.context.account_name,
+                                &mut this.focus,
+                                Focus::AccountName,
+                                |ui, text| {
+                                    // ui.add_space(8.);
+                                    ui.label(RichText::new("Enter account name (optional)").size(12.).raised());
+                                    ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
+                                        .vertical_align(Align::Center))
+                                },
+                            ).submit(|_,focus| {
+                                println!("submit called...");
+                                this.state = State::WalletSecret;
+                                focus.next(Focus::WalletSecret);
+                            })
+                            .build(ui);
+                    
+                        })
+                        .with_footer(|this,ui| {
+                            let size = theme_style().large_button_size;
+                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                                this.state = State::WalletSecret;
+                                this.focus.next(Focus::WalletSecret);
+                            }
+                        })
+                        .render(ui);
                 }
 
 
@@ -228,7 +232,7 @@ impl ModuleT for AccountCreate {
                         .with_body(|this,ui| {
                             TextEditor::new(
                                 &mut this.context.wallet_secret,
-                                &mut this.context.focus,
+                                &mut this.focus,
                                 Focus::WalletSecret,
                                 |ui, text| {
                                     ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
@@ -253,15 +257,12 @@ impl ModuleT for AccountCreate {
                         .render(ui);
 
                     if submit_via_editor || submit_via_footer {
-                        if let Some(prv_key_data_info) = self.context.prv_key_data_info.as_ref() {
-                            prv_key_data_info.requires_bip39_passphrase().then(||{
-                                self.state = State::PaymentSecret;
-                                self.context.focus = Focus::PaymentSecret;
-                            });
+                        if self.context.prv_key_data_info.as_ref().map(|info| info.requires_bip39_passphrase()).unwrap_or(false) {
+                            self.state = State::PaymentSecret;
+                            self.focus.next(Focus::PaymentSecret);
                         } else {
                             self.state = State::CreateAccount;
                         }
-
                     }
                 }
 
@@ -279,7 +280,7 @@ impl ModuleT for AccountCreate {
                         .with_body(|this,_ui| {
                             TextEditor::new(
                                 &mut this.context.payment_secret,
-                                &mut this.context.focus,
+                                &mut this.focus,
                                 Focus::PaymentSecret,
                                 |ui, text| {
                                     ui.label(egui::RichText::new("Enter your BIP39 passphrase").size(12.).raised());
@@ -290,7 +291,7 @@ impl ModuleT for AccountCreate {
                             ).submit(|text,focus| {
                                 if !text.is_empty() {
                                     this.state = State::CreateAccount;
-                                    *focus = Focus::None;
+                                    focus.clear()
                                 }
                             });
                         })
@@ -329,6 +330,18 @@ impl ModuleT for AccountCreate {
                     .render(ui);
 
                     let args = self.context.clone();
+                    // let args = &self.context;
+                    // let account_name = self.context.account_name.trim().clone();
+                    // let account_name = (!account_name.is_empty()).then_some(account_name.to_string());
+                    // let account_kind = AccountKind::Bip32;
+                    // let wallet_secret = Secret::from(self.context.wallet_secret.clone());
+                    // let payment_secret = self.context.prv_key_data_info.as_ref().and_then(|secret| {
+                    //     secret.requires_bip39_passphrase().then_some(Secret::from(self.context.payment_secret))
+                    // });
+
+                    let prv_key_data_id = self.context.prv_key_data_info.as_ref().unwrap().id();
+
+
                     // let prv_key_data_info = args.prv_key_data_info.clone().unwrap();
                     let account_create_result = Payload::<Result<AccountDescriptor>>::new("wallet_create_result");
                     if !account_create_result.is_pending() {

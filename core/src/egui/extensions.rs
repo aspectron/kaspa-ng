@@ -1,6 +1,6 @@
-use egui::text::TextWrapping;
-
 use crate::imports::*;
+use egui::text::TextWrapping;
+use std::fmt::Debug;
 
 pub enum Confirm {
     Ack,
@@ -189,14 +189,45 @@ impl HyperlinkExtension for Ui {
 
 type TextEditorCreateFn<'editor> = Box<dyn FnOnce(&mut Ui, &mut String) -> Response + 'editor>;
 type TextEditorChangeFn<'editor> = Box<dyn FnOnce(&str) + 'editor>;
-type TextEditorSubmitFn<'editor, Focus> = Box<dyn FnOnce(&str, &mut Focus) + 'editor>;
+type TextEditorSubmitFn<'editor, Focus> = Box<dyn FnOnce(&str, &mut FocusManager<Focus>) + 'editor>;
+
+#[derive(Default, Debug)]
+pub struct FocusManager<Focus>
+where
+    Focus: PartialEq + Debug,
+{
+    focus: Option<Focus>,
+}
+
+impl<Focus> FocusManager<Focus>
+where
+    Focus: PartialEq + Debug,
+{
+    pub fn next(&mut self, focus: Focus) {
+        println!("next focus: {:?}", focus);
+        self.focus.replace(focus);
+    }
+
+    pub fn matches(&self, focus: Focus) -> bool {
+        self.focus == Some(focus)
+    }
+
+    pub fn clear(&mut self) {
+        println!("clear focus!");
+        self.focus.take();
+    }
+
+    pub fn take(&mut self) -> Option<Focus> {
+        self.focus.take()
+    }
+}
 
 pub struct TextEditor<'editor, Focus>
 where
-    Focus: PartialEq + Copy,
+    Focus: PartialEq + Copy + Debug,
 {
     user_text: &'editor mut String,
-    focus_mut: &'editor mut Focus,
+    focus_manager: &'editor mut FocusManager<Focus>,
     focus_value: Focus,
     editor_create_fn: TextEditorCreateFn<'editor>,
     editor_change_fn: Option<TextEditorChangeFn<'editor>>,
@@ -205,17 +236,17 @@ where
 
 impl<'editor, Focus> TextEditor<'editor, Focus>
 where
-    Focus: PartialEq + Copy,
+    Focus: PartialEq + Copy + Debug,
 {
     pub fn new(
         user_text: &'editor mut String,
-        focus_mut_ref: &'editor mut Focus,
+        focus_mut_ref: &'editor mut FocusManager<Focus>,
         focus_value: Focus,
         editor_create_fn: impl FnOnce(&mut Ui, &mut String) -> Response + 'editor,
     ) -> Self {
         Self {
             user_text,
-            focus_mut: focus_mut_ref,
+            focus_manager: focus_mut_ref,
             focus_value,
             editor_create_fn: Box::new(editor_create_fn),
             editor_change_fn: None,
@@ -228,7 +259,7 @@ where
         self
     }
 
-    pub fn submit(mut self, submit: impl FnOnce(&str, &mut Focus) + 'editor) -> Self {
+    pub fn submit(mut self, submit: impl FnOnce(&str, &mut FocusManager<Focus>) + 'editor) -> Self {
         self.editor_submit_fn = Some(Box::new(submit));
         self
     }
@@ -236,7 +267,7 @@ where
     pub fn build(self, ui: &mut Ui) -> Response {
         let TextEditor {
             user_text,
-            focus_mut,
+            focus_manager,
             focus_value,
             editor_create_fn,
             editor_change_fn,
@@ -246,21 +277,24 @@ where
         let mut editor_text = user_text.clone();
         let response = editor_create_fn(ui, &mut editor_text);
 
-        if response.gained_focus() {
-            *focus_mut = focus_value;
-        } else if *focus_mut == focus_value && !response.has_focus() {
+        if focus_manager.matches(focus_value) && !response.has_focus() {
+            focus_manager.clear();
+            // println!("focus_manager: {:?}, focus_value: {:?}", focus_manager, focus_value);
+            // println!("requesting focus!");
             response.request_focus();
-        };
+        }
 
         if *user_text != editor_text {
+            println!("user text different!");
             *user_text = editor_text;
             if let Some(editor_change_fn) = editor_change_fn {
                 editor_change_fn(user_text.as_str());
             }
         } else if response.text_edit_submit(ui) {
+            println!("text submit!!!");
             *user_text = editor_text;
             if let Some(editor_submit_fn) = editor_submit_fn {
-                editor_submit_fn(user_text.as_str(), focus_mut);
+                editor_submit_fn(user_text.as_str(), focus_manager);
             }
         }
 
