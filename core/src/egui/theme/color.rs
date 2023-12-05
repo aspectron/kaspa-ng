@@ -10,6 +10,7 @@ pub struct ThemeColor {
     pub hyperlink_color: Color32,
     pub node_data_color: Color32,
     pub balance_color: Color32,
+    pub balance_syncing_color: Color32,
     pub error_color: Color32,
     pub alert_color: Color32,
     pub warning_color: Color32,
@@ -72,13 +73,14 @@ impl ThemeColor {
 
             node_data_color: Color32::WHITE,
             balance_color: Color32::WHITE,
+            balance_syncing_color: Color32::DARK_GRAY,
             error_color: Color32::from_rgb(255, 136, 136),
             alert_color: Color32::from_rgb(255, 136, 136),
             warning_color: egui::Color32::from_rgb(255, 255, 136),
             syncing_color: egui::Color32::from_rgb(255, 255, 136),
             // connected_color: egui::Color32::from_rgb(144, 238, 144),
             connected_color: egui::Color32::from_rgb(85, 233, 136),
-            icon_color_default: Color32::from_rgb(255, 255, 255),
+            icon_color_default: Color32::from_rgb(240,240,240),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
 
@@ -87,7 +89,8 @@ impl ThemeColor {
 
             qr_background: Color32::from_rgba(0, 0, 0, 0),
             qr_foreground: Color32::WHITE,
-            selection_color: Color32::from_rgb(71, 105, 97),
+            // selection_color: Color32::from_rgb(58, 221, 190),
+            selection_color: Color32::from_rgb(33, 128, 111),
             progress_color: Color32::from_rgb(71, 105, 97),
 
             transaction_incoming: Color32::from_rgb(162, 245, 187),
@@ -132,18 +135,21 @@ impl ThemeColor {
 
             node_data_color: Color32::BLACK,
             balance_color: Color32::BLACK,
+            balance_syncing_color: Color32::LIGHT_GRAY,
             error_color: Color32::from_rgb(77, 41, 41),
             alert_color: Color32::from_rgb(77, 41, 41),
             warning_color: egui::Color32::from_rgb(77, 77, 41),
             syncing_color: egui::Color32::from_rgb(76, 77, 41),
             connected_color: egui::Color32::from_rgb(8, 110, 65),
-            icon_color_default: Color32::from_rgb(255, 255, 255),
+            icon_color_default: Color32::from_rgb(32,32,32),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
 
             raised_text_color: Color32::from_rgb(0, 0, 0),
             raised_text_shadow: Color32::from_rgb(255, 255, 255),
 
+            // qr_background: Color32::from_rgba(0, 0, 0, 255),
+            // qr_foreground: Color32::WHITE,
             qr_background: Color32::from_rgba(255, 255, 255, 0),
             qr_foreground: Color32::BLACK,
             selection_color: Color32::from_rgb(165, 201, 197),

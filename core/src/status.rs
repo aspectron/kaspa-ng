@@ -85,17 +85,6 @@ impl<'core> Status<'core> {
                 });
             }
 
-            if !self.module().modal() && !self.device().is_singular_layout() {
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if icons()
-                        .sliders
-                        .render_with_options(ui, &IconSize::new(Vec2::splat(20.)), true)
-                        .clicked()
-                    {
-                        self.core.select::<modules::Settings>();
-                    }
-                });
-            }
         });
     }
 
@@ -198,7 +187,7 @@ impl<'core> Status<'core> {
                     }
                 }
 
-                if !self.device().is_singular_layout() {
+                if !self.device().is_single_pane() {
                     module.status_bar(self.core, ui);
                 }
             }
@@ -231,7 +220,7 @@ impl<'core> Status<'core> {
                 //     });
                 // });
 
-                if !self.device().is_singular_layout() {
+                if !self.device().is_single_pane() {
                     ui.separator();
                     self.render_peers(ui, peers);
                     if let Some(current_daa_score) = current_daa_score {
@@ -256,7 +245,7 @@ impl<'core> Status<'core> {
                         ui.separator();
                         self.render_network_selector(ui);
 
-                        if !self.device().is_singular_layout() {
+                        if !self.device().is_single_pane() {
                             ui.separator();
                             self.render_peers(ui, peers);
                             if let Some(status) = sync_status.as_ref() {

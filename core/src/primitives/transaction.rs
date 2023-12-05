@@ -428,7 +428,7 @@ impl Transaction {
                     .default_open(false);
                 if !maturity.unwrap_or(true) {
                     collapsing_header = collapsing_header.icon(|ui, _rect, response| {
-                        Spinner::new().paint_at(ui, response.rect);
+                        Spinner::new().paint_at(ui, response.rect.expand(4.));
                     });
                 }
                 collapsing_header.show(ui, |ui| {

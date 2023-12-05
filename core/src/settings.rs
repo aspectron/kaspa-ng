@@ -191,6 +191,7 @@ pub struct NodeSettings {
     pub network: Network,
     pub node_kind: KaspadNodeKind,
     pub kaspad_daemon_binary: String,
+    pub kaspad_daemon_args: String,
 }
 
 impl Default for NodeSettings {
@@ -233,6 +234,7 @@ impl Default for NodeSettings {
             // kaspad_node: KaspadNodeKind::InternalInProc,
             node_kind: KaspadNodeKind::default(),
             kaspad_daemon_binary: String::default(),
+            kaspad_daemon_args: String::default(),
             //  {
             //     url: "".to_string(),
             // },
@@ -358,13 +360,26 @@ pub struct PluginSettings {
 
 pub type PluginSettingsMap = HashMap<String, PluginSettings>;
 
-#[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct DeveloperSettings {
     pub enable: bool,
     pub enable_screen_capture: bool,
     pub disable_password_restrictions: bool,
     pub enable_experimental_features: bool,
+    pub enable_custom_daemon_args: bool,
+}
+
+impl Default for DeveloperSettings {
+    fn default() -> Self {
+        Self {
+            enable: false,
+            enable_screen_capture: true,
+            disable_password_restrictions: false,
+            enable_experimental_features: true,
+            enable_custom_daemon_args: true,
+        }
+    }
 }
 
 impl DeveloperSettings {

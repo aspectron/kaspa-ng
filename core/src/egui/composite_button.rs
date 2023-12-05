@@ -1,6 +1,22 @@
 use egui::load::{TextureLoadResult, TexturePoll};
 use egui::*;
 
+use super::theme_style;
+
+pub enum Composite<'a> {
+    Image(Image<'a>),
+    Icon(RichText),
+}
+
+impl<'a> Composite<'a> {
+    pub fn image(image: Image<'a>) -> Self {
+        Self::Image(image)
+    }
+    pub fn icon(icon: impl Into<RichText>) -> Self {
+        Self::Icon(icon.into())
+    }
+}
+
 /// Clickable button with text.
 ///
 /// See also [`Ui::button`].
@@ -21,7 +37,8 @@ use egui::*;
 /// ```
 #[must_use = "You should put this widget in an ui with `ui.add(widget);`"]
 pub struct CompositeButton<'a> {
-    image: Option<Image<'a>>,
+    image: Option<Composite<'a>>,
+    icon_size : Option<f32>,
     text: Option<WidgetText>,
     secondary_text: Option<WidgetText>,
     shortcut_text: WidgetText,
@@ -55,14 +72,14 @@ impl<'a> CompositeButton<'a> {
 
     /// Creates a button with an image. The size of the image as displayed is defined by the provided size.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn image(image: impl Into<Image<'a>>) -> Self {
+    pub fn image(image: impl Into<Composite<'a>>) -> Self {
         Self::opt_image_and_text(Some(image.into()), None, None)
     }
 
     /// Creates a button with an image to the left of the text. The size of the image as displayed is defined by the provided size.
     #[allow(clippy::needless_pass_by_value)]
     pub fn image_and_text(
-        image: impl Into<Image<'a>>,
+        image: impl Into<Composite<'a>>,
         text: impl Into<WidgetText>,
         secondary_text: impl Into<WidgetText>,
     ) -> Self {
@@ -74,13 +91,14 @@ impl<'a> CompositeButton<'a> {
     }
 
     pub fn opt_image_and_text(
-        image: Option<Image<'a>>,
+        image: Option<Composite<'a>>,
         text: Option<WidgetText>,
         secondary_text: Option<WidgetText>,
     ) -> Self {
         Self {
             text,
             image,
+            icon_size : None,
             shortcut_text: Default::default(),
             wrap: None,
             fill: None,
@@ -90,6 +108,7 @@ impl<'a> CompositeButton<'a> {
             frame: None,
             min_size: Vec2::ZERO,
             rounding: None,
+            // padding: Some(vec2(2.0, 4.0)),
             padding: None,
             selected: false,
             show_loading_spinner: None,
@@ -101,6 +120,14 @@ impl<'a> CompositeButton<'a> {
         self.padding = padding;
         self
     }
+
+    
+    pub fn icon_size(mut self, icon_size: f32) -> Self {
+        self.icon_size = Some(icon_size);
+        self
+    }
+
+
 
     /// If `true`, the text will wrap to stay within the max width of the [`Ui`].
     ///
@@ -196,6 +223,7 @@ impl Widget for CompositeButton<'_> {
         let Self {
             text,
             image,
+            icon_size,
             shortcut_text,
             wrap,
             fill,
@@ -230,9 +258,16 @@ impl Widget for CompositeButton<'_> {
         };
 
         let image_size = if let Some(image) = &image {
-            image
-                .load_and_calc_size(ui, space_available_for_image)
-                .unwrap_or(space_available_for_image)
+            match image {
+                Composite::Image(image) => {
+                    image
+                        .load_and_calc_size(ui, space_available_for_image)
+                        .unwrap_or(space_available_for_image)
+                }
+                Composite::Icon(_icon) => {
+                    self.icon_size.map(|f|Vec2::splat(f)).unwrap_or(Vec2::splat(theme_style().composite_icon_size))
+                }
+            }
         } else {
             Vec2::ZERO
         };
@@ -247,7 +282,7 @@ impl Widget for CompositeButton<'_> {
 
         let mut secondary_text_style = TextStyle::Name("CompositeButtonSubtext".into());
         if !ui.style().text_styles.contains_key(&secondary_text_style) {
-            secondary_text_style = TextStyle::Body;
+            secondary_text_style = TextStyle::Monospace;
         }
 
         let text = text.map(|text| text.into_galley(ui, wrap, text_wrap_width, TextStyle::Button));
@@ -340,21 +375,36 @@ impl Widget for CompositeButton<'_> {
             let mut cursor_x = rect.min.x + button_padding.x;
 
             if let Some(image) = &image {
-                let image_rect = Rect::from_min_size(
-                    pos2(cursor_x, rect.center().y - 0.5 - (image_size.y / 2.0)),
-                    image_size,
-                );
-                cursor_x += image_size.x;
-                let tlr = image.load_for_size(ui.ctx(), image_size);
-                paint_texture_load_result(
-                    ui,
-                    &tlr,
-                    image_rect,
-                    show_loading_spinner,
-                    image.image_options(),
-                );
 
-                response = texture_load_result_response(image.source(), &tlr, response);
+                match image {
+                    Composite::Image(image) => {
+                        let image_rect = Rect::from_min_size(
+                            pos2(cursor_x, rect.center().y - 0.5 - (image_size.y / 2.0)),
+                            image_size,
+                        );
+                        cursor_x += image_size.x;
+                        let tlr = image.load_for_size(ui.ctx(), image_size);
+                        paint_texture_load_result(
+                            ui,
+                            &tlr,
+                            image_rect,
+                            show_loading_spinner,
+                            image.image_options(),
+                        );
+
+                        response = texture_load_result_response(image.source(), &tlr, response);
+                    }
+                    Composite::Icon(icon) => {
+
+                        let galley = WidgetText::RichText(icon.clone().size(image_size.y)).into_galley(ui, wrap, text_wrap_width, TextStyle::Button);
+                        let image_rect = Rect::from_min_size(
+                            pos2(cursor_x, rect.center().y - 0.5 - (galley.size().y / 2.0)),
+                            galley.size(),
+                        );
+                        cursor_x += galley.size().x;
+                        galley.paint_with_fallback_color(ui.painter(), image_rect.min, visuals.fg_stroke.color);
+                    }
+                }
             }
 
             if image.is_some() && (text.is_some() || secondary_text.is_some()) {

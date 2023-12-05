@@ -11,11 +11,11 @@ mod popup;
 mod theme;
 
 pub use collapsable::*;
-pub use composite_button::CompositeButton;
+pub use composite_button::{CompositeButton,Composite};
 pub use composite_icon::CompositeIcon;
 pub use easy_mark::easy_mark;
 pub use extensions::*;
-pub use icon::{icons, Icon, IconSize, Icons};
+pub use icon::IconSize;
 pub use mnemonic::*;
 pub use network::NetworkInterfaceEditor;
 pub use panel::Panel;

@@ -43,7 +43,7 @@ impl Device {
         inner.is_mobile = !inner.is_mobile;
     }
 
-    pub fn is_singular_layout(&self) -> bool {
+    pub fn is_single_pane(&self) -> bool {
         let inner = self.inner();
         inner.is_mobile || inner.is_portrait
     }

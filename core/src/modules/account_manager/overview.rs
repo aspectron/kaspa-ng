@@ -29,13 +29,13 @@ impl<'manager> Overview<'manager> {
                 ui.vertical_centered(|ui| {
 
                     self.render_address(core, ui, rc);
+                    
+                    self.render_balance(core, ui, rc);
 
                     if !core.state().is_synced() || !core.state().is_connected() {
                         self.render_network_state(core,ui);
                         return;
                     }
-
-                    self.render_balance(core, ui, rc);
 
                     if self.context.action.is_sending() {
                         self.render_send_ui(core, ui, rc);
@@ -79,27 +79,28 @@ impl<'manager> Overview<'manager> {
     fn render_network_state(&mut self, core : &mut Core, ui: &mut Ui) {
         use egui_phosphor::light::{CLOUD_SLASH,CLOUD_ARROW_DOWN};
 
+        const ICON_SPACING: f32 = 24.0;
         ui.vertical_centered(|ui|{
-            ui.add_space(32.);
+            // ui.add_space(16.);
             if !core.state().is_connected() {
-                ui.add_space(32.);
+                ui.add_space(ICON_SPACING);
                 ui.label(
                     RichText::new(CLOUD_SLASH)
                         .size(theme_style().icon_size_large)
                         .color(theme_color().icon_color_default)
                 );
-                ui.add_space(32.);
+                ui.add_space(ICON_SPACING);
                 
                 ui.label("You are currently not connected to the Kaspa node.");
             } else if !core.state().is_synced() {
                 
-                ui.add_space(32.);
+                ui.add_space(ICON_SPACING);
                 ui.label(
                     RichText::new(CLOUD_ARROW_DOWN)
                         .size(theme_style().icon_size_large)
                         .color(theme_color().icon_color_default)
                 );
-                ui.add_space(32.);
+                ui.add_space(ICON_SPACING);
 
                 ui.label("The node is currently syncing with the Kaspa p2p network.");
                 ui.add_space(16.);
@@ -133,7 +134,7 @@ impl<'manager> Overview<'manager> {
             }
     }
 
-    fn render_balance(&mut self, _core: &mut Core, ui : &mut Ui, rc: &RenderContext<'_>) {
+    fn render_balance(&mut self, core: &mut Core, ui : &mut Ui, rc: &RenderContext<'_>) {
 
         // let theme = theme();
         let RenderContext { account, network_type, .. } = rc;
@@ -141,10 +142,19 @@ impl<'manager> Overview<'manager> {
         ui.add_space(10.);
 
         if let Some(balance) = account.balance() {
-            ui.heading(
-                RichText::new(sompi_to_kaspa_string_with_suffix(balance.mature, network_type)).font(FontId::proportional(28.)).color(theme_color().balance_color)
-            );
             
+            if !core.state().is_synced() {
+                ui.label(
+                    s2kws_layout_job(balance.mature, network_type, theme_color().balance_syncing_color,FontId::proportional(28.))
+                );
+                ui.label(RichText::new(i18n("The balance may be out of date during node sync")).size(12.).color(theme_color().balance_syncing_color));
+                return;
+            } else {
+                ui.label(
+                    s2kws_layout_job(balance.mature, network_type, theme_color().balance_color,FontId::proportional(28.))
+                );
+            }
+
             if balance.pending != 0 {
                 ui.label(format!(
                     "Pending: {}",
@@ -176,10 +186,12 @@ impl<'manager> Overview<'manager> {
                 "".to_string()
             };
 
-            ui.label(format!(
-                "UTXOs: {}{suffix}",
-                balance.mature_utxo_count.separated_string(),
-            ));
+            if self.context.transaction_kind.is_none() {
+                ui.label(format!(
+                    "UTXOs: {}{suffix}",
+                    balance.mature_utxo_count.separated_string(),
+                ));
+            }
         } else {
             ui.label("Balance: N/A");
         }
@@ -189,48 +201,85 @@ impl<'manager> Overview<'manager> {
     }
 
     fn render_qr(&mut self, _core: &mut Core, ui : &mut Ui, rc: &RenderContext<'_>) {
+        let RenderContext { context, .. } = rc;
 
-        let scale = if self.context.action == Action::None { 1. } else { 0.35 };
+        // let scale = if self.context.action == Action::None { 1. } else { 0.35 };
         ui.add(
-            egui::Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://qr.svg"), bytes: rc.context.qr() })
-            .fit_to_original_size(scale)
+            egui::Image::new(ImageSource::Bytes { uri : Cow::Owned(context.uri()), bytes: context.qr() })
+            .fit_to_original_size(1.0)
             .texture_options(TextureOptions::NEAREST)
         );
-
     }
 
     fn render_transfer_account_selector(&mut self, core: &mut Core, ui: &mut egui::Ui, rc: &RenderContext<'_>) {
         let RenderContext { network_type, .. } = rc;
 
+        let default_account = core.account_collection().as_ref().and_then(|collection|{
+            if collection.len() <= 1 {
+                unreachable!("expecting least 2 accounts");
+            }
+            if collection.len() == 2 {
+                collection.list().iter().find(|account|account.id() != rc.account.id()).cloned()
+            } else {
+                None
+            }
+        });
 
-        PopupPanel::new(ui, "transfer_selector_popup",|ui|{ ui.button("Select Account XYZ ⏷") }, |ui, _| {
+        if let Some(account) = default_account {
+            self.context.transfer_to_account = Some(account.clone());
+            ui.label(format!("Transferring funds to: {}", account.name_or_id()));
+            ui.label(format!("Destination balance: {}", sompi_to_kaspa_string_with_suffix(account.balance().map(|balance|balance.mature).unwrap_or(0), network_type)));
+        } else {
 
-            egui::ScrollArea::vertical()
-                .id_source("transfer_selector_popup_scroll")
-                .auto_shrink([true; 2])
-                .show(ui, |ui| {
+            if self.context.transfer_to_account.as_ref().map(|account|account.id() == rc.account.id()).unwrap_or_default() {
+                self.context.transfer_to_account = None;
+                self.context.transfer_to_account.take();
+            }
 
-                    if let Some(account_collection) = core.account_collection() {
-                        account_collection.iter().for_each(|account| {
-                            if ui
-                                .large_button(format!("{}\n{}", account.name_or_id(),account.balance().map(|balance|sompi_to_kaspa_string_with_suffix(balance.mature, network_type)).unwrap_or("N/A".to_string())))
-                                .clicked()
-                            {
-                                
-                            }
-                        });
-                    }
+            let transfer_to_account = self.context.transfer_to_account.clone();
 
+
+            PopupPanel::new(ui, "transfer_selector_popup",|ui|{ 
+                let response = ui.vertical_centered(|ui| {
+
+                    let response = if let Some(account) = transfer_to_account {
+                        let response = ui.add(Label::new(format!("Transferring funds to: {} ⏷", account.name_or_id())).sense(Sense::click()));
+                        ui.label(format!("Destination balance: {}", sompi_to_kaspa_string_with_suffix(account.balance().map(|balance|balance.mature).unwrap_or(0), network_type)));
+                        response
+                    } else {
+                        ui.add(Label::new("Please select destination account ⏷").sense(Sense::click()))
+                    };
+                    
+                    response
                 });
 
-        })
-        .with_min_width(240.)
-        // .with_max_height(max_height)
-        // .with_caption(true)
-        // .with_close_button(true)    
-        // .with_pulldown_marker(true)
-        .with_close_on_interaction(true)
-        .build(ui);
+                response.inner
+            }, |ui, _| {
+
+                egui::ScrollArea::vertical()
+                    .id_source("transfer_selector_popup_scroll")
+                    .auto_shrink([true; 2])
+                    .show(ui, |ui| {
+
+                        if let Some(account_collection) = core.account_collection() {
+                            account_collection.iter().for_each(|account| {
+                                if account.id() == rc.account.id() {
+                                    return;
+                                }
+
+                                if ui.account_selector_button(account, network_type, false).clicked() {
+                                    self.context.transfer_to_account = Some(account.clone());
+                                }
+                            });
+                        }
+
+                    });
+
+            })
+            .with_min_width(240.)
+            .with_close_on_interaction(true)
+            .build(ui);
+        }
     }
 
     fn render_address_input(&mut self, _core: &mut Core, ui: &mut egui::Ui, rc: &RenderContext<'_>) {
@@ -291,7 +340,7 @@ impl<'manager> Overview<'manager> {
 
         let RenderContext { network_type, .. } = rc;
 
-        let mut request_estimate = false;
+        let mut request_estimate = self.context.request_estimate.unwrap_or_default();
 
         match self.context.transaction_kind.as_ref().unwrap() {
             TransactionKind::Send => {
@@ -299,7 +348,6 @@ impl<'manager> Overview<'manager> {
             }
             TransactionKind::Transfer => {
                 self.render_transfer_account_selector(core, ui, rc);
-                ui.label("TODO - Transfer funds - select account");
             }
         }
 
@@ -329,7 +377,10 @@ impl<'manager> Overview<'manager> {
         }
 
         ui.add_space(8.);
-        if ui.checkbox(&mut self.context.enable_priority_fees,i18n("Include Priority Fees")).changed() {
+        if ui
+            .checkbox(&mut self.context.enable_priority_fees,i18n("Include Priority Fees"))
+            // .on_hover_text_at_pointer(i18n("Add priority fees to ensure faster confirmation.\nUseful only if the network is congested."))
+            .changed() {
             if self.context.enable_priority_fees {
                 self.context.focus.next(Focus::Fees);
             } else {
@@ -372,7 +423,7 @@ impl<'manager> Overview<'manager> {
                 ui.label(format!("{} {}", fee_title, sompi_to_kaspa_string_with_suffix(estimate.aggregated_fees, network_type)));
                 ui.label(format!("Transactions: {} UTXOs: {}", estimate.number_of_generated_transactions, estimate.aggregated_utxos));
                 
-                self.context.address_status == AddressStatus::Valid
+                self.context.address_status == AddressStatus::Valid || self.context.transaction_kind == Some(TransactionKind::Transfer)
             }
             EstimatorStatus::Error(error) => {
                 ui.label(RichText::new(error.to_string()).color(theme_color().error_color));
@@ -479,8 +530,16 @@ impl<'manager> Overview<'manager> {
         let RenderContext { account, network_type, .. } = rc;
 
         ui.add_space(8.);
-        ui.label("Sending funds");
-        ui.add_space(8.);
+        match self.context.transaction_kind.as_ref().unwrap() {
+            TransactionKind::Send => {
+                ui.label("Sending funds");
+                ui.add_space(8.);
+            }
+            TransactionKind::Transfer => {
+                // ui.label("Transferring funds");
+            }
+        }
+        // ui.label("Sending funds");
 
 
         let send_result = Payload::<Result<GeneratorSummary>>::new("send_result");
@@ -541,49 +600,65 @@ impl<'manager> Overview<'manager> {
 
                 if proceed_with_send {
 
+                    if self.context.destination_address_string.is_not_empty() && self.context.transfer_to_account.is_some() {
+                        unreachable!("expecting only one of destination address or transfer to account");
+                    }
+
                     let priority_fees_sompi = if self.context.enable_priority_fees {
                         self.context.priority_fees_sompi
                     } else { 0 };
 
-                    let address = Address::try_from(self.context.destination_address_string.as_str()).expect("Invalid address");
-                    let account_id = account.id();
-                    let payment_output = PaymentOutput {
-                        address,
-                        amount: self.context.send_amount_sompi,
-                    };
-                    let wallet_secret = Secret::try_from(self.context.wallet_secret.clone()).expect("Invalid secret");
-                    let payment_secret = None;
+                    let wallet_secret = Secret::try_from(self.context.wallet_secret.clone()).expect("expecting wallet secret");
+                    let payment_secret = account.requires_bip39_passphrase().then_some(Secret::try_from(self.context.payment_secret.clone()).expect("expecting payment secret"));
 
-                    spawn_with_result(&send_result, async move {
-                        let request = AccountsSendRequest {
-                            // task_id: None,
-                            account_id,
-                            destination: payment_output.into(),
-                            wallet_secret,
-                            payment_secret,
-                            priority_fee_sompi: Fees::SenderPaysAll(priority_fees_sompi),
-                            payload: None,
-                        };
+                    match self.context.transaction_kind.unwrap() {
+                        TransactionKind::Send => {
 
-                        let generator_summary = runtime().wallet().accounts_send_call(request).await?.generator_summary;
-                        // let result = match runtime().wallet().accounts_send_call(request).await;
-                        
-                        //  {
-                        //     Ok(_response) => {
-                        //         // println!("RESPONSE: {:?}", response);
-                        //         // *estimate.lock().unwrap() = Estimate::GeneratorSummary(response.generator_summary);
-                        //     }
-                        //     Err(error) => {
-                        //         *status.lock().unwrap() = Status::Error(error.to_string());
-                        //         // self.context.action = Action::Estimating;
-                        //         // println!("ERROR: {}", error);
-                        //         // *estimate.lock().unwrap() = Estimate::Error(error.to_string());
-                        //     }    
-                        // }
+                            let address = Address::try_from(self.context.destination_address_string.as_str()).expect("invalid address");
+                            let account_id = account.id();
+                            let payment_output = PaymentOutput {
+                                address,
+                                amount: self.context.send_amount_sompi,
+                            };
+        
+                            spawn_with_result(&send_result, async move {
+                                let request = AccountsSendRequest {
+                                    account_id,
+                                    destination: payment_output.into(),
+                                    wallet_secret,
+                                    payment_secret,
+                                    priority_fee_sompi: Fees::SenderPaysAll(priority_fees_sompi),
+                                    payload: None,
+                                };
+        
+                                let generator_summary = runtime().wallet().accounts_send_call(request).await?.generator_summary;
+                                runtime().request_repaint();
+                                Ok(generator_summary)
+                            });
 
-                        runtime().request_repaint();
-                        Ok(generator_summary)
-                    });
+                        }
+
+                        TransactionKind::Transfer => {
+                            let destination_account_id = self.context.transfer_to_account.as_ref().unwrap().id();
+                            let source_account_id = account.id();
+                            let transfer_amount_sompi = self.context.send_amount_sompi;
+
+                            spawn_with_result(&send_result, async move {
+                                let request = AccountsTransferRequest {
+                                    source_account_id,
+                                    destination_account_id,
+                                    wallet_secret,
+                                    payment_secret,
+                                    priority_fee_sompi: Some(Fees::SenderPaysAll(priority_fees_sompi)),
+                                    transfer_amount_sompi,
+                                };
+        
+                                let generator_summary = runtime().wallet().accounts_transfer_call(request).await?.generator_summary;
+                                runtime().request_repaint();
+                                Ok(generator_summary)
+                            });
+                        }
+                    }
             
                     self.context.action = Action::Processing;
                 }
@@ -593,7 +668,11 @@ impl<'manager> Overview<'manager> {
                 ui.add_space(16.);
                 ui.add(egui::Spinner::new().size(92.));
 
-                if let Some(_result) = send_result.take() {
+                if let Some(result) = send_result.take() {
+
+                    if result.is_ok() {
+                        self.context.reset_send_state();
+                    }
 
                     // - TODO - SET AND DISPLAY AN ERROR
                     // - PRESENT CLOSE BUTTON BEFORE CONTINUING

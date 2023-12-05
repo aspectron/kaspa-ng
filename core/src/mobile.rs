@@ -93,9 +93,9 @@ impl<'core> MobileMenu<'core> {
 
         if account_collection.len() > 1 {
             handlers.insert(
-                1,
+                0,
                 Handler::new(
-                    HOUSE,
+                    HOUSE_SIMPLE,
                     "HOME",
                     Box::new(|core, _ui| {
                         core.get_mut::<modules::AccountManager>().select(None);

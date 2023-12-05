@@ -71,7 +71,7 @@ pub use crate::network::Network;
 pub use crate::notifications::{UserNotification, UserNotifyKind};
 pub use crate::primitives::{
     Account, AccountCollection, BlockDagGraphSettings, DaaBucket, DagBlock, Transaction,
-    TransactionCollection,
+    TransactionCollection, AccountSelectorButtonExtension,
 };
 pub use crate::result::Result;
 pub use crate::runtime::{runtime, spawn, spawn_with_result, Device, Payload, Runtime, Service};

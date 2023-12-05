@@ -1,3 +1,5 @@
+use egui_phosphor::thin::*;
+
 use crate::imports::*;
 use super::*;
 
@@ -10,8 +12,8 @@ impl WalletMenu {
 
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, max_height: f32) {
 
-        let wallet_name = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
-            wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str()).to_string()
+        let (wallet_name,wallet_filename) = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
+            (wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str()).to_string(),wallet_descriptor.filename.clone())
         } else {
             ui.label("Missing wallet descriptor");
             return;
@@ -36,7 +38,25 @@ impl WalletMenu {
                             "NO NAME".to_string()
                         };
 
-                        if ui.add(CompositeButton::new(
+
+                        let icon = if wallet_descriptor.filename == wallet_filename {
+                            // Composite::Icon(egui_phosphor::thin::LOCK_KEY_OPEN)
+                            // Composite::Icon(egui_phosphor::thin::COINS)
+
+                            if !core.state().is_connected() {
+                                RichText::new(egui_phosphor::thin::CLOUD_X)
+                            } else if !core.state().is_synced() {
+                                RichText::new(egui_phosphor::thin::CLOUD_ARROW_DOWN)
+                            } else {
+                                RichText::new(egui_phosphor::thin::CLOUD_CHECK)
+                            }
+
+                        } else {
+                            RichText::new(egui_phosphor::thin::FINGERPRINT_SIMPLE).color(Color32::DARK_GRAY)
+                        };
+
+                        if ui.add(CompositeButton::image_and_text(
+                            Composite::icon(icon),
                             title,
                             wallet_descriptor.filename.clone(),
                         )).clicked()
@@ -61,9 +81,6 @@ impl WalletMenu {
         })
         .with_min_width(240.)
         .with_max_height(max_height)
-        // .with_caption("Wallet")
-        // .with_close_button(true)
-        // .with_pulldown_marker(true)
         .with_close_on_interaction(true)
         .build(ui);
 
@@ -78,6 +95,7 @@ impl AccountMenu {
     }
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, account_manager : &mut AccountManager, rc : &RenderContext<'_>, max_height: f32) {
         let RenderContext { account, network_type, .. } = rc;
+
         PopupPanel::new(ui, "account_selector_popup",|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), account.name_or_id())).sense(Sense::click())) }, |ui, close| {
 
             egui::ScrollArea::vertical()
@@ -86,13 +104,11 @@ impl AccountMenu {
                 .show(ui, |ui| {
 
                     if let Some(account_collection) = core.account_collection() {
-                        account_collection.iter().for_each(|account| {
-                            if ui.add(CompositeButton::new(
-                                account.name_or_id(),
-                                account.balance().map(|balance|sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)).unwrap_or("N/A".to_string())),
-                            ).clicked() {
+                        account_collection.iter().for_each(|select_account| {
+                            if ui.account_selector_button(select_account, network_type, account.id() == select_account.id()).clicked() {
+                                account_manager.request_estimate();
                                 account_manager.state = AccountManagerState::Overview {
-                                    account: account.clone(),
+                                    account: select_account.clone(),
                                 };
                             }
                         });
@@ -100,8 +116,12 @@ impl AccountMenu {
                         ui.label("");
                         ui.separator();
                         ui.label("");
-                        use egui_phosphor::light::FOLDER_NOTCH_PLUS;
-                        if ui.medium_button(format!("{FOLDER_NOTCH_PLUS} Create New Account")).clicked() {
+                        if ui.add(CompositeButton::opt_image_and_text(
+                            Some(Composite::icon(LIST)),
+                            // Composite::Icon(egui_phosphor::thin::LOCK_KEY_OPEN),
+                            Some("Create New Account".into()),
+                            None,
+                        )).clicked() {
                             *close = true;
                             core.select::<modules::AccountCreate>();
                         }

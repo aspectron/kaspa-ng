@@ -90,6 +90,7 @@ enum AddressStatus {
 
 #[derive(Default)]
 pub struct ManagerContext {
+    transfer_to_account : Option<Account>,
     destination_address_string : String,
     send_amount_text: String,
     send_amount_sompi : u64,
@@ -97,6 +98,7 @@ pub struct ManagerContext {
     priority_fees_text : String,
     priority_fees_sompi : u64,
     estimate : Arc<Mutex<EstimatorStatus>>,
+    request_estimate : Option<bool>,
     address_status : AddressStatus,
     action : Action,
     transaction_kind : Option<TransactionKind>,
@@ -116,6 +118,7 @@ impl ManagerContext {
         
         println!("*** resetting send state...");
 
+        self.transfer_to_account = None;
         self.destination_address_string = String::default();
         self.send_amount_text = String::default();
         self.send_amount_sompi = 0;
@@ -200,6 +203,10 @@ impl ModuleT for AccountManager {
 
 impl AccountManager {
 
+    pub fn request_estimate(&mut self) {
+        self.context.request_estimate = Some(true);
+    }
+
     pub fn select(&mut self, account: Option<Account>) {
         if let Some(account) = account {
             self.state = AccountManagerState::Overview {
@@ -252,13 +259,10 @@ impl AccountManager {
                         Panel::new(self)
                             .with_caption("Select Account")
                             .with_body(|this, ui| {
-                                account_collection.iter().for_each(|account| {
-                                    if ui.add_sized(theme_style().large_button_size(), CompositeButton::new(
-                                        account.name_or_id(),
-                                        account.balance().map(|balance|sompi_to_kaspa_string_with_suffix(balance.mature, &network_type)).unwrap_or("N/A".to_string())),
-                                    ).clicked() {
-                                        this.select(Some(account.clone()));
-                                        if runtime().device().is_singular_layout() {
+                                account_collection.iter().for_each(|account_select| {
+                                    if ui.account_selector_button(account_select, &network_type, false).clicked() {
+                                        this.select(Some(account_select.clone()));
+                                        if runtime().device().is_single_pane() {
                                             this.section = AccountManagerSection::Overview;
                                         } else {
                                             this.section = AccountManagerSection::Transactions;
@@ -275,8 +279,7 @@ impl AccountManager {
 
             AccountManagerState::Overview { account } => {
                 let rc = RenderContext::new(&account, network_type, current_daa_score)?;
-                // let section = self.section;
-                if runtime().device().is_singular_layout() {
+                if runtime().device().is_single_pane() {
                     self.render_singular_layout(core,ui,&rc, self.section);
                 } else {
                     if self.section == AccountManagerSection::Overview {

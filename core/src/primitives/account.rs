@@ -5,15 +5,19 @@ use crate::imports::*;
 pub struct AccountContext {
     qr: load::Bytes,
     receive_address: Address,
+    uri: String,
 }
 
 impl AccountContext {
     pub fn new(descriptor: &AccountDescriptor) -> Option<Arc<Self>> {
         if let Some(receive_address) = descriptor.receive_address() {
-            let qr = render_qrcode(&receive_address.to_string(), 128, 128);
+            let address_string = receive_address.to_string();
+            let qr = render_qrcode(&address_string, 128, 128);
+            let uri = format!("bytes://{}-{}.svg", address_string, theme_color().name);
             Some(Arc::new(Self {
                 qr: qr.as_bytes().to_vec().into(),
                 receive_address,
+                uri,
             }))
         } else {
             None
@@ -27,6 +31,11 @@ impl AccountContext {
     pub fn qr(&self) -> load::Bytes {
         self.qr.clone()
     }
+
+    pub fn uri(&self) -> String {
+        self.uri.clone()
+    }
+
 }
 
 struct Inner {
@@ -81,6 +90,16 @@ impl Account {
         self.inner.descriptor.lock().unwrap()
     }
 
+    pub fn receive_address(&self) -> Address {
+        self.inner
+            .context
+            .lock()
+            .unwrap()
+            .as_ref()
+            .map(|context| context.address().clone())
+            .unwrap()
+    }
+
     pub fn transactions(&self) -> MutexGuard<'_, TransactionCollection> {
         self.inner.transactions.lock().unwrap()
     }
@@ -105,11 +124,6 @@ impl Account {
         let descriptor = self.descriptor().clone();
         *self.inner.context.lock().unwrap() = AccountContext::new(&descriptor);
     }
-
-    // pub fn address(&self) -> Result<String> {
-    //     self.inner.context.lock().unwrap().receive_address
-    //     Ok(self.inner.runtime.receive_address()?.into())
-    // }
 
     pub fn context(&self) -> Option<Arc<AccountContext>> {
         self.inner.context.lock().unwrap().clone()
@@ -155,6 +169,7 @@ impl Account {
 
         Ok(())
     }
+
 }
 
 impl IdT for Account {
@@ -186,6 +201,42 @@ impl DescribeAccount for AccountKind {
             AccountKind::Keypair => ("Keypair", "secp256k1"),
             AccountKind::Hardware => ("Hardware", ""),
             _ => ("", ""),
+        }
+    }
+}
+
+pub trait AccountSelectorButtonExtension {
+    fn account_selector_button(&mut self, account: &Account, network_type: &NetworkType, selected : bool) -> Response;
+}
+
+impl AccountSelectorButtonExtension for Ui {
+    fn account_selector_button(&mut self, account: &Account, network_type: &NetworkType, selected : bool) -> Response {
+        let account_name = account.name_or_id();
+
+        let icon = if selected {
+            Composite::icon(egui_phosphor::thin::CHECK)
+        } else {
+            Composite::icon(egui_phosphor::thin::LIST_DASHES)
+        };
+
+        let large_button_size = theme_style().large_button_size() + vec2(32.,0.);
+        if let Some(balance) = account.balance() {
+            let color = self.style().visuals.text_color();
+            self.add_sized(
+                large_button_size, CompositeButton::image_and_text(
+                    icon,
+                    RichText::new(account_name).size(14.),
+                    s2kws_layout_job(balance.mature, network_type, color,FontId::monospace(16.))
+                )
+            )
+        } else {
+            self.add_sized(
+                large_button_size, CompositeButton::image_and_text(
+                    icon,
+                    RichText::new(account_name).size(14.),
+                    RichText::new("N/A").font(FontId::monospace(16.)),
+                )
+            )
         }
     }
 }

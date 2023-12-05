@@ -1,4 +1,3 @@
-// use egui::style::WidgetVisuals;
 use kaspa_metrics::MetricGroup;
 
 mod color;
@@ -55,6 +54,7 @@ impl From<&Theme> for Visuals {
 
         visuals.hyperlink_color = theme.color.hyperlink_color;
         visuals.selection.bg_fill = theme.color.selection_color;
+        visuals.selection.stroke.color = theme.color.selection_color;
         visuals.warn_fg_color = theme.color.warning_color;
         visuals.error_fg_color = theme.color.error_color;
 
@@ -143,6 +143,9 @@ pub fn apply_theme_style_by_name(ctx: &Context, theme_style_name: impl Into<Stri
 }
 
 pub fn apply_theme(ctx: &Context, theme: Theme) {
+
+    // generate_theme_icons(theme.color.icon_color_default.to_hex().as_str());
+
     unsafe {
         THEME = Some(theme.clone());
     }

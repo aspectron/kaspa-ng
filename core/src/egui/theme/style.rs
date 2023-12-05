@@ -15,6 +15,7 @@ pub struct ThemeStyle {
     pub icon_size_large: f32,
     pub status_icon_size: f32,
     pub node_log_font_size: f32,
+    pub composite_icon_size: f32,
 }
 
 impl ThemeStyle {
@@ -33,6 +34,7 @@ impl ThemeStyle {
             icon_size_large: 96_f32,
             status_icon_size: 18_f32,
             node_log_font_size: 15_f32,
+            composite_icon_size: 32_f32,
         }
     }
 
@@ -51,6 +53,7 @@ impl ThemeStyle {
             icon_size_large: 96_f32,
             status_icon_size: 18_f32,
             node_log_font_size: 15_f32,
+            composite_icon_size: 32_f32,
         }
     }
 }

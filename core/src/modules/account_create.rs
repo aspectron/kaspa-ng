@@ -330,6 +330,7 @@ println!("rendering account name...");
                     .render(ui);
 
                     let args = self.context.clone();
+                    self.context = Default::default();
                     // let args = &self.context;
                     // let account_name = self.context.account_name.trim().clone();
                     // let account_name = (!account_name.is_empty()).then_some(account_name.to_string());
@@ -339,7 +340,7 @@ println!("rendering account name...");
                     //     secret.requires_bip39_passphrase().then_some(Secret::from(self.context.payment_secret))
                     // });
 
-                    let prv_key_data_id = self.context.prv_key_data_info.as_ref().unwrap().id();
+                    // let prv_key_data_id = self.context.prv_key_data_info.as_ref().unwrap().id();
 
 
                     // let prv_key_data_info = args.prv_key_data_info.clone().unwrap();
@@ -374,11 +375,13 @@ println!("rendering account name...");
                         match result {
                             Ok(descriptor) => {
                                 println!("Account created successfully");
-                                let account = Account::from(descriptor);
-                                core.account_collection.as_mut().expect("account collection").push_unchecked(account.clone());
-                                core.get_mut::<modules::AccountManager>().select(Some(account));
-                                core.select::<modules::AccountManager>();
+                                // let account = Account::from(descriptor);
+                                // core.account_collection.as_mut().expect("account collection").push_unchecked(account.clone());
+                                // core.get_mut::<modules::AccountManager>().select(Some(account));
+                                // core.select::<modules::AccountManager>();
 
+                                // - RESET STATE
+                                self.state = State::Start;
                             }
                             Err(err) => {
                                 println!("Account creation error: {}", err);

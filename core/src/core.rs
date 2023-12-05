@@ -91,7 +91,8 @@ impl Core {
         );
         mobile_style.text_styles.insert(
             egui::TextStyle::Monospace,
-            egui::FontId::new(18.0, egui::FontFamily::Proportional),
+            egui::FontId::new(18.0, egui::FontFamily::Monospace),
+            // egui::FontId::new(18.0, egui::FontFamily::Proportional),
         );
 
         apply_theme_by_name(
@@ -377,14 +378,14 @@ impl eframe::App for Core {
 
         let device = runtime().device();
 
-        if !self.module.modal() && !device.is_singular_layout() {
+        if !self.module.modal() && !device.is_single_pane() {
             egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
                 Menu::new(self).render(ui);
                 // self.render_menu(ui, frame);
             });
         }
 
-        if device.is_singular_layout() {
+        if device.is_single_pane() {
             if !device.is_mobile() {
                 egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                     Status::new(self).render(ui);
@@ -645,7 +646,18 @@ impl Core {
                         // self.update_account_list();
                     }
                     CoreWallet::AccountActivation { ids: _ } => {}
-                    CoreWallet::AccountCreation { descriptor: _ } => {}
+                    CoreWallet::AccountCreation { descriptor } => {
+                        let account = Account::from(descriptor);
+                        self.account_collection.as_mut().expect("account collection").push_unchecked(account.clone());
+                        self.get_mut::<modules::AccountManager>().select(Some(account.clone()));
+                        self.select::<modules::AccountManager>();
+
+                        let wallet = self.wallet().clone();
+                        spawn(async move {
+                            wallet.accounts_activate(Some(vec![account.id()])).await?;
+                            Ok(())
+                        });
+                    }
                     CoreWallet::AccountUpdate { descriptor } => {
                         let account_id = descriptor.account_id();
                         if let Some(account_collection) = self.account_collection.as_ref() {
