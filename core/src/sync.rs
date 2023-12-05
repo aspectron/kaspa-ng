@@ -82,10 +82,11 @@ impl SyncStatus {
         }
     }
 
-    pub fn progress_bar(&self) -> Option<egui::ProgressBar> {
+    pub fn progress_bar(&self, ui: &mut egui::Ui) -> Option<egui::ProgressBar> {
         let progress_color = theme_color().progress_color;
         if let Some(progress_bar_percentage) = self.progress_bar_percentage {
             if let Some(progress_bar_text) = &self.progress_bar_text {
+                ui.style_mut().visuals.override_text_color = Some(theme_color().raised_text_color);
                 Some(
                     egui::ProgressBar::new(progress_bar_percentage)
                         .fill(progress_color)

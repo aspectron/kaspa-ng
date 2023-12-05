@@ -115,7 +115,12 @@ impl ManagerContext {
     }
 
     fn reset_send_state(&mut self) {
-        
+        self.zeroize()
+    }
+}
+
+impl Zeroize for ManagerContext {
+    fn zeroize(&mut self) {
         println!("*** resetting send state...");
 
         self.transfer_to_account = None;
@@ -131,7 +136,7 @@ impl ManagerContext {
         self.transaction_kind = None;
         self.focus.clear();
         self.wallet_secret.zeroize();
-        self.payment_secret.zeroize();
+        self.payment_secret.zeroize();    
     }
 }
 

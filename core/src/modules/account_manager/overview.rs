@@ -241,16 +241,13 @@ impl<'manager> Overview<'manager> {
 
             PopupPanel::new(ui, "transfer_selector_popup",|ui|{ 
                 let response = ui.vertical_centered(|ui| {
-
-                    let response = if let Some(account) = transfer_to_account {
+                    if let Some(account) = transfer_to_account {
                         let response = ui.add(Label::new(format!("Transferring funds to: {} ⏷", account.name_or_id())).sense(Sense::click()));
                         ui.label(format!("Destination balance: {}", sompi_to_kaspa_string_with_suffix(account.balance().map(|balance|balance.mature).unwrap_or(0), network_type)));
                         response
                     } else {
                         ui.add(Label::new("Please select destination account ⏷").sense(Sense::click()))
-                    };
-                    
-                    response
+                    }
                 });
 
                 response.inner

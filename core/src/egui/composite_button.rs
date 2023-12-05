@@ -259,9 +259,8 @@ impl Widget for CompositeButton<'_> {
                 Composite::Image(image) => image
                     .load_and_calc_size(ui, space_available_for_image)
                     .unwrap_or(space_available_for_image),
-                Composite::Icon(_icon) => self
-                    .icon_size
-                    .map(|f| Vec2::splat(f))
+                Composite::Icon(_icon) => icon_size
+                    .map(Vec2::splat)
                     .unwrap_or(Vec2::splat(theme_style().composite_icon_size)),
             }
         } else {

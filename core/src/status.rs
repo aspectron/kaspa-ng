@@ -261,7 +261,7 @@ impl<'core> Status<'core> {
                     if let Some(status) = sync_status.as_ref() {
                         if !status.synced {
                             status
-                                .progress_bar()
+                                .progress_bar(ui)
                                 .map(|bar| ui.add(bar.desired_width(status_area_width)));
                         }
                     }
