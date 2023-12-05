@@ -80,7 +80,7 @@ impl ThemeColor {
             syncing_color: egui::Color32::from_rgb(255, 255, 136),
             // connected_color: egui::Color32::from_rgb(144, 238, 144),
             connected_color: egui::Color32::from_rgb(85, 233, 136),
-            icon_color_default: Color32::from_rgb(240,240,240),
+            icon_color_default: Color32::from_rgb(240, 240, 240),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
 
@@ -141,7 +141,7 @@ impl ThemeColor {
             warning_color: egui::Color32::from_rgb(77, 77, 41),
             syncing_color: egui::Color32::from_rgb(76, 77, 41),
             connected_color: egui::Color32::from_rgb(8, 110, 65),
-            icon_color_default: Color32::from_rgb(32,32,32),
+            icon_color_default: Color32::from_rgb(32, 32, 32),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
 

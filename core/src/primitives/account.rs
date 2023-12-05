@@ -35,7 +35,6 @@ impl AccountContext {
     pub fn uri(&self) -> String {
         self.uri.clone()
     }
-
 }
 
 struct Inner {
@@ -169,7 +168,6 @@ impl Account {
 
         Ok(())
     }
-
 }
 
 impl IdT for Account {
@@ -206,11 +204,21 @@ impl DescribeAccount for AccountKind {
 }
 
 pub trait AccountSelectorButtonExtension {
-    fn account_selector_button(&mut self, account: &Account, network_type: &NetworkType, selected : bool) -> Response;
+    fn account_selector_button(
+        &mut self,
+        account: &Account,
+        network_type: &NetworkType,
+        selected: bool,
+    ) -> Response;
 }
 
 impl AccountSelectorButtonExtension for Ui {
-    fn account_selector_button(&mut self, account: &Account, network_type: &NetworkType, selected : bool) -> Response {
+    fn account_selector_button(
+        &mut self,
+        account: &Account,
+        network_type: &NetworkType,
+        selected: bool,
+    ) -> Response {
         let account_name = account.name_or_id();
 
         let icon = if selected {
@@ -219,23 +227,25 @@ impl AccountSelectorButtonExtension for Ui {
             Composite::icon(egui_phosphor::thin::LIST_DASHES)
         };
 
-        let large_button_size = theme_style().large_button_size() + vec2(32.,0.);
+        let large_button_size = theme_style().large_button_size() + vec2(32., 0.);
         if let Some(balance) = account.balance() {
             let color = self.style().visuals.text_color();
             self.add_sized(
-                large_button_size, CompositeButton::image_and_text(
+                large_button_size,
+                CompositeButton::image_and_text(
                     icon,
                     RichText::new(account_name).size(14.),
-                    s2kws_layout_job(balance.mature, network_type, color,FontId::monospace(16.))
-                )
+                    s2kws_layout_job(balance.mature, network_type, color, FontId::monospace(16.)),
+                ),
             )
         } else {
             self.add_sized(
-                large_button_size, CompositeButton::image_and_text(
+                large_button_size,
+                CompositeButton::image_and_text(
                     icon,
                     RichText::new(account_name).size(14.),
                     RichText::new("N/A").font(FontId::monospace(16.)),
-                )
+                ),
             )
         }
     }

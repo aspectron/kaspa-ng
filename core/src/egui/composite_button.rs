@@ -38,7 +38,7 @@ impl<'a> Composite<'a> {
 #[must_use = "You should put this widget in an ui with `ui.add(widget);`"]
 pub struct CompositeButton<'a> {
     image: Option<Composite<'a>>,
-    icon_size : Option<f32>,
+    icon_size: Option<f32>,
     text: Option<WidgetText>,
     secondary_text: Option<WidgetText>,
     shortcut_text: WidgetText,
@@ -98,7 +98,7 @@ impl<'a> CompositeButton<'a> {
         Self {
             text,
             image,
-            icon_size : None,
+            icon_size: None,
             shortcut_text: Default::default(),
             wrap: None,
             fill: None,
@@ -121,13 +121,10 @@ impl<'a> CompositeButton<'a> {
         self
     }
 
-    
     pub fn icon_size(mut self, icon_size: f32) -> Self {
         self.icon_size = Some(icon_size);
         self
     }
-
-
 
     /// If `true`, the text will wrap to stay within the max width of the [`Ui`].
     ///
@@ -259,14 +256,13 @@ impl Widget for CompositeButton<'_> {
 
         let image_size = if let Some(image) = &image {
             match image {
-                Composite::Image(image) => {
-                    image
-                        .load_and_calc_size(ui, space_available_for_image)
-                        .unwrap_or(space_available_for_image)
-                }
-                Composite::Icon(_icon) => {
-                    self.icon_size.map(|f|Vec2::splat(f)).unwrap_or(Vec2::splat(theme_style().composite_icon_size))
-                }
+                Composite::Image(image) => image
+                    .load_and_calc_size(ui, space_available_for_image)
+                    .unwrap_or(space_available_for_image),
+                Composite::Icon(_icon) => self
+                    .icon_size
+                    .map(|f| Vec2::splat(f))
+                    .unwrap_or(Vec2::splat(theme_style().composite_icon_size)),
             }
         } else {
             Vec2::ZERO
@@ -375,7 +371,6 @@ impl Widget for CompositeButton<'_> {
             let mut cursor_x = rect.min.x + button_padding.x;
 
             if let Some(image) = &image {
-
                 match image {
                     Composite::Image(image) => {
                         let image_rect = Rect::from_min_size(
@@ -395,14 +390,18 @@ impl Widget for CompositeButton<'_> {
                         response = texture_load_result_response(image.source(), &tlr, response);
                     }
                     Composite::Icon(icon) => {
-
-                        let galley = WidgetText::RichText(icon.clone().size(image_size.y)).into_galley(ui, wrap, text_wrap_width, TextStyle::Button);
+                        let galley = WidgetText::RichText(icon.clone().size(image_size.y))
+                            .into_galley(ui, wrap, text_wrap_width, TextStyle::Button);
                         let image_rect = Rect::from_min_size(
                             pos2(cursor_x, rect.center().y - 0.5 - (galley.size().y / 2.0)),
                             galley.size(),
                         );
                         cursor_x += galley.size().x;
-                        galley.paint_with_fallback_color(ui.painter(), image_rect.min, visuals.fg_stroke.color);
+                        galley.paint_with_fallback_color(
+                            ui.painter(),
+                            image_rect.min,
+                            visuals.fg_stroke.color,
+                        );
                     }
                 }
             }

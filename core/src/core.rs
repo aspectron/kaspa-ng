@@ -648,8 +648,12 @@ impl Core {
                     CoreWallet::AccountActivation { ids: _ } => {}
                     CoreWallet::AccountCreation { descriptor } => {
                         let account = Account::from(descriptor);
-                        self.account_collection.as_mut().expect("account collection").push_unchecked(account.clone());
-                        self.get_mut::<modules::AccountManager>().select(Some(account.clone()));
+                        self.account_collection
+                            .as_mut()
+                            .expect("account collection")
+                            .push_unchecked(account.clone());
+                        self.get_mut::<modules::AccountManager>()
+                            .select(Some(account.clone()));
                         self.select::<modules::AccountManager>();
 
                         let wallet = self.wallet().clone();

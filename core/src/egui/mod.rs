@@ -11,7 +11,7 @@ mod popup;
 mod theme;
 
 pub use collapsable::*;
-pub use composite_button::{CompositeButton,Composite};
+pub use composite_button::{Composite, CompositeButton};
 pub use composite_icon::CompositeIcon;
 pub use easy_mark::easy_mark;
 pub use extensions::*;

@@ -36,4 +36,3 @@ impl IconSize {
         self.outer.y
     }
 }
-

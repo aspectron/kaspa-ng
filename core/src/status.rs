@@ -84,7 +84,6 @@ impl<'core> Status<'core> {
                     }
                 });
             }
-
         });
     }
 

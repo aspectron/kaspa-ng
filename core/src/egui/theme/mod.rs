@@ -143,7 +143,6 @@ pub fn apply_theme_style_by_name(ctx: &Context, theme_style_name: impl Into<Stri
 }
 
 pub fn apply_theme(ctx: &Context, theme: Theme) {
-
     // generate_theme_icons(theme.color.icon_color_default.to_hex().as_str());
 
     unsafe {
