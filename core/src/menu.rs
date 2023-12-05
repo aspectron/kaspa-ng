@@ -127,7 +127,10 @@ impl<'core> Menu<'core> {
                         ui,
                         "display_settings",
                         |ui| {
-                            ui.add(Label::new(egui_phosphor::light::MONITOR).sense(Sense::click()))
+                            ui.add(
+                                Label::new(RichText::new(egui_phosphor::light::MONITOR).size(16.))
+                                    .sense(Sense::click()),
+                            )
                         },
                         |ui, close_popup| {
                             // ui.horizontal(|ui| {
@@ -228,7 +231,7 @@ impl<'core> Menu<'core> {
                     // if ui.button("Theme").clicked() {
                     //     self.select::<modules::Logs>();
                     // }
-                    ui.separator();
+                    // ui.separator();
                 });
             });
         });
