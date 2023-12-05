@@ -37,6 +37,7 @@ cfg_if! {
         use kaspa_core::signals::Signals;
         use clap::ArgAction;
         use crate::utils::*;
+        use runtime::panic::*;
         use std::fs;
 
         #[derive(Debug)]
@@ -125,8 +126,6 @@ cfg_if! {
 
             use std::sync::Mutex;
 
-            runtime::panic::init_panic_handler();
-
             match try_set_fd_limit(DESIRED_DAEMON_SOFT_FD_LIMIT) {
                 Ok(limit) => {
                     if limit < MINIMUM_DAEMON_SOFT_FD_LIMIT {
@@ -150,12 +149,14 @@ cfg_if! {
             match parse_args() {
                 Args::Cli => {
                     use kaspa_cli_lib::*;
+                    init_ungraceful_panic_handler();
                     let result = kaspa_cli(TerminalOptions::new().with_prompt("$ "), None).await;
                     if let Err(err) = result {
                         println!("{err}");
                     }
                 }
                 Args::Kaspad{ args } => {
+                    init_ungraceful_panic_handler();
                     let fd_total_budget = fd_budget::limit() - args.rpc_max_clients as i32 - args.inbound_limit as i32 - args.outbound_target as i32;
                     let (core, _) = create_core(*args, fd_total_budget);
                     Arc::new(Signals::new(&core)).init();
@@ -165,10 +166,12 @@ cfg_if! {
                 Args::I18n {
                     op
                 } => {
+                    init_ungraceful_panic_handler();
                     manage_i18n(op)?;
                 }
 
                 Args::Kng { reset_settings, disable } => {
+                    init_graceful_panic_handler();
 
                     println!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version());
 
