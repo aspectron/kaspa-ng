@@ -192,6 +192,7 @@ pub struct NodeSettings {
     pub node_kind: KaspadNodeKind,
     pub kaspad_daemon_binary: String,
     pub kaspad_daemon_args: String,
+    pub kaspad_daemon_args_enable: bool,
 }
 
 impl Default for NodeSettings {
@@ -220,21 +221,20 @@ impl Default for NodeSettings {
 
         Self {
             rpc_kind: RpcKind::Wrpc,
-            wrpc_url: wrpc_url.to_string(), // : "127.0.0.1".to_string(),
+            wrpc_url: wrpc_url.to_string(),
             wrpc_encoding: WrpcEncoding::Borsh,
-            // wrpc_borsh_network_interface: NetworkInterfaceConfig::default(),
             enable_wrpc_json: false,
             wrpc_json_network_interface: NetworkInterfaceConfig::default(),
             enable_grpc: false,
             grpc_network_interface: NetworkInterfaceConfig::default(),
             enable_upnp: true,
-            // rpc: RpcConfig::default(),
             // network: Network::Mainnet,
+            // network: Network::Testnet10,
             network: Network::default(),
-            // kaspad_node: KaspadNodeKind::InternalInProc,
             node_kind: KaspadNodeKind::default(),
             kaspad_daemon_binary: String::default(),
             kaspad_daemon_args: String::default(),
+            kaspad_daemon_args_enable: false,
             //  {
             //     url: "".to_string(),
             // },
@@ -251,11 +251,7 @@ impl NodeSettings {
                     Some(true)
                 } else if self.node_kind != other.node_kind {
                     Some(true)
-                // } else if self.rpc_kind != other.rpc_kind
-                //     || self.wrpc_url != other.wrpc_url
-                //     || self.wrpc_encoding != other.wrpc_encoding
-                //     || self.grpc_network_interface != other.grpc_network_interface
-            } else if self.enable_grpc != other.enable_grpc
+                } else if self.enable_grpc != other.enable_grpc
                     || self.grpc_network_interface != other.grpc_network_interface
                     || self.wrpc_url != other.wrpc_url
                     || self.wrpc_encoding != other.wrpc_encoding
@@ -264,6 +260,10 @@ impl NodeSettings {
                     || self.enable_upnp != other.enable_upnp
                 {
                     Some(self.node_kind != KaspadNodeKind::IntegratedInProc)
+                } else if self.kaspad_daemon_args != other.kaspad_daemon_args
+                    || self.kaspad_daemon_args_enable != other.kaspad_daemon_args_enable
+                {
+                    Some(self.node_kind.is_config_capable())
                 } else if self.kaspad_daemon_binary != other.kaspad_daemon_binary {
                     Some(self.node_kind == KaspadNodeKind::ExternalAsDaemon)
                 } else {
@@ -376,7 +376,7 @@ impl Default for DeveloperSettings {
             enable: false,
             enable_screen_capture: true,
             disable_password_restrictions: false,
-            enable_experimental_features: true,
+            enable_experimental_features: false,
             enable_custom_daemon_args: true,
         }
     }
@@ -393,6 +393,10 @@ impl DeveloperSettings {
 
     pub fn enable_experimental_features(&self) -> bool {
         self.enable && self.enable_experimental_features
+    }
+
+    pub fn enable_custom_daemon_args(&self) -> bool {
+        self.enable && self.enable_custom_daemon_args
     }
 }
 

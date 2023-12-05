@@ -1,10 +1,14 @@
-use crate::imports::*;
+use clap::error::ErrorKind as ClapErrorKind;
+use kaspad_lib::args::Args;
+
+use crate::{imports::*, runtime::services::kaspa::Config};
 
 pub struct Settings {
     #[allow(dead_code)]
     runtime: Runtime,
     settings : crate::settings::Settings,
     grpc_network_interface : NetworkInterfaceEditor,
+    reset_settings : bool,
 
 
 }
@@ -15,6 +19,7 @@ impl Settings {
             runtime,
             settings : crate::settings::Settings::default(),
             grpc_network_interface : NetworkInterfaceEditor::default(),
+            reset_settings : false,
         }
     }
 
@@ -42,6 +47,21 @@ impl ModuleT for Settings {
         core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
+        ScrollArea::vertical()
+            .auto_shrink([false, true])
+            .show(ui, |ui| {
+                self.render_settings(core,ui);
+            });
+    }
+}
+
+impl Settings {
+
+    fn render_settings(
+        &mut self,
+        core: &mut Core,
         ui: &mut egui::Ui,
     ) {
 
@@ -111,26 +131,89 @@ impl ModuleT for Settings {
 
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadNodeKind::ExternalAsDaemon => {
+
+                                // let binary_path = self.settings.node.kaspad_daemon_binary.clone();
+
                                 ui.horizontal(|ui|{
                                     ui.label(i18n("Rusty Kaspa Daemon Path:"));
                                     ui.add(TextEdit::singleline(&mut self.settings.node.kaspad_daemon_binary));
                                 });
-                                let path = std::path::PathBuf::from(&self.settings.node.kaspad_daemon_binary);
-                                if path.exists() && !path.is_file() {
-                                    ui.label(
-                                        RichText::new(format!("Rusty Kaspa Daemon not found at '{path}'", path = self.settings.node.kaspad_daemon_binary))
-                                            .color(theme_color().error_color),
-                                    );
-                                    node_settings_error = Some("Rusty Kaspa Daemon not found");
-                                }
+
+                                // if binary_path != self.settings.node.kaspad_daemon_binary {
+                                    let path = std::path::PathBuf::from(&self.settings.node.kaspad_daemon_binary);
+                                    if path.exists() && !path.is_file() {
+                                        ui.label(
+                                            RichText::new(format!("Rusty Kaspa Daemon not found at '{path}'", path = self.settings.node.kaspad_daemon_binary))
+                                                .color(theme_color().error_color),
+                                        );
+                                        node_settings_error = Some("Rusty Kaspa Daemon not found");
+                                    }
+                                // }
                             },
                             _ => { }
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        if core.settings.developer.enable_custom_daemon_args() && core.settings.node.node_kind.is_config_capable() {
+                            ui.add_space(4.);
+                            ui.checkbox(&mut self.settings.node.kaspad_daemon_args_enable, i18n("Enable custom daemon arguments"));
+                            ui.add_space(4.);
+
+                            if self.settings.node.kaspad_daemon_args_enable {
+                                
+                                ui.vertical(|ui| {
+                                    ui.label("Resulting daemon arguments:");
+                                    ui.add_space(4.);
+
+                                    let config = Config::from(self.settings.node.clone());
+                                    let config = Vec::<String>::from(config).join(" ");
+                                    ui.label(RichText::new(config).code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
+                                    ui.add_space(4.);
+
+
+                                    ui.label("Custom arguments:");
+                                    let width = ui.available_width() * 0.4;
+                                    let height = 48.0;
+                                    ui.add_sized(vec2(width,height),TextEdit::multiline(&mut self.settings.node.kaspad_daemon_args).code_editor().font(FontId::monospace(14.0)));
+                                    ui.add_space(4.);
+                                });
+
+                                let args = format!("kaspad {}",self.settings.node.kaspad_daemon_args.trim());
+                                let args = args.trim().split(' ').collect::<Vec<&str>>();
+                                match Args::parse(args.iter()) {
+                                    Ok(_) => { },
+                                    Err(err) => {
+                                        if matches!(err.kind(), ClapErrorKind::DisplayHelp | ClapErrorKind::DisplayVersion) {
+                                            ui.label(
+                                                RichText::new("--help and --version are not allowed")
+                                                    .color(theme_color().warning_color),
+                                            );
+                                        } else {
+                                            println!("err: {:?}", err);
+                                            let help = err.to_string();
+                                            let lines = help.split('\n').collect::<Vec<&str>>();
+                                            let text = if let Some(idx) = lines.iter().position(|line| line.starts_with("For more info") || line.starts_with("Usage:")) {
+                                                lines[0..idx].join("\n")
+                                            } else {
+                                                lines.join("\n")
+                                            };
+
+                                            ui.label(
+                                                RichText::new(text.trim())
+                                                    .color(theme_color().warning_color),
+                                            );
+                                        }
+                                        ui.add_space(4.);
+                                        node_settings_error = Some("Invalid daemon arguments");
+                                    }
+                                }
+                            }
                         }
 
                     });
 
                 if !self.grpc_network_interface.is_valid() {
-                    node_settings_error = Some("Invalid gRPC Network Interface Configuration");
+                    node_settings_error = Some("Invalid gRPC network interface configuration");
                 } else {
                     self.settings.node.grpc_network_interface = self.grpc_network_interface.as_ref().try_into().unwrap(); //NetworkInterfaceConfig::try_from(&self.grpc_network_interface).unwrap();
                 }
@@ -169,13 +252,10 @@ impl ModuleT for Settings {
                         ui.horizontal_wrapped(|ui|{
                             ui.set_max_width(half_width);
                             ui.label("Recommended arguments for the remote node:");
-                            ui.code("kaspad --utxoindex --rpclisten-borsh=0.0.0.0");
+                            ui.label(RichText::new("kaspad --utxoindex --rpclisten-borsh=0.0.0.0").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
                             ui.label("If you are running locally, use");
-                            ui.code("--rpclisten-borsh=127.0.0.1.");
+                            ui.label(RichText::new("--rpclisten-borsh=127.0.0.1.").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
                         });
-
-
-
 
                     });
             }
@@ -220,14 +300,15 @@ impl ModuleT for Settings {
             } // is_config_capable
 
             if let Some(error) = node_settings_error {
+                ui.add_space(4.);
                 ui.label(
                     RichText::new(error.to_string())
-                        .color(theme_color().warning_color),
+                        .color(theme_color().error_color),
                 );
-                ui.add_space(16.);
+                ui.add_space(4.);
                 ui.label(i18n("Unable to change node settings until the problem is resolved."));
 
-                ui.add_space(16.);
+                ui.add_space(8.);
                 ui.separator();
 
             } else if node_settings_error.is_none() {
@@ -320,21 +401,28 @@ impl ModuleT for Settings {
                         if self.settings.developer.enable {
                             ui.checkbox(
                                 &mut self.settings.developer.enable_experimental_features, 
-                                i18n("Enable Experimental Features")
+                                i18n("Enable experimental features")
                             ).on_hover_text_at_pointer(
                                 i18n("Enables features currently in development")
                             );
                             
                             ui.checkbox(
+                                &mut self.settings.developer.enable_custom_daemon_args, 
+                                i18n("Allow custom daemon arguments")
+                            ).on_hover_text_at_pointer(
+                                i18n("Allows you to specify custom arguments for the Rusty Kaspa daemon")
+                            );
+                            
+                            ui.checkbox(
                                 &mut self.settings.developer.disable_password_restrictions, 
-                                i18n("Disable Password Score Restrictions")
+                                i18n("Disable password score restrictions")
                             ).on_hover_text_at_pointer(
                                 i18n("Removes security restrictions, allows for single-letter passwords")
                             );
 
                             ui.checkbox(
                                 &mut self.settings.developer.enable_screen_capture, 
-                                i18n("Screen Capture")
+                                i18n("Screen capture")
                             ).on_hover_text_at_pointer(
                                 i18n("Allows you to take screenshots from within the application")
                             );
@@ -359,18 +447,40 @@ impl ModuleT for Settings {
                         ui.separator();
                     }
 
-                    // ui.add_space(16.);
-                    ui.vertical(|ui|{
-                        ui.set_max_width(340.);
-                        ui.separator();
-                        if ui.medium_button("Reset Settings").clicked() {
-                            let settings = crate::settings::Settings::default();
-                            settings.store_sync().unwrap();
-                            #[cfg(target_arch = "wasm32")]
-                            workflow_dom::utils::window().location().reload().ok();
+                    if !self.reset_settings {
+                        ui.vertical(|ui|{
+                            if self.settings.developer == core.settings.developer {
+                                ui.set_max_width(340.);
+                                ui.separator();
+                            }
+                            if ui.medium_button("Reset Settings").clicked() {
+                                self.reset_settings = true;
+                            }
+                        });
+                    } else {
+                        ui.add_space(16.);
+                        ui.label(RichText::new(i18n("Are you sure you want to reset all settings?")).color(theme_color().warning_color));
+                        ui.add_space(16.);
+                        if let Some(response) = ui.confirm_medium_apply_cancel(Align::Min) {
+                            match response {
+                                Confirm::Ack => {
+                                    let settings = crate::settings::Settings {
+                                        initialized : true,
+                                        ..Default::default()
+                                    };
+                                    self.settings = settings.clone();
+                                    settings.store_sync().unwrap();
+                                    #[cfg(target_arch = "wasm32")]
+                                    workflow_dom::utils::window().location().reload().ok();
+                                },
+                                Confirm::Nack => {
+                                    self.reset_settings = false;
+                                }
+                            }
                         }
-                        
-                    });
+                        ui.separator();
+                    }
+
 
 
                 });

@@ -10,6 +10,8 @@ pub struct Config {
     enable_upnp: bool,
     enable_grpc: bool,
     grpc_network_interface: NetworkInterfaceConfig,
+    kaspad_daemon_args_enable: bool,
+    kaspad_daemon_args: String,
 }
 
 impl From<NodeSettings> for Config {
@@ -19,6 +21,8 @@ impl From<NodeSettings> for Config {
             enable_upnp: node_settings.enable_upnp,
             enable_grpc: node_settings.enable_grpc,
             grpc_network_interface: node_settings.grpc_network_interface,
+            kaspad_daemon_args_enable: node_settings.kaspad_daemon_args_enable,
+            kaspad_daemon_args: node_settings.kaspad_daemon_args,
         }
     }
 }
@@ -90,6 +94,12 @@ cfg_if! {
                 // ---
 
                 args.push("--rpclisten-borsh=default");
+
+                if config.kaspad_daemon_args_enable {
+                    config.kaspad_daemon_args.trim().split(' ').filter(|arg|!arg.trim().is_empty()).for_each(|arg| {
+                        args.push(arg);
+                    });
+                }
 
                 args.into()
             }
