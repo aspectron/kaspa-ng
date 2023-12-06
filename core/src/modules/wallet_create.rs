@@ -99,6 +99,10 @@ impl WalletCreate {
 impl ModuleT for WalletCreate {
     fn modal(&self) -> bool { true }
 
+    fn style(&self) -> ModuleStyle {
+        ModuleStyle::Mobile
+    }
+
     fn render(
         &mut self,
         core: &mut Core,
@@ -449,7 +453,7 @@ impl ModuleT for WalletCreate {
                             |ui, text| {
                                 ui.label(RichText::new("Enter wallet password").size(12.).raised());
                                 ui.add_sized(editor_size, TextEdit::singleline(text)
-                                    .password(this.context.wallet_secret_show)
+                                    .password(!this.context.wallet_secret_show)
                                     .vertical_align(Align::Center))
                             },
                         )
@@ -473,7 +477,7 @@ impl ModuleT for WalletCreate {
                             |ui, text| {
                                 ui.label(RichText::new("Confirm wallet password").size(12.).raised());
                                 ui.add_sized(editor_size, TextEdit::singleline(text)
-                                    .password(this.context.wallet_secret_show)
+                                    .password(!this.context.wallet_secret_show)
                                     .vertical_align(Align::Center))
                             },
                         )
@@ -737,7 +741,7 @@ impl ModuleT for WalletCreate {
                             payment_secret.clone(),
                         );
 
-                        let WalletCreateResponse { mnemonic, wallet_descriptor: _, account_descriptor } = wallet.wallet_create(wallet_args, prv_key_data_args, account_args).await?;
+                        let WalletCreateResponse { mnemonic, wallet_descriptor: _, account_descriptor, storage_descriptor: _ } = wallet.wallet_create(wallet_args, prv_key_data_args, account_args).await?;
                         Ok((Arc::new(mnemonic), account_descriptor))
                     });
                 }
