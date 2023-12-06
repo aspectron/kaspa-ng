@@ -89,6 +89,31 @@ impl UiExtension for Ui {
     }
 }
 
+
+pub struct LayoutJobBuilderSettings {
+    pub width: f32,
+    pub leading: f32,
+    pub font_id: Option<FontId>,
+}
+
+impl LayoutJobBuilderSettings {
+    pub fn new(width: f32, leading: f32, font_id: Option<FontId>) -> Self {
+        Self {
+            width,
+            leading,
+            font_id,
+        }
+    }
+}
+
+pub fn ljb(settings : &LayoutJobBuilderSettings) -> LayoutJobBuilder {
+    LayoutJobBuilder::new(settings.width, settings.leading, settings.font_id.clone())
+}
+
+pub fn ljb_with_settings(width: f32, leading: f32, font_id: &FontId) -> LayoutJobBuilder {
+    LayoutJobBuilder::new(width, leading, Some(font_id.clone()))
+}
+
 #[derive(Default)]
 pub struct LayoutJobBuilder {
     job: LayoutJob,
@@ -135,6 +160,19 @@ impl LayoutJobBuilder {
 
         self
     }
+    pub fn padded(mut self, width : usize, text: &str, color: Color32) -> Self {
+        self.job.append(
+            text.pad_to_width_with_alignment(width, Alignment::Right).as_str(),
+            self.leading,
+            TextFormat {
+                color,
+                font_id: self.font_id.clone().unwrap_or_default(),
+                ..Default::default()
+            },
+        );
+
+        self
+    }
     pub fn icon(mut self, text: &str, color: Color32) -> Self {
         self.job.append(
             text,
@@ -147,6 +185,10 @@ impl LayoutJobBuilder {
         );
 
         self
+    }
+
+    pub fn label(self, ui: &mut Ui) -> Response {
+        ui.label(self.job)
     }
 }
 
@@ -204,7 +246,6 @@ where
     Focus: PartialEq + Debug,
 {
     pub fn next(&mut self, focus: Focus) {
-        println!("next focus: {:?}", focus);
         self.focus.replace(focus);
     }
 
@@ -213,7 +254,6 @@ where
     }
 
     pub fn clear(&mut self) {
-        println!("clear focus!");
         self.focus.take();
     }
 
@@ -279,19 +319,15 @@ where
 
         if focus_manager.matches(focus_value) && !response.has_focus() {
             focus_manager.clear();
-            // println!("focus_manager: {:?}, focus_value: {:?}", focus_manager, focus_value);
-            // println!("requesting focus!");
             response.request_focus();
         }
 
         if *user_text != editor_text {
-            println!("user text different!");
             *user_text = editor_text;
             if let Some(editor_change_fn) = editor_change_fn {
                 editor_change_fn(user_text.as_str());
             }
         } else if response.text_edit_submit(ui) {
-            println!("text submit!!!");
             *user_text = editor_text;
             if let Some(editor_submit_fn) = editor_submit_fn {
                 editor_submit_fn(user_text.as_str(), focus_manager);

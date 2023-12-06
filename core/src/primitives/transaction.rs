@@ -4,7 +4,6 @@ use kaspa_wallet_core::storage::{
     transaction::{TransactionData, UtxoRecord},
     TransactionType,
 };
-// use pad::*;
 
 pub trait AsColor {
     fn as_color(&self) -> Color32;
@@ -37,7 +36,6 @@ impl Context {
 
 struct Inner {
     id: TransactionId,
-    // record: Mutex<Arc<TransactionRecord>>,
     context: Mutex<Arc<Context>>,
 }
 
@@ -129,15 +127,9 @@ impl Transaction {
         largest: Option<u64>,
     ) {
         let ppp = ui.ctx().pixels_per_point();
-        // println!("ppp: {}", ppp);
         let width = ui.available_width() / ppp;
-        // println!("width: {}", width);
 
         let Context { record, maturity } = &*self.context();
-        // let record = context.record; // self.record();
-        // let maturity = context.maturity;
-        // let transaction_type = record.transaction_type();
-        // let kind = transaction_type.style(&transaction_type.to_string());
 
         let padding = 9 + largest
             .map(|largest| sompi_to_kaspa(largest).trunc().separated_string().len())
@@ -151,20 +143,16 @@ impl Transaction {
             .unwrap_or_else(|| format!("@{} DAA", record.block_daa_score().separated_string()));
         let block_daa_score = record.block_daa_score().separated_string();
         let transaction_id = record.id().to_string();
-        // let short_id = transaction_id.chars().take(10).collect::<String>() + "...";
-        // let suffix = kaspa_suffix(&network_type);
 
         let default_color = theme_color().default_color;
         let strong_color = theme_color().strong_color;
 
         let font_id_header = FontId::monospace(15.0);
         let font_id_content = FontId::monospace(15.0);
-        // let font_id_header = FontId::monospace(14.0);
-        // let font_id_content = FontId::monospace(14.0);
-        // let font_id_header = FontId::proportional(14.0);
-        // let font_id_content = FontId::proportional(14.0);
         let icon_font_id = FontId::proportional(18.0);
-        // egui_phosphor
+
+        let header = LayoutJobBuilderSettings::new(width, 8.0, Some(font_id_content.clone()));
+        let content = LayoutJobBuilderSettings::new(width, 8.0, Some(font_id_content.clone()));
 
         match record.transaction_data() {
             TransactionData::Reorg {
@@ -247,21 +235,17 @@ impl Transaction {
                     .icon(paint_header_icon)
                     .default_open(false)
                     .show(ui, |ui| {
-                        let width = 32.; //ui.available_width() / ppp;
+                        ljb(&content)
+                            .padded(15, "Transaction id:", default_color)
+                            .text(&transaction_id, default_color)
+                            .label(ui);
 
-                        let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
-                            .text(
-                                &format!("Transaction id: {}", shorten(&transaction_id)),
-                                default_color,
-                            );
-                        ui.label(text);
-
-                        let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
-                            .text(&format!("DAA: {}", block_daa_score), default_color);
-                        ui.label(text);
+                        ljb(&content)
+                            .padded(15, "Received at:", default_color)
+                            .text(&format!("{} DAA", block_daa_score), default_color)
+                            .label(ui);
 
                         utxo_entries.iter().for_each(|utxo_entry| {
-                            // utxo_entry.render(ui, suffix);
                             let UtxoRecord {
                                 index: _,
                                 address,
@@ -274,42 +258,30 @@ impl Transaction {
                                 .map(|addr| addr.to_string())
                                 .unwrap_or_else(|| "n/a".to_string());
 
-                            let text =
-                                LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
-                                    .text(&address, default_color);
-                            ui.label(text);
+                            ljb(&content).text(&address, default_color).label(ui);
 
-                            // ui.label(address);
                             if *is_coinbase {
-                                let text = LayoutJobBuilder::new(
-                                    width,
-                                    8.0,
-                                    Some(font_id_content.clone()),
-                                )
-                                .text(&format!("{} - Coinbase UTXO", s2k(*amount)), default_color);
-                                ui.label(text);
-                                // ui.label(format!("{} {amount} {suffix} COINBASE UTXO", ""));
+                                ljb(&content)
+                                    .text(
+                                        &format!("{} - Coinbase UTXO", s2k(*amount)),
+                                        default_color,
+                                    )
+                                    .label(ui);
                             } else {
-                                let text = LayoutJobBuilder::new(
-                                    width,
-                                    8.0,
-                                    Some(font_id_content.clone()),
-                                )
-                                .text(&format!("{} - Standard UTXO", s2k(*amount)), default_color);
-                                ui.label(text);
+                                ljb(&content)
+                                    .text(
+                                        &format!("{} - Standard UTXO", s2k(*amount)),
+                                        default_color,
+                                    )
+                                    .label(ui);
                             }
 
-                            let text =
-                                LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
-                                    .text(
-                                        &format!("Script: {}", script_public_key.script_as_hex()),
-                                        default_color,
-                                    );
-                            ui.label(text);
-
-                            // let job = job
-                            //     .text(short_id.as_str(), default_color)
-                            //     .text(&aggregate_input_value, transaction_type.as_color());
+                            ljb(&content)
+                                .text(
+                                    &format!("Script: {}", script_public_key.script_as_hex()),
+                                    default_color,
+                                )
+                                .label(ui);
                         });
                     });
             }
@@ -319,43 +291,31 @@ impl Transaction {
                 transaction,
                 payment_value,
                 change_value,
+                accepted_daa_score,
                 ..
             } => {
-                // let maturity_progress = current_daa_score.and_then(|current_daa_score| {
-                //     record
-                //         .maturity_progress(current_daa_score)
-                //         .map(|progress| format!("{}% - ", (progress * 100.) as usize))
-                // });
-
                 let job = if let Some(payment_value) = payment_value {
-                    let mut job = LayoutJobBuilder::new(width, 8.0, Some(font_id_header.clone()))
+                    let mut job = ljb(&header) 
                         .with_icon_font(icon_font_id);
 
-                    // LayoutJobBuilder::new(width,8.0, Some(font_id.clone()))
-
                     job = job
-                        // .text("SEND", TransactionType::Outgoing.as_color())
                         .icon(
                             egui_phosphor::light::ARROW_SQUARE_LEFT,
                             TransactionType::Outgoing.as_color(),
                         )
                         .text(timestamp.as_str(), default_color)
-                        // .text(short_id.as_str(), default_color)
                         .text(
                             &ps2k(*payment_value + *fees),
                             TransactionType::Outgoing.as_color(),
                         );
-                    // .text(format!("\n@{} DAA", block_daa_score).as_str(), default_color);
 
                     if !maturity.unwrap_or(true) {
                         job = job.text("Submitting...", strong_color);
                     }
 
                     job
-                    //     transaction.inputs.len(),
-                    //     transaction.outputs.len(),
                 } else {
-                    LayoutJobBuilder::new(width, 16.0, Some(font_id_header.clone()))
+                    ljb(&header)
                         .text("Sweep:", default_color)
                         .text(&sompi_to_kaspa_string(*aggregate_input_value), strong_color)
                         .text("Fees:", default_color)
@@ -434,40 +394,56 @@ impl Transaction {
                 collapsing_header.show(ui, |ui| {
                     let width = ui.available_width() - 64.0;
 
-                    let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
+                    ljb(&content)
                         .text(
-                            &format!("Transaction id: {}", shorten(&transaction_id)),
+                            &format!("{}: {}", "Transaction id", transaction_id),
                             default_color,
-                        );
-                    ui.label(text);
-                    let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
-                        .text(&format!("DAA: {}", block_daa_score), default_color);
-                    ui.label(text);
-
-                    let text = LayoutJobBuilder::new(width, 8.0, Some(font_id_content.clone()))
-                        .text("Fees:", default_color)
-                        .text(
-                            &sompi_to_kaspa_string(*fees),
-                            TransactionType::Outgoing.as_color(),
                         )
-                        .text("Used:", default_color)
-                        .text(&sompi_to_kaspa_string(*aggregate_input_value), strong_color)
-                        .text("Change:", default_color)
-                        .text(
-                            &sompi_to_kaspa_string(*change_value),
-                            TransactionType::Incoming.as_color(),
-                        );
-                    ui.label(text);
+                        .label(ui);
 
-                    // transaction.inputs.len(),
-                    // transaction.outputs.len(),
+                    ljb(&content)
+                        .padded(15, "Submitted at:", default_color)
+                        .text(&format!("{} DAA", block_daa_score), default_color)
+                        .label(ui);
 
-                    let text = LayoutJobBuilder::new(width, 16.0, Some(font_id_content.clone()))
+                    if let Some(accepted_daa_score) = accepted_daa_score {
+                        ljb(&content)
+                            .padded(15, "Accepted at:", default_color)
+                            .text(
+                                &format!("{} DAA", accepted_daa_score.separated_string()),
+                                default_color,
+                            )
+                            .label(ui);
+                    }
+
+                    if let Some(payment_value) = payment_value {
+                        ljb(&content)
+                            .padded(15, "Amount:", default_color)
+                            .text(&ps2k(*payment_value), TransactionType::Outgoing.as_color())
+                            .label(ui);
+                    }
+
+                    ljb(&content)
+                        .padded(14, "Fees:", default_color)
+                        .text(&ps2k(*fees), TransactionType::Outgoing.as_color())
+                        .label(ui);
+
+                    ljb(&content)
+                        .padded(15, "Inputs:", default_color)
+                        .text(&ps2k(*aggregate_input_value), strong_color)
+                        .label(ui);
+
+                    ljb(&content)
+                        .padded(15, "Change:", default_color)
+                        .text(&ps2k(*change_value), TransactionType::Incoming.as_color())
+                        .label(ui);
+
+                    ljb(&content)
                         .text(
                             &format!("{} UTXO inputs", transaction.inputs.len()),
                             default_color,
-                        );
-                    ui.label(text);
+                        )
+                        .label(ui);
 
                     for input in transaction.inputs.iter() {
                         let TransactionInput {
@@ -481,13 +457,15 @@ impl Transaction {
                             index,
                         } = previous_outpoint;
 
-                        let text = RichText::new(format!(
-                            "  {sequence:>2}: {}:{index} SigOps: {sig_op_count}",
-                            shorten(transaction_id.to_string())
-                        ))
-                        .font(font_id_content.clone());
-
-                        ui.label(text);
+                        ljb(&content)
+                            .text(
+                                &format!(
+                                    "  {sequence:>2}: {}:{index} SigOps: {sig_op_count}",
+                                    transaction_id.to_string()
+                                ),
+                                default_color,
+                            )
+                            .label(ui);
                     }
 
                     let text = LayoutJobBuilder::new(width, 16.0, Some(font_id_content.clone()))
@@ -502,20 +480,21 @@ impl Transaction {
                             value,
                             script_public_key,
                         } = output;
-                        let text = RichText::new(format!(
-                            "  {} {}",
-                            ps2k(*value),
-                            shorten(script_public_key.script_as_hex())
-                        ))
-                        .font(font_id_content.clone());
-                        ui.label(text);
+
+                        ljb(&content)
+                            .text(
+                                &format!(
+                                    "  {} {}",
+                                    ps2k(*value),
+                                    script_public_key.script_as_hex()
+                                ),
+                                default_color,
+                            )
+                            .label(ui);
                     }
                 });
             }
         }
-
-        // let mut ch = CustomCollapsingHeader::new(&transaction_id.to_string(), ui);
-        // ch.ui(ui);
     }
 }
 
@@ -531,16 +510,12 @@ pub fn kaspa_to_sompi(kaspa: f64) -> u64 {
 
 #[inline]
 pub fn sompi_to_kaspa_string(sompi: u64) -> String {
-    // sompi_to_kaspa(sompi).separated_string()
     separated_float!(format!("{:.8}", sompi_to_kaspa(sompi)))
 }
 #[inline]
 pub fn padded_sompi_to_kaspa_string(sompi: u64, padding: usize) -> String {
-    // sompi_to_kaspa(sompi).separated_string()
-    // 00,000,000.00000000
     separated_float!(format!("{:.8}", sompi_to_kaspa(sompi)))
         .pad_to_width_with_alignment(padding, Alignment::Right)
-    // pad_to_width_with(separated_float!(format!("{:.8}",sompi_to_kaspa(sompi))))
 }
 
 pub fn kaspa_suffix(network_type: &NetworkType) -> &'static str {
@@ -570,22 +545,16 @@ pub fn padded_sompi_to_kaspa_string_with_suffix(
     format!("{kas} {suffix}")
 }
 
-pub fn shorten(s: impl Into<String>) -> String {
-    s.into()
-    // let s: String = s.into();
-    // s.chars().take(10).collect::<String>() + "..."
-}
+// pub fn shorten(s: impl Into<String>) -> String {
+//     s.into()
+//     // let s: String = s.into();
+//     // s.chars().take(10).collect::<String>() + "..."
+// }
 
 pub fn paint_header_icon(ui: &mut Ui, openness: f32, response: &Response) {
     let visuals = ui.style().interact(response);
 
     let rect = response.rect;
-    // println!("rect: {:?}",rect);
-    // Draw a pointy triangle arrow:
-    // let mut center = rect.center();
-    // center.y -= rect.height() * 1.25;
-    // let rect = Rect::from_center_size(center, vec2(rect.width(), rect.height()) * 1.15);
-    // let rect = Rect::from_center_size(center, vec2(rect.width(), rect.height()));
     let rect = Rect::from_center_size(rect.center(), vec2(rect.width(), rect.height()) * 0.75);
     let rect = rect.expand(visuals.expansion);
     let mut points = vec![rect.left_top(), rect.right_top(), rect.center_bottom()];
