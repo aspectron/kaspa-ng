@@ -75,7 +75,7 @@ impl ModuleT for BlockDag {
             ui.heading("Block DAG");
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                PopupPanel::new(ui, "block_dag_settings",|ui|{ ui.label("Settings ⏷") }, |ui, _| {
+                PopupPanel::new(ui, "block_dag_settings",|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
                     ui.add(
                         Slider::new(&mut self.daa_range, 1.0..=self.settings.graph_length_daa as f64)
                             .clamp_to_range(true)
