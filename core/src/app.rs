@@ -149,7 +149,7 @@ cfg_if! {
             match parse_args() {
                 Args::Cli => {
                     use kaspa_cli_lib::*;
-                    init_ungraceful_panic_handler();
+                    // cli instantiates a custom panic handler
                     let result = kaspa_cli(TerminalOptions::new().with_prompt("$ "), None).await;
                     if let Err(err) = result {
                         println!("{err}");
@@ -172,6 +172,8 @@ cfg_if! {
 
                 Args::Kng { reset_settings, disable } => {
                     init_graceful_panic_handler();
+
+                    workflow_log::set_colors_enabled(true);
 
                     println!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version());
 
