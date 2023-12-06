@@ -37,39 +37,60 @@ impl<'manager> Overview<'manager> {
                         return;
                     }
 
-                    if self.context.action.is_sending() {
-                        self.render_send_ui(core, ui, rc);
-                    } else {
-                        
-                        self.render_qr(core, ui, rc);
+                    match self.context.action.clone() {
+                        Action::Sending | Action::Estimating | Action::Processing => {
+                            self.render_send_ui(core, ui, rc);
+                        }
+                        Action::Error(error) => {
+                            ui.vertical_centered(|ui|{
 
-                        ui.vertical_centered(|ui|{
-                        
-                            ui.add_space(8.);
-                            ui.horizontal(|ui| {
-
-                                let mut layout = CenterLayoutBuilder::new();
-                                
-                                layout = layout.add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme_style().medium_button_size()), |(this, _):&mut (&mut Overview<'_>, &mut Core)| {
-                                    this.context.action = Action::Estimating;
-                                    this.context.transaction_kind = Some(TransactionKind::Send);
-                                    this.context.focus.next(Focus::Address);
-                                });
-
-                                if core.account_collection().as_ref().map(|collection|collection.len()).unwrap_or(0) > 1 {
-                                    layout = layout.add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme_style().medium_button_size()), |(this,_)| {
-                                        this.context.action = Action::Estimating;
-                                        this.context.transaction_kind = Some(TransactionKind::Transfer);
-                                    });
+                                ui.add_space(16.);
+                                ui.label(RichText::new("An error has occurred while submitting transaction:"));
+                                ui.add_space(16.);
+                                ui.separator();
+                                ui.add_space(8.);
+                                ui.label(RichText::new(error.to_string()).color(theme_color().error_color));
+                                ui.add_space(8.);
+                                ui.separator();
+                                ui.add_space(16.);
+                                // TODO - copy to clipboard?
+                                if ui.medium_button("Continue").clicked() {
+                                    self.context.action = Action::None;
                                 }
-                                layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme_style().medium_button_size()), |(_,core)| {
-                                    core.select::<modules::Request>();
-
-                                });
-
-                                layout.build(ui,&mut (self,core));
                             });
-                        });
+                        }
+                        Action::None => {
+
+                            self.render_qr(core, ui, rc);
+
+                            ui.vertical_centered(|ui|{
+                            
+                                ui.add_space(8.);
+                                ui.horizontal(|ui| {
+
+                                    let mut layout = CenterLayoutBuilder::new();
+                                    
+                                    layout = layout.add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme_style().medium_button_size()), |(this, _):&mut (&mut Overview<'_>, &mut Core)| {
+                                        this.context.action = Action::Estimating;
+                                        this.context.transaction_kind = Some(TransactionKind::Send);
+                                        this.context.focus.next(Focus::Address);
+                                    });
+
+                                    if core.account_collection().as_ref().map(|collection|collection.len()).unwrap_or(0) > 1 {
+                                        layout = layout.add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme_style().medium_button_size()), |(this,_)| {
+                                            this.context.action = Action::Estimating;
+                                            this.context.transaction_kind = Some(TransactionKind::Transfer);
+                                        });
+                                    }
+                                    layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme_style().medium_button_size()), |(_,core)| {
+                                        core.select::<modules::Request>();
+
+                                    });
+
+                                    layout.build(ui,&mut (self,core));
+                                });
+                            });
+                        }
 
                     }
                 });
@@ -246,7 +267,11 @@ impl<'manager> Overview<'manager> {
                         ui.label(format!("Destination balance: {}", sompi_to_kaspa_string_with_suffix(account.balance().map(|balance|balance.mature).unwrap_or(0), network_type)));
                         response
                     } else {
-                        ui.add(Label::new("Please select destination account ⏷").sense(Sense::click()))
+                        if self.context.send_amount_text.is_not_empty() {
+                            ui.add(Label::new(RichText::new("Please select destination account ⏷").color(theme_color().warning_color)).sense(Sense::click()))
+                        } else {
+                            ui.add(Label::new(RichText::new("Please select destination account ⏷")).sense(Sense::click()))
+                        }
                     }
                 });
 
@@ -420,7 +445,7 @@ impl<'manager> Overview<'manager> {
                 ui.label(format!("{} {}", fee_title, sompi_to_kaspa_string_with_suffix(estimate.aggregated_fees, network_type)));
                 ui.label(format!("Transactions: {} UTXOs: {}", estimate.number_of_generated_transactions, estimate.aggregated_utxos));
                 
-                self.context.address_status == AddressStatus::Valid || self.context.transaction_kind == Some(TransactionKind::Transfer)
+                self.context.address_status == AddressStatus::Valid || (self.context.transaction_kind == Some(TransactionKind::Transfer) && self.context.transfer_to_account.is_some())
             }
             EstimatorStatus::Error(error) => {
                 ui.label(RichText::new(error.to_string()).color(theme_color().error_color));
@@ -542,7 +567,7 @@ impl<'manager> Overview<'manager> {
         let send_result = Payload::<Result<GeneratorSummary>>::new("send_result");
 
 
-        match self.context.action {
+        match &self.context.action {
             Action::Estimating => {
 
                 let request_estimate = self.render_estimation_ui(core, ui, rc);
@@ -636,7 +661,7 @@ impl<'manager> Overview<'manager> {
                         }
 
                         TransactionKind::Transfer => {
-                            let destination_account_id = self.context.transfer_to_account.as_ref().unwrap().id();
+                            let destination_account_id = self.context.transfer_to_account.as_ref().expect("transfer destination account").id();
                             let source_account_id = account.id();
                             let transfer_amount_sompi = self.context.send_amount_sompi;
 
@@ -666,19 +691,22 @@ impl<'manager> Overview<'manager> {
                 ui.add(egui::Spinner::new().size(92.));
 
                 if let Some(result) = send_result.take() {
-
-                    if result.is_ok() {
-                        self.context.reset_send_state();
+                    match result {
+                        Ok(_) => {
+                            self.context.reset_send_state();
+                            self.context.action = Action::None;
+                        }
+                        Err(error) => {
+                            println!();
+                            println!("transaction error: {error}");
+                            println!();
+                            self.context.reset_send_state();
+                            self.context.action = Action::Error(Arc::new(error));
+                        }
                     }
-
-                    // - TODO - SET AND DISPLAY AN ERROR
-                    // - PRESENT CLOSE BUTTON BEFORE CONTINUING
-                    // - RESET STATE TO ESTIMATING?
-
-                    self.context.action = Action::None;
                 }
             }
-            Action::None => {}
+            _ => { }
         }
 
     }
