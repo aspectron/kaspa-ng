@@ -62,6 +62,7 @@ impl ModuleT for Metrics {
                     ui.add(
                         Slider::new(&mut graph_height, 1..=1200)
                             .text("Height")
+                            .logarithmic(true)
                             .orientation(SliderOrientation::Horizontal)
                             .suffix("px")
                     );
