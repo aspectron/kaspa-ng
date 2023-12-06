@@ -200,7 +200,7 @@ impl<'core> Status<'core> {
                 ui.label(
                     RichText::new(egui_phosphor::light::CPU)
                         .size(status_icon_size)
-                        .color(theme_color().connected_color),
+                        .color(theme_color().icon_connected_color),
                 );
                 ui.separator();
                 ui.label("CONNECTED").on_hover_ui(|ui| {
@@ -237,7 +237,7 @@ impl<'core> Status<'core> {
                         ui.label(
                             RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN)
                                 .size(status_icon_size)
-                                .color(Color32::YELLOW),
+                                .color(theme_color().icon_syncing_color),
                         );
                         ui.separator();
                         ui.label("CONNECTED");
