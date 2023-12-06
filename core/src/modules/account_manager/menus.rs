@@ -93,6 +93,7 @@ impl AccountMenu {
     pub fn new() -> Self {
         Self { }
     }
+
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, account_manager : &mut AccountManager, rc : &RenderContext<'_>, max_height: f32) {
         let RenderContext { account, network_type, .. } = rc;
 
@@ -103,28 +104,65 @@ impl AccountMenu {
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 
-                    if let Some(account_collection) = core.account_collection() {
-                        account_collection.iter().for_each(|select_account| {
-                            if ui.account_selector_button(select_account, network_type, account.id() == select_account.id()).clicked() {
+                    let mut account_list = if let Some(account_collection) = core.account_collection() {
+                        account_collection.list().clone()
+                    } else {
+                        ui.label("No accounts found");
+                        return;
+                    };
+
+                    if let Some(prv_key_data_map) = core.prv_key_data_map() {
+                        
+                        for prv_key_data_info in prv_key_data_map.values() {
+                            CollapsingHeader::new(prv_key_data_info.name_or_id())
+                                // .default_open(true)
+                                .open(Some(true))
+                                .show(ui, |ui| {
+
+                                    account_list.retain(|selectable_account|{
+                                        if selectable_account.descriptor().prv_key_data_id() == Some(&prv_key_data_info.id) {
+
+                                            if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id()).clicked() {
+                                                account_manager.request_estimate();
+                                                account_manager.state = AccountManagerState::Overview {
+                                                    account: selectable_account.clone(),
+                                                };
+                                            }
+
+                                            false
+                                        } else {
+                                            true
+                                        }
+                                    });
+                            });
+                        }
+                    }
+
+                    if account_list.is_not_empty() {
+                        
+                        ui.separator();
+
+                        account_list.iter().for_each(|selectable_account|{
+                            if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id()).clicked() {
                                 account_manager.request_estimate();
                                 account_manager.state = AccountManagerState::Overview {
-                                    account: select_account.clone(),
+                                    account: selectable_account.clone(),
                                 };
                             }
                         });
+                    }
 
-                        ui.label("");
-                        ui.separator();
-                        ui.label("");
-                        if ui.add(CompositeButton::opt_image_and_text(
-                            Some(Composite::icon(LIST)),
-                            // Composite::Icon(egui_phosphor::thin::LOCK_KEY_OPEN),
-                            Some("Create New Account".into()),
-                            None,
-                        )).clicked() {
-                            *close = true;
-                            core.select::<modules::AccountCreate>();
-                        }
+                    ui.add_space(8.);
+                    ui.separator();
+                    ui.add_space(8.);
+                    if ui.add(CompositeButton::opt_image_and_text(
+                        Some(Composite::icon(LIST)),
+                        // Composite::Icon(egui_phosphor::thin::LOCK_KEY_OPEN),
+                        Some("Create New Account".into()),
+                        None,
+                    )).clicked() {
+                        *close = true;
+                        core.select::<modules::AccountCreate>();
                     }
 
                 });
