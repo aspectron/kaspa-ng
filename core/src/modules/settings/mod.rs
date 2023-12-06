@@ -397,7 +397,7 @@ impl Settings {
                         ui.label("Developer mode enables advanced and experimental features");
                     });
 
-                    ui.horizontal(|ui|{
+                    ui.vertical(|ui|{
                         if self.settings.developer.enable {
                             ui.checkbox(
                                 &mut self.settings.developer.enable_experimental_features, 
@@ -408,9 +408,9 @@ impl Settings {
                             
                             ui.checkbox(
                                 &mut self.settings.developer.enable_custom_daemon_args, 
-                                i18n("Allow custom daemon arguments")
+                                i18n("Enable custom daemon arguments")
                             ).on_hover_text_at_pointer(
-                                i18n("Allows you to specify custom arguments for the Rusty Kaspa daemon")
+                                i18n("Enables custom arguments for the Rusty Kaspa daemon")
                             );
                             
                             ui.checkbox(
