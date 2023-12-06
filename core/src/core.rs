@@ -40,7 +40,7 @@ pub struct Core {
     pub metrics: Option<Box<MetricsSnapshot>>,
     pub wallet_descriptor: Option<WalletDescriptor>,
     pub wallet_list: Vec<WalletDescriptor>,
-    pub prv_key_data_map: HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>,
+    pub prv_key_data_map: Option<HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>>,
     pub account_collection: Option<AccountCollection>,
     // pub selected_account: Option<Account>,
     pub release: Option<Release>,
@@ -163,7 +163,7 @@ impl Core {
 
             wallet_descriptor: None,
             wallet_list: Vec::new(),
-            prv_key_data_map: HashMap::new(),
+            prv_key_data_map: None,
             account_collection: None,
             // selected_account: None,
             metrics: None,
@@ -256,6 +256,10 @@ impl Core {
 
     pub fn account_collection(&self) -> &Option<AccountCollection> {
         &self.account_collection
+    }
+
+    pub fn prv_key_data_map(&self) -> &Option<HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>> {
+        &self.prv_key_data_map
     }
 
     pub fn modules(&self) -> &HashMap<TypeId, Module> {
@@ -573,7 +577,7 @@ impl Core {
             Events::PrvKeyDataInfo {
                 prv_key_data_info_map,
             } => {
-                self.prv_key_data_map = prv_key_data_info_map;
+                self.prv_key_data_map = Some(prv_key_data_info_map);
             }
             Events::Wallet { event } => {
                 match *event {
@@ -624,13 +628,15 @@ impl Core {
                         self.hint = hint;
                         self.discard_hint = false;
                     }
+                    // TODO remove reloading notification
+                    CoreWallet::WalletReload { .. } => {}
                     CoreWallet::WalletOpen {
                         wallet_descriptor,
                         account_descriptors,
-                    }
-                    | CoreWallet::WalletReload {
-                        wallet_descriptor,
-                        account_descriptors,
+                        // }
+                        // | CoreWallet::WalletReload {
+                        //     wallet_descriptor,
+                        //     account_descriptors,
                     } => {
                         self.state.is_open = true;
 
@@ -645,9 +651,29 @@ impl Core {
                         self.load_accounts(network_id, account_descriptors)?;
                         // self.update_account_list();
                     }
+                    CoreWallet::WalletCreate {
+                        wallet_descriptor,
+                        storage_descriptor: _,
+                    } => {
+                        self.wallet_list.push(wallet_descriptor.clone());
+                        self.wallet_descriptor = Some(wallet_descriptor);
+                        self.account_collection = Some(AccountCollection::default());
+                        self.state.is_open = true;
+                    }
+                    CoreWallet::PrvKeyDataCreate { prv_key_data_info } => {
+                        if let Some(prv_key_data_map) = self.prv_key_data_map.as_mut() {
+                            prv_key_data_map
+                                .insert(*prv_key_data_info.id(), Arc::new(prv_key_data_info));
+                        } else {
+                            let mut prv_key_data_map = HashMap::new();
+                            prv_key_data_map
+                                .insert(*prv_key_data_info.id(), Arc::new(prv_key_data_info));
+                            self.prv_key_data_map = Some(prv_key_data_map);
+                        }
+                    }
                     CoreWallet::AccountActivation { ids: _ } => {}
-                    CoreWallet::AccountCreation { descriptor } => {
-                        let account = Account::from(descriptor);
+                    CoreWallet::AccountCreate { account_descriptor } => {
+                        let account = Account::from(account_descriptor);
                         self.account_collection
                             .as_mut()
                             .expect("account collection")
@@ -662,11 +688,11 @@ impl Core {
                             Ok(())
                         });
                     }
-                    CoreWallet::AccountUpdate { descriptor } => {
-                        let account_id = descriptor.account_id();
+                    CoreWallet::AccountUpdate { account_descriptor } => {
+                        let account_id = account_descriptor.account_id();
                         if let Some(account_collection) = self.account_collection.as_ref() {
                             if let Some(account) = account_collection.get(account_id) {
-                                account.update(descriptor);
+                                account.update(account_descriptor);
                             }
                         }
                     }
@@ -676,6 +702,7 @@ impl Core {
                         self.state.is_open = false;
                         self.account_collection = None;
                         self.wallet_descriptor = None;
+                        self.prv_key_data_map = None;
 
                         self.modules.clone().into_iter().for_each(|(_, module)| {
                             module.reset(self);
@@ -699,6 +726,9 @@ impl Core {
                                 .as_ref()
                                 .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
+                                        println!();
+                                        println!("$$$ RECEIVING MATURITY");
+                                        println!();
                                         account.transactions().replace_or_insert(
                                             Transaction::new_confirmed(Arc::new(record)),
                                         );
@@ -718,6 +748,9 @@ impl Core {
                                 .as_ref()
                                 .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
+                                        println!();
+                                        println!("$$$ RECEIVING OUTGOING");
+                                        println!();
                                         account.transactions().replace_or_insert(
                                             Transaction::new_processing(Arc::new(record)),
                                         );
