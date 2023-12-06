@@ -41,12 +41,12 @@ impl From<&str> for Log {
 impl From<&Log> for RichText {
     fn from(log: &Log) -> Self {
         let text = match log {
-            Log::Info(text) => RichText::from(text).color(egui::Color32::WHITE),
-            Log::Error(text) => RichText::from(text).color(egui::Color32::LIGHT_RED),
-            Log::Warning(text) => RichText::from(text).color(egui::Color32::LIGHT_YELLOW),
-            Log::Debug(text) => RichText::from(text).color(egui::Color32::LIGHT_BLUE),
-            Log::Trace(text) => RichText::from(text).color(egui::Color32::LIGHT_GRAY),
-            Log::Processed(text) => RichText::from(text).color(egui::Color32::LIGHT_GREEN),
+            Log::Info(text) => RichText::from(text).color(theme_color().logs_info_color),
+            Log::Error(text) => RichText::from(text).color(theme_color().logs_error_color),
+            Log::Warning(text) => RichText::from(text).color(theme_color().logs_warning_color),
+            Log::Debug(text) => RichText::from(text).color(theme_color().logs_debug_color),
+            Log::Trace(text) => RichText::from(text).color(theme_color().logs_trace_color),
+            Log::Processed(text) => RichText::from(text).color(theme_color().logs_processed_color),
         };
 
         text.font(FontId::monospace(theme_style().node_log_font_size))
