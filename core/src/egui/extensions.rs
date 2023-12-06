@@ -89,7 +89,6 @@ impl UiExtension for Ui {
     }
 }
 
-
 pub struct LayoutJobBuilderSettings {
     pub width: f32,
     pub leading: f32,
@@ -106,7 +105,7 @@ impl LayoutJobBuilderSettings {
     }
 }
 
-pub fn ljb(settings : &LayoutJobBuilderSettings) -> LayoutJobBuilder {
+pub fn ljb(settings: &LayoutJobBuilderSettings) -> LayoutJobBuilder {
     LayoutJobBuilder::new(settings.width, settings.leading, settings.font_id.clone())
 }
 
@@ -160,9 +159,10 @@ impl LayoutJobBuilder {
 
         self
     }
-    pub fn padded(mut self, width : usize, text: &str, color: Color32) -> Self {
+    pub fn padded(mut self, width: usize, text: &str, color: Color32) -> Self {
         self.job.append(
-            text.pad_to_width_with_alignment(width, Alignment::Right).as_str(),
+            text.pad_to_width_with_alignment(width, Alignment::Right)
+                .as_str(),
             self.leading,
             TextFormat {
                 color,
