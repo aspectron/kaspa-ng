@@ -145,22 +145,28 @@ impl ModuleT for AccountCreate {
 
                             let margin = ui.available_width() * 0.5;
 
-                            for (_, prv_key_data_info) in prv_key_data_map.into_iter() {
-                                ui.add(Separator::default().horizontal().shrink(margin));
-                                ui.add_space(16.);
-                                ui.label(format!("Private Key: {}", prv_key_data_info.name_or_id()));
-                                ui.add_space(16.);
-                                if ui.add(CompositeButton::new(
-                                    "Kaspa Core HD account",
-                                    "BIP-44 "
-                                ))
-                                .clicked() {
-                                    this.context.prv_key_data_info = Some(prv_key_data_info.clone());
-                                    this.context.account_kind = Some(CreateAccountKind::Bip44);
-                                    this.state = State::AccountName;
-                                }
+                            if let Some(prv_key_data_map) = prv_key_data_map {
 
-                                ui.add_space(16.);
+                                for (_, prv_key_data_info) in prv_key_data_map.into_iter() {
+                                    ui.add(Separator::default().horizontal().shrink(margin));
+                                    ui.add_space(16.);
+                                    ui.label(format!("Private Key: {}", prv_key_data_info.name_or_id()));
+                                    ui.add_space(16.);
+                                    if ui.add(CompositeButton::new(
+                                        "Kaspa Core HD account",
+                                        "BIP-44 "
+                                    ))
+                                    .clicked() {
+                                        this.context.prv_key_data_info = Some(prv_key_data_info.clone());
+                                        this.context.account_kind = Some(CreateAccountKind::Bip44);
+                                        this.state = State::AccountName;
+                                        this.focus.next(Focus::AccountName);
+                                    }
+
+                                    ui.add_space(16.);
+                                }
+                            } else {
+                                ui.label("No private keys found");
                             }
 
                             ui.add(Separator::default().horizontal().shrink(margin));
@@ -170,7 +176,6 @@ impl ModuleT for AccountCreate {
                         .render(ui);
                 }
                 State::AccountName => {
-println!("rendering account name...");
 
                     Panel::new(self)
                         .with_caption("Account Name")
