@@ -66,10 +66,15 @@ impl<'core> Menu<'core> {
                             self.select::<modules::WalletOpen>();
                         }
                     }
-                    ui.separator();
 
-                    if ui.button("Settings").clicked() {
-                        self.select::<modules::Settings>();
+                    ui.separator();
+                    if ui.button("Metrics").clicked() {
+                        self.select::<modules::Metrics>();
+                    }
+
+                    ui.separator();
+                    if ui.button("Block DAG").clicked() {
+                        self.select::<modules::BlockDag>();
                     }
 
                     #[cfg(not(target_arch = "wasm32"))]
@@ -81,13 +86,9 @@ impl<'core> Menu<'core> {
                     }
 
                     ui.separator();
-                    if ui.button("Metrics").clicked() {
-                        self.select::<modules::Metrics>();
-                    }
 
-                    ui.separator();
-                    if ui.button("Block DAG").clicked() {
-                        self.select::<modules::BlockDag>();
+                    if ui.button("Settings").clicked() {
+                        self.select::<modules::Settings>();
                     }
 
                     #[cfg(not(target_arch = "wasm32"))]
