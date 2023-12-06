@@ -110,7 +110,7 @@ impl ModuleT for Export {
             match self.state.clone() {
 
                 State::Select => {
-                    let prv_key_data_list = core.prv_key_data_map.values().cloned().collect::<Vec<_>>();
+                    // let prv_key_data_list = core.prv_key_data_map.values().cloned().collect::<Vec<_>>();
 
                     let mut submit = false;
                     Panel::new(self)
@@ -163,8 +163,8 @@ impl ModuleT for Export {
 
 
                         })
-                        .with_footer(|_this,_ui| {
-                        })
+                        // .with_footer(|_this,_ui| {
+                        // })
                         .render(ui);
 
                         if submit {
@@ -185,7 +185,7 @@ impl ModuleT for Export {
                 }
 
                 State::SelectPrvKey => {
-                    let prv_key_data_list = core.prv_key_data_map.values().cloned().collect::<Vec<_>>();
+                    let prv_key_data_map = core.prv_key_data_map.clone(); //values().cloned().collect::<Vec<_>>();
 
                     let mut submit = false;
                     Panel::new(self)
@@ -208,12 +208,14 @@ impl ModuleT for Export {
                             ui.label("Please select private key to export");
                             ui.label("");
 
-                            for prv_key_data_info in prv_key_data_list.into_iter() {
-                                if ui.large_button(prv_key_data_info.name_or_id()).clicked() {
-                                    this.context.prv_key_data_id = Some(*prv_key_data_info.id());
-                                    submit = true;
+                            if let Some(prv_key_data_map) = prv_key_data_map {
+                                for prv_key_data_info in prv_key_data_map.values() {
+                                    if ui.large_button(prv_key_data_info.name_or_id()).clicked() {
+                                        this.context.prv_key_data_id = Some(*prv_key_data_info.id());
+                                        submit = true;
+                                    }
+                                    ui.label("");
                                 }
-                                ui.label("");
                             }
 
                         })

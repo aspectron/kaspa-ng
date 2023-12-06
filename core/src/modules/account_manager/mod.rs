@@ -1,6 +1,7 @@
 use crate::imports::*;
 use crate::primitives::account;
 use std::borrow::Cow;
+use egui_phosphor::thin::{CLOUD_ARROW_DOWN, CLOUD_SLASH};
 use kaspa_wallet_core::tx::{GeneratorSummary, PaymentOutput, Fees};
 use kaspa_wallet_core::api::*;
 use crate::primitives::descriptors::*;
@@ -10,12 +11,20 @@ mod transactions;
 mod details;
 mod utxo;
 mod menus;
+mod transfer;
+mod send;
+mod estimation;
+mod secret;
 
 use overview::*;
 use transactions::*;
 use details::*;
 use utxo::*;
 use menus::*;
+use transfer::*;
+use send::*;
+use estimation::*;
+use secret::*;
 
 
 #[allow(dead_code)]
@@ -35,7 +44,9 @@ pub enum AccountManagerSection {
     UtxoManager
 }
 
-#[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
+// #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
+// #[derive(Default, Debug, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Clone)]
 enum Action {
     #[default]
     None,
@@ -43,14 +54,15 @@ enum Action {
     Sending,
     // Reset,
     Processing,
+    Error(Arc<Error>),
 }
 
 
-impl Action {
-    fn is_sending(&self) -> bool {
-        matches!(self, Action::Sending | Action::Estimating | Action::Processing)
-    }
-}
+// impl Action {
+//     fn is_sending(&self) -> bool {
+//         matches!(self, Action::Sending | Action::Estimating | Action::Processing)
+//     }
+// }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 enum TransactionKind {
@@ -115,6 +127,8 @@ impl ManagerContext {
     }
 
     fn reset_send_state(&mut self) {
+        self.action = Action::None;
+
         self.zeroize()
     }
 }
@@ -132,7 +146,6 @@ impl Zeroize for ManagerContext {
         self.priority_fees_sompi = 0;
         *self.estimate.lock().unwrap() = EstimatorStatus::None;
         self.address_status = AddressStatus::None;
-        self.action = Action::None;
         self.transaction_kind = None;
         self.focus.clear();
         self.wallet_secret.zeroize();
@@ -191,6 +204,13 @@ impl ModuleT for AccountManager {
         self.context = ManagerContext::default();
         self.state = AccountManagerState::Select;
     }
+
+    // fn reload(&mut self, core : &mut Core) {
+    //     if let AccountManagerState::Overview { account } = self.state.clone() {
+    //         let account_id = account.id();
+    //         core.account_collection().get()
+    //     }
+    // }
 
     fn render(
         &mut self,
@@ -264,6 +284,32 @@ impl AccountManager {
                         Panel::new(self)
                             .with_caption("Select Account")
                             .with_body(|this, ui| {
+
+                                const SPACING : f32 = 8.;
+
+                                if !core.state().is_connected() {
+                                    ui.add_space(SPACING);
+                                    ui.label(
+                                        RichText::new(CLOUD_SLASH)
+                                            .size(theme_style().icon_size_large)
+                                            .color(theme_color().icon_color_default)
+                                    );
+                                    ui.add_space(SPACING);                                    
+                                    ui.label("You are currently not connected to the Kaspa node.");
+                                    ui.add_space(SPACING);                                    
+                                } else if !core.state().is_synced() {
+                                    ui.add_space(SPACING);
+                                    ui.label(
+                                        RichText::new(CLOUD_ARROW_DOWN)
+                                            .size(theme_style().icon_size_medium)
+                                            .color(theme_color().icon_color_default)
+                                    );
+                                    ui.add_space(SPACING);
+                                    ui.label("The node is currently syncing with the Kaspa p2p network. Account balances may be out of date.");
+                                    ui.add_space(SPACING);
+                                }
+
+
                                 account_collection.iter().for_each(|account_select| {
                                     if ui.account_selector_button(account_select, &network_type, false).clicked() {
                                         this.select(Some(account_select.clone()));
@@ -321,12 +367,6 @@ impl AccountManager {
             .exact_width(panel_width)
             .resizable(false)
             .show_separator_line(true)
-            // .frame(
-            //     Frame::default()
-            //         .inner_margin(0.)
-            //         .outer_margin(4.)
-            //         .fill(ui.ctx().style().visuals.panel_fill),
-            // )
             .show_inside(ui, |ui| {
             Overview::new(&mut self.context).render(core,ui,rc);
         });
@@ -335,12 +375,6 @@ impl AccountManager {
             .exact_width(panel_width)
             .resizable(false)
             .show_separator_line(false)
-            // .frame(
-            //     Frame::default()
-            //         .inner_margin(0.)
-            //         .outer_margin(4.)
-            //         .fill(ui.ctx().style().visuals.panel_fill),
-            // )
             .show_inside(ui, |ui| {
                 ui.separator();
 

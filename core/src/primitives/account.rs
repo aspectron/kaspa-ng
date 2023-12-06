@@ -222,7 +222,8 @@ impl AccountSelectorButtonExtension for Ui {
         let account_name = account.name_or_id();
 
         let icon = if selected {
-            Composite::icon(egui_phosphor::thin::CHECK)
+            // Composite::icon(egui_phosphor::thin::CHECK)
+            Composite::icon(egui_phosphor::thin::ARROW_FAT_RIGHT)
         } else {
             Composite::icon(egui_phosphor::thin::LIST_DASHES)
         };
