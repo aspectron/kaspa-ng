@@ -318,9 +318,7 @@ pub fn halt() {
         runtime.try_send(Events::Exit).ok();
         runtime.kaspa_service().clone().terminate();
 
-        let handle = tokio::spawn(async move { 
-            runtime.shutdown().await 
-        });
+        let handle = tokio::spawn(async move { runtime.shutdown().await });
 
         while !handle.is_finished() {
             std::thread::sleep(std::time::Duration::from_millis(50));

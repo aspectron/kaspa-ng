@@ -39,12 +39,12 @@ pub use std::sync::OnceLock;
 pub use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 pub use std::time::Duration;
 
+pub use workflow_core::abortable::Abortable;
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::enums::Describe;
 pub use workflow_core::extensions::is_not_empty::*;
 pub use workflow_core::task::interval;
 pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
-pub use workflow_core::abortable::Abortable;
 pub use workflow_i18n::*;
 pub use workflow_log::*;
 

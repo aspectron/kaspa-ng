@@ -295,8 +295,7 @@ impl Transaction {
                 ..
             } => {
                 let job = if let Some(payment_value) = payment_value {
-                    let mut job = ljb(&header) 
-                        .with_icon_font(icon_font_id);
+                    let mut job = ljb(&header).with_icon_font(icon_font_id);
 
                     job = job
                         .icon(
