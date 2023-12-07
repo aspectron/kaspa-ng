@@ -314,8 +314,13 @@ where
 /// is an inevitable eventuality.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn halt() {
-    if try_runtime().is_some() {
-        let handle = tokio::spawn(async move { runtime().shutdown().await });
+    if let Some(runtime) = try_runtime() {
+        runtime.try_send(Events::Exit).ok();
+        runtime.kaspa_service().clone().terminate();
+
+        let handle = tokio::spawn(async move { 
+            runtime.shutdown().await 
+        });
 
         while !handle.is_finished() {
             std::thread::sleep(std::time::Duration::from_millis(50));
