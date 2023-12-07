@@ -1,0 +1,345 @@
+use crate::imports::*;
+use egui_phosphor::thin::*;
+use kaspa_wallet_core::runtime::Wallet;
+
+#[derive(Clone)]
+pub enum State {
+    Select,
+    WalletSecret { account : Account },
+    Spawn { account : Account },
+    Status,
+    Finish,
+}
+
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
+enum Focus {
+    #[default]
+    None,
+    WalletSecret,
+}
+
+#[derive(Default, Clone)]
+enum Status {
+    #[default]
+    None,
+    Error { message : String },
+    Processing { index : usize, utxo_count: usize, balance : u64}
+}
+
+impl Status {
+    fn error(message : &str) -> Self {
+        Self::Error { message : message.to_string() }
+    }
+
+    fn processing(index : usize, utxo_count: usize, balance : u64) -> Self {
+        Self::Processing { index, utxo_count, balance }
+    }
+}
+
+#[derive(Default)]
+struct ScannerContext {
+    wallet_secret: String,
+    status : Arc<Mutex<Status>>,
+    abortable : Abortable,
+}
+
+pub struct Scanner {
+    #[allow(dead_code)]
+    runtime: Runtime,
+    context: ScannerContext,
+    state: State,
+    focus: FocusManager<Focus>,
+}
+
+impl Scanner {
+    pub fn new(runtime: Runtime) -> Self {
+        Self {
+            runtime,
+            context: ScannerContext::default(),
+            state: State::Select,
+            focus: FocusManager::default(),
+        }
+    }
+}
+
+impl ModuleT for Scanner {
+
+    fn style(&self) -> ModuleStyle {
+        ModuleStyle::Mobile
+    }
+
+    fn modal(&self) -> bool {
+        true
+    }
+
+    fn render(
+        &mut self,
+        core: &mut Core,
+        _ctx: &egui::Context,
+        _frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
+        let network_type = if let Some(network_id) = core.state().network_id() {
+            network_id.network_type()
+        } else {
+            core.settings.node.network.into()
+        };
+
+        match self.state.clone() {
+
+            State::Select => {
+
+                let mut close = false;
+
+                Panel::new(self)
+                    .with_caption("Scanner")
+                    .with_close_enabled(false, |_|{
+                    })
+                    .with_header(|_this,ui| {
+                        if core.state().is_open() && core.state().is_connected() && core.state().is_synced() {
+                            ui.label("Please select account to scan");
+                        }
+                    })
+                    .with_body(|this, ui|{
+
+                        if !core.state().is_open() {
+                            ui.label(
+                                RichText::new(SEAL_WARNING)
+                                    .size(theme_style().icon_size_large)
+                                    .color(theme_color().error_color)
+                            );
+                            ui.add_space(8.);                                    
+                            ui.label("Scanner requires an open wallet.");
+                            ui.add_space(16.);
+
+                            if ui.large_button("Close").clicked() {
+                                close = true;
+                            }
+                            
+                            return;
+                        } else if !core.state().is_connected() {
+                            ui.label(
+                                RichText::new(CLOUD_X)
+                                    .size(theme_style().icon_size_large)
+                                    .color(theme_color().error_color)
+                            );
+                            ui.add_space(8.);                                    
+                            ui.label("You are currently not connected to the Kaspa node.");
+                            ui.add_space(16.);
+                            
+                            if ui.large_button("Close").clicked() {
+                                close = true;
+                            }
+
+                            return;
+                        } else if !core.state().is_synced() {
+                            ui.label(
+                                RichText::new(CLOUD_ARROW_DOWN)
+                                    .size(theme_style().icon_size_medium)
+                                    .color(theme_color().warning_color)
+                            );
+                            ui.add_space(8.);
+                            ui.label("The node is currently syncing with the Kaspa p2p network. Please wait for the node to sync.");
+                            ui.add_space(16.);
+
+                            if ui.large_button("Close").clicked() {
+                                close = true;
+                            }
+
+                            return;
+                        }
+
+                        if let Some(account_collection) = core.account_collection() {
+
+                            for selectable_account in account_collection.list() {
+
+                                let account_kind = selectable_account.account_kind();
+                                if !account_kind.is_derivation_capable() {
+                                    continue;
+                                }
+
+                                if ui.account_selector_button(selectable_account, &network_type, false).clicked() {
+                                    this.state = State::WalletSecret {
+                                        account: selectable_account.clone(),
+                                    };
+                                    this.focus.next(Focus::WalletSecret);
+                                }
+                            }
+                        }
+
+                    }).render(ui);
+
+                    if close {
+                        core.select::<modules::Overview>();
+                    }
+            }
+            State::WalletSecret { account } => {
+
+                let submit = Rc::new(RefCell::new(false));
+
+                Panel::new(self)
+                    .with_caption("Wallet Secret")
+                    .with_back(|this| {
+                        this.state = State::Select;
+                    })
+                    .with_close_enabled(false, |_|{
+                    })
+                    .with_header(|_ctx,ui| {
+                        ui.label("Please enter the wallet secret");
+                    })
+                    .with_body(|this,ui| {
+                        TextEditor::new(
+                            &mut this.context.wallet_secret,
+                            &mut this.focus,
+                            Focus::WalletSecret,
+                            |ui, text| {
+                                ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
+                                ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
+                                    .vertical_align(Align::Center)
+                                    .password(true))
+                            },
+                        ).submit(|text,_focus| {
+                            if !text.is_empty() {
+                                *submit.borrow_mut() = true;
+                            }
+                        })
+                        .build(ui);
+                    })
+                    .with_footer(|this,ui| {
+                        let size = theme_style().large_button_size;
+                        let enabled = !this.context.wallet_secret.is_empty();
+                        if ui.add_enabled(enabled, egui::Button::new("Continue").min_size(size)).clicked() {
+                            *submit.borrow_mut() = true;
+                        }
+                    })
+                    .render(ui);
+
+                if *submit.borrow() {
+                    self.state = State::Spawn { account };
+                    self.focus.next(Focus::None);
+                }
+
+            }
+            State::Spawn { account } => {
+
+                if let Ok(wallet) = core.wallet().clone().downcast_arc::<Wallet>() {
+                    let status = self.context.status.clone();
+                    let abortable = self.context.abortable.clone();
+                    let wallet_secret = Secret::from(self.context.wallet_secret.as_str());
+                    self.context.wallet_secret.zeroize();
+
+                    spawn(async move {
+
+                        if let Some(account) = wallet.get_account_by_id(&account.id()).await? {
+
+                            account.as_derivation_capable()?
+                                .derivation_scan(
+                                    wallet_secret,
+                                    None,
+                                    0,
+                                    usize::MAX,
+                                    64,
+                                    false,
+                                    &abortable,
+                                    Some(Arc::new(move |index,utxo_count, balance, txid|{
+                                        if let Some(txid) = txid {
+                                            // println!("txid: {}", txid);
+                                            println!("scanner - txid: {}, balance: {}", txid, balance);
+                                        } else {
+                                            *status.lock().unwrap() = Status::processing(index, utxo_count, balance);
+                                        }
+                                    }))
+                                ).await?;
+
+                        } else {
+                            *status.lock().unwrap() = Status::error("Account not found");
+                        }
+
+                        Ok(())
+                    });
+
+                    self.state = State::Status;
+
+                } else {
+                    ui.label("");
+                    ui.label("Unable to access the wallet subsystem");
+                    ui.label("");
+                    if ui.large_button("Continue").clicked() {
+                        self.state = State::Select;
+                    }
+                }
+            }
+            State::Status => {
+
+                Panel::new(self)
+                    .with_caption("Scanner")
+                    .with_close_enabled(false, |_|{
+                    })
+                    .with_header(|_ctx,ui| {
+                        ui.label("Processing...");
+                    })
+                    .with_body(|this,ui| {
+
+                        match &*this.context.status.lock().unwrap() {
+                            Status::Error { message } => {
+                                ui.label(message);
+                            }
+                            Status::Processing { index, utxo_count, balance } => {
+                                ui.label(format!("Scanning address derivation {}...", index.separated_string()));
+                                ui.label(format!("Located {} UTXOs", utxo_count.separated_string()));
+                                ui.add_space(16.);
+                                ui.label(egui::RichText::new("BALANCE").size(12.).raised());
+                                ui.label(
+                                    s2kws_layout_job(*balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
+                                );
+                            }
+                            _ => {}
+                        }
+
+                        // ui.label("");
+                        ui.add_space(64.);
+                        ui.add(egui::Spinner::new().size(92.));
+
+                    })
+                    .with_footer(|this,ui| {
+                        if ui.large_button("Stop").clicked() {
+                            this.context.abortable.abort();
+                            this.state = State::Finish;
+                        }
+                    })
+                    .render(ui);
+
+            }
+
+            State::Finish => {
+
+                Panel::new(self)
+                    .with_caption("Scanner")
+                    .with_close_enabled(false, |_|{
+                    })
+                    .with_header(|_ctx,ui| {
+                        ui.label("Scanning complete...");
+                    })
+                    .with_body(|this,ui| {
+
+                        if let Status::Processing { index,utxo_count, balance } = &*this.context.status.lock().unwrap() {
+                            ui.label(format!("Total addresses scanned: {}", index.separated_string()));
+                            ui.label(format!("Located {} UTXOs", utxo_count.separated_string()));
+                            ui.add_space(16.);
+                            ui.label(egui::RichText::new("BALANCE").size(12.).raised());
+                            ui.label(
+                                s2kws_layout_job(*balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
+                            );
+                        }
+
+                    })
+                    .with_footer(|_this,ui| {
+                        if ui.large_button("Close").clicked() {
+                            core.select::<modules::AccountManager>();
+                        }
+                    })
+                    .render(ui);
+            }
+        }
+    }
+}

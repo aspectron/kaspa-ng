@@ -221,8 +221,7 @@ impl ModuleT for AccountCreate {
 
                 State::WalletSecret => {
 
-                    let mut submit_via_editor = false;
-                    let mut submit_via_footer = false;
+                    let submit = Rc::new(RefCell::new(false));
 
                     Panel::new(self)
                         .with_caption("Wallet Secret")
@@ -247,7 +246,7 @@ impl ModuleT for AccountCreate {
                                 },
                             ).submit(|text,_focus| {
                                 if !text.is_empty() {
-                                    submit_via_editor = true;
+                                    *submit.borrow_mut() = true;
                                 }
                             })
                             .build(ui);
@@ -256,12 +255,12 @@ impl ModuleT for AccountCreate {
                             let size = theme_style().large_button_size;
                             let enabled = !this.context.wallet_secret.is_empty();
                             if ui.add_enabled(enabled, egui::Button::new("Continue").min_size(size)).clicked() {
-                                submit_via_footer = true;
+                                *submit.borrow_mut() = true;
                             }
                         })
                         .render(ui);
 
-                    if submit_via_editor || submit_via_footer {
+                    if *submit.borrow() {
                         if self.context.prv_key_data_info.as_ref().map(|info| info.requires_bip39_passphrase()).unwrap_or(false) {
                             self.state = State::PaymentSecret;
                             self.focus.next(Focus::PaymentSecret);

@@ -285,30 +285,25 @@ impl AccountManager {
                             .with_caption("Select Account")
                             .with_body(|this, ui| {
 
-                                const SPACING : f32 = 8.;
-
                                 if !core.state().is_connected() {
-                                    ui.add_space(SPACING);
                                     ui.label(
                                         RichText::new(CLOUD_SLASH)
                                             .size(theme_style().icon_size_large)
                                             .color(theme_color().icon_color_default)
                                     );
-                                    ui.add_space(SPACING);                                    
+                                    ui.add_space(8.);                                    
                                     ui.label("You are currently not connected to the Kaspa node.");
-                                    ui.add_space(SPACING);                                    
+                                    ui.add_space(16.);                                    
                                 } else if !core.state().is_synced() {
-                                    ui.add_space(SPACING);
                                     ui.label(
                                         RichText::new(CLOUD_ARROW_DOWN)
                                             .size(theme_style().icon_size_medium)
                                             .color(theme_color().icon_color_default)
                                     );
-                                    ui.add_space(SPACING);
+                                    ui.add_space(8.);
                                     ui.label("The node is currently syncing with the Kaspa p2p network. Account balances may be out of date.");
-                                    ui.add_space(SPACING);
+                                    ui.add_space(16.);
                                 }
-
 
                                 account_collection.iter().for_each(|account_select| {
                                     if ui.account_selector_button(account_select, &network_type, false).clicked() {

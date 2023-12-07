@@ -115,6 +115,10 @@ impl Account {
         self.inner.bip39_passphrase
     }
 
+    pub fn account_kind(&self) -> AccountKind {
+        self.descriptor().account_kind()
+    }
+
     pub fn balance(&self) -> Option<Balance> {
         self.inner.balance.lock().unwrap().clone()
     }

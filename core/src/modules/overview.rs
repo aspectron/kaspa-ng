@@ -244,6 +244,7 @@ impl Overview {
                             ui.horizontal_wrapped(|ui|{
                                 ui.set_width(ui.available_width() - 64.);
                                 let mut nicks = [
+                                    "0xAndrei",
                                     "142673",
                                     "Bape",
                                     "Bubblegum Lightning",
@@ -260,12 +261,14 @@ impl Overview {
                                     "lAmeR",
                                     "matoo",
                                     "msutton",
+                                    "n15a",
                                     "Rhubarbarian",
                                     "shaideshe",
                                     "someone235",
                                     "supertypo",
                                     "The AllFather",
                                     "Tim",
+                                    "tmrlvi",
                                     "Wolfie",
                                 ];
                                 nicks.sort();

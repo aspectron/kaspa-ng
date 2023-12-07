@@ -80,6 +80,7 @@ impl<'manager> Overview<'manager> {
                                         layout = layout.add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme_style().medium_button_size()), |(this,_)| {
                                             this.context.action = Action::Estimating;
                                             this.context.transaction_kind = Some(TransactionKind::Transfer);
+                                            this.context.focus.next(Focus::Amount);
                                         });
                                     }
                                     layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme_style().medium_button_size()), |(_,core)| {
@@ -362,7 +363,7 @@ impl<'manager> Overview<'manager> {
 
         let RenderContext { network_type, .. } = rc;
 
-        let mut request_estimate = self.context.request_estimate.unwrap_or_default();
+        let mut request_estimate = self.context.request_estimate.take().unwrap_or_default();
 
         match self.context.transaction_kind.as_ref().unwrap() {
             TransactionKind::Send => {

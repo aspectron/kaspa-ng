@@ -280,13 +280,13 @@ where
 {
     pub fn new(
         user_text: &'editor mut String,
-        focus_mut_ref: &'editor mut FocusManager<Focus>,
+        focus_manager: &'editor mut FocusManager<Focus>,
         focus_value: Focus,
         editor_create_fn: impl FnOnce(&mut Ui, &mut String) -> Response + 'editor,
     ) -> Self {
         Self {
             user_text,
-            focus_manager: focus_mut_ref,
+            focus_manager,
             focus_value,
             editor_create_fn: Box::new(editor_create_fn),
             editor_change_fn: None,
