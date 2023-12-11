@@ -15,7 +15,6 @@ pub struct WalletOpen {
     wallet_secret: String,
     pub state: State,
     pub message: Option<String>,
-    // selected_wallet: Option<String>,
 }
 
 impl WalletOpen {
@@ -25,7 +24,6 @@ impl WalletOpen {
             wallet_secret: String::new(),
             state: State::Select,
             message: None,
-            // selected_wallet: None,
         }
     }
 
@@ -33,10 +31,6 @@ impl WalletOpen {
         self.state = State::Unlock { wallet_descriptor, error : None};
     }
 
-    // pub fn lock(&mut self) {
-    //     // Go to unlock page
-    //     self.state = State::Unlock(None);
-    // }
 }
 
 impl ModuleT for WalletOpen {
@@ -72,7 +66,6 @@ impl ModuleT for WalletOpen {
                     .with_body(|this, ui| {
                         for wallet_descriptor in core.borrow_mut().wallet_list.clone().into_iter() {
                             if ui.add_sized(theme_style().large_button_size(), CompositeButton::image_and_text(
-                                // Composite::Icon(egui_phosphor::thin::LOCK_KEY_OPEN),
                                 Composite::icon(egui_phosphor::thin::FINGERPRINT_SIMPLE),
                                 wallet_descriptor.title.as_deref().unwrap_or("NO NAME"),
                                 wallet_descriptor.filename.clone(),
@@ -113,7 +106,7 @@ impl ModuleT for WalletOpen {
 
                         if let Some(err) = error {
                             ui.label(
-                                egui::RichText::new(err.to_string())
+                                RichText::new(err.to_string())
                                     .color(egui::Color32::from_rgb(255, 120, 120)),
                             );
                             ui.label(" ");

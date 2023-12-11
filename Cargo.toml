@@ -63,7 +63,7 @@ kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
 kaspa-cli = { path = "../rusty-kaspa/cli" }
 kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
 kaspa-core = { path = "../rusty-kaspa/core" }
-kaspa-metrics = { path = "../rusty-kaspa/metrics/metrics" }
+kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
 kaspa-notify = { path = "../rusty-kaspa/notify" }
 kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
 kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
@@ -78,7 +78,7 @@ kaspad = { path = "../rusty-kaspa/kaspad" }
 # kaspa-cli = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-metrics = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-metrics-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-notify = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-rpc-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-rpc-service = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }

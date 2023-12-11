@@ -37,6 +37,9 @@ pub struct ThemeColor {
     pub transaction_reorg: Color32,
     pub transaction_batch: Color32,
     pub transaction_stasis: Color32,
+    pub transaction_transfer_incoming: Color32,
+    pub transaction_transfer_outgoing: Color32,
+    pub transaction_change: Color32,
 
     pub logs_info_color: Color32,
     pub logs_error_color: Color32,
@@ -95,10 +98,13 @@ impl ThemeColor {
 
             transaction_incoming: Color32::from_rgb(162, 245, 187),
             transaction_outgoing: Color32::from_rgb(245, 162, 162),
+            transaction_transfer_incoming: Color32::from_rgb(162, 245, 187),
+            transaction_transfer_outgoing: Color32::from_rgb(245, 162, 162),
             transaction_external: Color32::from_rgb(162, 245, 187),
             transaction_reorg: Color32::from_rgb(79, 64, 64),
             transaction_batch: Color32::GRAY,
             transaction_stasis: Color32::GRAY,
+            transaction_change: Color32::GRAY,
 
             logs_info_color: Color32::WHITE,
             logs_error_color: Color32::LIGHT_RED,
@@ -157,7 +163,10 @@ impl ThemeColor {
 
             transaction_incoming: Color32::from_rgb(15, 77, 35),
             transaction_outgoing: Color32::from_rgb(77, 15, 15),
+            transaction_transfer_incoming: Color32::from_rgb(15, 77, 35),
+            transaction_transfer_outgoing: Color32::from_rgb(77, 15, 15),
             transaction_external: Color32::from_rgb(15, 77, 35),
+            transaction_change: Color32::GRAY,
             transaction_reorg: Color32::from_rgb(38, 31, 31),
             transaction_batch: Color32::GRAY,
             transaction_stasis: Color32::GRAY,

@@ -10,12 +10,9 @@ cfg_if! {
 }
 
 pub mod channel;
-pub mod device;
 pub mod payload;
-pub mod plugins;
 pub mod services;
 pub mod system;
-pub use device::Device;
 pub use payload::Payload;
 pub use services::Service;
 use services::*;
@@ -29,13 +26,13 @@ pub struct Inner {
     peer_monitor_service: Arc<PeerMonitorService>,
     metrics_service: Arc<MetricsService>,
     block_dag_monitor_service: Arc<BlockDagMonitorService>,
-    plugin_manager_service: Arc<PluginManagerService>,
+    market_monitor_service: Arc<MarketMonitorService>,
+    update_monitor_service: Arc<UpdateMonitorService>,
     application_events: ApplicationEventsChannel,
     egui_ctx: egui::Context,
     is_running: Arc<AtomicBool>,
     start_time: Instant,
     system: Option<System>,
-    device: Device,
 }
 
 /// Runtime is a core component of the Kaspa NG application responsible for
@@ -62,7 +59,11 @@ impl Runtime {
             application_events.clone(),
             settings,
         ));
-        let plugin_manager_service = Arc::new(PluginManagerService::new(
+        let market_monitor_service = Arc::new(MarketMonitorService::new(
+            application_events.clone(),
+            settings,
+        ));
+        let update_monitor_service = Arc::new(UpdateMonitorService::new(
             application_events.clone(),
             settings,
         ));
@@ -73,7 +74,8 @@ impl Runtime {
             peer_monitor_service.clone(),
             metrics_service.clone(),
             block_dag_monitor_service.clone(),
-            plugin_manager_service.clone(),
+            market_monitor_service.clone(),
+            update_monitor_service.clone(),
         ]);
 
         let runtime = Self {
@@ -83,15 +85,14 @@ impl Runtime {
                 repaint_service,
                 kaspa,
                 peer_monitor_service,
-                plugin_manager_service,
+                market_monitor_service,
+                update_monitor_service,
                 metrics_service,
                 block_dag_monitor_service,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
                 start_time: Instant::now(),
-
                 system: Some(system),
-                device: Device::default(),
             }),
         };
 
@@ -106,10 +107,6 @@ impl Runtime {
 
     pub fn system(&self) -> &Option<System> {
         &self.inner.system
-    }
-
-    pub fn device(&self) -> &Device {
-        &self.inner.device
     }
 
     pub fn start_services(&self) {
@@ -191,8 +188,12 @@ impl Runtime {
         &self.inner.block_dag_monitor_service
     }
 
-    pub fn plugin_manager_service(&self) -> &Arc<PluginManagerService> {
-        &self.inner.plugin_manager_service
+    pub fn market_monitor_service(&self) -> &Arc<MarketMonitorService> {
+        &self.inner.market_monitor_service
+    }
+
+    pub fn update_monitor_service(&self) -> &Arc<UpdateMonitorService> {
+        &self.inner.update_monitor_service
     }
 
     /// Returns the reference to the application events channel.
@@ -231,7 +232,6 @@ impl Runtime {
                     .send(Events::Error(Box::new(err.to_string())))
                     .await
                     .unwrap();
-                // println!("spawned task error: {:?}", err);
             }
         });
     }

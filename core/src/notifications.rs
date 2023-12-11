@@ -49,7 +49,9 @@ impl UserNotification {
     }
 
     pub fn error(text: impl Into<String>) -> Self {
-        Self::new(UserNotifyKind::Error, text)
+        let text = text.into();
+        // println!("error: {}", text);
+        Self::new(UserNotifyKind::Error, text).duration(Duration::from_millis(5000))
     }
 
     pub fn success(text: impl Into<String>) -> Self {
@@ -58,6 +60,11 @@ impl UserNotification {
 
     pub fn basic(text: impl Into<String>) -> Self {
         Self::new(UserNotifyKind::Basic, text)
+    }
+
+    pub fn duration(mut self, duration: Duration) -> Self {
+        self.duration = Some(duration);
+        self
     }
 
     pub fn short(mut self) -> Self {

@@ -3,9 +3,8 @@ use crate::imports::*;
 use kaspa_wallet_core::api::WalletCreateResponse;
 use kaspa_wallet_core::runtime::{AccountKind, AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
 use slug::slugify;
-use passwords::analyzer;
-use passwords::scorer;
 use kaspa_bip32::WordCount;
+use crate::utils::{secret_score, secret_score_to_text};
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
 enum Focus {
@@ -73,6 +72,20 @@ struct Context {
     import_advanced : bool,
     
     // mnemonic: Vec<String>,
+}
+
+impl Zeroize for Context {
+    fn zeroize(&mut self) {
+        self.wallet_name.zeroize();
+        self.wallet_filename.zeroize();
+        self.account_name.zeroize();
+        self.phishing_hint.zeroize();
+        self.wallet_secret.zeroize();
+        self.wallet_secret_confirm.zeroize();
+        self.payment_secret.zeroize();
+        self.payment_secret_confirm.zeroize();
+        // self.mnemonic_presenter_context.zeroize();
+    }
 }
 
 pub struct WalletCreate {
@@ -496,7 +509,6 @@ impl ModuleT for WalletCreate {
 
 
                         if change {
-                            // if ((this.context.wallet_secret.is_not_empty() || this.context.wallet_secret_confirm.is_not_empty())) {
                             let wallet_secret = this
                                 .context
                                 .wallet_secret
@@ -507,18 +519,18 @@ impl ModuleT for WalletCreate {
                                     .is_not_empty()
                                     .then_some(this.context.wallet_secret_confirm.clone())
                                 );
-                            this.context.wallet_secret_score = wallet_secret.map(password_score); //Some(password_score(&this.context.wallet_secret));
+                            this.context.wallet_secret_score = wallet_secret.map(secret_score); //Some(password_score(&this.context.wallet_secret));
                         }
 
                         if let Some(score) = this.context.wallet_secret_score {
                             ui.label("");
-                            ui.label(format!("Password score: {}",score_to_text(score)));
+                            ui.label(format!("Secret score: {}",secret_score_to_text(score)));
                             if score < 80.0 {
                                 ui.label("");
-                                ui.label(RichText::new(i18n("Password is too weak")).color(egui::Color32::from_rgb(255, 120, 120)));
+                                ui.label(RichText::new(i18n("Secret is too weak")).color(error_color()));
                                 if !core.settings.developer.disable_password_restrictions() {
                                     submit = false;
-                                    ui.label(RichText::new(i18n("Please create a stronger password")).color(egui::Color32::from_rgb(255, 120, 120)));
+                                    ui.label(RichText::new(i18n("Please create a stronger password")).color(error_color()));
                                 }
                             }
                         }
@@ -526,7 +538,7 @@ impl ModuleT for WalletCreate {
 
                         if this.context.wallet_secret_confirm.is_not_empty() && this.context.wallet_secret != this.context.wallet_secret_confirm {
                             ui.label(" ");
-                            ui.label(egui::RichText::new(i18n("Passwords do not match")).color(egui::Color32::from_rgb(255, 120, 120)));
+                            ui.label(RichText::new(i18n("Passwords do not match")).color(error_color()));
                             ui.label(" ");
                             submit = false;
                         } else {
@@ -634,12 +646,12 @@ impl ModuleT for WalletCreate {
                                         .is_not_empty()
                                         .then_some(this.context.wallet_secret_confirm.clone())
                                     );
-                                this.context.payment_secret_score = payment_secret.map(password_score);
+                                this.context.payment_secret_score = payment_secret.map(secret_score);
                             }
 
                             if let Some(score) = this.context.payment_secret_score {
                                 ui.label("");
-                                ui.label(score_to_text(score));
+                                ui.label(secret_score_to_text(score));
                                 if score < 80.0 {
                                     ui.label("");
                                     ui.label(RichText::new(i18n("Passphrase is too weak")).color(egui::Color32::from_rgb(255, 120, 120)));
@@ -749,9 +761,12 @@ impl ModuleT for WalletCreate {
                 if let Some(result) = wallet_create_result.take() {
                     match result {
                         Ok((mnemonic,account)) => {
+                            self.context.zeroize();
+
                             println!("Wallet created successfully");
                             self.state = State::PresentMnemonic(mnemonic);
-                            core.get_mut::<modules::AccountManager>().select(Some(account.into()));
+                            let device = core.device().clone();
+                            core.get_mut::<modules::AccountManager>().select(Some(account.into()), device);
                         }
                         Err(err) => {
                             println!("Wallet creation error: {}", err);
@@ -769,8 +784,8 @@ impl ModuleT for WalletCreate {
                 .with_header(move |this,ui| {
                     ui.label(" ");
                     ui.label(" ");
-                    ui.label(egui::RichText::new("Error creating a wallet").color(egui::Color32::from_rgb(255, 120, 120)));
-                    ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
+                    ui.label(RichText::new("Error creating a wallet").color(egui::Color32::from_rgb(255, 120, 120)));
+                    ui.label(RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
                     ui.label(" ");
                     ui.label(" ");
 
@@ -847,31 +862,5 @@ impl ModuleT for WalletCreate {
 
         }
 
-    }
-}
-
-fn password_score(password : impl AsRef<str>) -> f64 {
-    scorer::score(&analyzer::analyze(password))
-}
-
-fn score_to_text(value: f64) -> String {
-    if (0.0..=20.0).contains(&value) {
-        return String::from(i18n("Very dangerous (may be cracked within few seconds)"));
-    } else if value > 20.0 && value <= 40.0 {
-        return String::from(i18n("Dangerous"));
-    } else if value > 40.0 && value <= 60.0 {
-        return String::from(i18n("Very weak"));
-    } else if value > 60.0 && value <= 80.0 {
-        return String::from(i18n("Weak"));
-    } else if value > 80.0 && value <= 90.0 {
-        return String::from(i18n("Good"));
-    } else if value > 90.0 && value <= 95.0 {
-        return String::from(i18n("Strong"));
-    } else if value > 95.0 && value <= 99.0 {
-        return String::from(i18n("Very strong"));
-    } else if value > 99.0 && value <= 100.0 {
-        return String::from(i18n("Invulnerable"));
-    } else {
-        return String::from("Value is outside the defined range");
     }
 }

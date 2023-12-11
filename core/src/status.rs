@@ -1,6 +1,6 @@
 use crate::imports::*;
 use crate::sync::SyncStatus;
-use kaspa_metrics::MetricsSnapshot;
+use kaspa_metrics_core::MetricsSnapshot;
 
 enum ConnectionStatus {
     Connected {
@@ -37,8 +37,8 @@ impl<'core> Status<'core> {
         self.core.module()
     }
 
-    fn device(&self) -> &Device {
-        runtime().device()
+    fn device(&mut self) -> &Device {
+        self.core.device()
     }
 
     fn metrics(&self) -> &Option<Box<MetricsSnapshot>> {
@@ -136,7 +136,7 @@ impl<'core> Status<'core> {
                     }
                     KaspadNodeKind::Remote => {
                         ui.label(
-                            RichText::new(egui_phosphor::light::TREE_STRUCTURE)
+                            RichText::new(egui_phosphor::light::CLOUD_X)
                                 .size(status_icon_size)
                                 .color(theme_color().error_color),
                         );
@@ -186,7 +186,7 @@ impl<'core> Status<'core> {
                     }
                 }
 
-                if !self.device().is_single_pane() {
+                if !self.device().single_pane() {
                     module.status_bar(self.core, ui);
                 }
             }
@@ -219,14 +219,16 @@ impl<'core> Status<'core> {
                 //     });
                 // });
 
-                if !self.device().is_single_pane() {
+                if !self.device().mobile() {
                     ui.separator();
                     self.render_peers(ui, peers);
                     if let Some(current_daa_score) = current_daa_score {
                         ui.separator();
                         ui.label(format!("DAA {}", current_daa_score.separated_string()));
                     }
+                }
 
+                if !self.device().single_pane() {
                     module.status_bar(self.core, ui);
                 }
             }
@@ -244,7 +246,7 @@ impl<'core> Status<'core> {
                         ui.separator();
                         self.render_network_selector(ui);
 
-                        if !self.device().is_single_pane() {
+                        if !self.device().single_pane() {
                             ui.separator();
                             self.render_peers(ui, peers);
                             if let Some(status) = sync_status.as_ref() {

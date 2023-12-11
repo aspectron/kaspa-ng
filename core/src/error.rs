@@ -51,7 +51,7 @@ pub enum Error {
     NodeStdoutHandleError,
 
     #[error("Metrics: {0}")]
-    Metrics(#[from] kaspa_metrics::error::Error),
+    Metrics(#[from] kaspa_metrics_core::error::Error),
 
     #[error(transparent)]
     AddrParseError(#[from] AddrParseError),

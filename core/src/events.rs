@@ -1,6 +1,7 @@
 use crate::imports::*;
+use crate::market::*;
 use crate::utils::Release;
-use kaspa_metrics::MetricsSnapshot;
+use kaspa_metrics_core::MetricsSnapshot;
 use kaspa_wallet_core::{events as kaspa, storage::PrvKeyDataInfo};
 
 pub type ApplicationEventsChannel = crate::runtime::channel::Channel<Events>;
@@ -11,6 +12,7 @@ pub enum Events {
     ThemeChange,
     StoreSettings,
     UpdateLogs,
+    Market(MarketUpdate),
     Metrics {
         snapshot: Box<MetricsSnapshot>,
     },

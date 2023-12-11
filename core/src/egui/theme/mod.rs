@@ -1,4 +1,4 @@
-use kaspa_metrics::MetricGroup;
+use kaspa_metrics_core::MetricGroup;
 
 mod color;
 pub use color::*;
@@ -154,6 +154,20 @@ pub fn apply_theme(ctx: &Context, theme: Theme) {
         .try_send(Events::ThemeChange)
         .unwrap();
 }
+
+// ~
+
+#[inline(always)]
+pub fn error_color() -> Color32 {
+    theme_color().error_color
+}
+
+#[inline(always)]
+pub fn warning_color() -> Color32 {
+    theme_color().warning_color
+}
+
+// ~
 
 pub trait MetricGroupExtension {
     fn to_color(&self) -> Color32;

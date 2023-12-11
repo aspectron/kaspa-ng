@@ -1,7 +1,7 @@
 use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
-use kaspa_metrics::{Metric, Metrics, MetricsSnapshot};
+use kaspa_metrics_core::{Metric, Metrics, MetricsSnapshot};
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 

@@ -72,10 +72,7 @@ impl ModuleT for Import {
                                 // ui.label(this.mnemonic.last().unwrap_or(&String::new()));
                                 this.mnemonic.iter().for_each(|word| {
                                     ui.label(" ");
-                                    
-                                    ui.label(egui::RichText::new(word).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
-                                    
-                                    
+                                    ui.label(RichText::new(word).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
                                 });
                             });
                             // ui.label(" ");
@@ -155,14 +152,12 @@ impl ModuleT for Import {
                             if let Some(message) = message {
                                 ui.label(" ");
 
-                                // ui.label(format!("Error: {}",message));
-
                                 ui.label(
-                                    egui::RichText::new("Error unlocking wallet")
+                                    RichText::new("Error unlocking wallet")
                                         .color(egui::Color32::from_rgb(255, 120, 120)),
                                 );
                                 ui.label(
-                                    egui::RichText::new(message)
+                                    RichText::new(message)
                                         .color(egui::Color32::from_rgb(255, 120, 120)),
                                 );
 

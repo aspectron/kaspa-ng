@@ -1,11 +1,10 @@
 use crate::imports::*;
-use crate::runtime::plugins::Plugin;
-// use workflow_http::get_json;
+use crate::market::*;
 
 mod coingecko;
 mod coinmarketcap;
 
-pub const POLLING_INTERVAL_SECONDS: usize = 60;
+pub const POLLING_INTERVAL_SECONDS: u64 = 60;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -24,7 +23,7 @@ impl MarketDataProvider {
         }
     }
 
-    async fn fetch_market_price_list(&self, currencies: &[&str]) -> Result<MarketPriceMap> {
+    async fn fetch_market_price_list(&self, currencies: &[&str]) -> Result<MarketDataMap> {
         match self {
             Self::CoinGecko => coingecko::fetch_market_price_list(currencies).await,
             Self::CoinMarketCap => coinmarketcap::fetch_market_price_list(currencies).await,
@@ -55,16 +54,6 @@ struct MarketMonitorSettings {
 //     }
 // }
 
-#[derive(Default, Debug)]
-pub struct MarketPrice {
-    pub price: Option<f64>,
-    pub market_cap: Option<f64>,
-    pub volume: Option<f64>,
-    pub change: Option<f64>,
-}
-
-pub type MarketPriceMap = HashMap<String, MarketPrice>;
-
 // struct MarketPriceList {
 //     pub prices: HashMap<String, MarketPrice>,
 // }
@@ -84,7 +73,7 @@ pub enum MarketMonitorEvents {
     Exit,
 }
 
-pub struct MarketMonitorPlugin {
+pub struct MarketMonitorService {
     pub application_events: ApplicationEventsChannel,
     pub plugin_events: Channel<MarketMonitorEvents>,
     pub task_ctl: Channel<()>,
@@ -92,11 +81,16 @@ pub struct MarketMonitorPlugin {
     pub currencies: Mutex<Option<Vec<String>>>,
     pub provider: Mutex<MarketDataProvider>,
     pub available_currencies: Mutex<Option<Vec<CurrencyDescriptor>>>,
-    pub market_price_list: Mutex<Option<Arc<MarketPriceMap>>>,
+    pub market_price_list: Mutex<Option<Arc<MarketDataMap>>>,
 }
 
-impl MarketMonitorPlugin {
-    pub fn new(application_events: ApplicationEventsChannel) -> Self {
+impl MarketMonitorService {
+    pub fn new(application_events: ApplicationEventsChannel, _settings: &Settings) -> Self {
+        let currencies = ["usd", "btc"]
+            .into_iter()
+            .map(String::from)
+            .collect::<Vec<_>>();
+
         Self {
             application_events,
             plugin_events: Channel::unbounded(),
@@ -104,7 +98,8 @@ impl MarketMonitorPlugin {
             is_enabled: AtomicBool::new(false),
             provider: Mutex::new(MarketDataProvider::default()),
             // ------
-            currencies: Mutex::new(Some(vec!["usd".to_string()])),
+            // currencies: Mutex::new(Some(vec!["usd".to_string()])),
+            currencies: Mutex::new(Some(currencies)),
             // ------
             // currencies: Mutex::new(None),
             available_currencies: Mutex::new(None),
@@ -136,11 +131,18 @@ impl MarketMonitorPlugin {
             if let Ok(market_price_list) =
                 self.provider().fetch_market_price_list(&currencies).await
             {
-                println!("market price list: {:?}", market_price_list);
-                self.market_price_list
-                    .lock()
-                    .unwrap()
-                    .replace(Arc::new(market_price_list));
+                // println!("market price list: {:?}", market_price_list);
+                // self.market_price_list
+                //     .lock()
+                //     .unwrap()
+                //     .replace(Arc::new(market_price_list));
+
+                self.application_events
+                    .sender
+                    .try_send(Events::Market(MarketUpdate::Price(Arc::new(
+                        market_price_list,
+                    ))))
+                    .unwrap();
                 // println!("market_data: {:?}", market_data);
             }
         }
@@ -149,48 +151,47 @@ impl MarketMonitorPlugin {
 }
 
 #[async_trait]
-impl Plugin for MarketMonitorPlugin {
-    fn ident(&self) -> &'static str {
+impl Service for MarketMonitorService {
+    // fn ident(&self) -> &'static str {
+    //     "market-monitor"
+    // }
+
+    fn name(&self) -> &'static str {
         "market-monitor"
     }
 
-    fn name(&self) -> &'static str {
-        "Market Monitor"
-    }
+    // fn load(&self, settings: serde_json::Value) -> Result<()> {
+    //     let MarketMonitorSettings {
+    //         enabled,
+    //         provider,
+    //         currencies,
+    //     } = serde_json::from_value(settings)?;
+    //     self.is_enabled.store(enabled, Ordering::SeqCst);
+    //     self.currencies.lock().unwrap().replace(currencies);
+    //     *self.provider.lock().unwrap() = provider;
 
-    fn load(&self, settings: serde_json::Value) -> Result<()> {
-        let MarketMonitorSettings {
-            enabled,
-            provider,
-            currencies,
-        } = serde_json::from_value(settings)?;
-        self.is_enabled.store(enabled, Ordering::SeqCst);
-        self.currencies.lock().unwrap().replace(currencies);
-        *self.provider.lock().unwrap() = provider;
+    //     Ok(())
+    // }
 
-        Ok(())
-    }
+    // fn store(&self) -> Result<Option<serde_json::Value>> {
+    //     let settings = MarketMonitorSettings {
+    //         enabled: self.is_enabled.load(Ordering::SeqCst),
+    //         provider: self.provider.lock().unwrap().clone(),
+    //         currencies: self.currencies.lock().unwrap().clone().unwrap_or_default(),
+    //     };
 
-    fn store(&self) -> Result<Option<serde_json::Value>> {
-        let settings = MarketMonitorSettings {
-            enabled: self.is_enabled.load(Ordering::SeqCst),
-            provider: self.provider.lock().unwrap().clone(),
-            currencies: self.currencies.lock().unwrap().clone().unwrap_or_default(),
-        };
+    //     Ok(Some(serde_json::to_value(settings)?))
+    // }
 
-        Ok(Some(serde_json::to_value(settings)?))
-    }
-
-    async fn start(self: Arc<Self>) -> Result<()> {
+    async fn spawn(self: Arc<Self>) -> Result<()> {
         let this = self.clone();
         let _application_events_sender = self.application_events.sender.clone();
-        let interval = interval(Duration::from_secs(1));
+        let interval = interval(Duration::from_secs(POLLING_INTERVAL_SECONDS));
         pin_mut!(interval);
 
         loop {
             select! {
                 _ = interval.next().fuse() => {
-                    println!("Updating market price list...");
                     this.update_market_price_list().await?;
                 },
 
@@ -225,9 +226,9 @@ impl Plugin for MarketMonitorPlugin {
         Ok(())
     }
 
-    fn render(&self, ui: &mut Ui) {
-        ui.label("Market Monitor");
+    // fn render(&self, ui: &mut Ui) {
+    //     ui.label("Market Monitor");
 
-        ui.label("TODO - Add Market Monitor Settings");
-    }
+    //     ui.label("TODO - Add Market Monitor Settings");
+    // }
 }

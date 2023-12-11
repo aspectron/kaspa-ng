@@ -56,7 +56,6 @@ impl CompositeIcon {
         text: Option<impl Into<WidgetText>>,
         secondary_text: Option<impl Into<WidgetText>>,
     ) -> Self {
-        //let icon = icon.map(|icon|egui::RichText::new(&icon).size(10.0).color(Color32::from_rgb(255, 0, 0)));
         Self {
             text: text.map(|a| a.into()),
             secondary_text: secondary_text.map(|a| a.into()),

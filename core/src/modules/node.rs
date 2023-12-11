@@ -104,9 +104,7 @@ fn render_peer(ui : &mut Ui, peer: &RpcPeerInfo) {
 
             Grid::new("peer_info_grid")
                 .num_columns(2)
-                .spacing([40.0,4.0])
-                .min_col_width(120.0)
-                // .striped(true)
+                .spacing([16.0,4.0])
                 .show(ui, |ui| {
 
                     ui.label(i18n("User Agent"));

@@ -1,3 +1,5 @@
+use egui_phosphor::thin::TRANSLATE;
+
 use crate::imports::*;
 
 pub struct Menu<'core> {
@@ -20,93 +22,31 @@ impl<'core> Menu<'core> {
         egui::menu::bar(ui, |ui| {
             ui.columns(2, |cols| {
                 cols[0].horizontal(|ui| {
-                    ui.menu_button("File", |ui| {
-                        #[cfg(not(target_arch = "wasm32"))]
-                        if ui.button("Quit").clicked() {
-                            ui.ctx().send_viewport_cmd(ViewportCommand::Close)
-                        }
+                    if self.core.settings.developer.enable && self.core.debug {
+                        self.render_debug(ui);
                         ui.separator();
-                        ui.label(" ~ Debug Modules ~");
-                        ui.label(" ");
+                    }
 
-                        let (tests, mut modules): (Vec<_>, Vec<_>) = self
-                            .core
-                            .modules()
-                            .values()
-                            .cloned()
-                            .partition(|module| module.name().starts_with('~'));
-
-                        tests.into_iter().for_each(|module| {
-                            if ui.button(module.name()).clicked() {
-                                self.core.select_with_type_id(module.type_id());
-                                ui.close_menu();
-                            }
+                    if self.core.device().single_pane() {
+                        // ui.menu_button(format!("{} Kaspa NG", LIST), |ui| {
+                        ui.menu_button("Kaspa NG", |ui| {
+                            self.render_menu(ui);
                         });
-
-                        ui.label(" ");
-
-                        modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
-                        modules.into_iter().for_each(|module| {
-                            if ui.button(module.name()).clicked() {
-                                self.core.select_with_type_id(module.type_id());
-                                ui.close_menu();
-                            }
-                        });
-                    });
-
-                    ui.separator();
-                    if ui.button("Overview").clicked() {
-                        self.select::<modules::Overview>();
-                    }
-                    ui.separator();
-                    if ui.button("Wallet").clicked() {
-                        if self.core.state().is_open() {
-                            self.select::<modules::AccountManager>();
-                        } else {
-                            self.select::<modules::WalletOpen>();
-                        }
-                    }
-
-                    ui.separator();
-                    if ui.button("Metrics").clicked() {
-                        self.select::<modules::Metrics>();
-                    }
-
-                    ui.separator();
-                    if ui.button("Block DAG").clicked() {
-                        self.select::<modules::BlockDag>();
-                    }
-
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
+                    } else {
+                        self.render_menu(ui);
                         ui.separator();
-                        if ui.button("Node").clicked() {
-                            self.select::<modules::Node>();
-                        }
                     }
-
-                    ui.separator();
-
-                    if ui.button("Settings").clicked() {
-                        self.select::<modules::Settings>();
-                    }
-
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        ui.separator();
-                        if ui.button("Logs").clicked() {
-                            self.select::<modules::Logs>();
-                        }
-                    }
-
-                    ui.separator();
                 });
 
                 cols[1].with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let dictionary = i18n::dictionary();
-                    // use egui_phosphor::light::TRANSLATE;
+                    let lang_menu = if self.core.device().orientation() == Orientation::Portrait {
+                        RichText::new(TRANSLATE).size(18.)
+                    } else {
+                        RichText::new(format!("{} ⏷", dictionary.current_title()))
+                    };
                     #[allow(clippy::useless_format)]
-                    ui.menu_button(format!("{} ⏷", dictionary.current_title()), |ui| {
+                    ui.menu_button(lang_menu, |ui| {
                         // ui.menu_button(RichText::new(format!("{TRANSLATE} ⏷")).size(18.), |ui| {
                         dictionary
                             .enabled_languages()
@@ -175,6 +115,7 @@ impl<'core> Menu<'core> {
                                 ui.label("Theme Style");
 
                                 let current_theme_style_name = theme_style().name();
+
                                 ui.menu_button(format!("{} ⏷", current_theme_style_name), |ui| {
                                     theme_styles().keys().for_each(|name| {
                                         if name.as_str() != current_theme_style_name
@@ -234,6 +175,95 @@ impl<'core> Menu<'core> {
                     // }
                     // ui.separator();
                 });
+            });
+        });
+    }
+
+    pub fn render_menu(&mut self, ui: &mut Ui) {
+        if ui.button("Overview").clicked() {
+            self.select::<modules::Overview>();
+            ui.close_menu();
+        }
+        ui.separator();
+        if ui.button("Wallet").clicked() {
+            if self.core.state().is_open() {
+                self.select::<modules::AccountManager>();
+            } else {
+                self.select::<modules::WalletOpen>();
+            }
+            ui.close_menu();
+        }
+
+        ui.separator();
+        if ui.button("Metrics").clicked() {
+            self.select::<modules::Metrics>();
+            ui.close_menu();
+        }
+
+        ui.separator();
+        if ui.button("Block DAG").clicked() {
+            self.select::<modules::BlockDag>();
+            ui.close_menu();
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            ui.separator();
+            if ui.button("Node").clicked() {
+                self.select::<modules::Node>();
+                ui.close_menu();
+            }
+        }
+
+        ui.separator();
+
+        if ui.button("Settings").clicked() {
+            self.select::<modules::Settings>();
+            ui.close_menu();
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            ui.separator();
+            if ui.button("Logs").clicked() {
+                self.select::<modules::Logs>();
+                ui.close_menu();
+            }
+        }
+    }
+
+    pub fn render_debug(&mut self, ui: &mut Ui) {
+        ui.menu_button("Debug", |ui| {
+            #[cfg(not(target_arch = "wasm32"))]
+            if ui.button("Quit").clicked() {
+                ui.ctx().send_viewport_cmd(ViewportCommand::Close)
+            }
+            ui.separator();
+            ui.label(" ~ Debug Modules ~");
+            ui.label(" ");
+
+            let (tests, mut modules): (Vec<_>, Vec<_>) = self
+                .core
+                .modules()
+                .values()
+                .cloned()
+                .partition(|module| module.name().starts_with('~'));
+
+            tests.into_iter().for_each(|module| {
+                if ui.button(module.name()).clicked() {
+                    self.core.select_with_type_id(module.type_id());
+                    ui.close_menu();
+                }
+            });
+
+            ui.label(" ");
+
+            modules.sort_by(|a, b| a.name().partial_cmp(b.name()).unwrap());
+            modules.into_iter().for_each(|module| {
+                if ui.button(module.name()).clicked() {
+                    self.core.select_with_type_id(module.type_id());
+                    ui.close_menu();
+                }
             });
         });
     }

@@ -1,8 +1,9 @@
 use crate::imports::*;
+use crate::market::*;
 use crate::mobile::MobileMenu;
 use egui::load::Bytes;
 use egui_notify::Toasts;
-use kaspa_metrics::MetricsSnapshot;
+use kaspa_metrics_core::MetricsSnapshot;
 use kaspa_wallet_core::api::TransactionDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint, PrvKeyDataInfo};
@@ -42,8 +43,11 @@ pub struct Core {
     pub wallet_list: Vec<WalletDescriptor>,
     pub prv_key_data_map: Option<HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>>,
     pub account_collection: Option<AccountCollection>,
-    // pub selected_account: Option<Account>,
     pub release: Option<Release>,
+
+    pub device: Device,
+    pub market: Market,
+    pub debug: bool,
 }
 
 impl Core {
@@ -173,6 +177,10 @@ impl Core {
             exception: None,
 
             release: None,
+
+            device: Device::default(),
+            market: Market::default(),
+            debug: false,
         };
 
         modules.values().for_each(|module| {
@@ -268,6 +276,14 @@ impl Core {
 
     pub fn metrics(&self) -> &Option<Box<MetricsSnapshot>> {
         &self.metrics
+    }
+
+    pub fn device(&self) -> &Device {
+        &self.device
+    }
+
+    pub fn device_mut(&mut self) -> &mut Device {
+        &mut self.device
     }
 
     pub fn module(&self) -> &Module {
@@ -380,17 +396,45 @@ impl eframe::App for Core {
             }
         }
 
-        let device = runtime().device();
+        // let device = runtime().device();
 
-        if !self.module.modal() && !device.is_single_pane() {
+        self.device_mut().set_screen_size(&ctx.screen_rect());
+
+        // if ctx.screen_rect().width() < ctx.screen_rect().height() || ctx.screen_rect().width() < 540.0 {
+        //     self.device.orientation = Orientation::Portrait;
+        // } else {
+        //     self.device.orientation = Orientation::Landscape;
+        // }
+        // device.enable_portrait_desired(ctx.screen_rect().width() < 540.0);
+
+        // if !self.module.modal() && !device.single_pane() {
+        if !self.module.modal() && !self.device.mobile() {
             egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
                 Menu::new(self).render(ui);
                 // self.render_menu(ui, frame);
             });
         }
 
-        if device.is_single_pane() {
-            if !device.is_mobile() {
+        if self.device.orientation() == Orientation::Portrait {
+            CentralPanel::default()
+                .frame(Frame::default().fill(ctx.style().visuals.panel_fill))
+                .show(ctx, |ui| {
+                    egui::TopBottomPanel::bottom("portrait_bottom_panel").show_inside(ui, |ui| {
+                        Status::new(self).render(ui);
+                    });
+
+                    if self.device.mobile() {
+                        egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(ui, |ui| {
+                            MobileMenu::new(self).render(ui);
+                        });
+                    }
+
+                    egui::CentralPanel::default().show_inside(ui, |ui| {
+                        self.module.clone().render(self, ctx, frame, ui);
+                    });
+                });
+        } else if self.device.single_pane() {
+            if !self.device.mobile() {
                 egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
                     Status::new(self).render(ui);
                     egui::warn_if_debug_build(ui);
@@ -422,7 +466,7 @@ impl eframe::App for Core {
                         Status::new(self).render(ui);
                     });
 
-                    if device.is_mobile() {
+                    if self.device.mobile() {
                         egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(ui, |ui| {
                             MobileMenu::new(self).render(ui);
                         });
@@ -450,7 +494,6 @@ impl eframe::App for Core {
                 self.module.clone().render(self, ctx, frame, ui);
             });
         }
-
         // if false {
         //     egui::Window::new("Window").show(ctx, |ui| {
         //         ui.label("Windows can be moved by dragging them.");
@@ -533,6 +576,14 @@ impl Core {
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
         match event {
+            Events::Market(update) => match update {
+                MarketUpdate::Price(price) => {
+                    self.market.price.replace(price);
+                }
+                MarketUpdate::Ohlc(ohlc) => {
+                    self.market.ohlc.replace(ohlc);
+                }
+            },
             Events::ThemeChange => {
                 if let Some(account_collection) = self.account_collection.as_ref() {
                     account_collection
@@ -581,6 +632,9 @@ impl Core {
             }
             Events::Wallet { event } => {
                 match *event {
+                    CoreWallet::Error { message } => {
+                        println!("{message}");
+                    }
                     CoreWallet::UtxoProcStart => {}
                     CoreWallet::UtxoProcStop => {}
                     CoreWallet::UtxoProcError { message: _ } => {
@@ -678,8 +732,9 @@ impl Core {
                             .as_mut()
                             .expect("account collection")
                             .push_unchecked(account.clone());
+                        let device = self.device().clone();
                         self.get_mut::<modules::AccountManager>()
-                            .select(Some(account.clone()));
+                            .select(Some(account.clone()), device);
                         self.select::<modules::AccountManager>();
 
                         let wallet = self.wallet().clone();
@@ -713,36 +768,36 @@ impl Core {
                         self.state.current_daa_score.replace(current_daa_score);
                     }
                     // Ignore scan notifications
-                    CoreWallet::Scan { record: _ } => {}
+                    CoreWallet::Discovery { record: _ } => {}
                     // Ignore stasis notifications
                     CoreWallet::Stasis { record: _ } => {}
-                    // This notification is for a UTXO change, which is
-                    // a part of the Outgoing transaction, we ignore it.
-                    CoreWallet::Change { record: _ } => {}
                     // A transaction has been confirmed
-                    CoreWallet::Maturity { record } => match record.binding().clone() {
-                        Binding::Account(id) => {
-                            self.account_collection
-                                .as_ref()
-                                .and_then(|account_collection| {
-                                    account_collection.get(&id).map(|account| {
-                                        println!();
-                                        println!("$$$ RECEIVING MATURITY");
-                                        println!();
-                                        account.transactions().replace_or_insert(
-                                            Transaction::new_confirmed(Arc::new(record)),
-                                        );
-                                    })
-                                });
+                    CoreWallet::Maturity { record } => {
+                        if record.is_change() {
+                            return Ok(());
                         }
-                        Binding::Custom(_) => {
-                            panic!("custom binding not supported");
+
+                        match record.binding().clone() {
+                            Binding::Account(id) => {
+                                self.account_collection
+                                    .as_ref()
+                                    .and_then(|account_collection| {
+                                        account_collection.get(&id).map(|account| {
+                                            println!();
+                                            println!("$$$ RECEIVING MATURITY");
+                                            println!();
+                                            account.transactions().replace_or_insert(
+                                                Transaction::new_confirmed(Arc::new(record)),
+                                            );
+                                        })
+                                    });
+                            }
+                            Binding::Custom(_) => {
+                                panic!("custom binding not supported");
+                            }
                         }
-                    },
-                    // Observing a new, unconfirmed transaction
-                    CoreWallet::External { record }
-                    | CoreWallet::Outgoing { record }
-                    | CoreWallet::Pending { record } => match record.binding().clone() {
+                    }
+                    CoreWallet::Pending { record } => match record.binding().clone() {
                         Binding::Account(id) => {
                             self.account_collection
                                 .as_ref()
@@ -911,10 +966,13 @@ impl Core {
                     self.select::<modules::WalletCreate>();
                 }
                 Key::M => {
-                    runtime().device().toggle_mobile();
+                    self.device_mut().toggle_mobile();
                 }
                 Key::P => {
-                    runtime().device().toggle_portrait();
+                    self.device_mut().toggle_portrait();
+                }
+                Key::D => {
+                    self.debug = !self.debug;
                 }
                 _ => {}
             }
@@ -926,10 +984,10 @@ impl Core {
                     self.select::<modules::Testing>();
                 }
                 Key::M => {
-                    runtime().device().toggle_mobile();
+                    self.device_mut().toggle_mobile();
                 }
                 Key::P => {
-                    runtime().device().toggle_portrait();
+                    self.device_mut().toggle_portrait();
                 }
                 _ => {}
             }

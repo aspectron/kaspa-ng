@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use egui::load::Bytes;
-use kaspa_metrics::{Metric,MetricGroup};
+use kaspa_metrics_core::{Metric,MetricGroup};
 use egui_plot::{
     Legend,
     Line,
@@ -39,23 +39,26 @@ impl ModuleT for Overview {
     ) {
         let width = ui.available_width();
 
-        SidePanel::left("overview_left").exact_width(width/2.).resizable(false).show_separator_line(true).show_inside(ui, |ui| {
-            // ui.label("Kaspa NG");
-            egui::ScrollArea::vertical()
-                .id_source("overview_metrics")
-                .auto_shrink([false; 2])
-                .show(ui, |ui| {
-                    self.render_stats(core,ui);
-                });
-        });
-
-        SidePanel::right("overview_right")
-            .exact_width(width/2.)
-            .resizable(false)
-            .show_separator_line(false)
-            .show_inside(ui, |ui| {
-                self.render_details(core, ui);
+        if core.device().single_pane() {
+            self.render_details(core, ui);
+        } else {
+            SidePanel::left("overview_left").exact_width(width/2.).resizable(false).show_separator_line(true).show_inside(ui, |ui| {
+                egui::ScrollArea::vertical()
+                    .id_source("overview_metrics")
+                    .auto_shrink([false; 2])
+                    .show(ui, |ui| {
+                        self.render_stats(core,ui);
+                    });
             });
+
+            SidePanel::right("overview_right")
+                .exact_width(width/2.)
+                .resizable(false)
+                .show_separator_line(false)
+                .show_inside(ui, |ui| {
+                    self.render_details(core, ui);
+                });
+        }
 
 
     }
@@ -106,7 +109,15 @@ impl Overview {
             CollapsingHeader::new(i18n("Market"))
                 .default_open(true)
                 .show(ui, |ui| {
-                    ui.label("TODO");
+
+                    if let Some(price_list) = core.market.price.as_ref() {
+                        for (symbol, data) in price_list.iter() {
+                            if let Some(price) = data.price {
+                                ui.label(RichText::new(format!("{} {}  ",price,symbol.to_uppercase())));//.font(FontId::proportional(14.)));
+                            }
+                        }
+                    }
+
                 });
 
             CollapsingHeader::new(i18n("Resources"))
@@ -239,45 +250,42 @@ impl Overview {
                 .default_open(false)
                 .show(ui, |ui| {
                     ui.vertical(|ui|{
+                        ui.set_width(ui.available_width() - 48.);
                         ui.label("Special thanks Kaspa developers and the following community members:");
-                        // ui.horizontal(|ui|{
-                            ui.horizontal_wrapped(|ui|{
-                                ui.set_width(ui.available_width() - 64.);
-                                let mut nicks = [
-                                    "0xAndrei",
-                                    "142673",
-                                    "Bape",
-                                    "Bubblegum Lightning",
-                                    "coderofstuff",
-                                    "CryptoK",
-                                    "Dhayse",
-                                    "Elertan",
-                                    "Gennady Gorin",
-                                    "hashdag",
-                                    "Helix",
-                                    "jablonx",
-                                    "jwj",
-                                    "KaffinPX",
-                                    "lAmeR",
-                                    "matoo",
-                                    "msutton",
-                                    "n15a",
-                                    "Rhubarbarian",
-                                    "shaideshe",
-                                    "someone235",
-                                    "supertypo",
-                                    "The AllFather",
-                                    "Tim",
-                                    "tmrlvi",
-                                    "Wolfie",
-                                ];
-                                nicks.sort();
-                                nicks.into_iter().for_each(|nick| {
-                                    ui.label(format!("@{nick}"));
-                                });
-                            });
-                            // ui.add_space(32.);
-                        // });
+                        ui.horizontal_wrapped(|ui|{
+                            let nicks = [
+                                "0xAndrei",
+                                "142673",
+                                "Bape",
+                                "Bubblegum Lightning",
+                                "coderofstuff",
+                                "CryptoK",
+                                "Dhayse",
+                                "elertan0",
+                                "elichai2",
+                                "Gennady Gorin",
+                                "hashdag",
+                                "Helix",
+                                "jablonx",
+                                "jwj",
+                                "KaffinPX",
+                                "lAmeR",
+                                "matoo",
+                                "msutton",
+                                "n15a",
+                                "Rhubarbarian",
+                                "shaideshe",
+                                "someone235",
+                                "supertypo",
+                                "The AllFather",
+                                "Tim",
+                                "tmrlvi",
+                                "Wolfie",
+                            ];
+
+                            let text = nicks.into_iter().map(|nick|format!("@{nick}  ")).collect::<Vec<_>>().join(" ");
+                            ui.label(text);
+                        });
                     });
                 });
 
@@ -292,15 +300,6 @@ impl Overview {
                         }
                     });
         });
-
-
-
-
-
-
-
-
-
     }
 
     fn render_graphs(&mut self, core: &mut Core, ui : &mut Ui) {
@@ -394,8 +393,8 @@ impl Overview {
                 });
 
                 let text = format!("{} {}", i18n(metric.title().1).to_uppercase(), metric.format(value, true, true));
-                let rich_text_top = egui::RichText::new(&text).size(10.).color(theme_color().raised_text_color);
-                let rich_text_back = egui::RichText::new(text).size(10.).color(theme_color().raised_text_shadow);
+                let rich_text_top = RichText::new(&text).size(10.).color(theme_color().raised_text_color);
+                let rich_text_back = RichText::new(text).size(10.).color(theme_color().raised_text_shadow);
                 let label_top = Label::new(rich_text_top).wrap(false);
                 let label_back = Label::new(rich_text_back).wrap(false);
                 let mut rect_top = plot_result.response.rect;

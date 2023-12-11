@@ -15,8 +15,11 @@ pub use metrics_monitor::MetricsService;
 pub mod blockdag_monitor;
 pub use blockdag_monitor::BlockDagMonitorService;
 
-pub mod plugin_manager;
-pub use plugin_manager::PluginManagerService;
+pub mod market_monitor;
+pub use market_monitor::MarketMonitorService;
+
+pub mod update_monitor;
+pub use update_monitor::UpdateMonitorService;
 
 /// Service is a core component of the Kaspa NG application responsible for
 /// running application services and communication between these services.

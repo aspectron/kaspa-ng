@@ -1,7 +1,7 @@
 use crate::imports::*;
 use crate::runtime::services::metrics_monitor::MAX_METRICS_SAMPLES;
 use egui_extras::{StripBuilder, Size};
-use kaspa_metrics::{Metric,MetricGroup, MetricsSnapshot};
+use kaspa_metrics_core::{Metric,MetricGroup, MetricsSnapshot};
 use chrono::DateTime;
 use egui_plot::{
     Legend,
@@ -152,7 +152,9 @@ impl ModuleT for Metrics {
                             format_duration(v as u64)
                         })
                 );
-                ui.label("Duration:");
+                if core.device().orientation() == Orientation::Portrait {
+                    ui.label("Duration:");
+                }
 
             });
         });
@@ -183,16 +185,21 @@ impl ModuleT for Metrics {
                 .id_source("node_metrics")
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
-
                     let view_width = ui.available_width() - 32.;
                     let graph_height = core.settings.user_interface.metrics.graph_height as f32;
-                    let graph_width = view_width / core.settings.user_interface.metrics.graph_columns as f32;
+
+                    let (columns, graph_width) = if core.device().orientation() == Orientation::Portrait {
+                        (1,view_width)
+                    } else {
+                        (core.settings.user_interface.metrics.graph_columns, view_width / core.settings.user_interface.metrics.graph_columns as f32)
+                    };
+
 
                         let mut metric_iter = Metric::list().into_iter().filter(|metric| !core.settings.user_interface.metrics.disabled.contains(metric));
                         let mut draw = true;
                         while draw {
                             ui.horizontal(|ui| {
-                                for _ in 0..core.settings.user_interface.metrics.graph_columns {
+                                for _ in 0..columns {
                                     if let Some(metric) = metric_iter.next() {
                                         let range_from = core.settings.user_interface.metrics.graph_range_from;
                                         let range_to = core.settings.user_interface.metrics.graph_range_to;

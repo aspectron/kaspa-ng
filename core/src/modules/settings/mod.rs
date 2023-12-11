@@ -1,7 +1,5 @@
-use clap::error::ErrorKind as ClapErrorKind;
-use kaspad_lib::args::Args;
 
-use crate::{imports::*, runtime::services::kaspa::Config};
+use crate::imports::*;
 
 pub struct Settings {
     #[allow(dead_code)]
@@ -155,6 +153,10 @@ impl Settings {
 
                         #[cfg(not(target_arch = "wasm32"))]
                         if core.settings.developer.enable_custom_daemon_args() && core.settings.node.node_kind.is_config_capable() {
+                            use kaspad_lib::args::Args;
+                            use clap::error::ErrorKind as ClapErrorKind;
+                            use crate::runtime::services::kaspa::Config;
+
                             ui.add_space(4.);
                             ui.checkbox(&mut self.settings.node.kaspad_daemon_args_enable, i18n("Enable custom daemon arguments"));
                             ui.add_space(4.);
@@ -183,13 +185,13 @@ impl Settings {
                                 match Args::parse(args.iter()) {
                                     Ok(_) => { },
                                     Err(err) => {
+
                                         if matches!(err.kind(), ClapErrorKind::DisplayHelp | ClapErrorKind::DisplayVersion) {
                                             ui.label(
                                                 RichText::new("--help and --version are not allowed")
                                                     .color(theme_color().warning_color),
                                             );
                                         } else {
-                                            println!("err: {:?}", err);
                                             let help = err.to_string();
                                             let lines = help.split('\n').collect::<Vec<&str>>();
                                             let text = if let Some(idx) = lines.iter().position(|line| line.starts_with("For more info") || line.starts_with("Usage:")) {
@@ -334,71 +336,42 @@ impl Settings {
                     ui.separator();
                 }
             }
-            CollapsingHeader::new("Plugins")
+
+            CollapsingHeader::new("Centralized Services")
                 .default_open(true)
                 .show(ui, |ui| {
-                    // let enable_plugins = self.settings.enable_plugins;
-                    // if ui.checkbox(&mut self.settings.enable_plugins, i18n("Enable Plugins")).changed() {
-                        // if self.settings.enable_plugins {
-                        //     self.runtime.plugin_manager_service().start_plugins(&self.settings).await.unwrap();
-                        // } else {
-                        //     self.runtime.plugin_manager_service().terminate_plugins();
-                        // }
-                    // }
 
-                    if self.settings.enable_plugins {
+                    CollapsingHeader::new("Market Monitor")
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            let mut v = false;
+                            if ui.checkbox(&mut v, i18n("Enable Market Monitor")).changed() {
+                            }
+                        });
 
-                        let plugins = runtime().plugin_manager_service().plugins();
-                        for plugin in plugins.iter() {
-                            let plugin_name = plugin.name();
-                            let mut plugin_enabled = runtime().plugin_manager_service().is_enabled(plugin);
-                            ui.collapsable(plugin_name, true, |ui,state|{
-                                if ui.add(Label::new(plugin.name()).sense(Sense::click())).clicked() {
-                                    *state = !*state;
-                                }
-                                ui.add_space(8.);
-                                if ui.checkbox(&mut plugin_enabled,"Enable").changed() {
-                                    runtime().plugin_manager_service().enable(plugin, plugin_enabled);
-                                }
-
-                            }, |ui|{
-                                ui.vertical(|ui| {
-                                    // ui.set_max_width(340.);
-
-                                    // ui.separator();
-                                    plugin.render(ui);
-                                    // ui.label(plugin_name);
-                                    // ui.add(Separator::default().horizontal().);
-
-                                });
-
-                            });
-                            // CollapsingHeader::new(plugin_name)
-                            //     .default_open(true)
-                            //     .show(ui, |ui| {
-                            //     });        
-
-                            // ui.horizontal(|ui|{
-                            //     ui.checkbox(&mut runtime().plugin_manager_service().plugin_settings_mut().get_mut(plugin_name).unwrap().enabled, plugin_name);
-                            //     ui.label(plugin.description());
-                            // });
-                        }
-                    }
-
+                    #[cfg(not(target_arch = "wasm32"))]
+                    CollapsingHeader::new("Check for Updates")
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            let mut v = false;
+                            if ui.checkbox(&mut v, i18n("Check for Software Updates via GitHub")).changed() {
+                            }
+        
+                        });    
                 });
-            // ----------------------------
+
             CollapsingHeader::new("Advanced")
                 .default_open(false)
                 .show(ui, |ui| {
 
                     ui.vertical(|ui|{
-                        // ui.set_max_width(340.);
                         ui.checkbox(&mut self.settings.developer.enable, i18n("Developer Mode"));
                         ui.label("Developer mode enables advanced and experimental features");
                     });
 
                     ui.vertical(|ui|{
                         if self.settings.developer.enable {
+                            #[cfg(not(target_arch = "wasm32"))]
                             ui.checkbox(
                                 &mut self.settings.developer.enable_experimental_features, 
                                 i18n("Enable experimental features")
@@ -406,11 +379,12 @@ impl Settings {
                                 i18n("Enables features currently in development")
                             );
                             
+                            #[cfg(not(target_arch = "wasm32"))]
                             ui.checkbox(
                                 &mut self.settings.developer.enable_custom_daemon_args, 
-                                i18n("Enable custom daemon arguments")
+                                i18n("Allow custom daemon arguments")
                             ).on_hover_text_at_pointer(
-                                i18n("Enables custom arguments for the Rusty Kaspa daemon")
+                                i18n("Allow custom arguments for the Rusty Kaspa daemon")
                             );
                             
                             ui.checkbox(
@@ -420,6 +394,7 @@ impl Settings {
                                 i18n("Removes security restrictions, allows for single-letter passwords")
                             );
 
+                            #[cfg(not(target_arch = "wasm32"))]
                             ui.checkbox(
                                 &mut self.settings.developer.enable_screen_capture, 
                                 i18n("Screen capture")
@@ -428,8 +403,6 @@ impl Settings {
                             );
                         }
                     });
-
-                        // ui.separator();
 
                     if self.settings.developer != core.settings.developer {
                         ui.add_space(16.);
@@ -485,7 +458,7 @@ impl Settings {
 
                 });
 
-                // if ui.button("Test Toast").clicked() {
+            // if ui.button("Test Toast").clicked() {
             //     self.runtime.try_send(Events::Notify {
             //         notification : UserNotification::info("Test Toast")
             //     }).unwrap();

@@ -218,7 +218,7 @@ impl ModuleT for PrivateKeyCreate {
                                 be able to use mnemonic to recover your wallet!");
                         })
                         .with_body(|this,ui| {
-                            ui.label(egui::RichText::new("ENTER YOUR PAYMENT PASSWORD").size(12.).raised());
+                            ui.label(RichText::new("ENTER YOUR PAYMENT PASSWORD").size(12.).raised());
                             ui.add_sized(
                                 size,
                                 TextEdit::singleline(&mut this.args.payment_secret)
@@ -227,7 +227,7 @@ impl ModuleT for PrivateKeyCreate {
                             );
 
                             ui.label(" ");
-                            ui.label(egui::RichText::new("VERIFY YOUR PAYMENT PASSWORD").size(12.).raised());
+                            ui.label(RichText::new("VERIFY YOUR PAYMENT PASSWORD").size(12.).raised());
 
                             ui.add_sized(
                                 size,
@@ -238,7 +238,7 @@ impl ModuleT for PrivateKeyCreate {
 
                             if this.args.payment_secret_confirm.is_not_empty() && this.args.payment_secret != this.args.payment_secret_confirm {
                                 ui.label(" ");
-                                ui.label(egui::RichText::new("Passwords do not match").color(egui::Color32::from_rgb(255, 120, 120)));
+                                ui.label(RichText::new("Passwords do not match").color(egui::Color32::from_rgb(255, 120, 120)));
                                 ui.label(" ");
                             } else {
                                 ui.label(" ");
@@ -357,8 +357,8 @@ impl ModuleT for PrivateKeyCreate {
                     .with_header(move |this,ui| {
                         ui.label(" ");
                         ui.label(" ");
-                        ui.label(egui::RichText::new("Error creating account").color(egui::Color32::from_rgb(255, 120, 120)));
-                        ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
+                        ui.label(RichText::new("Error creating account").color(egui::Color32::from_rgb(255, 120, 120)));
+                        ui.label(RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
 
                         if ui.add_sized(size, egui::Button::new("Restart")).clicked() {
                             this.state = State::Start;
@@ -396,7 +396,7 @@ impl ModuleT for PrivateKeyCreate {
                     //                 ui.columns(6, |cols| {
 
                     //                     for col in 0..chunk.len() {
-                    //                         cols[col].label(egui::RichText::new(chunk[col]).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
+                    //                         cols[col].label(RichText::new(chunk[col]).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
                     //                     }
                     //                 })
                     //             });
@@ -451,7 +451,8 @@ impl ModuleT for PrivateKeyCreate {
                                 core.account_collection.as_mut().unwrap().push_unchecked(account.clone());
 
                                 core.select::<modules::AccountManager>();
-                                core.get_mut::<modules::AccountManager>().select(Some(account));
+                                let device = core.device().clone();
+                                core.get_mut::<modules::AccountManager>().select(Some(account), device);
                             }
                         })
                         .render(ui);

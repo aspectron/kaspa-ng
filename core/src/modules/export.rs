@@ -249,7 +249,7 @@ impl ModuleT for Export {
 
                             if let Some(err) = error {
                                 ui.label(
-                                    egui::RichText::new(err.to_string())
+                                    RichText::new(err.to_string())
                                         .color(egui::Color32::from_rgb(255, 120, 120)),
                                 );
                                 ui.label(" ");
@@ -279,7 +279,7 @@ impl ModuleT for Export {
                                 &mut this.context.focus,
                                 Focus::WalletSecret,
                                 |ui, text| {
-                                    ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
+                                    ui.label(RichText::new("Enter your wallet secret").size(12.).raised());
                                     ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center)
                                         .password(true))

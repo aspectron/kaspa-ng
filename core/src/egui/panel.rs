@@ -163,49 +163,53 @@ impl<'panel, Context> Panel<'panel, Context> {
                 }
             });
 
-            if let Some(header) = self.header {
-                ui.add_space(24.);
-
-                ui.vertical_centered(|ui| {
-                    ui.set_width(inner_panel_width);
-                    header(self.this, ui);
-                });
-            }
-
-            ui.add_space(24.);
-
             egui::ScrollArea::vertical()
                 .auto_shrink([false, true])
                 .show(ui, |ui| {
-                    ui.set_width(ui.available_width());
+                    if let Some(header) = self.header {
+                        ui.add_space(24.);
 
-                    if let Some(body) = self.body {
                         ui.vertical_centered(|ui| {
                             ui.set_width(inner_panel_width);
-
-                            body(self.this, ui);
+                            header(self.this, ui);
                         });
                     }
 
-                    let padding = ui.available_height() - theme_style().panel_footer_height;
-                    if padding > 0. {
-                        ui.add_space(padding);
+                    ui.add_space(24.);
+
+                    egui::ScrollArea::vertical()
+                        .auto_shrink([false, true])
+                        .show(ui, |ui| {
+                            ui.set_width(ui.available_width());
+
+                            if let Some(body) = self.body {
+                                ui.vertical_centered(|ui| {
+                                    ui.set_width(inner_panel_width);
+
+                                    body(self.this, ui);
+                                });
+                            }
+
+                            let padding = ui.available_height() - theme_style().panel_footer_height;
+                            if padding > 0. {
+                                ui.add_space(padding);
+                            }
+                        });
+
+                    if let Some(footer) = self.footer {
+                        footer(self.this, ui);
+                    }
+
+                    if let Some(handler) = self.handler {
+                        let text = self.handler_text.as_deref();
+                        if ui
+                            .large_button_enabled(self.handler_enabled, text.unwrap_or("Continue"))
+                            .clicked()
+                        {
+                            handler(self.this);
+                        }
                     }
                 });
-
-            if let Some(footer) = self.footer {
-                footer(self.this, ui);
-            }
-
-            if let Some(handler) = self.handler {
-                let text = self.handler_text.as_deref();
-                if ui
-                    .large_button_enabled(self.handler_enabled, text.unwrap_or("Continue"))
-                    .clicked()
-                {
-                    handler(self.this);
-                }
-            }
         });
     }
 }

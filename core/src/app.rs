@@ -218,6 +218,7 @@ cfg_if! {
                         viewport: egui::ViewportBuilder::default()
                             .with_resizable(true)
                             .with_title(i18n("Kaspa NG"))
+                            .with_min_inner_size([400.0,320.0])
                             .with_inner_size([1000.0,600.0])
                             .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, FitTo::Size(256,256))),
                         ..Default::default()
@@ -274,17 +275,13 @@ cfg_if! {
                 Settings::default()
             });
 
-            // init_i18n(settings.language_code.as_str()).expect("failed to init i18n");
-
             i18n::Builder::new(settings.language_code.as_str(), "en")
                 .with_static_json_data(I18N_EMBEDDED)
-                // .with_store(move |json_data: &str| {
-                // })
                 .try_init()?;
 
             // wasm_bindgen_futures::spawn_local(async {
             use workflow_log::*;
-            log_info!("starting");
+            log_info!("Welcome to Kaspa NG! Have a great day!");
             eframe::WebRunner::new()
                 .start(
                     "kaspa-ng",

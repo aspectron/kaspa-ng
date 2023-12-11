@@ -158,12 +158,12 @@ impl Testing {
             //     self.text("icon 2 clicked");
             // }
 
-            // let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA).size(100.0).color(Color32::RED)).text("Hello").padding(Some((10.0, 10.0).into()));
+            // let icon = CompositeIcon::new(RichText::new(egui_phosphor::bold::UMBRELLA).size(100.0).color(Color32::RED)).text("Hello").padding(Some((10.0, 10.0).into()));
             // if ui.add(icon).clicked(){
             //     self.text("icon 3 clicked");
             // }
 
-            // let icon = CompositeIcon::new(egui::RichText::new(egui_phosphor::bold::UMBRELLA)).text("Hello").sense(Sense::hover());
+            // let icon = CompositeIcon::new(RichText::new(egui_phosphor::bold::UMBRELLA)).text("Hello").sense(Sense::hover());
             // if ui.add(icon).clicked(){
             //     self.text("icon 3 clicked");
             // }
@@ -253,11 +253,11 @@ impl Testing {
                                 //     });
                                 //     ui.vertical(|ui| {
                                 //         // ui.set_width(width-theme.error_icon_size.outer_width());
-                                //         // ui.label(egui::RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
+                                //         // ui.label(RichText::new("Error unlocking wallet").color(egui::Color32::from_rgb(255, 120, 120)));
                                 //     });
                                 // });
                                 ui.label(
-                                    egui::RichText::new(err.to_string())
+                                    RichText::new(err.to_string())
                                         .color(egui::Color32::from_rgb(255, 120, 120)),
                                 );
                                 ui.label(" ");

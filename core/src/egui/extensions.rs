@@ -159,6 +159,7 @@ impl LayoutJobBuilder {
 
         self
     }
+
     pub fn padded(mut self, width: usize, text: &str, color: Color32) -> Self {
         self.job.append(
             text.pad_to_width_with_alignment(width, Alignment::Right)
@@ -176,7 +177,7 @@ impl LayoutJobBuilder {
     pub fn icon(mut self, text: &str, color: Color32) -> Self {
         self.job.append(
             text,
-            self.leading,
+            4.,
             TextFormat {
                 color,
                 font_id: self.icon_font_id.clone().unwrap_or_default(),

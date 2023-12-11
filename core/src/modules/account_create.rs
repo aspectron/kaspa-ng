@@ -239,7 +239,7 @@ impl ModuleT for AccountCreate {
                                 &mut this.focus,
                                 Focus::WalletSecret,
                                 |ui, text| {
-                                    ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
+                                    ui.label(RichText::new("Enter your wallet secret").size(12.).raised());
                                     ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center)
                                         .password(true))
@@ -252,9 +252,8 @@ impl ModuleT for AccountCreate {
                             .build(ui);
                         })
                         .with_footer(|this,ui| {
-                            let size = theme_style().large_button_size;
                             let enabled = !this.context.wallet_secret.is_empty();
-                            if ui.add_enabled(enabled, egui::Button::new("Continue").min_size(size)).clicked() {
+                            if ui.large_button_enabled(enabled,"Continue").clicked() {
                                 *submit.borrow_mut() = true;
                             }
                         })
@@ -287,7 +286,7 @@ impl ModuleT for AccountCreate {
                                 &mut this.focus,
                                 Focus::PaymentSecret,
                                 |ui, text| {
-                                    ui.label(egui::RichText::new("Enter your BIP39 passphrase").size(12.).raised());
+                                    ui.label(RichText::new("Enter your BIP39 passphrase").size(12.).raised());
                                     ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center)
                                         .password(true))
@@ -401,8 +400,8 @@ impl ModuleT for AccountCreate {
                     .with_header(move |this,ui| {
                         ui.label(" ");
                         ui.label(" ");
-                        ui.label(egui::RichText::new("Error creating account").color(egui::Color32::from_rgb(255, 120, 120)));
-                        ui.label(egui::RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
+                        ui.label(RichText::new("Error creating account").color(egui::Color32::from_rgb(255, 120, 120)));
+                        ui.label(RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
 
                         if ui.add_sized(theme_style().panel_editor_size, egui::Button::new("Restart")).clicked() {
                             this.state = State::Start;
@@ -440,7 +439,7 @@ impl ModuleT for AccountCreate {
                     //                 ui.columns(6, |cols| {
 
                     //                     for col in 0..chunk.len() {
-                    //                         cols[col].label(egui::RichText::new(chunk[col]).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
+                    //                         cols[col].label(RichText::new(chunk[col]).family(FontFamily::Monospace).size(14.).color(egui::Color32::WHITE));
                     //                     }
                     //                 })
                     //             });

@@ -1,5 +1,5 @@
 use crate::imports::*;
-use kaspa_metrics::Metric;
+use kaspa_metrics_core::Metric;
 use kaspa_utils::networking::ContextualNetAddress;
 use kaspa_wallet_core::storage::local::storage::Storage;
 use kaspa_wrpc_client::WrpcEncoding;

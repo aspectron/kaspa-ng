@@ -43,7 +43,7 @@ impl<'core> MobileMenu<'core> {
 
     pub fn render_closed(&mut self, ui: &mut Ui) {
         let handlers = vec![Handler::new(
-            LOCK_KEY_OPEN,
+            FINGERPRINT,
             "OPEN",
             Box::new(|core, _ui| {
                 core.select::<modules::WalletOpen>();
@@ -98,7 +98,9 @@ impl<'core> MobileMenu<'core> {
                     HOUSE_SIMPLE,
                     "HOME",
                     Box::new(|core, _ui| {
-                        core.get_mut::<modules::AccountManager>().select(None);
+                        let device = core.device().clone();
+                        core.get_mut::<modules::AccountManager>()
+                            .select(None, device);
                         core.select::<modules::AccountManager>();
                     }),
                 ),

@@ -46,7 +46,7 @@ cfg_if! {
             }
 
             pub fn render(&self, ui: &mut Ui) {
-                use kaspa_metrics::data::as_data_size;
+                use kaspa_metrics_core::data::as_data_size;
 
                 CollapsingHeader::new(i18n("System"))
                     .default_open(true)

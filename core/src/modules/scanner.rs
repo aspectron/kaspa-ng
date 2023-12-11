@@ -5,6 +5,7 @@ use kaspa_wallet_core::runtime::Wallet;
 #[derive(Clone)]
 pub enum State {
     Select,
+    Settings { account : Account },
     WalletSecret { account : Account },
     Spawn { account : Account },
     Status,
@@ -38,9 +39,18 @@ impl Status {
 
 #[derive(Default)]
 struct ScannerContext {
+    transfer_funds : bool,
     wallet_secret: String,
     status : Arc<Mutex<Status>>,
     abortable : Abortable,
+}
+
+impl Zeroize for ScannerContext {
+    fn zeroize(&mut self) {
+        self.wallet_secret.zeroize();
+        self.status = Arc::new(Mutex::new(Status::default()));
+        self.abortable.reset();
+    }
 }
 
 pub struct Scanner {
@@ -89,10 +99,13 @@ impl ModuleT for Scanner {
 
             State::Select => {
 
-                let mut close = false;
+                let back = Rc::new(RefCell::new(false));
 
                 Panel::new(self)
                     .with_caption("Scanner")
+                    .with_back(|_this| {
+                        *back.borrow_mut() = true;
+                    })
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_this,ui| {
@@ -113,7 +126,7 @@ impl ModuleT for Scanner {
                             ui.add_space(16.);
 
                             if ui.large_button("Close").clicked() {
-                                close = true;
+                                *back.borrow_mut() = true;
                             }
                             
                             return;
@@ -128,7 +141,7 @@ impl ModuleT for Scanner {
                             ui.add_space(16.);
                             
                             if ui.large_button("Close").clicked() {
-                                close = true;
+                                *back.borrow_mut() = true;
                             }
 
                             return;
@@ -143,7 +156,7 @@ impl ModuleT for Scanner {
                             ui.add_space(16.);
 
                             if ui.large_button("Close").clicked() {
-                                close = true;
+                                *back.borrow_mut() = true;
                             }
 
                             return;
@@ -159,19 +172,48 @@ impl ModuleT for Scanner {
                                 }
 
                                 if ui.account_selector_button(selectable_account, &network_type, false).clicked() {
-                                    this.state = State::WalletSecret {
+                                    this.state = State::Settings {
                                         account: selectable_account.clone(),
                                     };
-                                    this.focus.next(Focus::WalletSecret);
                                 }
                             }
                         }
 
                     }).render(ui);
 
-                    if close {
-                        core.select::<modules::Overview>();
+                    if *back.borrow() {
+                        if core.has_stack() {
+                            core.back();
+                        } else {
+                            core.select::<modules::Overview>();
+                        }
                     }
+            }
+            State::Settings { account } => {
+
+                Panel::new(self)
+                    .with_caption("Settings")
+                    .with_back(|this| {
+                        this.state = State::Select;
+                    })
+                    .with_header(|_ctx,_ui| {
+                        // ui.label("Please enter the wallet secret");
+                    })
+                    .with_body(|this,ui| {
+
+                        ui.checkbox(&mut this.context.transfer_funds, "Transfer funds during scan");
+
+                        ui.label("");
+                        ui.label("This option will transfer any discovered funds to the first change address of this account.");
+
+                    })
+                    .with_footer(|this,ui| {
+                        if ui.large_button("Continue").clicked() {
+                            this.state = State::WalletSecret { account };
+                            this.focus.next(Focus::WalletSecret)
+                        }
+                    })
+                    .render(ui);
             }
             State::WalletSecret { account } => {
 
@@ -193,7 +235,7 @@ impl ModuleT for Scanner {
                             &mut this.focus,
                             Focus::WalletSecret,
                             |ui, text| {
-                                ui.label(egui::RichText::new("Enter your wallet secret").size(12.).raised());
+                                ui.label(RichText::new("Enter your wallet secret").size(12.).raised());
                                 ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center)
                                     .password(true))
@@ -206,9 +248,8 @@ impl ModuleT for Scanner {
                         .build(ui);
                     })
                     .with_footer(|this,ui| {
-                        let size = theme_style().large_button_size;
                         let enabled = !this.context.wallet_secret.is_empty();
-                        if ui.add_enabled(enabled, egui::Button::new("Continue").min_size(size)).clicked() {
+                        if ui.large_button_enabled(enabled,"Continue").clicked() {
                             *submit.borrow_mut() = true;
                         }
                     })
@@ -226,6 +267,7 @@ impl ModuleT for Scanner {
                     let status = self.context.status.clone();
                     let abortable = self.context.abortable.clone();
                     let wallet_secret = Secret::from(self.context.wallet_secret.as_str());
+                    let transfer_funds = self.context.transfer_funds;
                     self.context.wallet_secret.zeroize();
 
                     spawn(async move {
@@ -239,7 +281,7 @@ impl ModuleT for Scanner {
                                     0,
                                     usize::MAX,
                                     64,
-                                    false,
+                                    transfer_funds,
                                     &abortable,
                                     Some(Arc::new(move |index,utxo_count, balance, txid|{
                                         if let Some(txid) = txid {
@@ -288,7 +330,7 @@ impl ModuleT for Scanner {
                                 ui.label(format!("Scanning address derivation {}...", index.separated_string()));
                                 ui.label(format!("Located {} UTXOs", utxo_count.separated_string()));
                                 ui.add_space(16.);
-                                ui.label(egui::RichText::new("BALANCE").size(12.).raised());
+                                ui.label(RichText::new("BALANCE").size(12.).raised());
                                 ui.label(
                                     s2kws_layout_job(*balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
                                 );
@@ -326,15 +368,16 @@ impl ModuleT for Scanner {
                             ui.label(format!("Total addresses scanned: {}", index.separated_string()));
                             ui.label(format!("Located {} UTXOs", utxo_count.separated_string()));
                             ui.add_space(16.);
-                            ui.label(egui::RichText::new("BALANCE").size(12.).raised());
+                            ui.label(RichText::new("BALANCE").size(12.).raised());
                             ui.label(
                                 s2kws_layout_job(*balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
                             );
                         }
 
                     })
-                    .with_footer(|_this,ui| {
+                    .with_footer(|this,ui| {
                         if ui.large_button("Close").clicked() {
+                            this.context.zeroize();
                             core.select::<modules::AccountManager>();
                         }
                     })

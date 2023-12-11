@@ -18,6 +18,8 @@ mod image;
 pub use image::*;
 mod version;
 pub use version::*;
+mod secret;
+pub use secret::*;
 
 #[macro_export]
 macro_rules! spawn {

@@ -24,9 +24,9 @@ use workflow_http::get_json;
 //     "name": "01coin"
 //   },
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 struct CoinGeckoSimplePrice {
-    kaspa: Option<HashMap<String, f64>>,
+    kaspa: Option<AHashMap<String, f64>>,
 }
 
 impl CoinGeckoSimplePrice {
@@ -42,9 +42,9 @@ impl CoinGeckoSimplePrice {
     }
 }
 
-impl From<CoinGeckoSimplePrice> for MarketPriceMap {
+impl From<CoinGeckoSimplePrice> for MarketDataMap {
     fn from(data: CoinGeckoSimplePrice) -> Self {
-        let mut prices = HashMap::new();
+        let mut prices = AHashMap::new();
         if let Some(kaspa) = data.kaspa {
             prices = group_by_currency_prefix(&kaspa);
         }
@@ -58,24 +58,30 @@ pub async fn fetch_available_currencies() -> Result<CurrencyDescriptorList> {
     Ok(available_currencies)
 }
 
-pub async fn fetch_market_price_list(currencies: &[&str]) -> Result<MarketPriceMap> {
+pub async fn fetch_market_price_list(currencies: &[&str]) -> Result<MarketDataMap> {
     let market_data = CoinGeckoSimplePrice::get(currencies).await?;
+    // println!("market_data: {:?}", market_data);
+
     Ok(market_data.into())
 }
 
-fn group_by_currency_prefix(data: &HashMap<String, f64>) -> MarketPriceMap {
-    let mut grouped_data: MarketPriceMap = HashMap::new();
+fn group_by_currency_prefix(data: &AHashMap<String, f64>) -> MarketDataMap {
+    let mut grouped_data: MarketDataMap = AHashMap::new();
 
     for (coin, info) in data.iter() {
-        let parts: Vec<&str> = coin.split('_').collect();
-        let currency_prefix = parts[0].to_lowercase();
-        let suffix = parts.last().map(|suffix| suffix.to_lowercase());
+        let mut parts: Vec<&str> = coin.split('_').collect();
+        if parts.is_empty() {
+            continue;
+        }
+        let currency_prefix = parts.remove(0).to_lowercase();
+        let suffix = parts.join("_");
         let existing_data = grouped_data.entry(currency_prefix.clone()).or_default();
-        match suffix.as_deref() {
-            None => existing_data.price = Some(*info),
-            Some("market_cap") => existing_data.market_cap = Some(*info),
-            Some("24h_vol") => existing_data.volume = Some(*info),
-            Some("24h_change") => existing_data.change = Some(*info),
+
+        match suffix.as_str() {
+            "" => existing_data.price = Some(*info),
+            "market_cap" => existing_data.market_cap = Some(*info),
+            "24h_vol" => existing_data.volume = Some(*info),
+            "24h_change" => existing_data.change = Some(*info),
             _ => (),
         }
     }

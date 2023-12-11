@@ -3,7 +3,7 @@ use workflow_http::get_json;
 
 #[derive(Default, Serialize, Deserialize)]
 struct CoinGeckoSimplePrice {
-    kaspa: Option<HashMap<String, f64>>,
+    kaspa: Option<AHashMap<String, f64>>,
 }
 
 impl CoinGeckoSimplePrice {
@@ -19,9 +19,9 @@ impl CoinGeckoSimplePrice {
     }
 }
 
-impl From<CoinGeckoSimplePrice> for MarketPriceMap {
+impl From<CoinGeckoSimplePrice> for MarketDataMap {
     fn from(data: CoinGeckoSimplePrice) -> Self {
-        let mut prices = HashMap::new();
+        let mut prices = AHashMap::new();
         if let Some(kaspa) = data.kaspa {
             prices = group_by_currency_prefix(&kaspa);
         }
@@ -35,13 +35,13 @@ pub async fn fetch_available_currencies() -> Result<CurrencyDescriptorList> {
     Ok(available_currencies)
 }
 
-pub async fn fetch_market_price_list(currencies: &[&str]) -> Result<MarketPriceMap> {
+pub async fn fetch_market_price_list(currencies: &[&str]) -> Result<MarketDataMap> {
     let market_data = CoinGeckoSimplePrice::get(currencies).await?;
     Ok(market_data.into())
 }
 
-fn group_by_currency_prefix(data: &HashMap<String, f64>) -> MarketPriceMap {
-    let mut grouped_data: MarketPriceMap = HashMap::new();
+fn group_by_currency_prefix(data: &AHashMap<String, f64>) -> MarketDataMap {
+    let mut grouped_data: MarketDataMap = AHashMap::new();
 
     for (coin, info) in data.iter() {
         let parts: Vec<&str> = coin.split('_').collect();

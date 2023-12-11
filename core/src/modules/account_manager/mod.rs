@@ -6,25 +6,35 @@ use kaspa_wallet_core::tx::{GeneratorSummary, PaymentOutput, Fees};
 use kaspa_wallet_core::api::*;
 use crate::primitives::descriptors::*;
 
-mod overview;
-mod transactions;
+mod address;
+mod balance;
+mod destination;
 mod details;
-mod utxo;
+mod estimator;
 mod menus;
-mod transfer;
-mod send;
-mod estimation;
+mod network;
+mod overview;
+mod processor;
+mod qr;
 mod secret;
+mod transactions;
+mod transfer;
+mod utxo;
 
-use overview::*;
-use transactions::*;
+use address::*;
+use balance::*;
+use destination::*;
 use details::*;
-use utxo::*;
+use estimator::*;
 use menus::*;
-use transfer::*;
-use send::*;
-use estimation::*;
+use network::*;
+use overview::*;
+use processor::*;
+use qr::*;
 use secret::*;
+use transactions::*;
+use transfer::*;
+use utxo::*;
 
 
 #[allow(dead_code)]
@@ -232,13 +242,13 @@ impl AccountManager {
         self.context.request_estimate = Some(true);
     }
 
-    pub fn select(&mut self, account: Option<Account>) {
+    pub fn select(&mut self, account: Option<Account>, device : Device) {
         if let Some(account) = account {
             self.state = AccountManagerState::Overview {
                 account: account.clone(),
             };
             
-            if runtime().device().is_portrait() {
+            if device.orientation() == Orientation::Portrait {
                 self.section = AccountManagerSection::Overview;
             } else {
                 self.section = AccountManagerSection::Transactions;
@@ -279,7 +289,7 @@ impl AccountManager {
                                 ui.label("Please create an account");
                             }).render(ui);
                     } else if account_collection.len() == 1 {
-                        self.select(Some(account_collection.first().unwrap().clone()));
+                        self.select(Some(account_collection.first().unwrap().clone()), core.device().clone());
                     } else {
                         Panel::new(self)
                             .with_caption("Select Account")
@@ -307,8 +317,8 @@ impl AccountManager {
 
                                 account_collection.iter().for_each(|account_select| {
                                     if ui.account_selector_button(account_select, &network_type, false).clicked() {
-                                        this.select(Some(account_select.clone()));
-                                        if runtime().device().is_single_pane() {
+                                        this.select(Some(account_select.clone()), core.device().clone());
+                                        if core.device().single_pane() {
                                             this.section = AccountManagerSection::Overview;
                                         } else {
                                             this.section = AccountManagerSection::Transactions;
@@ -325,7 +335,7 @@ impl AccountManager {
 
             AccountManagerState::Overview { account } => {
                 let rc = RenderContext::new(&account, network_type, current_daa_score)?;
-                if runtime().device().is_single_pane() {
+                if core.device().single_pane() {
                     self.render_singular_layout(core,ui,&rc, self.section);
                 } else {
                     if self.section == AccountManagerSection::Overview {
@@ -348,6 +358,21 @@ impl AccountManager {
             AccountMenu::new().render(core,ui,self,rc, screen_rect_height * 0.8);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
+
+                ui.separator();
+
+                if ui.add(Label::new("UTXOs").sense(Sense::click())).clicked() {
+                    self.section = AccountManagerSection::UtxoManager;
+                }
+                ui.separator();
+                if ui.add(Label::new("Details").sense(Sense::click())).clicked() {
+                    self.section = AccountManagerSection::Details;
+                }
+                ui.separator();
+                if ui.add(Label::new("Transactions").sense(Sense::click())).clicked() {
+                    self.section = AccountManagerSection::Transactions;
+                }
+
             });
         });
     }
@@ -376,26 +401,6 @@ impl AccountManager {
                 // ---
                 ui.style_mut().text_styles = core.default_style.text_styles.clone();
                 // ---
-
-                egui::menu::bar(ui, |ui| {
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-
-                        ui.add_space(32.);
-
-                        if ui.button("UTXOs").clicked() {
-                            self.section = AccountManagerSection::UtxoManager;
-                        }
-                        ui.separator();
-                        if ui.button("Details").clicked() {
-                            self.section = AccountManagerSection::Details;
-                        }
-                        ui.separator();
-                        if ui.button("Transactions").clicked() {
-                            self.section = AccountManagerSection::Transactions;
-                        }
-                    });
-                });
-                ui.separator();
 
                 match section {
                     AccountManagerSection::Overview => {

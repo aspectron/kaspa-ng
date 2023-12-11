@@ -1,23 +1,27 @@
 use crate::imports::*;
+use egui_phosphor::light::*;
 use kaspa_consensus_core::tx::{TransactionInput, TransactionOutpoint, TransactionOutput};
 use kaspa_wallet_core::storage::{
     transaction::{TransactionData, UtxoRecord},
-    TransactionType,
+    TransactionKind,
 };
 
 pub trait AsColor {
     fn as_color(&self) -> Color32;
 }
 
-impl AsColor for TransactionType {
+impl AsColor for TransactionKind {
     fn as_color(&self) -> Color32 {
         match self {
-            TransactionType::Incoming => theme_color().transaction_incoming,
-            TransactionType::Outgoing => theme_color().transaction_outgoing,
-            TransactionType::External => theme_color().transaction_external,
-            TransactionType::Reorg => theme_color().transaction_reorg,
-            TransactionType::Batch => theme_color().transaction_batch,
-            TransactionType::Stasis => theme_color().transaction_stasis,
+            TransactionKind::Incoming => theme_color().transaction_incoming,
+            TransactionKind::Outgoing => theme_color().transaction_outgoing,
+            TransactionKind::External => theme_color().transaction_external,
+            TransactionKind::Reorg => theme_color().transaction_reorg,
+            TransactionKind::Batch => theme_color().transaction_batch,
+            TransactionKind::Stasis => theme_color().transaction_stasis,
+            TransactionKind::TransferIncoming => theme_color().transaction_transfer_incoming,
+            TransactionKind::TransferOutgoing => theme_color().transaction_transfer_outgoing,
+            TransactionKind::Change => theme_color().transaction_change,
         }
     }
 }
@@ -126,8 +130,7 @@ impl Transaction {
         _include_utxos: bool,
         largest: Option<u64>,
     ) {
-        let ppp = ui.ctx().pixels_per_point();
-        let width = ui.available_width() / ppp;
+        let width = ui.available_width() / ui.ctx().pixels_per_point();
 
         let Context { record, maturity } = &*self.context();
 
@@ -147,39 +150,30 @@ impl Transaction {
         let default_color = theme_color().default_color;
         let strong_color = theme_color().strong_color;
 
-        let font_id_header = FontId::monospace(15.0);
-        let font_id_content = FontId::monospace(15.0);
-        let icon_font_id = FontId::proportional(18.0);
+        let content_font = FontId::monospace(15.0);
+        let icon_font = FontId::proportional(18.0);
 
-        let header = LayoutJobBuilderSettings::new(width, 8.0, Some(font_id_content.clone()));
-        let content = LayoutJobBuilderSettings::new(width, 8.0, Some(font_id_content.clone()));
+        let header = LayoutJobBuilderSettings::new(width, 8.0, Some(content_font.clone()));
+        let content = LayoutJobBuilderSettings::new(width, 8.0, Some(content_font.clone()));
+
+        let is_transfer = record.is_transfer();
 
         match record.transaction_data() {
-            TransactionData::Reorg {
-                utxo_entries,
-                aggregate_input_value,
-            }
-            | TransactionData::Stasis {
-                utxo_entries,
-                aggregate_input_value,
-            }
-            | TransactionData::Incoming {
-                utxo_entries,
-                aggregate_input_value,
-            }
-            | TransactionData::External {
-                utxo_entries,
-                aggregate_input_value,
-            } => {
-                let aggregate_input_value = ps2k(*aggregate_input_value);
-                let mut job = LayoutJobBuilder::new(width, 8.0, Some(font_id_header.clone()))
-                    .with_icon_font(icon_font_id);
-                job = job.icon(
-                    egui_phosphor::light::ARROW_SQUARE_RIGHT,
-                    TransactionType::Incoming.as_color(),
-                );
+            TransactionData::Reorg { utxo_entries, .. }
+            | TransactionData::Stasis { utxo_entries, .. }
+            | TransactionData::Incoming { utxo_entries, .. }
+            | TransactionData::TransferIncoming { utxo_entries, .. }
+            | TransactionData::External { utxo_entries, .. } => {
+                let value = ps2k(record.value());
 
-                if maturity.unwrap_or(false) {
+                let mut job = ljb(&header).with_icon_font(icon_font);
+                if is_transfer {
+                    job = job.icon(DOTS_THREE_CIRCLE, TransactionKind::Incoming.as_color());
+                } else {
+                    job = job.icon(ARROW_CIRCLE_RIGHT, TransactionKind::Incoming.as_color());
+                }
+
+                if !maturity.unwrap_or(false) {
                     let maturity_progress = current_daa_score.and_then(|current_daa_score| {
                         record
                             .maturity_progress(current_daa_score)
@@ -193,12 +187,12 @@ impl Transaction {
 
                 job = job
                     .text(timestamp.as_str(), default_color)
-                    .text(&aggregate_input_value, TransactionType::Incoming.as_color());
+                    .text(&value, TransactionKind::Incoming.as_color());
 
                 // ui.LayoutJobBuilder::new(width,8.0(&transaction_id, false, |ui,state| {
                 //     ui.horizontal( |ui| {
 
-                //         let icon = RichText::new(egui_phosphor::light::ARROW_SQUARE_RIGHT).color(TransactionType::Incoming.as_color());
+                //         let icon = RichText::new(egui_phosphor::light::ARROW_SQUARE_RIGHT).color(TransactionKind::Incoming.as_color());
                 //         if ui.add(Label::new(icon).sense(Sense::click())).clicked() {
                 //             *state = !*state;
                 //         }
@@ -230,60 +224,61 @@ impl Transaction {
                 //     });
                 // }, |ui| {
 
-                CollapsingHeader::new(job)
+                let mut collapsing_header = CollapsingHeader::new(job)
                     .id_source(&transaction_id)
                     .icon(paint_header_icon)
-                    .default_open(false)
-                    .show(ui, |ui| {
-                        ljb(&content)
-                            .padded(15, "Transaction id:", default_color)
-                            .text(&transaction_id, default_color)
-                            .label(ui);
+                    .default_open(false);
 
-                        ljb(&content)
-                            .padded(15, "Received at:", default_color)
-                            .text(&format!("{} DAA", block_daa_score), default_color)
-                            .label(ui);
-
-                        utxo_entries.iter().for_each(|utxo_entry| {
-                            let UtxoRecord {
-                                index: _,
-                                address,
-                                amount,
-                                script_public_key,
-                                is_coinbase,
-                            } = utxo_entry;
-                            let address = address
-                                .as_ref()
-                                .map(|addr| addr.to_string())
-                                .unwrap_or_else(|| "n/a".to_string());
-
-                            ljb(&content).text(&address, default_color).label(ui);
-
-                            if *is_coinbase {
-                                ljb(&content)
-                                    .text(
-                                        &format!("{} - Coinbase UTXO", s2k(*amount)),
-                                        default_color,
-                                    )
-                                    .label(ui);
-                            } else {
-                                ljb(&content)
-                                    .text(
-                                        &format!("{} - Standard UTXO", s2k(*amount)),
-                                        default_color,
-                                    )
-                                    .label(ui);
-                            }
-
-                            ljb(&content)
-                                .text(
-                                    &format!("Script: {}", script_public_key.script_as_hex()),
-                                    default_color,
-                                )
-                                .label(ui);
-                        });
+                if !maturity.unwrap_or(true) {
+                    collapsing_header = collapsing_header.icon(|ui, _rect, response| {
+                        Spinner::new().paint_at(ui, response.rect.expand(4.));
                     });
+                }
+
+                collapsing_header.show(ui, |ui| {
+                    ljb(&content)
+                        .padded(15, "Transaction id:", default_color)
+                        .text(&transaction_id, default_color)
+                        .label(ui);
+
+                    ljb(&content)
+                        .padded(15, "Received at:", default_color)
+                        .text(&format!("{} DAA", block_daa_score), default_color)
+                        .label(ui);
+
+                    utxo_entries.iter().for_each(|utxo_entry| {
+                        let UtxoRecord {
+                            index: _,
+                            address,
+                            amount,
+                            script_public_key,
+                            is_coinbase,
+                        } = utxo_entry;
+                        let address = address
+                            .as_ref()
+                            .map(|addr| addr.to_string())
+                            .unwrap_or_else(|| "n/a".to_string());
+
+                        ljb(&content).text(&address, default_color).label(ui);
+
+                        if *is_coinbase {
+                            ljb(&content)
+                                .text(&format!("{} - Coinbase UTXO", s2k(*amount)), default_color)
+                                .label(ui);
+                        } else {
+                            ljb(&content)
+                                .text(&format!("{} - Standard UTXO", s2k(*amount)), default_color)
+                                .label(ui);
+                        }
+
+                        ljb(&content)
+                            .text(
+                                &format!("Script: {}", script_public_key.script_as_hex()),
+                                default_color,
+                            )
+                            .label(ui);
+                    });
+                });
             }
             TransactionData::Outgoing {
                 fees,
@@ -293,20 +288,29 @@ impl Transaction {
                 change_value,
                 accepted_daa_score,
                 ..
+            }
+            | TransactionData::TransferOutgoing {
+                fees,
+                aggregate_input_value,
+                transaction,
+                payment_value,
+                change_value,
+                accepted_daa_score,
+                ..
             } => {
                 let job = if let Some(payment_value) = payment_value {
-                    let mut job = ljb(&header).with_icon_font(icon_font_id);
+                    let mut job = ljb(&header).with_icon_font(icon_font);
 
-                    job = job
-                        .icon(
-                            egui_phosphor::light::ARROW_SQUARE_LEFT,
-                            TransactionType::Outgoing.as_color(),
-                        )
-                        .text(timestamp.as_str(), default_color)
-                        .text(
-                            &ps2k(*payment_value + *fees),
-                            TransactionType::Outgoing.as_color(),
-                        );
+                    if is_transfer {
+                        job = job.icon(DOTS_THREE_CIRCLE, TransactionKind::Outgoing.as_color());
+                    } else {
+                        job = job.icon(ARROW_CIRCLE_LEFT, TransactionKind::Outgoing.as_color());
+                    }
+
+                    job = job.text(timestamp.as_str(), default_color).text(
+                        &ps2k(*payment_value + *fees),
+                        TransactionKind::Outgoing.as_color(),
+                    );
 
                     if !maturity.unwrap_or(true) {
                         job = job.text("Submitting...", strong_color);
@@ -320,7 +324,7 @@ impl Transaction {
                         .text("Fees:", default_color)
                         .text(
                             &sompi_to_kaspa_string(*fees),
-                            TransactionType::Outgoing.as_color(),
+                            TransactionKind::Outgoing.as_color(),
                         )
                         .text("Change:", default_color)
                         .text(&sompi_to_kaspa_string(*change_value), strong_color)
@@ -329,7 +333,7 @@ impl Transaction {
                 // ui.collapsable(&transaction_id, false, |ui,state| {
                 //     ui.horizontal( |ui| {
 
-                //         let icon = RichText::new(egui_phosphor::light::ARROW_SQUARE_LEFT).color(TransactionType::Outgoing.as_color());
+                //         let icon = RichText::new(egui_phosphor::light::ARROW_SQUARE_LEFT).color(TransactionKind::Outgoing.as_color());
                 //         if ui.add(Label::new(icon).sense(Sense::click())).clicked() {
                 //             *state = !*state;
                 //         }
@@ -365,7 +369,7 @@ impl Transaction {
                 //             // .text("Fees:", default_color)
                 //             // .text(
                 //             //     &sompi_to_kaspa_string(*fees),
-                //             //     TransactionType::Outgoing.as_color(),
+                //             //     TransactionKind::Outgoing.as_color(),
                 //             // )
                 //             // .text("Change:", default_color)
                 //             // .text(&sompi_to_kaspa_string(*change_value), strong_color)
@@ -391,8 +395,6 @@ impl Transaction {
                     });
                 }
                 collapsing_header.show(ui, |ui| {
-                    let width = ui.available_width() - 64.0;
-
                     ljb(&content)
                         .text(
                             &format!("{}: {}", "Transaction id", transaction_id),
@@ -418,13 +420,13 @@ impl Transaction {
                     if let Some(payment_value) = payment_value {
                         ljb(&content)
                             .padded(15, "Amount:", default_color)
-                            .text(&ps2k(*payment_value), TransactionType::Outgoing.as_color())
+                            .text(&ps2k(*payment_value), TransactionKind::Outgoing.as_color())
                             .label(ui);
                     }
 
                     ljb(&content)
-                        .padded(14, "Fees:", default_color)
-                        .text(&ps2k(*fees), TransactionType::Outgoing.as_color())
+                        .padded(15, "Fees:", default_color)
+                        .text(&ps2k(*fees), TransactionKind::Outgoing.as_color())
                         .label(ui);
 
                     ljb(&content)
@@ -434,12 +436,12 @@ impl Transaction {
 
                     ljb(&content)
                         .padded(15, "Change:", default_color)
-                        .text(&ps2k(*change_value), TransactionType::Incoming.as_color())
+                        .text(&ps2k(*change_value), TransactionKind::Incoming.as_color())
                         .label(ui);
 
                     ljb(&content)
                         .text(
-                            &format!("{} UTXO inputs", transaction.inputs.len()),
+                            &format!("UTXO inputs ({})", transaction.inputs.len()),
                             default_color,
                         )
                         .label(ui);
@@ -460,19 +462,19 @@ impl Transaction {
                             .text(
                                 &format!(
                                     "  {sequence:>2}: {}:{index} SigOps: {sig_op_count}",
-                                    transaction_id.to_string()
+                                    transaction_id
                                 ),
                                 default_color,
                             )
                             .label(ui);
                     }
 
-                    let text = LayoutJobBuilder::new(width, 16.0, Some(font_id_content.clone()))
+                    ljb(&content)
                         .text(
-                            &format!("{} UTXO outputs:", transaction.outputs.len()),
+                            &format!("UTXO outputs ({})", transaction.outputs.len()),
                             default_color,
-                        );
-                    ui.label(text);
+                        )
+                        .label(ui);
 
                     for output in transaction.outputs.iter() {
                         let TransactionOutput {
@@ -493,6 +495,43 @@ impl Transaction {
                     }
                 });
             }
+            TransactionData::Batch { fees, .. } => {
+                let aggregate_input_value = record.aggregate_input_value();
+                let mut job = ljb(&header).with_icon_font(icon_font);
+                job = job.icon(CIRCLES_FOUR, TransactionKind::Batch.as_color());
+
+                job = job.text(timestamp.as_str(), default_color).text(
+                    &ps2k(aggregate_input_value),
+                    TransactionKind::Batch.as_color(),
+                );
+
+                let mut collapsing_header = CollapsingHeader::new(job)
+                    .id_source(&transaction_id)
+                    .icon(paint_header_icon)
+                    .default_open(false);
+
+                if !maturity.unwrap_or(true) {
+                    collapsing_header = collapsing_header.icon(|ui, _rect, response| {
+                        Spinner::new().paint_at(ui, response.rect.expand(4.));
+                    });
+                }
+
+                collapsing_header.show(ui, |ui| {
+                    ljb(&content)
+                        .text("Sweep:", default_color)
+                        .text(&sompi_to_kaspa_string(aggregate_input_value), strong_color)
+                        .label(ui);
+
+                    ljb(&content)
+                        .text("Fees:", default_color)
+                        .text(
+                            &sompi_to_kaspa_string(*fees),
+                            TransactionKind::Outgoing.as_color(),
+                        )
+                        .label(ui);
+                });
+            }
+            TransactionData::Change { .. } => {}
         }
     }
 }

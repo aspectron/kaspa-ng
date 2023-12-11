@@ -62,6 +62,7 @@ pub use egui_plot::{PlotPoint, PlotPoints};
 
 pub use crate::collection::Collection;
 pub use crate::core::Core;
+pub use crate::device::{Device, Orientation};
 pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};
@@ -75,7 +76,7 @@ pub use crate::primitives::{
     DagBlock, Transaction, TransactionCollection,
 };
 pub use crate::result::Result;
-pub use crate::runtime::{runtime, spawn, spawn_with_result, Device, Payload, Runtime, Service};
+pub use crate::runtime::{runtime, spawn, spawn_with_result, Payload, Runtime, Service};
 pub use crate::settings::{
     KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, PluginSettings,
     PluginSettingsMap, RpcConfig, Settings, UserInterfaceSettings,
