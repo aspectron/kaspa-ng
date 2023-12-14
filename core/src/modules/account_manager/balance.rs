@@ -23,13 +23,13 @@ impl<'context> BalancePane<'context> {
             
             if !core.state().is_synced() {
                 ui.label(
-                    s2kws_layout_job(balance.mature, network_type, theme_color().balance_syncing_color,FontId::proportional(28.))
+                    s2kws_layout_job(core.balance_padding(), balance.mature, network_type, theme_color().balance_syncing_color,FontId::proportional(28.))
                 );
                 ui.label(RichText::new(i18n("The balance may be out of date during node sync")).size(12.).color(theme_color().balance_syncing_color));
                 return;
             } else {
                 ui.label(
-                    s2kws_layout_job(balance.mature, network_type, theme_color().balance_color,FontId::proportional(28.))
+                    s2kws_layout_job(core.balance_padding(), balance.mature, network_type, theme_color().balance_color,FontId::proportional(28.))
                 );
             }
 

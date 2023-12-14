@@ -213,6 +213,7 @@ pub trait AccountSelectorButtonExtension {
         account: &Account,
         network_type: &NetworkType,
         selected: bool,
+        balance_padding: bool,
     ) -> Response;
 }
 
@@ -222,6 +223,7 @@ impl AccountSelectorButtonExtension for Ui {
         account: &Account,
         network_type: &NetworkType,
         selected: bool,
+        balance_padding: bool,
     ) -> Response {
         let account_name = account.name_or_id();
 
@@ -241,7 +243,13 @@ impl AccountSelectorButtonExtension for Ui {
                 CompositeButton::image_and_text(
                     icon,
                     RichText::new(account_name).size(14.),
-                    s2kws_layout_job(balance.mature, network_type, color, FontId::monospace(16.)),
+                    s2kws_layout_job(
+                        balance_padding,
+                        balance.mature,
+                        network_type,
+                        color,
+                        FontId::monospace(16.),
+                    ),
                 ),
             )
         } else {

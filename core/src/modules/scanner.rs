@@ -171,7 +171,7 @@ impl ModuleT for Scanner {
                                     continue;
                                 }
 
-                                if ui.account_selector_button(selectable_account, &network_type, false).clicked() {
+                                if ui.account_selector_button(selectable_account, &network_type, false, core.balance_padding()).clicked() {
                                     this.state = State::Settings {
                                         account: selectable_account.clone(),
                                     };
@@ -332,7 +332,7 @@ impl ModuleT for Scanner {
                                 ui.add_space(16.);
                                 ui.label(RichText::new("BALANCE").size(12.).raised());
                                 ui.label(
-                                    s2kws_layout_job(*balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
+                                    s2kws_layout_job(core.balance_padding(), *balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
                                 );
                             }
                             _ => {}
@@ -355,6 +355,8 @@ impl ModuleT for Scanner {
 
             State::Finish => {
 
+                let balance_padding = core.balance_padding();
+
                 Panel::new(self)
                     .with_caption("Scanner")
                     .with_close_enabled(false, |_|{
@@ -370,7 +372,7 @@ impl ModuleT for Scanner {
                             ui.add_space(16.);
                             ui.label(RichText::new("BALANCE").size(12.).raised());
                             ui.label(
-                                s2kws_layout_job(*balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
+                                s2kws_layout_job(balance_padding, *balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
                             );
                         }
 

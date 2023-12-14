@@ -180,8 +180,6 @@ pub struct NodeSettings {
     pub rpc_kind: RpcKind,
     pub wrpc_url: String,
     pub wrpc_encoding: WrpcEncoding,
-    // pub enable_wrpc_borsh : true,
-    // pub wrpc_network_interface_borsh: NetworkInterfaceConfig,
     pub enable_wrpc_json: bool,
     pub wrpc_json_network_interface: NetworkInterfaceConfig,
     pub enable_grpc: bool,
@@ -200,7 +198,6 @@ impl Default for NodeSettings {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
                 let wrpc_url = "127.0.0.1";
-                // let wrpc_url = "ws://127.0.0.1:17210".to_string();
             } else {
                 use workflow_dom::utils::*;
                 use workflow_core::runtime;
@@ -208,14 +205,9 @@ impl Default for NodeSettings {
                     "ws://127.0.0.1".to_string()
                 } else {
                     let location = location().unwrap();
-                    //let protocol = location.protocol().expect("unable to get protocol");
                     let hostname = location.hostname().expect("KaspadNodeKind: Unable to get hostname");
-                    //log_warning!("protocol: {}", protocol);
-                    //log_warning!("hostname: {}", hostname);
                     hostname.to_string()
                 };
-
-                //,Network::Testnet10.default_borsh_rpc_port()); // window().location().hostname().expect("KaspadNodeKind: Unable to get hostname");
             }
         }
 
@@ -235,9 +227,6 @@ impl Default for NodeSettings {
             kaspad_daemon_binary: String::default(),
             kaspad_daemon_args: String::default(),
             kaspad_daemon_args_enable: false,
-            //  {
-            //     url: "".to_string(),
-            // },
         }
     }
 }
@@ -324,7 +313,6 @@ impl Default for MetricsSettings {
             graph_range_from: 0,
             graph_range_to: 15 * 60,
             disabled: AHashSet::default(),
-            // rows : 5,
         }
     }
 }
@@ -336,6 +324,7 @@ pub struct UserInterfaceSettings {
     pub theme_style: String,
     pub scale: f32,
     pub metrics: MetricsSettings,
+    pub balance_padding: bool,
 }
 
 impl Default for UserInterfaceSettings {
@@ -345,20 +334,10 @@ impl Default for UserInterfaceSettings {
             theme_style: "Rounded".to_string(),
             scale: 1.0,
             metrics: MetricsSettings::default(),
+            balance_padding: true,
         }
     }
 }
-
-// pub type PluginSettings = HashMap<String, serde_json::Value>;
-
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PluginSettings {
-    pub enabled: bool,               //HashMap<String, bool>,
-    pub settings: serde_json::Value, //HashMap<String, serde_json::Value>,
-}
-
-pub type PluginSettingsMap = HashMap<String, PluginSettings>;
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -368,6 +347,7 @@ pub struct DeveloperSettings {
     pub disable_password_restrictions: bool,
     pub enable_experimental_features: bool,
     pub enable_custom_daemon_args: bool,
+    pub market_monitor_on_testnet: bool,
 }
 
 impl Default for DeveloperSettings {
@@ -378,24 +358,25 @@ impl Default for DeveloperSettings {
             disable_password_restrictions: false,
             enable_experimental_features: false,
             enable_custom_daemon_args: true,
+            market_monitor_on_testnet: false,
         }
     }
 }
 
 impl DeveloperSettings {
-    pub fn enable_screen_capture(&self) -> bool {
+    pub fn screen_capture_enabled(&self) -> bool {
         self.enable && self.enable_screen_capture
     }
 
-    pub fn disable_password_restrictions(&self) -> bool {
+    pub fn password_restrictions_disabled(&self) -> bool {
         self.enable && self.disable_password_restrictions
     }
 
-    pub fn enable_experimental_features(&self) -> bool {
+    pub fn experimental_features_enabled(&self) -> bool {
         self.enable && self.enable_experimental_features
     }
 
-    pub fn enable_custom_daemon_args(&self) -> bool {
+    pub fn custom_daemon_args_enabled(&self) -> bool {
         self.enable && self.enable_custom_daemon_args
     }
 }
@@ -406,14 +387,12 @@ pub struct Settings {
     pub initialized: bool,
     pub splash_screen: bool,
     pub version: String,
-    // pub developer_mode: bool,
     pub developer: DeveloperSettings,
     pub node: NodeSettings,
     pub user_interface: UserInterfaceSettings,
     pub language_code: String,
-    pub enable_plugins: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plugins: Option<PluginSettingsMap>,
+    pub update_monitor: bool,
+    pub market_monitor: bool,
 }
 
 impl Default for Settings {
@@ -426,13 +405,12 @@ impl Default for Settings {
 
             splash_screen: true,
             version: "0.0.0".to_string(),
-            // developer_mode: false,
             developer: DeveloperSettings::default(),
             node: NodeSettings::default(),
             user_interface: UserInterfaceSettings::default(),
             language_code: "en".to_string(),
-            enable_plugins: true,
-            plugins: Some(PluginSettingsMap::default()),
+            update_monitor: true,
+            market_monitor: true,
         }
     }
 }
@@ -463,7 +441,6 @@ impl Settings {
 
         let storage = storage()?;
         if storage.exists().await.unwrap_or(false) {
-            // println!("Settings::load: file exists: {}", storage.filename());
             match read_json::<Self>(storage.filename()).await {
                 Ok(settings) => Ok(settings),
                 Err(err) => {

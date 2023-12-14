@@ -527,7 +527,7 @@ impl ModuleT for WalletCreate {
                             if score < 80.0 {
                                 ui.label("");
                                 ui.label(RichText::new(i18n("Secret is too weak")).color(error_color()));
-                                if !core.settings.developer.disable_password_restrictions() {
+                                if !core.settings.developer.password_restrictions_disabled() {
                                     submit = false;
                                     ui.label(RichText::new(i18n("Please create a stronger password")).color(error_color()));
                                 }
@@ -550,7 +550,7 @@ impl ModuleT for WalletCreate {
                         }
                     })
                     .with_footer(|this,ui| {
-                        let is_weak = !core.settings.developer.disable_password_restrictions() && this.context.wallet_secret_score.unwrap_or_default() < 80.0;
+                        let is_weak = !core.settings.developer.password_restrictions_disabled() && this.context.wallet_secret_score.unwrap_or_default() < 80.0;
                         let enabled = this.context.wallet_secret == this.context.wallet_secret_confirm && this.context.wallet_secret.is_not_empty();
                         if ui.large_button_enabled(enabled && !is_weak, "Continue").clicked() {
                             this.state = State::PaymentSecret;
@@ -654,7 +654,7 @@ impl ModuleT for WalletCreate {
                                 if score < 80.0 {
                                     ui.label("");
                                     ui.label(RichText::new(i18n("Passphrase is too weak")).color(egui::Color32::from_rgb(255, 120, 120)));
-                                    if !core.settings.developer.disable_password_restrictions() {
+                                    if !core.settings.developer.password_restrictions_disabled() {
                                         submit = false;
                                         ui.label(RichText::new(i18n("Please create a stronger passphrase")).color(egui::Color32::from_rgb(255, 120, 120)));
                                     }
@@ -679,7 +679,7 @@ impl ModuleT for WalletCreate {
                     })
                     .with_footer(|this,ui| {
                         if this.context.enable_payment_secret {
-                            let is_weak = !core.settings.developer.disable_password_restrictions() && this.context.payment_secret_score.unwrap_or_default() < 80.0;
+                            let is_weak = !core.settings.developer.password_restrictions_disabled() && this.context.payment_secret_score.unwrap_or_default() < 80.0;
                             let enabled = this.context.wallet_secret == this.context.wallet_secret_confirm && this.context.wallet_secret.is_not_empty();
                             if ui.large_button_enabled(enabled && !is_weak, "Continue").clicked() {
                                 this.state = State::CreateWalletConfirm;

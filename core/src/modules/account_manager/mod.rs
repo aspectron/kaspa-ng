@@ -322,7 +322,7 @@ impl AccountManager {
                                 }
 
                                 account_collection.iter().for_each(|account_select| {
-                                    if ui.account_selector_button(account_select, &network_type, false).clicked() {
+                                    if ui.account_selector_button(account_select, &network_type, false, core.balance_padding()).clicked() {
                                         this.select(Some(account_select.clone()), core.device().clone());
                                         if core.device().single_pane() {
                                             this.section = AccountManagerSection::Overview;

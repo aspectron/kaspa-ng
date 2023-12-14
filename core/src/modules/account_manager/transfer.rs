@@ -66,7 +66,7 @@ impl<'context> Transfer<'context> {
                                     return;
                                 }
 
-                                if ui.account_selector_button(account, network_type, false).clicked() {
+                                if ui.account_selector_button(account, network_type, false, core.balance_padding()).clicked() {
                                     self.context.transfer_to_account = Some(account.clone());
                                 }
                             });

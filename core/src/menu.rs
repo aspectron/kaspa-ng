@@ -140,7 +140,7 @@ impl<'core> Menu<'core> {
                             //     // ui.ctx().set_visuals(Visuals::light());
                             // }
 
-                            if self.core.settings.developer.enable_screen_capture() {
+                            if self.core.settings.developer.screen_capture_enabled() {
                                 ui.add_space(8.);
                                 ui.vertical_centered(|ui| {
                                     use egui_phosphor::light::CAMERA;

@@ -40,6 +40,7 @@ pub fn format_address(address: &Address, range: Option<usize>) -> String {
 
 /// SOMPI (u64) to KASPA (string) with suffix layout job generator
 pub fn s2kws_layout_job(
+    enable: bool,
     sompi: u64,
     network_type: &NetworkType,
     color: Color32,
@@ -49,7 +50,17 @@ pub fn s2kws_layout_job(
     let style = Style::default();
 
     let mut layout_job = LayoutJob::default();
-    if sompi == 0 {
+    if !enable {
+        let kas = sompi_to_kaspa_string_with_suffix(sompi, network_type);
+        let text = RichText::new(kas).color(color).font(font.clone());
+        text.append_to(
+            &mut layout_job,
+            &style,
+            FontSelection::Default,
+            Align::Center,
+        );
+        layout_job
+    } else if sompi == 0 {
         let transparent = color.gamma_multiply(0.25);
         let left = RichText::new("0.0").color(color).font(font.clone());
         let right = RichText::new("0000000 ")

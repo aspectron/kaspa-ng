@@ -122,7 +122,7 @@ impl AccountMenu {
                                     account_list.retain(|selectable_account|{
                                         if selectable_account.descriptor().prv_key_data_id() == Some(&prv_key_data_info.id) {
 
-                                            if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id()).clicked() {
+                                            if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id(), core.balance_padding()).clicked() {
                                                 account_manager.request_estimate();
                                                 account_manager.state = AccountManagerState::Overview {
                                                     account: selectable_account.clone(),
@@ -143,7 +143,7 @@ impl AccountMenu {
                         ui.separator();
 
                         account_list.iter().for_each(|selectable_account|{
-                            if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id()).clicked() {
+                            if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id(), core.balance_padding()).clicked() {
                                 account_manager.request_estimate();
                                 account_manager.state = AccountManagerState::Overview {
                                     account: selectable_account.clone(),

@@ -106,7 +106,7 @@ impl Settings {
                         ui.horizontal_wrapped(|ui|{
                             KaspadNodeKind::iter().for_each(|node_kind| {
                                 #[cfg(not(target_arch = "wasm32"))] {
-                                    if !core.settings.developer.enable_experimental_features() && matches!(*node_kind,KaspadNodeKind::IntegratedInProc|KaspadNodeKind::ExternalAsDaemon) {
+                                    if !core.settings.developer.experimental_features_enabled() && matches!(*node_kind,KaspadNodeKind::IntegratedInProc|KaspadNodeKind::ExternalAsDaemon) {
                                         return;
                                     }
                                 }
@@ -152,7 +152,7 @@ impl Settings {
                         }
 
                         #[cfg(not(target_arch = "wasm32"))]
-                        if core.settings.developer.enable_custom_daemon_args() && core.settings.node.node_kind.is_config_capable() {
+                        if core.settings.developer.custom_daemon_args_enabled() && core.settings.node.node_kind.is_config_capable() {
                             use kaspad_lib::args::Args;
                             use clap::error::ErrorKind as ClapErrorKind;
                             use crate::runtime::services::kaspa::Config;
