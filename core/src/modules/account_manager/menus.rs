@@ -26,8 +26,8 @@ impl WalletMenu {
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 
-                    let wallet_list = core.wallet_list().clone();
-
+                    let mut wallet_list = core.wallet_list().clone();
+                    wallet_list.sort();
                     wallet_list.into_iter().for_each(|wallet_descriptor| {
 
                         let title = if let Some(title) = wallet_descriptor.title.clone() {

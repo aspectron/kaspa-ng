@@ -4,7 +4,7 @@ use crate::mobile::MobileMenu;
 use egui::load::Bytes;
 use egui_notify::Toasts;
 use kaspa_metrics_core::MetricsSnapshot;
-use kaspa_wallet_core::api::TransactionDataGetResponse;
+use kaspa_wallet_core::api::TransactionsDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint, PrvKeyDataInfo};
 use std::borrow::Cow;
@@ -25,7 +25,7 @@ pub struct Core {
     application_events_channel: ApplicationEventsChannel,
     deactivation: Option<Module>,
     module: Module,
-    stack: VecDeque<Module>,
+    pub stack: VecDeque<Module>,
     modules: HashMap<TypeId, Module>,
     pub settings: Settings,
     pub toasts: Toasts,
@@ -189,17 +189,6 @@ impl Core {
 
         this.wallet_update_list();
 
-        #[cfg(not(target_arch = "wasm32"))]
-        spawn(async move {
-            use workflow_core::task::sleep;
-
-            loop {
-                println!("Checking version...");
-                let _ = check_version().await;
-                sleep(Duration::from_secs(60 * 60 * 6)).await;
-            }
-        });
-
         this
     }
 
@@ -234,9 +223,22 @@ impl Core {
     }
 
     pub fn back(&mut self) {
-        if let Some(module) = self.stack.pop_back() {
-            self.module = module;
+        if self.state().is_open() {
+            if let Some(module) = self.stack.pop_back() {
+                self.module = module;
+            }
+        } else {
+            while let Some(module) = self.stack.pop_back() {
+                if !module.secure() {
+                    self.module = module;
+                    return;
+                }
+            }
         }
+    }
+
+    pub fn purge_secure_stack(&mut self) {
+        self.stack.retain(|module| !module.secure());
     }
 
     pub fn sender(&self) -> crate::runtime::channel::Sender<Events> {
@@ -725,6 +727,7 @@ impl Core {
                             self.prv_key_data_map = Some(prv_key_data_map);
                         }
                     }
+                    CoreWallet::AccountDeactivation { ids: _ } => {}
                     CoreWallet::AccountActivation { ids: _ } => {}
                     CoreWallet::AccountCreate { account_descriptor } => {
                         let account = Account::from(account_descriptor);
@@ -762,6 +765,8 @@ impl Core {
                         self.modules.clone().into_iter().for_each(|(_, module)| {
                             module.reset(self);
                         });
+
+                        self.purge_secure_stack();
                     }
                     CoreWallet::AccountSelection { id: _ } => {}
                     CoreWallet::DAAScoreChange { current_daa_score } => {
@@ -890,6 +895,7 @@ impl Core {
                 .into_iter()
                 .map(|prv_key_data_info| (*prv_key_data_info.id(), prv_key_data_info))
                 .collect::<HashMap<_, _>>();
+
             application_events_sender
                 .send(Events::PrvKeyDataInfo {
                     prv_key_data_info_map,
@@ -900,6 +906,7 @@ impl Core {
                 .iter()
                 .map(|account| account.id())
                 .collect::<Vec<_>>();
+
             let account_map: HashMap<AccountId, Account> = account_list
                 .clone()
                 .into_iter()
@@ -911,7 +918,7 @@ impl Core {
                 .map(|account_id| {
                     runtime
                         .wallet()
-                        .transaction_data_get_range(account_id, network_id, 0..128)
+                        .transactions_data_get_range(account_id, network_id, 0..128)
                 })
                 .collect::<Vec<_>>();
 
@@ -922,7 +929,7 @@ impl Core {
                 .collect::<Result<Vec<_>>>()?;
 
             transaction_data.into_iter().for_each(|data| {
-                let TransactionDataGetResponse {
+                let TransactionsDataGetResponse {
                     account_id,
                     transactions,
                     start: _,

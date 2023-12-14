@@ -4,8 +4,9 @@ use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 #[allow(unused_imports)]
-use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
-use kaspa_wallet_core::{ConnectOptions, ConnectStrategy};
+use kaspa_wallet_core::rpc::{
+    ConnectOptions, ConnectStrategy, NotificationMode, Rpc, RpcCtl, WrpcEncoding,
+};
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {

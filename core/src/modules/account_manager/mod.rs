@@ -215,6 +215,10 @@ impl ModuleT for AccountManager {
         self.state = AccountManagerState::Select;
     }
 
+    fn secure(&self) -> bool {
+        true
+    }
+
     // fn reload(&mut self, core : &mut Core) {
     //     if let AccountManagerState::Overview { account } = self.state.clone() {
     //         let account_id = account.id();
@@ -279,6 +283,8 @@ impl AccountManager {
 
         match self.state.clone() {
             AccountManagerState::Select => {
+
+                core.apply_mobile_style(ui);
 
                 if !core.state().is_open() {
                     core.select::<modules::WalletOpen>();
@@ -357,6 +363,17 @@ impl AccountManager {
             ui.separator();
             AccountMenu::new().render(core,ui,self,rc, screen_rect_height * 0.8);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+
+                if ui.add(Label::new(RichText::new(egui_phosphor::light::LOCK).size(18.)).sense(Sense::click())).clicked() {
+                    let wallet = core.wallet().clone();
+                    spawn(async move {
+                        wallet.wallet_close().await?;
+                        Ok(())
+                    });
+                }
+
+                ui.separator();
+
                 ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
 
                 ui.separator();

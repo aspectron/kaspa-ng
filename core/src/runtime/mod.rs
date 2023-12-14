@@ -22,17 +22,18 @@ pub struct Inner {
     // services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
     services: Mutex<Vec<Arc<dyn Service>>>,
     repaint_service: Arc<RepaintService>,
+    application_events: ApplicationEventsChannel,
+    egui_ctx: egui::Context,
+    is_running: Arc<AtomicBool>,
+    start_time: Instant,
+    system: Option<System>,
+
     kaspa: Arc<KaspaService>,
     peer_monitor_service: Arc<PeerMonitorService>,
     metrics_service: Arc<MetricsService>,
     block_dag_monitor_service: Arc<BlockDagMonitorService>,
     market_monitor_service: Arc<MarketMonitorService>,
     update_monitor_service: Arc<UpdateMonitorService>,
-    application_events: ApplicationEventsChannel,
-    egui_ctx: egui::Context,
-    is_running: Arc<AtomicBool>,
-    start_time: Instant,
-    system: Option<System>,
 }
 
 /// Runtime is a core component of the Kaspa NG application responsible for
@@ -63,6 +64,7 @@ impl Runtime {
             application_events.clone(),
             settings,
         ));
+
         let update_monitor_service = Arc::new(UpdateMonitorService::new(
             application_events.clone(),
             settings,
@@ -75,6 +77,7 @@ impl Runtime {
             metrics_service.clone(),
             block_dag_monitor_service.clone(),
             market_monitor_service.clone(),
+            #[cfg(not(target_arch = "wasm32"))]
             update_monitor_service.clone(),
         ]);
 

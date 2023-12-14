@@ -1,5 +1,5 @@
 use kaspa_consensus_core::network::NetworkId;
-use kaspa_wallet_core::SyncState;
+use kaspa_wallet_core::events::SyncState;
 
 #[derive(Default)]
 pub struct State {

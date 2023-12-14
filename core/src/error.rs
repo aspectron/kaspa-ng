@@ -79,6 +79,9 @@ pub enum Error {
 
     #[error(transparent)]
     NetworkType(#[from] kaspa_consensus_core::network::NetworkTypeError),
+
+    #[error("Account creation error")]
+    AccountCreationError,
 }
 
 impl Error {

@@ -49,6 +49,10 @@ pub trait ModuleT: Downcast {
         false
     }
 
+    fn secure(&self) -> bool {
+        false
+    }
+
     fn style(&self) -> ModuleStyle {
         // ModuleStyle::Large
         ModuleStyle::Default
@@ -152,6 +156,10 @@ impl Module {
         self.inner.module.borrow_mut().modal()
     }
 
+    pub fn secure(&self) -> bool {
+        self.inner.module.borrow_mut().secure()
+    }
+
     pub fn type_id(&self) -> TypeId {
         self.inner.type_id
     }
@@ -176,6 +184,12 @@ impl Module {
                 .downcast_mut::<M>()
                 .expect("unable to downcast_mut module")
         })
+    }
+}
+
+impl std::fmt::Debug for Module {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.inner.name)
     }
 }
 

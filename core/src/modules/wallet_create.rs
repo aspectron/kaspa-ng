@@ -1,9 +1,8 @@
 
 use crate::imports::*;
-use kaspa_wallet_core::api::WalletCreateResponse;
-use kaspa_wallet_core::runtime::{AccountKind, AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
+use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
 use slug::slugify;
-use kaspa_bip32::WordCount;
+use kaspa_bip32::{WordCount, Mnemonic, Language};
 use crate::utils::{secret_score, secret_score_to_text};
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
@@ -731,30 +730,47 @@ impl ModuleT for WalletCreate {
                         let wallet_secret = Secret::from(args.wallet_secret);
                         let payment_secret = args.enable_payment_secret.then_some(Secret::from(args.payment_secret));
 
-                        let account_kind = AccountKind::Bip32;
                         let wallet_args = WalletCreateArgs::new(
                             args.wallet_name.is_not_empty().then_some(args.wallet_name),
                             args.wallet_filename.is_not_empty().then_some(args.wallet_filename),
                             args.enable_phishing_hint.then_some(args.phishing_hint.into()),
-                            wallet_secret.clone(),
+                            // wallet_secret.clone(),
                             false
                         );
+                        
+                        wallet.clone().wallet_create(wallet_secret.clone(), wallet_args).await?;
+
+                        let mnemonic = Mnemonic::random(args.word_count, Language::default())?;
+                        let mnemonic_phrase_string = mnemonic.phrase_string();
+                        // let account_kind = AccountKind::Bip32;
+
                         let prv_key_data_args = PrvKeyDataCreateArgs::new(
                             None,
-                            wallet_secret.clone(),
                             payment_secret.clone(),
+                            mnemonic_phrase_string.clone(),
+                            // mnemonic.phrase_string(),
+                            //payment_secret.clone(),
                             // - TODO
-                            WordCount::Words12.into(),
-                        );
-                        let account_args = AccountCreateArgs::new(
-                            args.account_name.is_not_empty().then_some(args.account_name),
-                            account_kind,
-                            wallet_secret.clone(),
-                            payment_secret.clone(),
+                            // WordCount::Words12.into(),
                         );
 
-                        let WalletCreateResponse { mnemonic, wallet_descriptor: _, account_descriptor, storage_descriptor: _ } = wallet.wallet_create(wallet_args, prv_key_data_args, account_args).await?;
-                        Ok((Arc::new(mnemonic), account_descriptor))
+                        let prv_key_data_id = wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?;
+
+                        let account_create_args = AccountCreateArgs::new_bip32(
+                            prv_key_data_id,
+                            payment_secret.clone(),
+                            args.account_name.is_not_empty().then_some(args.account_name),
+                            None,
+                            // account_kind,
+                            // wallet_secret.clone(),
+                            // payment_secret.clone(),
+                        );
+
+                        let account_descriptor = wallet.clone().accounts_create(wallet_secret, account_create_args).await?;
+
+                        // let WalletCreateResponse { mnemonic, wallet_descriptor: _, account_descriptor, storage_descriptor: _ } = 
+                        // wallet.wallet_create(wallet_secret, wallet_args, prv_key_data_args, account_args).await?;
+                        Ok((Arc::new(mnemonic_phrase_string), account_descriptor))
                     });
                 }
 

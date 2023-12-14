@@ -3,11 +3,11 @@ use cfg_if::cfg_if;
 use kaspa_ng_core::runtime;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::api::WalletApi;
+use std::iter::once;
 use std::sync::Arc;
 use workflow_i18n::*;
 use workflow_log::*;
 
-// #[allow(unused)]
 pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
 pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-ng.svg");
 pub const I18N_EMBEDDED: &str = include_str!("../../resources/i18n/i18n.json");
@@ -32,7 +32,6 @@ cfg_if! {
             MINIMUM_DAEMON_SOFT_FD_LIMIT
         };
         use kaspad_lib::args::Args as NodeArgs;
-        use kaspad_lib::args::parse_args as parse_kaspad_args;
         use kaspa_utils::fd_budget;
         use kaspa_core::signals::Signals;
         use clap::ArgAction;
@@ -60,16 +59,24 @@ cfg_if! {
         fn parse_args() -> Args {
             #[allow(unused)]
             use clap::{arg, command, Arg, Command};
+            use std::env::{args,var};
 
-            if std::env::args().any(|arg| arg == "--daemon") || std::env::var("KASPA_NG_DAEMON").is_ok() {
-                Args::Kaspad { args : Box::new(parse_kaspad_args()) }
+            if args().any(|arg| arg == "--daemon") || var("KASPA_NG_DAEMON").is_ok() {
+                let args = once("kaspad".to_string()).chain(args().skip(1).filter(|arg| arg != "--daemon"));//.collect::<Vec<String>>();
+                match NodeArgs::parse(args) {
+                    Ok(args) => Args::Kaspad { args : Box::new(args) },
+                    Err(err) => {
+                        println!("{err}");
+                        std::process::exit(1);
+                    }
+                }
             } else {
 
                 let cmd = Command::new("kaspa-ng")
 
                     .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version()))
                     .arg(arg!(--disable "Disable node services when starting"))
-                    .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon"))
+                    .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon (kaspad)"))
                     .arg(
                         Arg::new("reset-settings")
                         .long("reset-settings")

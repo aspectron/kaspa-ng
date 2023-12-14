@@ -3,9 +3,9 @@
 use crate::imports::*;
 use kaspa_bip32::Mnemonic;
 use kaspa_wallet_core::api::AccountsCreateRequest;
-use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
-use kaspa_wallet_core::storage::interface::AccessContext;
-use kaspa_wallet_core::storage::{AccessContextT, AccountKind, PrvKeyDataInfo};
+use kaspa_wallet_core::runtime::wallet::AccountCreateArgsBip32;
+use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs, PrvKeyDataArgs};
+use kaspa_wallet_core::storage::{AccountKind, PrvKeyDataInfo};
 
 
 #[derive(Clone)]
@@ -347,7 +347,7 @@ impl ModuleT for AccountCreate {
 
 
                     // let prv_key_data_info = args.prv_key_data_info.clone().unwrap();
-                    let account_create_result = Payload::<Result<AccountDescriptor>>::new("wallet_create_result");
+                    let account_create_result = Payload::<Result<AccountDescriptor>>::new("account_create_result");
                     if !account_create_result.is_pending() {
 
                         let wallet = self.runtime.wallet().clone();
@@ -355,22 +355,26 @@ impl ModuleT for AccountCreate {
 
                             let account_name = args.account_name.trim();
                             let account_name = (!account_name.is_empty()).then_some(account_name.to_string());
-                            let account_kind = AccountKind::Bip32;
+                            // let account_kind = AccountKind::Bip32;
                             let wallet_secret = Secret::from(args.wallet_secret);
                             let payment_secret = args.prv_key_data_info.as_ref().and_then(|secret| {
                                 secret.requires_bip39_passphrase().then_some(Secret::from(args.payment_secret))
                             });
 
-                            let prv_key_data_id = args.prv_key_data_info.as_ref().unwrap().id();
+                            let prv_key_data_id = *args.prv_key_data_info.as_ref().unwrap().id();
 
-                            let account_args = AccountCreateArgs {
-                                account_name,
-                                account_kind,
-                                wallet_secret,
-                                payment_secret,
-                            };
+                            let prv_key_data_args = PrvKeyDataArgs { prv_key_data_id, payment_secret };
+                            let account_args = AccountCreateArgsBip32 { account_name, account_index: None };
+                            let account_create_args = AccountCreateArgs::Bip32 { prv_key_data_args, account_args };
+                            //  {
+                            //     account_name,
+                            //     account_kind,
+                            //     wallet_secret,
+                            //     payment_secret,
+                            // };
 
-                            Ok(wallet.accounts_create(*prv_key_data_id, account_args).await?)
+                            let account_descriptor = wallet.accounts_create(wallet_secret, account_create_args).await?;
+                            Ok(account_descriptor)
                         });
                     }
 

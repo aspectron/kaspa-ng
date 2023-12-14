@@ -28,41 +28,41 @@ impl UpdateMonitorService {
         }
     }
 
-    pub fn rpc_api(&self) -> Option<Arc<dyn RpcApi>> {
-        self.rpc_api.lock().unwrap().clone()
-    }
+    // pub fn rpc_api(&self) -> Option<Arc<dyn RpcApi>> {
+    //     self.rpc_api.lock().unwrap().clone()
+    // }
 
-    pub fn enable(&self) {
-        self.service_events
-            .sender
-            .try_send(UpdateMonitorEvents::Enable)
-            .unwrap();
-    }
+    // pub fn enable(&self) {
+    //     self.service_events
+    //         .sender
+    //         .try_send(UpdateMonitorEvents::Enable)
+    //         .unwrap();
+    // }
 
-    pub fn disable(&self) {
-        self.service_events
-            .sender
-            .try_send(UpdateMonitorEvents::Disable)
-            .unwrap();
-    }
+    // pub fn disable(&self) {
+    //     self.service_events
+    //         .sender
+    //         .try_send(UpdateMonitorEvents::Disable)
+    //         .unwrap();
+    // }
 }
 
 #[async_trait]
 impl Service for UpdateMonitorService {
     fn name(&self) -> &'static str {
-        "peer-monitor"
+        "update-monitor"
     }
 
-    async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
-        self.rpc_api.lock().unwrap().replace(rpc_api.clone());
-        Ok(())
-    }
+    // async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
+    //     self.rpc_api.lock().unwrap().replace(rpc_api.clone());
+    //     Ok(())
+    // }
 
-    async fn detach_rpc(self: Arc<Self>) -> Result<()> {
-        self.rpc_api.lock().unwrap().take();
+    // async fn detach_rpc(self: Arc<Self>) -> Result<()> {
+    //     self.rpc_api.lock().unwrap().take();
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     async fn spawn(self: Arc<Self>) -> Result<()> {
         let this = self.clone();
@@ -78,6 +78,8 @@ impl Service for UpdateMonitorService {
                         continue;
                     }
 
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let _ = check_version().await;
                 },
                 msg = this.as_ref().service_events.receiver.recv().fuse() => {
                     if let Ok(event) = msg {

@@ -39,6 +39,10 @@ impl ModuleT for WalletOpen {
         ModuleStyle::Mobile
     }
 
+    fn secure(&self) -> bool {
+        true
+    }
+
     fn render(
         &mut self,
         core: &mut Core,
@@ -55,6 +59,7 @@ impl ModuleT for WalletOpen {
             State::Select => {
 
                 let has_stack = core.has_stack();
+                println!("stack: {:?}", core.stack);
                 let core = Rc::new(RefCell::new(core));
 
                 Panel::new(self)
@@ -64,7 +69,9 @@ impl ModuleT for WalletOpen {
                         ui.label(text);
                     })
                     .with_body(|this, ui| {
-                        for wallet_descriptor in core.borrow_mut().wallet_list.clone().into_iter() {
+                        let mut wallet_descriptor_list = core.borrow_mut().wallet_list.clone();
+                        wallet_descriptor_list.sort(); //sort_by(|a, b| a.title.cmp(&b.title));
+                        for wallet_descriptor in wallet_descriptor_list.into_iter() {
                             if ui.add_sized(theme_style().large_button_size(), CompositeButton::image_and_text(
                                 Composite::icon(egui_phosphor::thin::FINGERPRINT_SIMPLE),
                                 wallet_descriptor.title.as_deref().unwrap_or("NO NAME"),

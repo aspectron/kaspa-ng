@@ -9,6 +9,7 @@ pub use kaspa_utils::{hashmap::GroupExtension, networking::ContextualNetAddress}
 pub use kaspa_wallet_core::api;
 pub use kaspa_wallet_core::api::WalletApi;
 pub use kaspa_wallet_core::events::SyncState;
+pub use kaspa_wallet_core::prelude::Address;
 pub use kaspa_wallet_core::rpc::DynRpcApi;
 pub use kaspa_wallet_core::runtime::{Account as KaspaAccount, Wallet as KaspaWallet};
 pub use kaspa_wallet_core::runtime::{AccountDescriptor, AccountId, Balance};
@@ -17,7 +18,6 @@ pub use kaspa_wallet_core::storage::{
     IdT, PrvKeyDataId, TransactionId, TransactionRecord, WalletDescriptor,
 };
 pub use kaspa_wallet_core::utils::*;
-pub use kaspa_wallet_core::Address;
 pub use kaspa_wrpc_client::{KaspaRpcClient, WrpcEncoding};
 
 pub use async_trait::async_trait;
@@ -78,8 +78,8 @@ pub use crate::primitives::{
 pub use crate::result::Result;
 pub use crate::runtime::{runtime, spawn, spawn_with_result, Payload, Runtime, Service};
 pub use crate::settings::{
-    KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, PluginSettings,
-    PluginSettingsMap, RpcConfig, Settings, UserInterfaceSettings,
+    KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, RpcConfig,
+    Settings, UserInterfaceSettings,
 };
 pub use crate::state::State;
 pub use crate::status::Status;

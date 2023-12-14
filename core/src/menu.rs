@@ -185,14 +185,27 @@ impl<'core> Menu<'core> {
             ui.close_menu();
         }
         ui.separator();
-        if ui.button("Wallet").clicked() {
-            if self.core.state().is_open() {
+
+        #[allow(clippy::collapsible_else_if)]
+        if self.core.state().is_open() {
+            if ui.button("Wallet").clicked() {
                 self.select::<modules::AccountManager>();
-            } else {
-                self.select::<modules::WalletOpen>();
+                ui.close_menu();
             }
-            ui.close_menu();
+        } else {
+            if ui.button("Wallet").clicked() {
+                self.select::<modules::WalletOpen>();
+                ui.close_menu();
+            }
         }
+        // if ui.button("Wallet").clicked() {
+        //     if self.core.state().is_open() {
+        //         self.select::<modules::AccountManager>();
+        //     } else {
+        //         self.select::<modules::WalletOpen>();
+        //     }
+        //     ui.close_menu();
+        // }
 
         ui.separator();
         if ui.button("Metrics").clicked() {

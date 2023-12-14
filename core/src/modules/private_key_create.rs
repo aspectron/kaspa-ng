@@ -3,8 +3,7 @@
 use crate::imports::*;
 use kaspa_bip32::Mnemonic;
 use kaspa_wallet_core::runtime::{PrvKeyDataCreateArgs, WalletCreateArgs};
-use kaspa_wallet_core::storage::interface::AccessContext;
-use kaspa_wallet_core::storage::{AccessContextT, AccountKind};
+use kaspa_wallet_core::storage::AccountKind;
 
 pub enum MnemonicSize {
     Words12,
