@@ -1,6 +1,6 @@
 use super::*;
-use workflow_http::get_json;
 use std::collections::hash_map::Entry;
+use workflow_http::get_json;
 
 // https://api.coingecko.com/api/v3/simple/price?ids=kaspa&vs_currencies=usd%2Ccny&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true
 // {
@@ -79,7 +79,7 @@ fn group_by_currency_prefix(data: &AHashMap<String, f64>) -> MarketDataMap {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => entry.insert(MarketData::new(symbol.as_str())),
         };
-        
+
         match suffix.as_str() {
             "" => data.price = *info,
             "market_cap" => data.market_cap = *info,

@@ -2,7 +2,6 @@ use crate::imports::*;
 
 pub fn format_duration(millis: u64) -> String {
     let seconds = millis / 1000;
-    // let seconds = seconds_f64 as u64;
     let days = seconds / (24 * 60 * 60);
     let hours = (seconds / (60 * 60)) % 24;
     let minutes = (seconds / 60) % 60;
@@ -124,13 +123,13 @@ pub fn s2kws_layout_job(
     }
 }
 
-pub fn format_price(price: f64, precision : usize) -> String {
+pub fn format_price(price: f64, precision: usize) -> String {
     if precision == 0 {
         price.trunc().separated_string()
     } else {
         let string = price.to_string();
         if let Some(idx) = string.find('.') {
-            let (left,right) = string.split_at(idx+1);
+            let (left, right) = string.split_at(idx + 1);
             if right.len() < precision {
                 let mut right = right.to_string();
                 while right.len() < precision {
@@ -147,16 +146,16 @@ pub fn format_price(price: f64, precision : usize) -> String {
     }
 }
 
-pub fn format_price_with_symbol(price: f64, precision : usize, symbol : &str) -> String {
+pub fn format_price_with_symbol(price: f64, precision: usize, symbol: &str) -> String {
     let price = format_price(price, precision);
     format!("{price} {symbol}")
 }
 
-pub fn precision_from_symbol(symbol : &str) -> usize {
+pub fn precision_from_symbol(symbol: &str) -> usize {
     match symbol {
         "kas" => 8,
         "btc" => 8,
         // "usd" => 2,
-        _ => 6
+        _ => 6,
     }
 }

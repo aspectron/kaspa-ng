@@ -5,17 +5,12 @@ type PopupHandler<'panel> = Box<dyn FnOnce(&mut Ui, &mut bool) + 'panel>;
 
 pub struct PopupPanel<'panel> {
     id: Id,
-    // title: String,
     min_width: Option<f32>,
     max_height: Option<f32>,
     widget: PopupWidget<'panel>,
     content: PopupHandler<'panel>,
-    // widget: Option<PopupWidget<'panel>>,
-    // content: Option<PopupHandler<'panel>>,
-    // with_caption: bool,
     caption: Option<String>,
     with_close_button: bool,
-    // with_pulldown_marker: bool,
     close_on_interaction: bool,
 }
 
@@ -23,7 +18,6 @@ impl<'panel> PopupPanel<'panel> {
     pub fn new(
         ui: &mut Ui,
         id: impl Into<String>,
-        // title: impl Into<String>,
         widget: impl FnOnce(&mut Ui) -> Response + 'panel,
         content: impl FnOnce(&mut Ui, &mut bool) + 'panel,
     ) -> Self {
@@ -31,17 +25,12 @@ impl<'panel> PopupPanel<'panel> {
 
         Self {
             id,
-            // title: title.into(),
             min_width: None,
             max_height: None,
-            // widget: Some(Box::new(widget)),
-            // content: Some(Box::new(content)),
             widget: Box::new(widget),
             content: Box::new(content),
-            // with_caption: false,
             caption: None,
             with_close_button: false,
-            // with_pulldown_marker: false,
             close_on_interaction: false,
         }
     }
@@ -56,10 +45,6 @@ impl<'panel> PopupPanel<'panel> {
         self
     }
 
-    // pub fn with_caption(mut self, caption: bool) -> Self {
-    //     self.with_caption = caption;
-    //     self
-    // }
     pub fn with_caption(mut self, caption: impl Into<String>) -> Self {
         self.caption = Some(caption.into());
         self
@@ -70,30 +55,14 @@ impl<'panel> PopupPanel<'panel> {
         self
     }
 
-    // pub fn with_pulldown_marker(mut self, pulldown_marker: bool) -> Self {
-    //     self.with_pulldown_marker = pulldown_marker;
-    //     self
-    // }
-
     pub fn with_close_on_interaction(mut self, close_on_interaction: bool) -> Self {
         self.close_on_interaction = close_on_interaction;
         self
     }
 
     pub fn build(self, ui: &mut Ui) {
-        // let title = self.title.clone();
-        // let content = self.content.take().unwrap();
-        // // let response = ui.add(Label::new(format!("{} ⏷", title)).sense(Sense::click()));
-        // let text = if self.with_pulldown_marker {
-        //     format!("{} ⏷", title)
-        // } else {
-        //     title.clone()
-        // };
-
-        // let response = ui.add(Label::new(text).sense(Sense::click()));
         let response = (self.widget)(ui);
         if response.clicked() {
-            // if response.clicked() {
             ui.memory_mut(|mem| mem.toggle_popup(self.id));
         }
 

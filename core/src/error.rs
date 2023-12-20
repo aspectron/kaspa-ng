@@ -119,9 +119,3 @@ impl<T> From<ChannelError<T>> for Error {
         Error::ChannelError(err.to_string())
     }
 }
-
-// impl<T> From<downcast::DowncastError<T>> for Error {
-//     fn from(e: downcast::DowncastError<T>) -> Self {
-//         Error::DowncastError(e.to_string())
-//     }
-// }

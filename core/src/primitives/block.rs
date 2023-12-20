@@ -64,7 +64,6 @@ pub struct DaaBucket {
 
 impl DaaBucket {
     pub fn new(daa_score: f64, block: DagBlock) -> Self {
-        // let daa_score = block.data.header.daa_score as f64;
         Self {
             blocks: vec![block],
             daa_score,

@@ -19,7 +19,6 @@ use services::*;
 use system::*;
 
 pub struct Inner {
-    // services: Mutex<Vec<Arc<dyn Service + Send + Sync + 'static>>>,
     services: Mutex<Vec<Arc<dyn Service>>>,
     repaint_service: Arc<RepaintService>,
     application_events: ApplicationEventsChannel,

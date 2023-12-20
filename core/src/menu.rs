@@ -28,7 +28,6 @@ impl<'core> Menu<'core> {
                     }
 
                     if self.core.device().single_pane() {
-                        // ui.menu_button(format!("{} Kaspa NG", LIST), |ui| {
                         ui.menu_button("Kaspa NG", |ui| {
                             self.render_menu(ui);
                         });
@@ -130,15 +129,6 @@ impl<'core> Menu<'core> {
                                     });
                                 });
                             });
-
-                            // if ui.button("Change").clicked() {
-                            //     if theme().name == "Light" {
-                            //         apply_theme(ui, Theme::dark());
-                            //     } else {
-                            //         apply_theme(ui, Theme::light());
-                            //     }
-                            //     // ui.ctx().set_visuals(Visuals::light());
-                            // }
 
                             if self.core.settings.developer.screen_capture_enabled() {
                                 ui.add_space(8.);

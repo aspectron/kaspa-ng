@@ -38,26 +38,6 @@ struct MarketMonitorSettings {
     currencies: Vec<String>,
 }
 
-// struct MarketDataProvider {
-//     pub name: String,
-//     pub url: String,
-// }
-
-// impl MarketDataProvider {
-//     pub fn new(name: String, url: String) -> Self {
-//         Self { name, url }
-//     }
-
-//     pub async fn get(&self) -> Result<serde_json::Value> {
-//         let resp = get_json(&self.url).await?;
-//         Ok(resp)
-//     }
-// }
-
-// struct MarketPriceList {
-//     pub prices: HashMap<String, MarketPrice>,
-// }
-
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CurrencyDescriptor {
     pub id: String,
@@ -66,8 +46,6 @@ pub struct CurrencyDescriptor {
 }
 
 pub type CurrencyDescriptorList = Vec<CurrencyDescriptor>;
-
-// pub struct MarketData {}
 
 pub enum MarketMonitorEvents {
     Enable,
@@ -99,11 +77,7 @@ impl MarketMonitorService {
             task_ctl: Channel::oneshot(),
             is_enabled: AtomicBool::new(settings.market_monitor),
             provider: Mutex::new(MarketDataProvider::default()),
-            // ------
-            // currencies: Mutex::new(Some(vec!["usd".to_string()])),
             currencies: Mutex::new(Some(currencies)),
-            // ------
-            // currencies: Mutex::new(None),
             available_currencies: Mutex::new(None),
             market_price_list: Mutex::new(None),
         }
@@ -117,11 +91,15 @@ impl MarketMonitorService {
         self.provider.lock().unwrap().clone()
     }
 
-    pub fn enable(&self, enable : bool) {
+    pub fn enable(&self, enable: bool) {
         if enable {
-            self.service_events.try_send(MarketMonitorEvents::Enable).unwrap();
+            self.service_events
+                .try_send(MarketMonitorEvents::Enable)
+                .unwrap();
         } else {
-            self.service_events.try_send(MarketMonitorEvents::Disable).unwrap();
+            self.service_events
+                .try_send(MarketMonitorEvents::Disable)
+                .unwrap();
         }
     }
 
@@ -141,19 +119,12 @@ impl MarketMonitorService {
             if let Ok(market_price_list) =
                 self.provider().fetch_market_price_list(&currencies).await
             {
-                // println!("market price list: {:?}", market_price_list);
-                // self.market_price_list
-                //     .lock()
-                //     .unwrap()
-                //     .replace(Arc::new(market_price_list));
-
                 self.application_events
                     .sender
                     .try_send(Events::Market(MarketUpdate::Price(Arc::new(
                         market_price_list,
                     ))))
                     .unwrap();
-                // println!("market_data: {:?}", market_data);
             }
         }
         Ok(())
@@ -162,36 +133,9 @@ impl MarketMonitorService {
 
 #[async_trait]
 impl Service for MarketMonitorService {
-    // fn ident(&self) -> &'static str {
-    //     "market-monitor"
-    // }
-
     fn name(&self) -> &'static str {
         "market-monitor"
     }
-
-    // fn load(&self, settings: serde_json::Value) -> Result<()> {
-    //     let MarketMonitorSettings {
-    //         enabled,
-    //         provider,
-    //         currencies,
-    //     } = serde_json::from_value(settings)?;
-    //     self.is_enabled.store(enabled, Ordering::SeqCst);
-    //     self.currencies.lock().unwrap().replace(currencies);
-    //     *self.provider.lock().unwrap() = provider;
-
-    //     Ok(())
-    // }
-
-    // fn store(&self) -> Result<Option<serde_json::Value>> {
-    //     let settings = MarketMonitorSettings {
-    //         enabled: self.is_enabled.load(Ordering::SeqCst),
-    //         provider: self.provider.lock().unwrap().clone(),
-    //         currencies: self.currencies.lock().unwrap().clone().unwrap_or_default(),
-    //     };
-
-    //     Ok(Some(serde_json::to_value(settings)?))
-    // }
 
     async fn spawn(self: Arc<Self>) -> Result<()> {
         let this = self.clone();
@@ -244,10 +188,4 @@ impl Service for MarketMonitorService {
         self.task_ctl.recv().await.unwrap();
         Ok(())
     }
-
-    // fn render(&self, ui: &mut Ui) {
-    //     ui.label("Market Monitor");
-
-    //     ui.label("TODO - Add Market Monitor Settings");
-    // }
 }

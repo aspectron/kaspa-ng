@@ -1,6 +1,6 @@
 use super::*;
-use workflow_http::get_json;
 use std::collections::hash_map::Entry;
+use workflow_http::get_json;
 
 #[derive(Default, Serialize, Deserialize)]
 struct CoinGeckoSimplePrice {
@@ -52,7 +52,7 @@ fn group_by_currency_prefix(data: &AHashMap<String, f64>) -> MarketDataMap {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => entry.insert(MarketData::new(symbol.as_str())),
         };
-        
+
         match suffix.as_deref() {
             None => data.price = *info,
             Some("market_cap") => data.market_cap = *info,

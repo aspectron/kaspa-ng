@@ -1,8 +1,5 @@
 use crate::imports::*;
-// pub use futures::{future::FutureExt, select, Future};
 use kaspa_rpc_core::RpcPeerInfo;
-// #[allow(unused_imports)]
-// use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 
 pub const PEER_POLLING_INTERVAL_SECONDS: u64 = 1; // 1 sec
 

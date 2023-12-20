@@ -55,7 +55,6 @@ cfg_if! {
                 if config.enable_grpc {
                     args.rpclisten = Some(config.grpc_network_interface.into());
                 }
-                // args.rpclisten_borsh = Some(WrpcNetAddress::Default);
 
                 Ok(args)
             }
@@ -90,8 +89,6 @@ cfg_if! {
                 if config.enable_grpc {
                     args.push(format!("--rpclisten={}", config.grpc_network_interface));
                 }
-
-                // ---
 
                 args.push("--rpclisten-borsh=default");
 

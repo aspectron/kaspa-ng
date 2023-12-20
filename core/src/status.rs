@@ -115,7 +115,6 @@ impl<'core> Status<'core> {
     }
 
     fn render_connected_state(&mut self, ui: &mut egui::Ui, state: ConnectionStatus) {
-        //connected : bool, icon: &str, color : Color32) {
         let status_area_width = ui.available_width() - 24.;
         let status_icon_size = theme_style().status_icon_size;
         let module = self.module().clone();

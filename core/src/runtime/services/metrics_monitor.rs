@@ -123,8 +123,6 @@ impl Service for MetricsService {
         Ok(())
     }
 
-    // async fn connect
-
     async fn spawn(self: Arc<Self>) -> Result<()> {
         Ok(())
     }

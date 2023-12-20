@@ -57,14 +57,13 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
         icon,
         0.0,
         TextFormat {
-            // font_id: FontId::new(text_size + 4., FontFamily::Name("phosphor".into())),
             font_id: FontId::new(text_size + 4., FontFamily::Proportional),
             color,
             valign: Align::Center,
             ..Default::default()
         },
     );
-    //  job.append(text, leading_space, format)
+
     job.append(
         text,
         2.0,
@@ -75,15 +74,6 @@ pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> Layout
             ..Default::default()
         },
     );
-    // job.append(
-    //     wallet.filename.clone().as_str(),
-    //     0.0,
-    //     TextFormat {
-    //         font_id: FontId::new(12.0, FontFamily::Proportional),
-    //         color: ui.ctx().style().visuals.text_color(),
-    //         ..Default::default()
-    //     },
-    // );
 
     job
 }

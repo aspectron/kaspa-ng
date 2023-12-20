@@ -1,5 +1,3 @@
-// use kaspa_wallet_core::storage::AccountKind;
-
 use kaspa_wallet_core::account::{
     BIP32_ACCOUNT_KIND, KEYPAIR_ACCOUNT_KIND, LEGACY_ACCOUNT_KIND, MULTISIG_ACCOUNT_KIND,
 };
@@ -42,7 +40,6 @@ impl AccountContext {
 }
 
 struct Inner {
-    // runtime: Arc<dyn runtime::Account>,
     id: AccountId,
     account_kind: AccountKind,
     balance: Mutex<Option<Balance>>,
@@ -51,17 +48,10 @@ struct Inner {
     transactions: Mutex<TransactionCollection>,
     total_transaction_count: AtomicU64,
     is_loading: AtomicBool,
-    // for bip32 accounts only
-    // bip39_passphrase: bool,
 }
 
 impl Inner {
     fn new(descriptor: AccountDescriptor) -> Self {
-        // let bip39_passphrase = match &descriptor {
-        //     AccountDescriptor::Bip32(bip32) => bip32.bip39_passphrase,
-        //     _ => false,
-        // };
-
         let context = AccountContext::new(&descriptor);
         Self {
             id: *descriptor.account_id(),
@@ -72,7 +62,6 @@ impl Inner {
             transactions: Mutex::new(TransactionCollection::default()),
             total_transaction_count: AtomicU64::new(0),
             is_loading: AtomicBool::new(true),
-            // bip39_passphrase,
         }
     }
 }
@@ -131,7 +120,6 @@ impl Account {
                 })
             })
             .unwrap_or(false)
-        // self.inner.bip39_passphrase
     }
 
     pub fn account_kind(&self) -> &AccountKind {
@@ -246,8 +234,6 @@ impl AccountSelectorButtonExtension for Ui {
         let account_name = account.name_or_id();
 
         let icon = if selected {
-            // Composite::icon(egui_phosphor::thin::CHECK)
-            // Composite::icon(egui_phosphor::thin::ARROW_FAT_RIGHT)
             Composite::icon(egui_phosphor::thin::QUEUE)
         } else {
             Composite::icon(egui_phosphor::thin::LIST_DASHES)

@@ -179,7 +179,6 @@ impl Service for BlockDagMonitorService {
     }
 
     async fn spawn(self: Arc<Self>) -> Result<()> {
-        // let this = self.clone();
         let _application_events_sender = self.application_events.sender.clone();
 
         let mut blocks_by_hash: AHashMap<kaspa_consensus_core::Hash, Arc<RpcBlock>> =
@@ -249,7 +248,7 @@ impl Service for BlockDagMonitorService {
                                 // println!("VirtualChainChanged: {:?}", virtual_chain_changed_notification);
                             },
                             _ => {
-                                println!("notification: {:?}", notification);
+                                // println!("notification: {:?}", notification);
                             }
                         }
 

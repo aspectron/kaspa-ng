@@ -6,17 +6,17 @@ pub struct MarketData {
     pub market_cap: f64,
     pub volume: f64,
     pub change: f64,
-    pub precision : usize,
+    pub precision: usize,
 }
 
 impl MarketData {
-    pub fn new(symbol : &str) -> Self {
+    pub fn new(symbol: &str) -> Self {
         let precision = precision_from_symbol(symbol);
         Self {
-            price : 0.0,
-            market_cap : 0.0,
-            volume : 0.0,
-            change : 0.0,
+            price: 0.0,
+            market_cap: 0.0,
+            volume: 0.0,
+            change: 0.0,
             precision,
         }
     }

@@ -68,12 +68,6 @@ impl AsRef<Theme> for Theme {
     }
 }
 
-// impl AsMut<Theme> for Theme {
-//     fn as_mut(&mut self) -> &mut Self {
-//         self
-//     }
-// }
-
 static mut THEME: Option<Theme> = None;
 #[inline(always)]
 pub fn theme() -> &'static Theme {
@@ -143,8 +137,6 @@ pub fn apply_theme_style_by_name(ctx: &Context, theme_style_name: impl Into<Stri
 }
 
 pub fn apply_theme(ctx: &Context, theme: Theme) {
-    // generate_theme_icons(theme.color.icon_color_default.to_hex().as_str());
-
     unsafe {
         THEME = Some(theme.clone());
     }

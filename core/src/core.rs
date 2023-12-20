@@ -25,11 +25,10 @@ pub struct Core {
     application_events_channel: ApplicationEventsChannel,
     deactivation: Option<Module>,
     module: Module,
-    pub stack: VecDeque<Module>,
     modules: HashMap<TypeId, Module>,
+    pub stack: VecDeque<Module>,
     pub settings: Settings,
     pub toasts: Toasts,
-    screenshot: Option<Arc<ColorImage>>,
     pub mobile_style: egui::Style,
     pub default_style: egui::Style,
 
@@ -37,6 +36,7 @@ pub struct Core {
     hint: Option<Hint>,
     discard_hint: bool,
     exception: Option<Exception>,
+    screenshot: Option<Arc<ColorImage>>,
 
     pub metrics: Option<Box<MetricsSnapshot>>,
     pub wallet_descriptor: Option<WalletDescriptor>,
@@ -160,8 +160,6 @@ impl Core {
             stack: VecDeque::new(),
             settings: settings.clone(),
             toasts: Toasts::default(),
-            screenshot: None,
-            // status_bar_message: None,
             default_style,
             mobile_style,
 
@@ -169,12 +167,12 @@ impl Core {
             wallet_list: Vec::new(),
             prv_key_data_map: None,
             account_collection: None,
-            // selected_account: None,
             metrics: None,
             state: Default::default(),
             hint: None,
             discard_hint: false,
             exception: None,
+            screenshot: None,
 
             release: None,
 
@@ -595,7 +593,7 @@ impl Core {
                         self.market.as_mut().unwrap().ohlc.replace(ohlc);
                     }
                 }
-            },
+            }
             Events::ThemeChange => {
                 if let Some(account_collection) = self.account_collection.as_ref() {
                     account_collection

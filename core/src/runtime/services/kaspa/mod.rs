@@ -34,7 +34,6 @@ cfg_if! {
         pub trait Kaspad {
             async fn start(self : Arc<Self>, config : Config) -> Result<()>;
             async fn stop(self : Arc<Self>) -> Result<()>;
-            // async fn halt(&self) -> Result<()>;
         }
 
         #[derive(Debug, Clone)]
@@ -48,7 +47,6 @@ cfg_if! {
             Exit,
         }
 
-        // pub static UPDATE_LOGS_UX : Arc<AtomicBool> = Arc::new(AtomicBool::new(true));
         pub fn update_logs_flag() -> &'static Arc<AtomicBool> {
             static FLAG: OnceLock<Arc<AtomicBool>> = OnceLock::new();
             FLAG.get_or_init(||Arc::new(AtomicBool::new(false)))

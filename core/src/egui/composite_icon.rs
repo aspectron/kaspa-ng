@@ -251,8 +251,8 @@ impl CompositeIcon {
             valign,
         );
 
-        let truncate = true; //self.truncate;
-        let wrap = !truncate && ui.wrap_text(); //None.unwrap_or_else(|| ui.wrap_text());
+        let truncate = true;
+        let wrap = !truncate && ui.wrap_text();
         let available_width = ui.available_width();
 
         if wrap
@@ -309,14 +309,8 @@ impl CompositeIcon {
                 text_job.job.wrap.max_width = f32::INFINITY;
             };
 
-            // if ui.is_grid() {
-            //     // TODO(emilk): remove special Grid hacks like these
-            //     text_job.job.halign = Align::LEFT;
-            //     text_job.job.justify = false;
-            // } else {
-            text_job.job.halign = Align::Center; //ui.layout().horizontal_placement();
+            text_job.job.halign = Align::Center;
             text_job.job.justify = ui.layout().horizontal_justify();
-            //};
 
             let text_galley = ui.fonts(|f| text_job.into_galley(f));
 
@@ -398,7 +392,6 @@ impl Widget for CompositeIcon {
             };
 
             let button_padding = self._padding(ui);
-            //pos.x -= button_padding.x;
             ui.painter().add(epaint::TextShape {
                 pos,
                 galley: icon_text.galley,

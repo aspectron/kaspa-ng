@@ -107,11 +107,12 @@ impl Overview {
         .show(ui, |ui| {
 
             if core.settings.market_monitor {
-                CollapsingHeader::new(i18n("Market"))
-                    .default_open(true)
-                    .show(ui, |ui| {
+                if let Some(market) = core.market.as_ref() {
 
-                        if let Some(market) = core.market.as_ref() {
+                    CollapsingHeader::new(i18n("Market"))
+                        .default_open(true)
+                        .show(ui, |ui| {
+
                             if let Some(price_list) = market.price.as_ref() {
                                 let mut symbols = price_list.keys().collect::<Vec<_>>();
                                 symbols.sort();
@@ -127,7 +128,6 @@ impl Overview {
                                                     .show(ui, |ui| {
                                                         let MarketData { price, volume, change, market_cap , precision } = *data;
                                                         ui.label(i18n("Price"));
-                                                        // ui.colored_label(theme_color().market_default_color, RichText::new(format_price_with_symbol(price, precision, symbol.as_str())).font(FontId::monospace(14.))); // 
                                                         ui.colored_label(theme_color().market_default_color, RichText::new(format_price_with_symbol(price, precision, symbol.as_str()))); // 
                                                         ui.end_row();
 
@@ -152,9 +152,8 @@ impl Overview {
                                     }
                                 })
                             }
-                        }
-
-                    });
+                        });
+                    }
                 }
 
             CollapsingHeader::new(i18n("Resources"))

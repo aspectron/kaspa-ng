@@ -103,9 +103,6 @@ pub enum RpcKind {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum RpcConfig {
-    // #[default]
-    // Wrpc,
-    // Grpc,
     Wrpc {
         url: Option<String>,
         encoding: WrpcEncoding,
@@ -302,7 +299,6 @@ pub struct MetricsSettings {
     pub graph_range_from: usize,
     pub graph_range_to: usize,
     pub disabled: AHashSet<Metric>,
-    // pub rows : usize,
 }
 
 impl Default for MetricsSettings {

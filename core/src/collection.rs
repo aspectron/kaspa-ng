@@ -23,7 +23,6 @@ where
 
 impl<Id, T> Collection<Id, T>
 where
-    // Id: IdT,
     Id: Copy + Eq + Hash + Debug + ToHex,
     T: Clone + IdT<Id = Id> + Debug,
 {

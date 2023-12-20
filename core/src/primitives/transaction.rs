@@ -583,12 +583,6 @@ pub fn padded_sompi_to_kaspa_string_with_suffix(
     format!("{kas} {suffix}")
 }
 
-// pub fn shorten(s: impl Into<String>) -> String {
-//     s.into()
-//     // let s: String = s.into();
-//     // s.chars().take(10).collect::<String>() + "..."
-// }
-
 pub fn paint_header_icon(ui: &mut Ui, openness: f32, response: &Response) {
     let visuals = ui.style().interact(response);
 

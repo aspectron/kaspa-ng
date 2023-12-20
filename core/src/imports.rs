@@ -61,10 +61,10 @@ pub use crate::device::{Device, Orientation};
 pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};
+pub use crate::market::MarketData;
 pub use crate::menu::Menu;
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
-pub use crate::market::MarketData;
 pub use crate::network::Network;
 pub use crate::notifications::{UserNotification, UserNotifyKind};
 pub use crate::primitives::{

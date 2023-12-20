@@ -28,7 +28,6 @@ pub struct ThemeColor {
 
     pub qr_background: Color32,
     pub qr_foreground: Color32,
-    // pub toast_background : Color32,
     pub selection_color: Color32,
     pub progress_color: Color32,
 
@@ -84,12 +83,11 @@ impl ThemeColor {
             alert_color: Color32::from_rgb(255, 136, 136),
             warning_color: egui::Color32::from_rgb(255, 255, 136),
             icon_syncing_color: egui::Color32::from_rgb(255, 255, 136),
-            // connected_color: egui::Color32::from_rgb(144, 238, 144),
             icon_connected_color: egui::Color32::from_rgb(85, 233, 136),
             icon_color_default: Color32::from_rgb(240, 240, 240),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
-            market_default_color: Color32::from_rgb(240,240,240),
+            market_default_color: Color32::from_rgb(240, 240, 240),
             market_up_color: Color32::from_rgb(136, 255, 136),
             market_down_color: Color32::from_rgb(255, 136, 136),
 
@@ -98,7 +96,6 @@ impl ThemeColor {
 
             qr_background: Color32::from_rgba(0, 0, 0, 0),
             qr_foreground: Color32::WHITE,
-            // selection_color: Color32::from_rgb(58, 221, 190),
             selection_color: Color32::from_rgb(40, 153, 132),
             progress_color: Color32::from_rgb(71, 105, 97),
 
@@ -156,15 +153,13 @@ impl ThemeColor {
             icon_color_default: Color32::from_rgb(32, 32, 32),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
-            market_default_color: Color32::from_rgb(20,20,20),
+            market_default_color: Color32::from_rgb(20, 20, 20),
             market_up_color: Color32::from_rgb(41, 77, 41),
             market_down_color: Color32::from_rgb(77, 41, 41),
 
             raised_text_color: Color32::from_rgb(0, 0, 0),
             raised_text_shadow: Color32::from_rgb(255, 255, 255),
 
-            // qr_background: Color32::from_rgba(0, 0, 0, 255),
-            // qr_foreground: Color32::WHITE,
             qr_background: Color32::from_rgba(255, 255, 255, 0),
             qr_foreground: Color32::BLACK,
             selection_color: Color32::from_rgb(165, 201, 197),

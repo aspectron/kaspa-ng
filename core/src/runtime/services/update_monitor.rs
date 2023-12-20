@@ -1,6 +1,5 @@
 use crate::imports::*;
 
-// TODO - move to settings
 pub const UPDATE_POLLING_INTERVAL_SECONDS: u64 = 60 * 60 * 12;
 
 pub enum UpdateMonitorEvents {
@@ -18,34 +17,27 @@ pub struct UpdateMonitorService {
 }
 
 impl UpdateMonitorService {
-    pub fn new(application_events: ApplicationEventsChannel, _settings: &Settings) -> Self {
+    pub fn new(application_events: ApplicationEventsChannel, settings: &Settings) -> Self {
         Self {
             application_events,
             service_events: Channel::unbounded(),
             task_ctl: Channel::oneshot(),
             rpc_api: Mutex::new(None),
-            is_enabled: Arc::new(AtomicBool::new(false)),
+            is_enabled: Arc::new(AtomicBool::new(settings.update_monitor)),
         }
     }
 
-    // pub fn rpc_api(&self) -> Option<Arc<dyn RpcApi>> {
-    //     self.rpc_api.lock().unwrap().clone()
-    // }
-
-    pub fn enable(&self, enable : bool) {
+    pub fn enable(&self, enable: bool) {
         if enable {
-            self.service_events.try_send(UpdateMonitorEvents::Enable).unwrap();
+            self.service_events
+                .try_send(UpdateMonitorEvents::Enable)
+                .unwrap();
         } else {
-            self.service_events.try_send(UpdateMonitorEvents::Disable).unwrap();
+            self.service_events
+                .try_send(UpdateMonitorEvents::Disable)
+                .unwrap();
         }
     }
-
-    // pub fn disable(&self) {
-    //     self.service_events
-    //         .sender
-    //         .try_send(UpdateMonitorEvents::Disable)
-    //         .unwrap();
-    // }
 }
 
 #[async_trait]
@@ -53,17 +45,6 @@ impl Service for UpdateMonitorService {
     fn name(&self) -> &'static str {
         "update-monitor"
     }
-
-    // async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
-    //     self.rpc_api.lock().unwrap().replace(rpc_api.clone());
-    //     Ok(())
-    // }
-
-    // async fn detach_rpc(self: Arc<Self>) -> Result<()> {
-    //     self.rpc_api.lock().unwrap().take();
-
-    //     Ok(())
-    // }
 
     async fn spawn(self: Arc<Self>) -> Result<()> {
         let this = self.clone();

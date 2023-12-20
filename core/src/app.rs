@@ -76,7 +76,8 @@ cfg_if! {
 
                     .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version()))
                     .arg(arg!(--disable "Disable node services when starting"))
-                    .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon (kaspad)"))
+                    .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon"))
+                    .arg(arg!(--cli "Run as Rusty Kaspa Cli Wallet"))
                     .arg(
                         Arg::new("reset-settings")
                         .long("reset-settings")
@@ -99,14 +100,11 @@ cfg_if! {
                                 .about("reset i18n data file")
                         )
                     )
-                    .subcommand(
-                        Command::new("cli")
-                            .about("Run kaspa-ng as rusty-kaspa cli wallet")
-                    )
                     ;
 
                     let matches = cmd.get_matches();
-                    if matches.subcommand_matches("cli").is_some() {
+
+                    if matches.get_one::<bool>("cli").cloned().unwrap_or(false) {
                         Args::Cli
                     } else if let Some(matches) = matches.subcommand_matches("i18n") {
                         if let Some(_matches) = matches.subcommand_matches("import") {
