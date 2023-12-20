@@ -32,12 +32,13 @@ impl UpdateMonitorService {
     //     self.rpc_api.lock().unwrap().clone()
     // }
 
-    // pub fn enable(&self) {
-    //     self.service_events
-    //         .sender
-    //         .try_send(UpdateMonitorEvents::Enable)
-    //         .unwrap();
-    // }
+    pub fn enable(&self, enable : bool) {
+        if enable {
+            self.service_events.try_send(UpdateMonitorEvents::Enable).unwrap();
+        } else {
+            self.service_events.try_send(UpdateMonitorEvents::Disable).unwrap();
+        }
+    }
 
     // pub fn disable(&self) {
     //     self.service_events
@@ -85,7 +86,11 @@ impl Service for UpdateMonitorService {
                     if let Ok(event) = msg {
                         match event {
                             UpdateMonitorEvents::Enable => {
-                                self.is_enabled.store(true, Ordering::Relaxed);
+                                if !self.is_enabled.load(Ordering::Relaxed) {
+                                    self.is_enabled.store(true, Ordering::Relaxed);
+                                    #[cfg(not(target_arch = "wasm32"))]
+                                    let _ = check_version().await;
+                                }
                             }
                             UpdateMonitorEvents::Disable => {
                                 self.is_enabled.store(false, Ordering::Relaxed);

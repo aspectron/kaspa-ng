@@ -158,7 +158,7 @@ impl Settings {
                             use crate::runtime::services::kaspa::Config;
 
                             ui.add_space(4.);
-                            ui.checkbox(&mut self.settings.node.kaspad_daemon_args_enable, i18n("Enable custom daemon arguments"));
+                            ui.checkbox(&mut self.settings.node.kaspad_daemon_args_enable, i18n("Activate custom daemon arguments"));
                             ui.add_space(4.);
 
                             if self.settings.node.kaspad_daemon_args_enable {
@@ -344,8 +344,10 @@ impl Settings {
                     CollapsingHeader::new("Market Monitor")
                         .default_open(true)
                         .show(ui, |ui| {
-                            let mut v = false;
-                            if ui.checkbox(&mut v, i18n("Enable Market Monitor")).changed() {
+                            if ui.checkbox(&mut self.settings.market_monitor, i18n("Enable Market Monitor")).changed() {
+                                core.settings.market_monitor = self.settings.market_monitor;
+                                self.runtime.market_monitor_service().enable(core.settings.market_monitor);
+                                core.store_settings();
                             }
                         });
 
@@ -353,10 +355,11 @@ impl Settings {
                     CollapsingHeader::new("Check for Updates")
                         .default_open(true)
                         .show(ui, |ui| {
-                            let mut v = false;
-                            if ui.checkbox(&mut v, i18n("Check for Software Updates via GitHub")).changed() {
+                            if ui.checkbox(&mut self.settings.update_monitor, i18n("Check for Software Updates via GitHub")).changed() {
+                                core.settings.update_monitor = self.settings.update_monitor;
+                                self.runtime.update_monitor_service().enable(core.settings.update_monitor);
+                                core.store_settings();
                             }
-        
                         });    
                 });
 
@@ -382,7 +385,7 @@ impl Settings {
                             #[cfg(not(target_arch = "wasm32"))]
                             ui.checkbox(
                                 &mut self.settings.developer.enable_custom_daemon_args, 
-                                i18n("Allow custom daemon arguments")
+                                i18n("Enable custom daemon arguments")
                             ).on_hover_text_at_pointer(
                                 i18n("Allow custom arguments for the Rusty Kaspa daemon")
                             );
@@ -397,7 +400,7 @@ impl Settings {
                             #[cfg(not(target_arch = "wasm32"))]
                             ui.checkbox(
                                 &mut self.settings.developer.enable_screen_capture, 
-                                i18n("Screen capture")
+                                i18n("Enable screen capture")
                             ).on_hover_text_at_pointer(
                                 i18n("Allows you to take screenshots from within the application")
                             );

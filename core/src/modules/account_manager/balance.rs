@@ -33,21 +33,23 @@ impl<'context> BalancePane<'context> {
                 );
             }
 
-            if let Some(market) = core.market.as_ref() {
-                if let Some(price_list) = market.price.as_ref() {
-                    let mut symbols = price_list.keys().collect::<Vec<_>>();
-                    symbols.sort();
-                    symbols.into_iter().for_each(|symbol| {
-                        if let Some(data) = price_list.get(symbol) {
-                            let symbol = symbol.to_uppercase();
-                            let MarketData { price,  change : _, .. } = data;
-                            let text = format!("{:.8} {}", sompi_to_kaspa(balance.mature) * (*price), symbol.as_str());
-                            ui.label(RichText::new(text).font(FontId::proportional(16.)));
-                        }
-                    });
+            if core.settings.market_monitor {
+                if let Some(market) = core.market.as_ref() {
+                    if let Some(price_list) = market.price.as_ref() {
+                        let mut symbols = price_list.keys().collect::<Vec<_>>();
+                        symbols.sort();
+                        symbols.into_iter().for_each(|symbol| {
+                            if let Some(data) = price_list.get(symbol) {
+                                let symbol = symbol.to_uppercase();
+                                let MarketData { price,  change : _, .. } = data;
+                                let text = format!("{:.8} {}", sompi_to_kaspa(balance.mature) * (*price), symbol.as_str());
+                                ui.label(RichText::new(text).font(FontId::proportional(16.)));
+                            }
+                        });
+                    }
                 }
             }
-
+            
             if balance.pending != 0 {
                 ui.label(format!(
                     "Pending: {}",

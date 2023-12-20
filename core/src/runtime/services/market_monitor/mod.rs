@@ -70,12 +70,14 @@ pub type CurrencyDescriptorList = Vec<CurrencyDescriptor>;
 // pub struct MarketData {}
 
 pub enum MarketMonitorEvents {
+    Enable,
+    Disable,
     Exit,
 }
 
 pub struct MarketMonitorService {
     pub application_events: ApplicationEventsChannel,
-    pub plugin_events: Channel<MarketMonitorEvents>,
+    pub service_events: Channel<MarketMonitorEvents>,
     pub task_ctl: Channel<()>,
     pub is_enabled: AtomicBool,
     pub currencies: Mutex<Option<Vec<String>>>,
@@ -85,7 +87,7 @@ pub struct MarketMonitorService {
 }
 
 impl MarketMonitorService {
-    pub fn new(application_events: ApplicationEventsChannel, _settings: &Settings) -> Self {
+    pub fn new(application_events: ApplicationEventsChannel, settings: &Settings) -> Self {
         let currencies = ["usd", "btc"]
             .into_iter()
             .map(String::from)
@@ -93,9 +95,9 @@ impl MarketMonitorService {
 
         Self {
             application_events,
-            plugin_events: Channel::unbounded(),
+            service_events: Channel::unbounded(),
             task_ctl: Channel::oneshot(),
-            is_enabled: AtomicBool::new(false),
+            is_enabled: AtomicBool::new(settings.market_monitor),
             provider: Mutex::new(MarketDataProvider::default()),
             // ------
             // currencies: Mutex::new(Some(vec!["usd".to_string()])),
@@ -113,6 +115,14 @@ impl MarketMonitorService {
 
     pub fn provider(&self) -> MarketDataProvider {
         self.provider.lock().unwrap().clone()
+    }
+
+    pub fn enable(&self, enable : bool) {
+        if enable {
+            self.service_events.try_send(MarketMonitorEvents::Enable).unwrap();
+        } else {
+            self.service_events.try_send(MarketMonitorEvents::Disable).unwrap();
+        }
     }
 
     #[allow(dead_code)]
@@ -195,9 +205,18 @@ impl Service for MarketMonitorService {
                     this.update_market_price_list().await?;
                 },
 
-                msg = this.as_ref().plugin_events.receiver.recv().fuse() => {
+                msg = this.as_ref().service_events.receiver.recv().fuse() => {
                     if let Ok(event) = msg {
                         match event {
+                            MarketMonitorEvents::Enable => {
+                                if !this.is_enabled.load(Ordering::SeqCst) {
+                                    this.is_enabled.store(true, Ordering::SeqCst);
+                                    this.update_market_price_list().await?;
+                                }
+                            }
+                            MarketMonitorEvents::Disable => {
+                                this.is_enabled.store(false, Ordering::SeqCst);
+                            }
                             MarketMonitorEvents::Exit => {
                                 break;
                             }
@@ -215,7 +234,7 @@ impl Service for MarketMonitorService {
     }
 
     fn terminate(self: Arc<Self>) {
-        self.plugin_events
+        self.service_events
             .sender
             .try_send(MarketMonitorEvents::Exit)
             .unwrap();
