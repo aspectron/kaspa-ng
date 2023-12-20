@@ -127,7 +127,6 @@ impl<'panel, Context> Panel<'panel, Context> {
             ui.horizontal(|ui| {
                 match self.back {
                     Some(back) if self.back_enabled => {
-                        println!("Back is enabled");
                         let icon = CompositeIcon::new(egui_phosphor::bold::ARROW_BEND_UP_LEFT)
                             .icon_size(icon_size.inner.x)
                             .padding(Some(icon_padding));

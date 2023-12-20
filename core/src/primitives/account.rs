@@ -1,4 +1,8 @@
-use kaspa_wallet_core::storage::AccountKind;
+// use kaspa_wallet_core::storage::AccountKind;
+
+use kaspa_wallet_core::account::{
+    BIP32_ACCOUNT_KIND, KEYPAIR_ACCOUNT_KIND, LEGACY_ACCOUNT_KIND, MULTISIG_ACCOUNT_KIND,
+};
 
 use crate::imports::*;
 
@@ -16,7 +20,7 @@ impl AccountContext {
             let uri = format!("bytes://{}-{}.svg", address_string, theme_color().name);
             Some(Arc::new(Self {
                 qr: qr.as_bytes().to_vec().into(),
-                receive_address,
+                receive_address: receive_address.clone(),
                 uri,
             }))
         } else {
@@ -40,6 +44,7 @@ impl AccountContext {
 struct Inner {
     // runtime: Arc<dyn runtime::Account>,
     id: AccountId,
+    account_kind: AccountKind,
     balance: Mutex<Option<Balance>>,
     descriptor: Mutex<AccountDescriptor>,
     context: Mutex<Option<Arc<AccountContext>>>,
@@ -47,26 +52,27 @@ struct Inner {
     total_transaction_count: AtomicU64,
     is_loading: AtomicBool,
     // for bip32 accounts only
-    bip39_passphrase: bool,
+    // bip39_passphrase: bool,
 }
 
 impl Inner {
     fn new(descriptor: AccountDescriptor) -> Self {
-        let bip39_passphrase = match &descriptor {
-            AccountDescriptor::Bip32(bip32) => bip32.bip39_passphrase,
-            _ => false,
-        };
+        // let bip39_passphrase = match &descriptor {
+        //     AccountDescriptor::Bip32(bip32) => bip32.bip39_passphrase,
+        //     _ => false,
+        // };
 
         let context = AccountContext::new(&descriptor);
         Self {
             id: *descriptor.account_id(),
+            account_kind: *descriptor.account_kind(),
             balance: Mutex::new(None),
             descriptor: Mutex::new(descriptor),
             context: Mutex::new(context),
             transactions: Mutex::new(TransactionCollection::default()),
             total_transaction_count: AtomicU64::new(0),
             is_loading: AtomicBool::new(true),
-            bip39_passphrase,
+            // bip39_passphrase,
         }
     }
 }
@@ -111,12 +117,25 @@ impl Account {
         self.descriptor().name_or_id()
     }
 
-    pub fn requires_bip39_passphrase(&self) -> bool {
-        self.inner.bip39_passphrase
+    pub fn requires_bip39_passphrase(&self, core: &Core) -> bool {
+        let descriptor = self.descriptor();
+        let prv_key_data_ids = descriptor.prv_key_data_ids();
+        core.prv_key_data_map()
+            .as_ref()
+            .map(|prv_key_data_map| {
+                prv_key_data_ids.into_iter().any(|prv_key_data_id| {
+                    prv_key_data_map
+                        .get(&prv_key_data_id)
+                        .map(|prv_key_data_info| prv_key_data_info.requires_bip39_passphrase())
+                        .unwrap_or(false)
+                })
+            })
+            .unwrap_or(false)
+        // self.inner.bip39_passphrase
     }
 
-    pub fn account_kind(&self) -> AccountKind {
-        self.descriptor().account_kind()
+    pub fn account_kind(&self) -> &AccountKind {
+        &self.inner.account_kind
     }
 
     pub fn balance(&self) -> Option<Balance> {
@@ -196,12 +215,11 @@ pub trait DescribeAccount {
 
 impl DescribeAccount for AccountKind {
     fn describe(&self) -> (&'static str, &'static str) {
-        match self {
-            AccountKind::Legacy => ("Legacy Account", "KDX, PWA (kaspanet.io)"),
-            AccountKind::Bip32 => ("Kaspa Core BIP32", "kaspawallet, kaspium"),
-            AccountKind::MultiSig => ("Multi-Signature", ""),
-            AccountKind::Keypair => ("Keypair", "secp256k1"),
-            AccountKind::Hardware => ("Hardware", ""),
+        match self.as_ref() {
+            LEGACY_ACCOUNT_KIND => ("Legacy Account", "KDX, PWA (kaspanet.io)"),
+            BIP32_ACCOUNT_KIND => ("Kaspa Core BIP32", "kaspawallet, kaspium"),
+            MULTISIG_ACCOUNT_KIND => ("Multi-Signature", ""),
+            KEYPAIR_ACCOUNT_KIND => ("Keypair", "secp256k1"),
             _ => ("", ""),
         }
     }

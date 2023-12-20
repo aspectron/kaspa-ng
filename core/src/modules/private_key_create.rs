@@ -2,8 +2,8 @@
 
 use crate::imports::*;
 use kaspa_bip32::Mnemonic;
-use kaspa_wallet_core::runtime::{PrvKeyDataCreateArgs, WalletCreateArgs};
-use kaspa_wallet_core::storage::AccountKind;
+// use kaspa_wallet_core::runtime::{PrvKeyDataCreateArgs, WalletCreateArgs};
+// use kaspa_wallet_core::storage::AccountKind;
 
 pub enum MnemonicSize {
     Words12,
@@ -45,26 +45,26 @@ pub enum State {
     AccountError(Arc<Error>),
     PresentMnemonic(Arc<CreationData>),
     ConfirmMnemonic(Arc<CreationData>),
-    Finish(Arc<dyn KaspaAccount>),
+    Finish(Arc<dyn CoreAccount>),
 }
 
 pub enum CreationData {
     Bip32 {
         mnemonic: Option<Mnemonic>,
-        account: Arc<dyn KaspaAccount>,
+        account: Arc<dyn CoreAccount>,
     },
     Keypair {
         private_key: Secret,
-        account: Arc<dyn KaspaAccount>,
+        account: Arc<dyn CoreAccount>,
     },
     MultiSig {
         mnemonics: Vec<Mnemonic>,
-        account: Arc<dyn KaspaAccount>,
+        account: Arc<dyn CoreAccount>,
     },
 }
 
 impl CreationData {
-    pub fn account(&self) -> Arc<dyn KaspaAccount> {
+    pub fn account(&self) -> Arc<dyn CoreAccount> {
         match self {
             Self::Bip32 { account, .. } => account.clone(),
             Self::Keypair { account, .. } => account.clone(),

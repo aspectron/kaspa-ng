@@ -1,11 +1,12 @@
 #![allow(unused_imports)]
 
 use crate::imports::*;
-use kaspa_bip32::Mnemonic;
-use kaspa_wallet_core::api::AccountsCreateRequest;
-use kaspa_wallet_core::runtime::wallet::AccountCreateArgsBip32;
-use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs, PrvKeyDataArgs};
-use kaspa_wallet_core::storage::{AccountKind, PrvKeyDataInfo};
+// use kaspa_bip32::Mnemonic;
+// use kaspa_wallet_core::api::AccountsCreateRequest;
+// use kaspa_wallet_core::wallet::AccountCreateArgsBip32;
+// use kaspa_wallet_core::wallet::args::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs, PrvKeyDataArgs};
+// use kaspa_wallet_core::storage::{AccountKind, PrvKeyDataInfo};
+// use kaspa_wallet_core::prelude::{AccountKind, PrvKeyDataInfo};
 
 
 #[derive(Clone)]
@@ -32,7 +33,7 @@ pub enum State {
     AccountError(Arc<Error>),
     PresentMnemonic(Arc<CreationData>),
     ConfirmMnemonic(Arc<CreationData>),
-    Finish(Arc<dyn KaspaAccount>),
+    Finish(Arc<dyn CoreAccount>),
 }
 
 #[derive(Clone)]
@@ -42,27 +43,14 @@ pub enum CreationData {
     },
     Bip32 {
         mnemonic: Option<Mnemonic>,
-        // account: Arc<dyn KaspaAccount>,
     },
     Keypair {
         private_key: Secret,
-        // account: Arc<dyn KaspaAccount>,
     },
     MultiSig {
         mnemonics: Vec<Mnemonic>,
-        // account: Arc<dyn KaspaAccount>,
     },
 }
-
-// impl CreationData {
-//     pub fn account(&self) -> Arc<dyn KaspaAccount> {
-//         match self {
-//             Self::Bip32 { account, .. } => account.clone(),
-//             Self::Keypair { account, .. } => account.clone(),
-//             Self::MultiSig { account, .. } => account.clone(),
-//         }
-//     }
-// }
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
 enum Focus {
@@ -380,7 +368,7 @@ impl ModuleT for AccountCreate {
 
                     if let Some(result) = account_create_result.take() {
                         match result {
-                            Ok(descriptor) => {
+                            Ok(_descriptor) => {
                                 println!("Account created successfully");
                                 // let account = Account::from(descriptor);
                                 // core.account_collection.as_mut().expect("account collection").push_unchecked(account.clone());

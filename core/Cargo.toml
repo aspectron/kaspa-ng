@@ -39,6 +39,7 @@ workflow-i18n.workspace = true
 ahash.workspace = true
 async-trait.workspace = true
 cfg-if.workspace = true
+convert_case.workspace = true
 derivative.workspace = true
 downcast-rs.workspace = true
 downcast.workspace = true

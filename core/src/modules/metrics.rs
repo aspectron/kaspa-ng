@@ -120,12 +120,12 @@ impl ModuleT for Metrics {
             
                                         for metric in group.metrics() {
                                             ui.space();
-                                            let mut state = !core.settings.user_interface.metrics.disabled.contains(&metric);
+                                            let mut state = !core.settings.user_interface.metrics.disabled.contains(metric);
                                             if ui.checkbox(&mut state, i18n(metric.title().0)).changed() {
                                                 if state {
-                                                    core.settings.user_interface.metrics.disabled.remove(&metric);
+                                                    core.settings.user_interface.metrics.disabled.remove(metric);
                                                 } else {
-                                                    core.settings.user_interface.metrics.disabled.insert(metric);
+                                                    core.settings.user_interface.metrics.disabled.insert(*metric);
                                                 }
                                                 // core.store_settings();
                                                 store_settings = true;

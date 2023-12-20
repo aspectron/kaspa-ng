@@ -138,12 +138,12 @@ impl ModuleT for Welcome {
                     if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, "Apply")).clicked() {
                         let mut settings = self.settings.clone();
                         settings.initialized = true;
-                        settings.version.clear(); // triggers changelog
+                        // settings.version.clear(); // triggers changelog
                         settings.store_sync().expect("Unable to store settings");
                         self.runtime.kaspa_service().update_services(&self.settings.node);
                         core.settings = settings.clone();
                         core.get_mut::<modules::Settings>().load(settings);
-                        core.select::<modules::Overview>();
+                        core.select::<modules::Changelog>();
                     }
                 });
                 ui.separator();

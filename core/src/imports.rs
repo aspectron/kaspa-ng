@@ -6,19 +6,14 @@ pub use kaspa_consensus_core::Hash as KaspaHash;
 pub use kaspa_rpc_core::api::rpc::RpcApi;
 pub use kaspa_utils::hex::{FromHex, ToHex};
 pub use kaspa_utils::{hashmap::GroupExtension, networking::ContextualNetAddress};
-pub use kaspa_wallet_core::api;
-pub use kaspa_wallet_core::api::WalletApi;
-pub use kaspa_wallet_core::events::SyncState;
-pub use kaspa_wallet_core::prelude::Address;
-pub use kaspa_wallet_core::rpc::DynRpcApi;
-pub use kaspa_wallet_core::runtime::{Account as KaspaAccount, Wallet as KaspaWallet};
-pub use kaspa_wallet_core::runtime::{AccountDescriptor, AccountId, Balance};
-pub use kaspa_wallet_core::secret::Secret;
-pub use kaspa_wallet_core::storage::{
-    IdT, PrvKeyDataId, TransactionId, TransactionRecord, WalletDescriptor,
+pub use kaspa_wallet_core::prelude::{
+    Account as CoreAccount, AccountCreateArgs, AccountCreateArgsBip32, AccountDescriptor,
+    AccountId, AccountKind, Address, Balance, DynRpcApi, IdT, KaspaRpcClient, Language, Mnemonic,
+    PrvKeyDataArgs, PrvKeyDataCreateArgs, PrvKeyDataId, PrvKeyDataInfo, Secret, SyncState,
+    TransactionId, TransactionRecord, Wallet as CoreWallet, WalletApi, WalletCreateArgs,
+    WalletDescriptor, WordCount, WrpcEncoding,
 };
 pub use kaspa_wallet_core::utils::*;
-pub use kaspa_wrpc_client::{KaspaRpcClient, WrpcEncoding};
 
 pub use async_trait::async_trait;
 pub use futures::{pin_mut, select, FutureExt, StreamExt};
@@ -69,6 +64,7 @@ pub use crate::events::{ApplicationEventsChannel, Events};
 pub use crate::menu::Menu;
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
+pub use crate::market::MarketData;
 pub use crate::network::Network;
 pub use crate::notifications::{UserNotification, UserNotifyKind};
 pub use crate::primitives::{

@@ -94,13 +94,14 @@ kaspad = { path = "../rusty-kaspa/kaspad" }
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-# workflow-chrome = "0.9.0"
-# workflow-dom = "0.9.0"
-# workflow-http = "0.9.0"
-# workflow-log = "0.9.0"
-# workflow-store = "0.9.0"
-# workflow-core = { version = "0.9.0", features = ["no-unsafe-eval"] }
-# workflow-i18n = { version = "0.9.0", features = ["preserve-order"] }
+# workflow-chrome = "0.10.1"
+# workflow-dom = "0.10.1"
+# workflow-http = "0.10.1"
+# workflow-log = "0.10.1"
+# workflow-store = "0.10.1"
+# workflow-core = { version = "0.10.1", features = ["no-unsafe-eval"] }
+# workflow-i18n = { version = "0.10.1", features = ["preserve-order"] }
+
 workflow-chrome = { path = "../workflow-rs/chrome" }
 workflow-dom = { path = "../workflow-rs/dom" }
 workflow-http = { path = "../workflow-rs/http" }
@@ -108,6 +109,7 @@ workflow-log = { path = "../workflow-rs/log" }
 workflow-store = { path = "../workflow-rs/store" }
 workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
 workflow-i18n = { path = "../workflow-rs/i18n", features = ["preserve-order"] }
+
 # workflow-chrome = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-dom = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-http = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
@@ -126,6 +128,7 @@ cfg-if = "1.0.0"
 chrome-sys = "0.1.0"
 # chrome-sys = {path = "../chrome-sys"}
 chrono = "0.4.31"
+convert_case = "0.6.0"
 clap = { version = "4.4.7", features = ["derive", "string", "cargo"] }
 ctrlc = { version = "3.2", features = ["termination"] }
 derivative = "2.2.0"

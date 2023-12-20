@@ -1,5 +1,5 @@
 use crate::imports::*;
-
+use convert_case::{Case, Casing};
 // #[derive(Clone, Debug, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
 // pub struct Bip32 {
 //     pub account_id: AccountId,
@@ -49,7 +49,7 @@ use crate::imports::*;
 //     pub public_key: String,
 // }
 
-use kaspa_wallet_core::runtime::account::descriptor::*;
+// use kaspa_wallet_core::account::descriptor::*;
 
 fn grid(ui: &mut Ui, id: &AccountId, add_contents: impl FnOnce(&mut Ui)) {
     CollapsingHeader::new(id.to_string())
@@ -66,11 +66,11 @@ fn grid(ui: &mut Ui, id: &AccountId, add_contents: impl FnOnce(&mut Ui)) {
         });
 }
 
-pub trait RenderDescriptor {
+pub trait RenderAccountDescriptor {
     fn render(&self, ui: &mut Ui);
 }
 
-impl RenderDescriptor for Bip32 {
+impl RenderAccountDescriptor for AccountDescriptor {
     fn render(&self, ui: &mut Ui) {
         grid(ui, &self.account_id, |ui| {
             let color = Color32::WHITE;
@@ -82,15 +82,18 @@ impl RenderDescriptor for Bip32 {
             );
             ui.end_row();
             ui.label(i18n("Type"));
-            ui.colored_label(color, "BIP-32 / Kaspa Core");
+            ui.colored_label(
+                color,
+                self.account_kind().as_ref().to_case(Case::UpperCamel),
+            );
             ui.end_row();
             // TODO bip39 info
-            ui.label(i18n("Derivation Index"));
-            ui.colored_label(color, format!("BIP-44 / {}", self.account_index));
-            ui.end_row();
-            ui.label(i18n("Signature Type"));
-            ui.colored_label(color, if self.ecdsa { "ECDSA" } else { "Schnorr" });
-            ui.end_row();
+            // ui.label(i18n("Derivation Index"));
+            // ui.colored_label(color, format!("BIP-44 / {}", self.account_index));
+            // ui.end_row();
+            // ui.label(i18n("Signature Type"));
+            // ui.colored_label(color, if self.ecdsa { "ECDSA" } else { "Schnorr" });
+            // ui.end_row();
             ui.label(i18n("Receive Address"));
             ui.colored_label(
                 color,
@@ -109,6 +112,12 @@ impl RenderDescriptor for Bip32 {
                     .unwrap_or("N/A".to_string()),
             );
             ui.end_row();
+
+            for (prop, value) in self.properties.iter() {
+                ui.label(i18n(prop.to_string().as_str()));
+                ui.colored_label(color, value.to_string());
+                ui.end_row();
+            }
         });
     }
 }

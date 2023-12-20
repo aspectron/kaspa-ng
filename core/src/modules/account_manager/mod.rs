@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use egui_phosphor::thin::{CLOUD_ARROW_DOWN, CLOUD_SLASH};
 use kaspa_wallet_core::tx::{GeneratorSummary, PaymentOutput, Fees};
 use kaspa_wallet_core::api::*;
-use crate::primitives::descriptors::*;
+use crate::primitives::descriptor::*;
 
 mod address;
 mod balance;

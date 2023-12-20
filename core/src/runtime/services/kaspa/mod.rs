@@ -76,7 +76,7 @@ pub struct KaspaService {
     pub service_events: Channel<KaspadServiceEvents>,
     pub task_ctl: Channel<()>,
     pub network: Mutex<Network>,
-    pub wallet: Arc<KaspaWallet>,
+    pub wallet: Arc<CoreWallet>,
     #[cfg(not(target_arch = "wasm32"))]
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -87,11 +87,11 @@ impl KaspaService {
     pub fn new(application_events: ApplicationEventsChannel, settings: &Settings) -> Self {
         // --
         // create wallet instance
-        let storage = KaspaWallet::local_store().unwrap_or_else(|e| {
+        let storage = CoreWallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
 
-        let wallet = KaspaWallet::try_with_rpc(None, storage, Some(settings.node.network.into()))
+        let wallet = CoreWallet::try_with_rpc(None, storage, Some(settings.node.network.into()))
             .unwrap_or_else(|e| {
                 panic!("Failed to create wallet instance: {}", e);
             });
@@ -192,7 +192,7 @@ impl KaspaService {
         Ok(())
     }
 
-    pub fn wallet(&self) -> Arc<KaspaWallet> {
+    pub fn wallet(&self) -> Arc<CoreWallet> {
         self.wallet.clone()
     }
 

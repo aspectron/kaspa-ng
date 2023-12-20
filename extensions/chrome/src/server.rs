@@ -6,8 +6,9 @@ use kaspa_ng_core::events::ApplicationEventsChannel;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::api::transport::WalletServer;
 use kaspa_wallet_core::error::Error;
+use kaspa_wallet_core::prelude::Wallet as CoreWallet;
 use kaspa_wallet_core::result::Result;
-use kaspa_wallet_core::runtime;
+// use kaspa_wallet_core::runtime;
 //use kaspa_wallet_core::runtime::api::transport::*;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
@@ -19,7 +20,7 @@ type ListenerClosure = Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>;
 
 pub struct Server {
     #[allow(dead_code)]
-    wallet: Arc<runtime::Wallet>,
+    wallet: Arc<CoreWallet>,
     wallet_server: Arc<WalletServer>,
     closure: Mutex<Option<Rc<ListenerClosure>>>,
     // runtime: Runtime,
@@ -47,7 +48,7 @@ impl Server {
         settings.store().await.unwrap();
         workflow_chrome::storage::__chrome_storage_unit_test().await;
 
-        let storage = runtime::Wallet::local_store().unwrap_or_else(|e| {
+        let storage = CoreWallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
 
@@ -57,7 +58,7 @@ impl Server {
         log_info!("storage storage: {:?}", storage.descriptor());
 
         let wallet = Arc::new(
-            runtime::Wallet::try_with_rpc(None, storage, None).unwrap_or_else(|e| {
+            CoreWallet::try_with_rpc(None, storage, None).unwrap_or_else(|e| {
                 panic!("Failed to create wallet instance: {}", e);
             }),
         );

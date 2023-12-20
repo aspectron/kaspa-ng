@@ -1,6 +1,6 @@
 
 use crate::imports::*;
-use kaspa_wallet_core::runtime::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs};
+use kaspa_wallet_core::{wallet::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs}, encryption::EncryptionKind};
 use slug::slugify;
 use kaspa_bip32::{WordCount, Mnemonic, Language};
 use crate::utils::{secret_score, secret_score_to_text};
@@ -36,9 +36,9 @@ pub enum State {
     Finish,
 }
 
-enum PrivateKeyImportKind {
+// enum PrivateKeyImportKind {
 
-}
+// }
 
 
 #[derive(Clone, Default)]
@@ -733,6 +733,7 @@ impl ModuleT for WalletCreate {
                         let wallet_args = WalletCreateArgs::new(
                             args.wallet_name.is_not_empty().then_some(args.wallet_name),
                             args.wallet_filename.is_not_empty().then_some(args.wallet_filename),
+                            EncryptionKind::XChaCha20Poly1305,
                             args.enable_phishing_hint.then_some(args.phishing_hint.into()),
                             // wallet_secret.clone(),
                             false

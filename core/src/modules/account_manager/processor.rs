@@ -53,7 +53,6 @@ impl<'context> Processor<'context> {
                     let status = self.context.estimate.clone();
                     spawn(async move {
                         let request = AccountsEstimateRequest {
-                            task_id: None,
                             account_id,
                             destination: payment_output.into(),
                             priority_fee_sompi: Fees::SenderPaysAll(priority_fees_sompi),
@@ -78,7 +77,7 @@ impl<'context> Processor<'context> {
 
             Action::Sending => {
 
-                let proceed_with_send = WalletSecret::new(self.context).render(ui, rc);
+                let proceed_with_send = WalletSecret::new(self.context).render(ui, core, rc);
 
                 if proceed_with_send {
 
@@ -91,7 +90,7 @@ impl<'context> Processor<'context> {
                     } else { 0 };
 
                     let wallet_secret = Secret::try_from(self.context.wallet_secret.clone()).expect("expecting wallet secret");
-                    let payment_secret = account.requires_bip39_passphrase().then_some(Secret::try_from(self.context.payment_secret.clone()).expect("expecting payment secret"));
+                    let payment_secret = account.requires_bip39_passphrase(core).then_some(Secret::try_from(self.context.payment_secret.clone()).expect("expecting payment secret"));
 
                     match self.context.transaction_kind.unwrap() {
                         TransactionKind::Send => {

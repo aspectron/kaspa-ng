@@ -120,3 +120,40 @@ pub fn s2kws_layout_job(
         layout_job
     }
 }
+
+pub fn format_price(price: f64, precision : usize) -> String {
+    if precision == 0 {
+        price.trunc().separated_string()
+    } else {
+        let string = price.to_string();
+        if let Some(idx) = string.find('.') {
+            let (left,right) = string.split_at(idx+1);
+            if right.len() < precision {
+                let mut right = right.to_string();
+                while right.len() < precision {
+                    right.push('0');
+                }
+                separated_float!(format!("{left}{right}"))
+            } else {
+                let right = &right[0..precision];
+                separated_float!(format!("{left}{right}"))
+            }
+        } else {
+            price.separated_string()
+        }
+    }
+}
+
+pub fn format_price_with_symbol(price: f64, precision : usize, symbol : &str) -> String {
+    let price = format_price(price, precision);
+    format!("{price} {symbol}")
+}
+
+pub fn precision_from_symbol(symbol : &str) -> usize {
+    match symbol {
+        "kas" => 8,
+        "btc" => 8,
+        // "usd" => 2,
+        _ => 6
+    }
+}

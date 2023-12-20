@@ -16,40 +16,33 @@ impl Details {
 
             let descriptor = account.descriptor();
 
-            match &*descriptor {
-                AccountDescriptor::Bip32(descriptor) => {
-                    descriptor.render(ui);
-                    ui.add_space(8.);
+            descriptor.render(ui);
+            ui.add_space(8.);
 
-                    let mut address_kind : Option<NewAddressKind> = None;
-                    
-                    ui.horizontal(|ui|{
-                        if ui.medium_button("Generate New Receive Address").clicked() {
-                            address_kind = Some(NewAddressKind::Receive);
-                        }
-                        if ui.medium_button("Generate New Change Address").clicked() {
-                            address_kind = Some(NewAddressKind::Change);
-                        }
-                    });
-
-                    if let Some(address_kind) = address_kind {
-                        let account_id = account.id();
-                        spawn(async move {
-                            runtime()
-                                .wallet()
-                                .accounts_create_new_address(account_id, address_kind)
-                                .await
-                                .map_err(|err|Error::custom(format!("Failed to create new address\n{err}")))?;
-
-                            runtime().request_repaint();
-
-                            Ok(())
-                        });
-                    }
-                },
-                _ => {
-                    ui.label("Unknown descriptor type");
+            let mut address_kind : Option<NewAddressKind> = None;
+            
+            ui.horizontal(|ui|{
+                if ui.medium_button("Generate New Receive Address").clicked() {
+                    address_kind = Some(NewAddressKind::Receive);
                 }
+                if ui.medium_button("Generate New Change Address").clicked() {
+                    address_kind = Some(NewAddressKind::Change);
+                }
+            });
+
+            if let Some(address_kind) = address_kind {
+                let account_id = account.id();
+                spawn(async move {
+                    runtime()
+                        .wallet()
+                        .accounts_create_new_address(account_id, address_kind)
+                        .await
+                        .map_err(|err|Error::custom(format!("Failed to create new address\n{err}")))?;
+
+                    runtime().request_repaint();
+
+                    Ok(())
+                });
             }
         });       
     }

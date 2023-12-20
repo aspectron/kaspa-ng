@@ -110,11 +110,46 @@ impl Overview {
                 .default_open(true)
                 .show(ui, |ui| {
 
-                    if let Some(price_list) = core.market.price.as_ref() {
-                        for (symbol, data) in price_list.iter() {
-                            if let Some(price) = data.price {
-                                ui.label(RichText::new(format!("{} {}  ",price,symbol.to_uppercase())));//.font(FontId::proportional(14.)));
-                            }
+                    if let Some(market) = core.market.as_ref() {
+                        if let Some(price_list) = market.price.as_ref() {
+                            let mut symbols = price_list.keys().collect::<Vec<_>>();
+                            symbols.sort();
+                            symbols.into_iter().for_each(|symbol| {
+                                if let Some(data) = price_list.get(symbol) {
+                                    let symbol = symbol.to_uppercase();
+                                    CollapsingHeader::new(symbol.as_str())
+                                        .default_open(true)
+                                        .show(ui, |ui| {
+                                            Grid::new("market_price_info_grid")
+                                                .num_columns(2)
+                                                .spacing([16.0,4.0])
+                                                .show(ui, |ui| {
+                                                    let MarketData { price, volume, change, market_cap , precision } = *data;
+                                                    ui.label(i18n("Price"));
+                                                    // ui.colored_label(theme_color().market_default_color, RichText::new(format_price_with_symbol(price, precision, symbol.as_str())).font(FontId::monospace(14.))); // 
+                                                    ui.colored_label(theme_color().market_default_color, RichText::new(format_price_with_symbol(price, precision, symbol.as_str()))); // 
+                                                    ui.end_row();
+
+                                                    ui.label(i18n("Change"));
+                                                    if change > 0. { 
+                                                        ui.colored_label(theme_color().market_up_color, RichText::new(format!("+{:.2}%  ",change)));
+                                                    } else { 
+                                                        ui.colored_label(theme_color().market_down_color, RichText::new(format!("{:.2}%  ",change)));
+                                                    };
+                                                    ui.end_row();
+
+                                                    ui.label(i18n("Volume"));
+                                                    ui.colored_label(theme_color().market_default_color, RichText::new(format!("{} {}",volume.trunc().separated_string(),symbol.to_uppercase())));
+                                                    ui.end_row();
+
+                                                    ui.label(i18n("Market Cap"));
+                                                    ui.colored_label(theme_color().market_default_color, RichText::new(format!("{} {}",market_cap.trunc().separated_string(),symbol.to_uppercase())));
+                                                    ui.end_row();
+                                                });
+
+                                        });
+                                }
+                            })
                         }
                     }
 
@@ -143,7 +178,7 @@ impl Overview {
                     );
                     ui.hyperlink_to_tab(
                         format!("• {}",i18n("Rust Wallet SDK")),
-                        "https://docs.rs/kaspa-wallet-core/0.0.4/kaspa_wallet_core/",
+                        "https://docs.rs/kaspa-wallet-core/",
                     );
                     ui.hyperlink_to_tab(
                         format!("• {}",i18n("Kaspa Discord")),

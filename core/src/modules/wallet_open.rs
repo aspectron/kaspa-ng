@@ -59,7 +59,6 @@ impl ModuleT for WalletOpen {
             State::Select => {
 
                 let has_stack = core.has_stack();
-                println!("stack: {:?}", core.stack);
                 let core = Rc::new(RefCell::new(core));
 
                 Panel::new(self)

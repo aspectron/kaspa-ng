@@ -3,7 +3,6 @@ use cfg_if::cfg_if;
 use kaspa_ng_core::runtime;
 use kaspa_ng_core::settings::Settings;
 use kaspa_wallet_core::api::WalletApi;
-use std::iter::once;
 use std::sync::Arc;
 use workflow_i18n::*;
 use workflow_log::*;
@@ -60,6 +59,7 @@ cfg_if! {
             #[allow(unused)]
             use clap::{arg, command, Arg, Command};
             use std::env::{args,var};
+            use std::iter::once;
 
             if args().any(|arg| arg == "--daemon") || var("KASPA_NG_DAEMON").is_ok() {
                 let args = once("kaspad".to_string()).chain(args().skip(1).filter(|arg| arg != "--daemon"));//.collect::<Vec<String>>();

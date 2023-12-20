@@ -315,7 +315,7 @@ impl ModuleT for Export {
                                             // wallet.export_mnemonic(prv_key_data_id.unwrap(), wallet_secret).await?;
 
                                             if let Some(prv_key_data_id) = prv_key_data_id {
-                                                let result = wallet.prv_key_data_get(prv_key_data_id, wallet_secret).await?;
+                                                let _result = wallet.prv_key_data_get(prv_key_data_id, wallet_secret).await?;
                                                 // let prv_key_data = wallet.prv_key_data(prv_key_data_id).await?;
                                                 // let mnemonic = prv_key_data.mnemonic().await?;
                                                 // println!("mnemonic: {}", mnemonic);

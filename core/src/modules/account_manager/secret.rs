@@ -11,12 +11,12 @@ impl<'context> WalletSecret<'context> {
         Self { context }
     }
 
-    pub fn render(&mut self, ui : &mut Ui, rc : &RenderContext<'_>) -> bool {
+    pub fn render(&mut self, ui : &mut Ui, core: &mut Core, rc : &RenderContext<'_>) -> bool {
         use egui_phosphor::light::{CHECK, X};
 
         let RenderContext { account, .. } = rc;
 
-        let requires_payment_passphrase = account.requires_bip39_passphrase();
+        let requires_payment_passphrase = account.requires_bip39_passphrase(core);
         let mut proceed_with_send = false;
 
         let response = TextEditor::new(
@@ -34,7 +34,7 @@ impl<'context> WalletSecret<'context> {
         .build(ui);
 
         if response.text_edit_submit(ui) {
-            if account.requires_bip39_passphrase() {
+            if requires_payment_passphrase {
                 self.context.focus.next(Focus::PaymentSecret);
             } else if !self.context.wallet_secret.is_empty() {
                 proceed_with_send = true;

@@ -1,6 +1,6 @@
 use super::*;
-// use crate::imports::*;
 use workflow_http::get_json;
+use std::collections::hash_map::Entry;
 
 // https://api.coingecko.com/api/v3/simple/price?ids=kaspa&vs_currencies=usd%2Ccny&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true
 // {
@@ -68,20 +68,23 @@ pub async fn fetch_market_price_list(currencies: &[&str]) -> Result<MarketDataMa
 fn group_by_currency_prefix(data: &AHashMap<String, f64>) -> MarketDataMap {
     let mut grouped_data: MarketDataMap = AHashMap::new();
 
-    for (coin, info) in data.iter() {
-        let mut parts: Vec<&str> = coin.split('_').collect();
+    for (tag, info) in data.iter() {
+        let mut parts: Vec<&str> = tag.split('_').collect();
         if parts.is_empty() {
             continue;
         }
-        let currency_prefix = parts.remove(0).to_lowercase();
+        let symbol = parts.remove(0).to_lowercase();
         let suffix = parts.join("_");
-        let existing_data = grouped_data.entry(currency_prefix.clone()).or_default();
-
+        let data = match grouped_data.entry(symbol.clone()) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => entry.insert(MarketData::new(symbol.as_str())),
+        };
+        
         match suffix.as_str() {
-            "" => existing_data.price = Some(*info),
-            "market_cap" => existing_data.market_cap = Some(*info),
-            "24h_vol" => existing_data.volume = Some(*info),
-            "24h_change" => existing_data.change = Some(*info),
+            "" => data.price = *info,
+            "market_cap" => data.market_cap = *info,
+            "24h_vol" => data.volume = *info,
+            "24h_change" => data.change = *info,
             _ => (),
         }
     }

@@ -19,6 +19,9 @@ pub struct ThemeColor {
     pub icon_color_default: Color32,
     pub ack_color: Color32,
     pub nack_color: Color32,
+    pub market_default_color: Color32,
+    pub market_up_color: Color32,
+    pub market_down_color: Color32,
 
     pub raised_text_color: Color32,
     pub raised_text_shadow: Color32,
@@ -86,6 +89,9 @@ impl ThemeColor {
             icon_color_default: Color32::from_rgb(240, 240, 240),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
+            market_default_color: Color32::from_rgb(240,240,240),
+            market_up_color: Color32::from_rgb(136, 255, 136),
+            market_down_color: Color32::from_rgb(255, 136, 136),
 
             raised_text_color: Color32::from_rgb(255, 255, 255),
             raised_text_shadow: Color32::from_rgb(0, 0, 0),
@@ -150,6 +156,9 @@ impl ThemeColor {
             icon_color_default: Color32::from_rgb(32, 32, 32),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
+            market_default_color: Color32::from_rgb(20,20,20),
+            market_up_color: Color32::from_rgb(41, 77, 41),
+            market_down_color: Color32::from_rgb(77, 41, 41),
 
             raised_text_color: Color32::from_rgb(0, 0, 0),
             raised_text_shadow: Color32::from_rgb(255, 255, 255),

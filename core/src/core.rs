@@ -46,7 +46,7 @@ pub struct Core {
     pub release: Option<Release>,
 
     pub device: Device,
-    pub market: Market,
+    pub market: Option<Market>,
     pub debug: bool,
 }
 
@@ -179,7 +179,7 @@ impl Core {
             release: None,
 
             device: Device::default(),
-            market: Market::default(),
+            market: None,
             debug: false,
         };
 
@@ -582,12 +582,18 @@ impl Core {
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
         match event {
-            Events::Market(update) => match update {
-                MarketUpdate::Price(price) => {
-                    self.market.price.replace(price);
+            Events::Market(update) => {
+                if self.market.is_none() {
+                    self.market = Some(Market::default());
                 }
-                MarketUpdate::Ohlc(ohlc) => {
-                    self.market.ohlc.replace(ohlc);
+
+                match update {
+                    MarketUpdate::Price(price) => {
+                        self.market.as_mut().unwrap().price.replace(price);
+                    }
+                    MarketUpdate::Ohlc(ohlc) => {
+                        self.market.as_mut().unwrap().ohlc.replace(ohlc);
+                    }
                 }
             },
             Events::ThemeChange => {

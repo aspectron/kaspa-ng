@@ -120,7 +120,7 @@ impl AccountMenu {
                                 .show(ui, |ui| {
 
                                     account_list.retain(|selectable_account|{
-                                        if selectable_account.descriptor().prv_key_data_id() == Some(&prv_key_data_info.id) {
+                                        if selectable_account.descriptor().prv_key_data_ids().contains(&prv_key_data_info.id) {
 
                                             if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id(), core.balance_padding()).clicked() {
                                                 account_manager.request_estimate();
