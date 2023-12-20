@@ -21,9 +21,8 @@ pub fn format_duration(millis: u64) -> String {
     }
 }
 
-pub fn format_address(address: &Address, range: Option<usize>) -> String {
-    let address = address.to_string();
-
+pub fn format_address_string(address: impl Into<String>, range: Option<usize>) -> String {
+    let address = address.into();
     let parts = address.split(':').collect::<Vec<&str>>();
     let prefix = parts[0];
     let payload = parts[1];
@@ -36,6 +35,10 @@ pub fn format_address(address: &Address, range: Option<usize>) -> String {
     let right = &payload[finish..];
 
     format!("{prefix}:{left}....{right}")
+}
+
+pub fn format_address(address: &Address, range: Option<usize>) -> String {
+    format_address_string(address, range)
 }
 
 /// SOMPI (u64) to KASPA (string) with suffix layout job generator

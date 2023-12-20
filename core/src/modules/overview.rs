@@ -90,7 +90,7 @@ impl Overview {
         let top = 32.;
         let logo_rect = Rect::from_min_size(Pos2::new(left, top), logo_size);
 
-        if screen_rect.width() > 768.0 {
+        if screen_rect.width() > 768.0 && !core.device().single_pane() {
             Image::new(ImageSource::Bytes { uri : Cow::Borrowed("bytes://logo.svg"), bytes : Bytes::Static(crate::app::KASPA_NG_LOGO_SVG)})
             .maintain_aspect_ratio(true)
             .max_size(logo_size)
@@ -328,10 +328,8 @@ impl Overview {
                     .default_open(true)
                     .show(ui, |ui| {
                         ui.label("Please support Kaspa NG development");
-                        // if ui.link("kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x").clicked() {
-                        let donation_address = "kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x";
-                        if ui.link(format_address(&Address::try_from(donation_address).unwrap(), Some(12))).clicked() {
-                            println!("link clicked...");
+                        if ui.link(format_address_string(modules::Donations::ADDRESS, Some(12))).clicked() {
+                            core.select::<modules::Donations>();
                         }
                     });
         });

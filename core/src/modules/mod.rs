@@ -9,6 +9,7 @@ kaspa_ng_macros::register_modules!(
         account_manager,
         block_dag,
         changelog,
+        donations,
         export,
         import,
         metrics,
@@ -19,8 +20,8 @@ kaspa_ng_macros::register_modules!(
         settings,
         testing,
         wallet_create,
-        wallet_secret,
         wallet_open,
+        wallet_secret,
         welcome,
     ]
 );
