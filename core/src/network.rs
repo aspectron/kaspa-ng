@@ -5,7 +5,9 @@ use crate::imports::*;
 pub enum Network {
     #[default]
     Mainnet,
+    #[serde(alias = "testnet-10")]
     Testnet10,
+    #[serde(alias = "testnet-11")]
     Testnet11,
 }
 

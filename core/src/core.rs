@@ -47,6 +47,7 @@ pub struct Core {
 
     pub device: Device,
     pub market: Option<Market>,
+    pub servers : Option<Arc<Vec<Server>>>,
     pub debug: bool,
 }
 
@@ -178,6 +179,7 @@ impl Core {
 
             device: Device::default(),
             market: None,
+            servers : None,
             debug: false,
         };
 
@@ -185,6 +187,7 @@ impl Core {
             module.init(&mut this);
         });
 
+        this.update_servers();
         this.wallet_update_list();
 
         this
@@ -580,6 +583,9 @@ impl Core {
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
         match event {
+            Events::ServerList { server_list } => {
+                self.servers = Some(server_list);
+            }
             Events::Market(update) => {
                 if self.market.is_none() {
                     self.market = Some(Market::default());
@@ -1016,4 +1022,18 @@ impl Core {
     pub fn apply_default_style(&self, ui: &mut Ui) {
         ui.style_mut().text_styles = self.default_style.text_styles.clone();
     }
+
+    pub fn update_servers(&self) {
+        let runtime = self.runtime.clone();
+        spawn(async move {
+            let server_list = load_servers().await?;
+            runtime
+                .send(Events::ServerList {
+                    server_list,
+                })
+                .await?;
+            Ok(())
+        });
+    }
+
 }

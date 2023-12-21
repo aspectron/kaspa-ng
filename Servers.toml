@@ -1,0 +1,15 @@
+[[server]]
+name = "aspectron alpha"
+location = "EU"
+protocol = "wrpc:borsh"
+network = ["testnet-10"]
+address = "1.2.3.4"
+
+[[server]]
+name = "community alpha"
+location = "EU"
+protocol = "wrpc:json"
+network = ["testnet-10"]
+address = "4.5.6.7"
+port = 3030
+

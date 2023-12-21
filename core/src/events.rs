@@ -17,6 +17,9 @@ pub enum Events {
         snapshot: Box<MetricsSnapshot>,
     },
     Error(Box<String>),
+    ServerList {
+        server_list : Arc<Vec<Server>>,
+    },
     WalletList {
         wallet_list: Arc<Vec<WalletDescriptor>>,
     },

@@ -1,4 +1,5 @@
 use crate::result::Result;
+use crate::servers::parse_default_servers;
 use cfg_if::cfg_if;
 use kaspa_ng_core::runtime;
 use kaspa_ng_core::settings::Settings;
@@ -187,6 +188,8 @@ cfg_if! {
 
                     set_log_level(LevelFilter::Info);
 
+                    parse_default_servers();
+
                     let mut settings = if reset_settings {
                         println!("Resetting kaspa-ng settings on user request...");
                         Settings::default().store_sync()?.clone()
@@ -274,6 +277,8 @@ cfg_if! {
             let web_options = eframe::WebOptions::default();
 
             kaspa_core::log::set_log_level(kaspa_core::log::LevelFilter::Info);
+
+            parse_default_servers();
 
             let settings = Settings::load().await.unwrap_or_else(|err| {
                 log_error!("Unable to load settings: {err}");

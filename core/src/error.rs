@@ -82,6 +82,9 @@ pub enum Error {
 
     #[error("Account creation error")]
     AccountCreationError,
+
+    #[error(transparent)]
+    Toml(#[from] toml::de::Error),
 }
 
 impl Error {

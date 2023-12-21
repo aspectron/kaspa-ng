@@ -201,7 +201,7 @@ impl Overview {
                             });
                         });
                 } else {
-                    CollapsingHeader::new(RichText::new(format!("{} {}",i18n("Update Available to version"), release.version)).color(theme_color().alert_color).strong())
+                    CollapsingHeader::new(RichText::new(format!("{} {}",i18n("Update Available to version"), release.version)).color(theme_color().warning_color).strong())
                         .id_source("redistributables-update")
                         .default_open(true)
                         .show(ui, |ui| {
