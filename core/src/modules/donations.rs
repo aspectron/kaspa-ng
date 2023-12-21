@@ -88,6 +88,8 @@ impl ModuleT for Donations {
                         runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short())
                     }
 
+                ui.label(" ");
+
             })
             .with_footer(|_this,ui| {
                 if ui.large_button("Close").clicked() {

@@ -561,7 +561,6 @@ impl ModuleT for WalletCreate {
             }
             State::PaymentSecret => {
 
-
                 Panel::new(self)
                     .with_caption("Payment & Recovery Password")
                     .with_back(|this| {
@@ -581,7 +580,6 @@ impl ModuleT for WalletCreate {
                     .with_body(|this,ui| {
                         let mut submit = false;
                         let mut change = false;
-    
     
                         ui.checkbox(&mut this.context.enable_payment_secret, i18n("Enable optional BIP39 passphrase"));
 
@@ -730,6 +728,8 @@ impl ModuleT for WalletCreate {
                         let wallet_secret = Secret::from(args.wallet_secret);
                         let payment_secret = args.enable_payment_secret.then_some(Secret::from(args.payment_secret));
 
+                        wallet.clone().batch().await?;
+
                         let wallet_args = WalletCreateArgs::new(
                             args.wallet_name.is_not_empty().then_some(args.wallet_name),
                             args.wallet_filename.is_not_empty().then_some(args.wallet_filename),
@@ -767,7 +767,9 @@ impl ModuleT for WalletCreate {
                             // payment_secret.clone(),
                         );
 
-                        let account_descriptor = wallet.clone().accounts_create(wallet_secret, account_create_args).await?;
+                        let account_descriptor = wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?;
+                        
+                        wallet.clone().flush(wallet_secret).await?;
 
                         // let WalletCreateResponse { mnemonic, wallet_descriptor: _, account_descriptor, storage_descriptor: _ } = 
                         // wallet.wallet_create(wallet_secret, wallet_args, prv_key_data_args, account_args).await?;
