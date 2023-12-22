@@ -32,7 +32,7 @@ impl From<CoinGeckoSimplePrice> for MarketDataMap {
 
 pub async fn fetch_available_currencies() -> Result<CurrencyDescriptorList> {
     let url = "https://api.coingecko.com/api/v3/coins/list";
-    let available_currencies = get_json::<CurrencyDescriptorList>(url).await?;
+    let available_currencies = http::get_json::<CurrencyDescriptorList>(url).await?;
     Ok(available_currencies)
 }
 

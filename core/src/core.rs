@@ -1,6 +1,7 @@
 use crate::imports::*;
 use crate::market::*;
 use crate::mobile::MobileMenu;
+use crate::servers::parse_default_servers;
 use egui::load::Bytes;
 use egui_notify::Toasts;
 use kaspa_metrics_core::MetricsSnapshot;
@@ -47,7 +48,7 @@ pub struct Core {
 
     pub device: Device,
     pub market: Option<Market>,
-    pub servers : Option<Arc<Vec<Server>>>,
+    pub servers : Arc<Vec<Server>>,
     pub debug: bool,
 }
 
@@ -179,7 +180,7 @@ impl Core {
 
             device: Device::default(),
             market: None,
-            servers : None,
+            servers : parse_default_servers().clone(),
             debug: false,
         };
 
@@ -584,7 +585,7 @@ impl Core {
     ) -> Result<()> {
         match event {
             Events::ServerList { server_list } => {
-                self.servers = Some(server_list);
+                self.servers = server_list;
             }
             Events::Market(update) => {
                 if self.market.is_none() {

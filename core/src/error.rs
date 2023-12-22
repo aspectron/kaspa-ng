@@ -85,6 +85,9 @@ pub enum Error {
 
     #[error(transparent)]
     Toml(#[from] toml::de::Error),
+
+    #[error("{0}")]
+    JsError(workflow_wasm::jserror::JsErrorData),
 }
 
 impl Error {
@@ -102,6 +105,12 @@ impl From<eframe::Error> for Error {
 impl From<Error> for JsValue {
     fn from(err: Error) -> Self {
         JsValue::from_str(&err.to_string())
+    }
+}
+
+impl From<JsValue> for Error {
+    fn from(err: JsValue) -> Self {
+        Error::JsError(workflow_wasm::jserror::JsErrorData::from(err))
     }
 }
 

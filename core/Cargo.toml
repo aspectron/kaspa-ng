@@ -29,12 +29,13 @@ kaspa-utils.workspace = true
 kaspa-wallet-core.workspace = true
 kaspa-wrpc-client.workspace = true
 
-workflow-log.workspace = true
 workflow-core.workspace = true
+workflow-i18n.workspace = true
 workflow-dom.workspace = true
 workflow-http.workspace = true
+workflow-log.workspace = true
 workflow-store.workspace = true
-workflow-i18n.workspace = true
+workflow-wasm.workspace = true
 
 ahash.workspace = true
 async-trait.workspace = true

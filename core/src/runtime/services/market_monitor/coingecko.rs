@@ -1,6 +1,5 @@
 use super::*;
 use std::collections::hash_map::Entry;
-use workflow_http::get_json;
 
 // https://api.coingecko.com/api/v3/simple/price?ids=kaspa&vs_currencies=usd%2Ccny&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true
 // {
@@ -38,7 +37,7 @@ impl CoinGeckoSimplePrice {
             .collect::<Vec<_>>()
             .join("%2C");
         let url = format!("https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies={currencies}&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true");
-        Ok(get_json::<Self>(url).await?)
+        Ok(http::get_json::<Self>(url).await?)
     }
 }
 
@@ -54,7 +53,7 @@ impl From<CoinGeckoSimplePrice> for MarketDataMap {
 
 pub async fn fetch_available_currencies() -> Result<CurrencyDescriptorList> {
     let url = "https://api.coingecko.com/api/v3/coins/list";
-    let available_currencies = get_json::<CurrencyDescriptorList>(url).await?;
+    let available_currencies = http::get_json::<CurrencyDescriptorList>(url).await?;
     Ok(available_currencies)
 }
 

@@ -1,5 +1,4 @@
 use crate::imports::*;
-use serde_json::Value;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Server {
@@ -16,55 +15,12 @@ pub struct ServerConfig {
     server : Vec<Server>,
 }
 
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub struct Record {
-//     pub name : Option<String>,
-//     pub location : Option<String>,
-//     pub protocol : String,
-//     pub network : Network,
-//     pub port : Option<u16>,
-// }
-
-// impl From<(String, Record)> for Server {
-//     fn from((address, record) : (String, Record)) -> Self {
-//         Self {
-//             name : record.name,
-//             location : record.location,
-//             protocol : record.protocol,
-//             network : record.network,
-//             port : record.port,
-//             address,
-//             // uri : record.uri,
-//         }
-//     }
-// }
-
-// impl Server {
-//     pub fn new(name : &str, location : &str, protocol : &str, network : &Network, uri : &str) -> Self {
-//         Self {
-//             name : Some(name.to_string()),
-//             location : Some(location.to_string()),
-//             protocol : protocol.to_string(),
-//             network : network.clone(),
-//             // uri : uri.to_string(),
-//         }
-//     }
-// }
-
-fn parse_servers_impl(toml : &str) -> Result<Arc<Vec<Server>>> {
-    // let table: Value = toml::from_str(&toml)?;
-
-    // println!("table: {:?}", table);
-    // panic!();
-
+fn try_parse_servers(toml : &str) -> Result<Arc<Vec<Server>>> {
     Ok(toml::from_str::<ServerConfig>(toml)?.server.into())
-    
-    
 }
 
-
 fn parse_servers(toml : &str) -> Arc<Vec<Server>> {
-    match parse_servers_impl(toml) {
+    match try_parse_servers(toml) {
         Ok(servers) => servers,
         Err(e) => {
             cfg_if! {
@@ -80,7 +36,6 @@ fn parse_servers(toml : &str) -> Arc<Vec<Server>> {
     }
 }
 
-
 pub fn parse_default_servers() -> &'static Arc<Vec<Server>> {
     static EMBEDDED_SERVERS: OnceLock<Arc<Vec<Server>>> = OnceLock::new();
     EMBEDDED_SERVERS.get_or_init(|| {
@@ -89,7 +44,22 @@ pub fn parse_default_servers() -> &'static Arc<Vec<Server>> {
 }
 
 pub async fn load_servers() -> Result<Arc<Vec<Server>>> {
-    let servers = parse_default_servers();
-println!("servers: {:?}", servers);
-    Ok(servers.clone())
+    cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+            use workflow_dom::utils::*;
+            let href = window().location().href()?;
+            let location = if let Some(index) = href.find('#') {
+                let (location, _) = href.split_at(index);
+                location.to_string()
+            } else {
+                href
+            };
+            let url = format!("{}/Servers.toml", location.trim_end_matches("/"));
+            let servers_toml = http::get(url).await?;
+            Ok(try_parse_servers(&servers_toml)?)
+        } else {
+            // TODO - parse local Servers.toml file
+            Ok(parse_default_servers().clone())
+        }
+    }
 }
