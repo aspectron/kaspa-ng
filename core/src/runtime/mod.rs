@@ -76,7 +76,6 @@ impl Runtime {
             metrics_service.clone(),
             block_dag_monitor_service.clone(),
             market_monitor_service.clone(),
-            #[cfg(not(target_arch = "wasm32"))]
             update_monitor_service.clone(),
         ]);
 

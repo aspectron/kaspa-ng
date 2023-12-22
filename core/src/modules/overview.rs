@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-
+use workflow_core::runtime::is_wasm;
 use egui::load::Bytes;
 use kaspa_metrics_core::{Metric,MetricGroup};
 use egui_plot::{
@@ -188,10 +188,10 @@ impl Overview {
                 });
 
             if let Some(release) = core.release.as_ref() {
-                if release.version == crate::app::VERSION {
+                if is_wasm() || release.version == crate::app::VERSION {
                     CollapsingHeader::new(i18n("Redistributables"))
                         .id_source("redistributables")
-                        .default_open(false)
+                        .default_open(true)
                         .show(ui, |ui| {
                             release.assets.iter().for_each(|asset| {
                                 Hyperlink::from_label_and_url(

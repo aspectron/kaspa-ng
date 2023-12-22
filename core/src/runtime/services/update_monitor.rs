@@ -59,8 +59,7 @@ impl Service for UpdateMonitorService {
                     if !self.is_enabled.load(Ordering::Relaxed) {
                         continue;
                     }
-
-                    #[cfg(not(target_arch = "wasm32"))]
+                    
                     let _ = check_version().await;
                 },
                 msg = this.as_ref().service_events.receiver.recv().fuse() => {
@@ -69,7 +68,6 @@ impl Service for UpdateMonitorService {
                             UpdateMonitorEvents::Enable => {
                                 if !self.is_enabled.load(Ordering::Relaxed) {
                                     self.is_enabled.store(true, Ordering::Relaxed);
-                                    #[cfg(not(target_arch = "wasm32"))]
                                     let _ = check_version().await;
                                 }
                             }
