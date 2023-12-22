@@ -19,6 +19,7 @@ pub struct ThemeColor {
     pub icon_color_default: Color32,
     pub ack_color: Color32,
     pub nack_color: Color32,
+    pub metrics_text_color: Color32,
     pub market_default_color: Color32,
     pub market_up_color: Color32,
     pub market_down_color: Color32,
@@ -28,7 +29,8 @@ pub struct ThemeColor {
 
     pub qr_background: Color32,
     pub qr_foreground: Color32,
-    pub selection_color: Color32,
+    pub selection_background_color: Color32,
+    pub selection_text_color: Color32,
     pub progress_color: Color32,
 
     pub default_color: Color32,
@@ -87,6 +89,7 @@ impl ThemeColor {
             icon_color_default: Color32::from_rgb(240, 240, 240),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
+            metrics_text_color: Color32::from_rgb(230, 230, 230),
             market_default_color: Color32::from_rgb(240, 240, 240),
             market_up_color: Color32::from_rgb(136, 255, 136),
             market_down_color: Color32::from_rgb(255, 136, 136),
@@ -96,7 +99,8 @@ impl ThemeColor {
 
             qr_background: Color32::from_rgba(0, 0, 0, 0),
             qr_foreground: Color32::WHITE,
-            selection_color: Color32::from_rgb(40, 153, 132),
+            selection_background_color: Color32::from_rgb(40, 153, 132),
+            selection_text_color: Color32::from_rgb(220,220,220),
             progress_color: Color32::from_rgb(71, 105, 97),
 
             transaction_incoming: Color32::from_rgb(162, 245, 187),
@@ -153,6 +157,7 @@ impl ThemeColor {
             icon_color_default: Color32::from_rgb(32, 32, 32),
             ack_color: Color32::from_rgb(100, 200, 100),
             nack_color: Color32::from_rgb(200, 100, 100),
+            metrics_text_color: Color32::from_rgb(20, 20, 20),
             market_default_color: Color32::from_rgb(20, 20, 20),
             market_up_color: Color32::from_rgb(41, 77, 41),
             market_down_color: Color32::from_rgb(77, 41, 41),
@@ -162,7 +167,8 @@ impl ThemeColor {
 
             qr_background: Color32::from_rgba(255, 255, 255, 0),
             qr_foreground: Color32::BLACK,
-            selection_color: Color32::from_rgb(165, 201, 197),
+            selection_background_color: Color32::from_rgb(165, 201, 197),
+            selection_text_color: Color32::from_rgb(20,20,20),
             progress_color: Color32::from_rgb(165, 201, 197),
 
             transaction_incoming: Color32::from_rgb(15, 77, 35),

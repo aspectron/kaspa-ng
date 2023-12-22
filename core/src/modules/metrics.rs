@@ -11,6 +11,9 @@ use egui_plot::{
     PlotPoints, uniform_grid_spacer, CoordinatesFormatter, Corner,
 };
 
+const METRICS_SAMPLES_START : isize = -(MAX_METRICS_SAMPLES as isize);
+const MIN_RANGE : isize = 15;
+
 pub struct Metrics {
     #[allow(dead_code)]
     runtime: Runtime,
@@ -35,18 +38,30 @@ impl ModuleT for Metrics {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        // let theme = theme();
-
         let screen_rect_height = ui.ctx().screen_rect().height();
 
         let mut store_settings = false;
                             
         let mut graph_columns = core.settings.user_interface.metrics.graph_columns;
         let mut graph_height = core.settings.user_interface.metrics.graph_height;
-        #[allow(unused_mut)]
         let mut graph_range_from = core.settings.user_interface.metrics.graph_range_from;
         let mut graph_range_to = core.settings.user_interface.metrics.graph_range_to;
 
+        if graph_range_from < METRICS_SAMPLES_START {
+            graph_range_from = METRICS_SAMPLES_START;
+        }
+        
+        if graph_range_to > 0 {
+            graph_range_to = 0;
+        }
+
+        if graph_range_to < METRICS_SAMPLES_START {
+            graph_range_to = METRICS_SAMPLES_START;
+        }
+
+        if graph_range_to > 0 {
+            graph_range_to = 0;
+        }
 
         ui.horizontal(|ui|{
             ui.heading("Node Metrics");
@@ -66,28 +81,6 @@ impl ModuleT for Metrics {
                             .orientation(SliderOrientation::Horizontal)
                             .suffix("px")
                     );
-                    // ui.label("From:");
-                    // ui.add(
-                    //     Slider::new(&mut graph_range_from, 0..=MAX_METRICS_SAMPLES)
-                    //         .text("From")
-                    //         .logarithmic(true)
-                    //         .orientation(SliderOrientation::Horizontal)
-                    //         .custom_formatter(|v, _range| {
-                    //             format_duration(v as u64)
-                    //         })
-                    // );
-                    // ui.label("To:");
-                    // ui.label("Duration:");
-                    // ui.space();
-                    // ui.add(
-                    //     Slider::new(&mut graph_range_to, 15..=MAX_METRICS_SAMPLES)
-                    //         .text("Duration")
-                    //         .logarithmic(true)
-                    //         .orientation(SliderOrientation::Horizontal)
-                    //         .custom_formatter(|v, _range| {
-                    //             format_duration(v as u64)
-                    //         })
-                    // );
 
                     ui.space();
                     ui.separator();
@@ -145,22 +138,53 @@ impl ModuleT for Metrics {
                 ui.separator();
 
                 ui.add(
-                    Slider::new(&mut graph_range_to, 15..=MAX_METRICS_SAMPLES)
+                    Slider::new(&mut graph_range_to, (METRICS_SAMPLES_START+MIN_RANGE)..=0)
                         .logarithmic(true)
                         .orientation(SliderOrientation::Horizontal)
-                        .custom_formatter(|v, _range| {
-                            format_duration(v as u64)
-                        })
+                        .show_value(false)
+                        // .custom_formatter(|v, _range| {
+                        //     format_duration(-v as u64)
+                        // })
                 );
-                if core.device().orientation() == Orientation::Portrait {
-                    ui.label("Duration:");
+                ui.add(
+                    Slider::new(&mut graph_range_from, METRICS_SAMPLES_START..=-MIN_RANGE)
+                        .logarithmic(true)
+                        .orientation(SliderOrientation::Horizontal)
+                        .show_value(false)
+                        // .custom_formatter(|v, _range| {
+                        //     format_duration(-v as u64)
+                        // })
+                );
+                ui.label(format!("{} ... {}", format_duration(-graph_range_from as u64), format_duration(-graph_range_to as u64)));
+                if core.device().orientation() != Orientation::Portrait {
+                    ui.label("Range:");
                 }
 
             });
         });
         
-        if graph_range_from > graph_range_to {
+        if graph_range_from != core.settings.user_interface.metrics.graph_range_from {
+            if graph_range_from.abs_diff(graph_range_to) < 15 {
+                graph_range_to = graph_range_from + 15;
+            }
+        }
+
+        if graph_range_to != core.settings.user_interface.metrics.graph_range_to {
+            if graph_range_to.abs_diff(graph_range_from) < 15 {
+                graph_range_from = graph_range_to - 15;
+            }
+        }
+
+        if graph_range_from.abs_diff(graph_range_to) < 15 {
             graph_range_to = graph_range_from + 15;
+        }
+    
+        if graph_range_to.abs_diff(graph_range_from) < 15 {
+            graph_range_from = graph_range_to - 15;
+        }
+
+        if graph_range_from > graph_range_to {
+            graph_range_from = graph_range_to - 15;
         }
 
         if store_settings
@@ -169,6 +193,8 @@ impl ModuleT for Metrics {
         || graph_range_from != core.settings.user_interface.metrics.graph_range_from 
         || graph_range_to != core.settings.user_interface.metrics.graph_range_to 
         {
+
+            println!("graph_range_from: {} graph_range_to: {}", graph_range_from, graph_range_to);
             core.settings.user_interface.metrics.graph_columns = graph_columns;
             core.settings.user_interface.metrics.graph_height = graph_height;
             core.settings.user_interface.metrics.graph_range_from = graph_range_from;
@@ -234,7 +260,7 @@ impl Metrics {
         ui : &mut Ui, 
         metric : Metric, 
         metrics : &MetricsSnapshot, 
-        range : std::ops::Range<usize>,
+        range : std::ops::Range<isize>,
         graph_width : f32, 
         graph_height : f32
     ) {
@@ -251,7 +277,7 @@ impl Metrics {
                         ui.add_space(8.);
                         ui.horizontal(|ui|{
                             ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
-                                ui.label(format!("{}: {}", i18n(metric.title().0), metric.format(metrics.get(&metric), true, false)));
+                                ui.colored_label(theme_color().metrics_text_color, format!("{}: {}", i18n(metric.title().0), metric.format(metrics.get(&metric), true, false)));
                             });
                         });
 
@@ -259,15 +285,15 @@ impl Metrics {
                         let graph_data = {
                             let metrics_data = self.runtime.metrics_service().metrics_data();
                             let data = metrics_data.get(&metric).unwrap();
-                            let mut start = range.start;
-                            let mut end = range.end;
+                            let mut start = range.start.clamp(METRICS_SAMPLES_START, 0).abs() as usize;
+                            let mut end = range.end.clamp(METRICS_SAMPLES_START, 0).abs() as usize;
                             if start > data.len() {
                                 start = data.len();
                             }
                             if end > data.len() {
                                 end = data.len();
                             }
-                            data[data.len()-end..data.len()-start].to_vec()
+                            data[data.len()-start..data.len()-end].to_vec()
                         };
 
                         let mut plot = Plot::new(metric.as_str())

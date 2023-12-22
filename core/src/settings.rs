@@ -171,9 +171,20 @@ impl std::fmt::Display for NetworkInterfaceConfig {
     }
 }
 
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum NodeConnectionConfigKind {
+    Custom,
+    Existing,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct NodeSettings {
+    // pub connection_config_kind: NodeConnectionConfigKind,
+    // pub existing_server: Server,
     pub rpc_kind: RpcKind,
     pub wrpc_url: String,
     pub wrpc_encoding: WrpcEncoding,
@@ -296,8 +307,8 @@ impl From<&NodeSettings> for RpcConfig {
 pub struct MetricsSettings {
     pub graph_columns: usize,
     pub graph_height: usize,
-    pub graph_range_from: usize,
-    pub graph_range_to: usize,
+    pub graph_range_from: isize,
+    pub graph_range_to: isize,
     pub disabled: AHashSet<Metric>,
 }
 
@@ -306,8 +317,8 @@ impl Default for MetricsSettings {
         Self {
             graph_columns: 3,
             graph_height: 90,
-            graph_range_from: 0,
-            graph_range_to: 15 * 60,
+            graph_range_from: -15 * 60,
+            graph_range_to: 0,
             disabled: AHashSet::default(),
         }
     }

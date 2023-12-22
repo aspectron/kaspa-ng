@@ -50,6 +50,7 @@ One of the best ways to test this application is to build both desktop and web v
 ### TODO (Known Issues)
 
 - [ ] Web App does not currently preserve transaction history. Reloading the page or the wallet will result in the blank transaction list (this does not affect the wallet functionality).  The Web Browser transaction history storage backend is currently under development in the Rusty Kaspa wallet framework.
+- [ ] When the Wen App goes off screen or in the background tab, browser will suspend it preventing it from processing updates. There is a workaround for this, but it is not yet implemented.
 
 ### License
 

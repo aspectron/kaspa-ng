@@ -367,45 +367,53 @@ impl Settings {
                 .default_open(false)
                 .show(ui, |ui| {
 
-                    ui.vertical(|ui|{
-                        ui.checkbox(&mut self.settings.developer.enable, i18n("Developer Mode"));
-                        ui.label("Developer mode enables advanced and experimental features");
+                    ui.horizontal(|ui| {
+                        ui.add_space(2.);
+                        ui.vertical(|ui|{
+                            ui.checkbox(&mut self.settings.developer.enable, i18n("Developer Mode"));
+                            if !self.settings.developer.enable {
+                                ui.label("Developer mode enables advanced and experimental features");
+                            }
+                        });
                     });
 
-                    ui.vertical(|ui|{
-                        if self.settings.developer.enable {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            ui.checkbox(
-                                &mut self.settings.developer.enable_experimental_features, 
-                                i18n("Enable experimental features")
-                            ).on_hover_text_at_pointer(
-                                i18n("Enables features currently in development")
-                            );
-                            
-                            #[cfg(not(target_arch = "wasm32"))]
-                            ui.checkbox(
-                                &mut self.settings.developer.enable_custom_daemon_args, 
-                                i18n("Enable custom daemon arguments")
-                            ).on_hover_text_at_pointer(
-                                i18n("Allow custom arguments for the Rusty Kaspa daemon")
-                            );
-                            
-                            ui.checkbox(
-                                &mut self.settings.developer.disable_password_restrictions, 
-                                i18n("Disable password score restrictions")
-                            ).on_hover_text_at_pointer(
-                                i18n("Removes security restrictions, allows for single-letter passwords")
-                            );
+                    if self.settings.developer.enable {
+                        ui.indent("developer_mode_settings", |ui | {
 
-                            #[cfg(not(target_arch = "wasm32"))]
-                            ui.checkbox(
-                                &mut self.settings.developer.enable_screen_capture, 
-                                i18n("Enable screen capture")
-                            ).on_hover_text_at_pointer(
-                                i18n("Allows you to take screenshots from within the application")
-                            );
-                        }
-                    });
+                            // ui.vertical(|ui|{
+                                #[cfg(not(target_arch = "wasm32"))]
+                                ui.checkbox(
+                                    &mut self.settings.developer.enable_experimental_features, 
+                                    i18n("Enable experimental features")
+                                ).on_hover_text_at_pointer(
+                                    i18n("Enables features currently in development")
+                                );
+                                
+                                #[cfg(not(target_arch = "wasm32"))]
+                                ui.checkbox(
+                                    &mut self.settings.developer.enable_custom_daemon_args, 
+                                    i18n("Enable custom daemon arguments")
+                                ).on_hover_text_at_pointer(
+                                    i18n("Allow custom arguments for the Rusty Kaspa daemon")
+                                );
+                                
+                                ui.checkbox(
+                                    &mut self.settings.developer.disable_password_restrictions, 
+                                    i18n("Disable password score restrictions")
+                                ).on_hover_text_at_pointer(
+                                    i18n("Removes security restrictions, allows for single-letter passwords")
+                                );
+    
+                                #[cfg(not(target_arch = "wasm32"))]
+                                ui.checkbox(
+                                    &mut self.settings.developer.enable_screen_capture, 
+                                    i18n("Enable screen capture")
+                                ).on_hover_text_at_pointer(
+                                    i18n("Allows you to take screenshots from within the application")
+                                );
+                            // });
+                        });
+                    }
 
                     if self.settings.developer != core.settings.developer {
                         ui.add_space(16.);

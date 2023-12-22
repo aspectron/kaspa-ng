@@ -61,7 +61,7 @@ impl ModuleT for Donations {
                 use egui_phosphor::light::CLIPBOARD_TEXT;
                 
                 ui.add_space(8.);                                    
-                ui.label("This project relies on the support of the community in all areas including development, testing and funding.");
+                ui.label("This project relies on the support of the community.");
                 ui.label(" ");
                 ui.label("If you are able to contribute by donating, we would greatly appreciate your support.");
                 ui.label(" ");

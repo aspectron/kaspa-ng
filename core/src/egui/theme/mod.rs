@@ -53,8 +53,8 @@ impl From<&Theme> for Visuals {
         visuals.widgets.open.rounding = theme.style.widget_rounding;
 
         visuals.hyperlink_color = theme.color.hyperlink_color;
-        visuals.selection.bg_fill = theme.color.selection_color;
-        visuals.selection.stroke.color = theme.color.selection_color;
+        visuals.selection.bg_fill = theme.color.selection_background_color;
+        visuals.selection.stroke.color = theme.color.selection_text_color;
         visuals.warn_fg_color = theme.color.warning_color;
         visuals.error_fg_color = theme.color.error_color;
 
