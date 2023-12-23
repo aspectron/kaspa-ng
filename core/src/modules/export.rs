@@ -198,14 +198,14 @@ impl ModuleT for Export {
                         // })
                         .with_header(|_ctx,ui| {
                             ui.add_space(64.);
-                            ui.label("Please select the type of export");
+                            ui.label(i18n("Please select the type of export"));
                             // ui.label("");
                         })
                         .with_body(|this,ui| {
                             // ui.label("(You can import additional private keys later, once the wallet has been created)");
 
                             ui.label("");
-                            ui.label("Please select private key to export");
+                            ui.label(i18n("Please select private key to export"));
                             ui.label("");
 
                             if let Some(prv_key_data_map) = prv_key_data_map {

@@ -107,7 +107,7 @@ impl AccountMenu {
                     let mut account_list = if let Some(account_collection) = core.account_collection() {
                         account_collection.list().clone()
                     } else {
-                        ui.label("No accounts found");
+                        ui.label(i18n("No accounts found"));
                         return;
                     };
 
@@ -158,7 +158,7 @@ impl AccountMenu {
                     if ui.add(CompositeButton::opt_image_and_text(
                         Some(Composite::icon(LIST)),
                         // Composite::Icon(egui_phosphor::thin::LOCK_KEY_OPEN),
-                        Some("Create New Account".into()),
+                        Some(i18n("Create New Account").into()),
                         None,
                     )).clicked() {
                         *close = true;
@@ -193,9 +193,9 @@ impl ToolsMenu {
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 
-                    let _ = ui.button("Create Account");
-                    let _ = ui.button("Import");
-                    let _ = ui.button("Export");
+                    let _ = ui.button(i18n("Create Account"));
+                    let _ = ui.button(i18n("Import"));
+                    let _ = ui.button(i18n("Export"));
                     // ui.button("Export");
 
                     // if let Some(account_collection) = core.account_collection() {

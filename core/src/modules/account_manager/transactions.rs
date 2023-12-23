@@ -14,7 +14,7 @@ impl Transactions {
         egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
             let transactions = account.transactions();
             if transactions.is_empty() {
-                ui.label("No transactions");
+                ui.label(i18n("No transactions"));
             } else {
                 let total: u64 = transactions.iter().map(|transaction|transaction.aggregate_input_value()).sum();
                 transactions.iter().for_each(|transaction| {

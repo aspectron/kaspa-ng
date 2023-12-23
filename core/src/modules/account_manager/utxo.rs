@@ -13,7 +13,7 @@ impl UtxoManager {
         let RenderContext { account: _, .. } = rc;
 
         egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
-            ui.label("UTXO Manager");
+            ui.label(i18n("UTXO Manager"));
         });
 
     }

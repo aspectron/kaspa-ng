@@ -113,8 +113,6 @@ impl ModuleT for PrivateKeyCreate {
     ) {
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
 
-            let size = egui::Vec2::new(200_f32, 40_f32);
-
             match self.state.clone() {
                 State::Start => {
 
@@ -136,7 +134,7 @@ impl ModuleT for PrivateKeyCreate {
                         })
                         .with_header(|_ctx,ui| {
                             // ui.add_space(64.);
-                            ui.label("Please select an account type");
+                            ui.label(i18n("Please select an account type"));
                             ui.label(" ");
                         })
                         .with_body(|_this,_ui|{
@@ -158,8 +156,7 @@ impl ModuleT for PrivateKeyCreate {
                         })
                         .with_footer(|_this,ui| {
                             // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
-                            let size = theme_style().large_button_size;
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                            if ui.large_button(i18n("Continue")).clicked() {
                                 // this.state = State::WalletName;
                             }
                         })
@@ -171,7 +168,7 @@ impl ModuleT for PrivateKeyCreate {
                     let _wallet_exists_result = Payload::<Result<bool>>::new("wallet_exists_result");
 
                     Panel::new(self)
-                    .with_caption("Account Name")
+                    .with_caption(i18n("Account Name"))
                     .with_back(|this| {
                         this.state = State::Start;
                     })
@@ -179,19 +176,18 @@ impl ModuleT for PrivateKeyCreate {
                     })
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
-                        ui.label("Please specify the name of the wallet");
+                        ui.label(i18n("Please specify the name of the wallet"));
                     })
                     .with_body(|this,ui| {
                         ui.add_sized(
-                            size,
+                            theme_style().panel_editor_size,
                             TextEdit::singleline(&mut this.args.account_title)
-                                .hint_text("Account Name...")
+                                .hint_text(i18n("Account Name..."))
                                 .vertical_align(Align::Center),
                         );
                     })
                     .with_footer(|this,ui| {
-                        let size = theme_style().large_button_size;
-                        if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                        if ui.large_button(i18n("Continue")).clicked() {
                             this.state = State::AccountName;
                         }
                     })
@@ -202,36 +198,36 @@ impl ModuleT for PrivateKeyCreate {
                 State::PaymentSecret => {
 
                     Panel::new(self)
-                        .with_caption("Payment & Recovery Password")
+                        .with_caption(i18n("Payment & Recovery Password"))
                         .with_back(|this| {
                             this.state = State::AccountName;
                         })
                         .with_close_enabled(false, |_|{
                         })
                         .with_header(|_ctx,ui| {
-                            ui.heading("Optional");
+                            ui.heading(i18n("Optional"));
                             ui.label(" ");
-                            ui.label("The optional payment & recovery password, if provided, will be required to \
+                            ui.label(i18n("The optional payment & recovery password, if provided, will be required to \
                                 send payments. This password will also be required when recovering your wallet \
                                 in addition to your private key or mnemonic. If you loose this password, you will not \
-                                be able to use mnemonic to recover your wallet!");
+                                be able to use mnemonic to recover your wallet!"));
                         })
                         .with_body(|this,ui| {
-                            ui.label(RichText::new("ENTER YOUR PAYMENT PASSWORD").size(12.).raised());
+                            ui.label(RichText::new(i18n("ENTER YOUR PAYMENT PASSWORD")).size(12.).raised());
                             ui.add_sized(
-                                size,
+                                theme_style().panel_editor_size,
                                 TextEdit::singleline(&mut this.args.payment_secret)
-                                    .hint_text("Payment password...")
+                                    .hint_text(i18n("Payment password..."))
                                     .vertical_align(Align::Center),
                             );
 
                             ui.label(" ");
-                            ui.label(RichText::new("VERIFY YOUR PAYMENT PASSWORD").size(12.).raised());
+                            ui.label(RichText::new(i18n("VERIFY YOUR PAYMENT PASSWORD")).size(12.).raised());
 
                             ui.add_sized(
-                                size,
+                                theme_style().panel_editor_size,
                                 TextEdit::singleline(&mut this.args.payment_secret_confirm)
-                                    .hint_text("Payment password...")
+                                    .hint_text(i18n("Payment password..."))
                                     .vertical_align(Align::Center),
                             );
 
@@ -244,9 +240,8 @@ impl ModuleT for PrivateKeyCreate {
                             }
                         })
                         .with_footer(|this,ui| {
-                            let size = theme_style().large_button_size;
-                            let ok = this.args.payment_secret == this.args.payment_secret_confirm;// && this.args.wallet_secret.len() > 0;
-                            if ui.add_enabled(ok, egui::Button::new("Continue").min_size(size)).clicked() {
+                            let ok = this.args.payment_secret == this.args.payment_secret_confirm;
+                            if ui.large_button_enabled(ok,i18n("Continue")).clicked() {
                                 this.state = State::Start;
                             }
                         })
@@ -266,10 +261,10 @@ impl ModuleT for PrivateKeyCreate {
                 State::CreateAccount => {
 
                     Panel::new(self)
-                    .with_caption("Creating Account")
+                    .with_caption(i18n("Creating Account"))
                     .with_header(|_, ui|{
                         ui.label(" ");
-                        ui.label("Please wait...");
+                        ui.label(i18n("Please wait..."));
                         ui.label(" ");
                         ui.label(" ");
                         ui.add_space(64.);
@@ -286,7 +281,7 @@ impl ModuleT for PrivateKeyCreate {
                         spawn_with_result(&wallet_create_result, async move {
 
                             if args.enable_payment_secret && args.payment_secret.is_empty() {
-                                return Err(Error::custom("Payment secret is empty"));
+                                return Err(Error::custom(i18n("Payment secret is empty")));
                             }
 
                             // if args.enable_phishing_hint && args.phishing_hint.is_empty() {
@@ -336,7 +331,7 @@ impl ModuleT for PrivateKeyCreate {
                     if let Some(result) = wallet_create_result.take() {
                         match result {
                             Ok(creation_data) => {
-                                println!("Account created successfully");
+                                // println!("Account created successfully");
                                 self.state = State::PresentMnemonic(creation_data);
                                 // wallet.get_mut::<section::Account>().select(Some(creation_dataaccount));
                             }
@@ -356,10 +351,10 @@ impl ModuleT for PrivateKeyCreate {
                     .with_header(move |this,ui| {
                         ui.label(" ");
                         ui.label(" ");
-                        ui.label(RichText::new("Error creating account").color(egui::Color32::from_rgb(255, 120, 120)));
+                        ui.label(RichText::new(i18n("Error creating account")).color(egui::Color32::from_rgb(255, 120, 120)));
                         ui.label(RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
 
-                        if ui.add_sized(size, egui::Button::new("Restart")).clicked() {
+                        if ui.large_button(i18n("Restart")).clicked() {
                             this.state = State::Start;
                         }
                     })
@@ -416,15 +411,15 @@ impl ModuleT for PrivateKeyCreate {
                 State::ConfirmMnemonic(creation_data) => {
                     let creation_data_back = creation_data.clone();
                     Panel::new(self)
-                        .with_caption("Confirm Mnemonic")
+                        .with_caption(i18n("Confirm Mnemonic"))
                         .with_back(move |this|{
                             this.state = State::PresentMnemonic(creation_data_back);
                         })
                         .with_header(|_this,ui| {
-                            ui.label("Please validate your mnemonic");
+                            ui.label(i18n("Please validate your mnemonic"));
                         })
                         .with_footer(move |this,ui| {
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                            if ui.large_button(i18n("Continue")).clicked() {
                                 this.state = State::Finish(creation_data.account());
                             }
                         })
@@ -434,14 +429,14 @@ impl ModuleT for PrivateKeyCreate {
                 State::Finish(account) => {
 
                     Panel::new(self)
-                        .with_caption("Account Created")
+                        .with_caption(i18n("Account Created"))
                         .with_body(|_this,ui| {
                             ui.label(" ");
-                            ui.label("Your account has been created and is ready to use.");
+                            ui.label(i18n("Your account has been created and is ready to use."));
                             ui.label(" ");
                         })
                         .with_footer(move |this,ui| {
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                            if ui.large_button(i18n("Continue")).clicked() {
                                 this.state = State::Start;
 
                                 // TODO - add account to wallet ^^^

@@ -157,7 +157,7 @@ impl ModuleT for Metrics {
                 );
                 ui.label(format!("{} ... {}", format_duration(-graph_range_from as u64), format_duration(-graph_range_to as u64)));
                 if core.device().orientation() != Orientation::Portrait {
-                    ui.label("Range:");
+                    ui.label(i18n("Range:"));
                 }
 
             });
@@ -239,9 +239,9 @@ impl ModuleT for Metrics {
 
                 ui.style_mut().text_styles = core.mobile_style.text_styles.clone();
 
-                ui.label("Metrics are not available");
+                ui.label(i18n("Metrics are not available"));
                 ui.add_space(32.);
-                ui.label("Please connect to kaspa p2p node");
+                ui.label(i18n("Please connect to kaspa p2p node"));
             });
         }
 

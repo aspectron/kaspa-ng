@@ -138,10 +138,10 @@ impl ModuleT for WalletCreate {
                     })
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
-                        ui.label("The following will guide you through the process of creating a new wallet");
+                        ui.label(i18n("The following will guide you through the process of creating a new wallet"));
                         ui.label(" ");
-                        ui.label("A wallet is stored in a file on your computer.");
-                        ui.label("You can create multiple wallets, but only one can be loaded at a time.");
+                        ui.label(i18n("A wallet is stored in a file on your computer."));
+                        ui.label(i18n("You can create multiple wallets, but only one can be loaded at a time."));
                     })
                     // .with_footer(|this,ui| {
                     //     // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
@@ -163,7 +163,7 @@ impl ModuleT for WalletCreate {
                 let mut import = false;
 
                 Panel::new(self)
-                    .with_caption("Select Private Key Type")
+                    .with_caption(i18n("Select Private Key Type"))
                     .with_back(|this| {
                         this.state = State::Start;
                     })
@@ -171,16 +171,16 @@ impl ModuleT for WalletCreate {
                     })
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
-                        ui.label("Please specify the private key type\nfor the new wallet");
+                        ui.label(i18n("Please specify the private key type\nfor the new wallet"));
                     })
                     .with_body(|this,ui| {
 
-                        if ui.large_button("12 word mnemonic").clicked() {
+                        if ui.large_button(i18n("12 word mnemonic")).clicked() {
                             this.context.word_count = WordCount::Words12;
                             submit = true;
                         }
                         ui.label("");
-                        if ui.large_button("24 word mnemonic").clicked() {
+                        if ui.large_button(i18n("24 word mnemonic")).clicked() {
                             this.context.word_count = WordCount::Words24;
                             submit = true;
                         }
@@ -190,10 +190,10 @@ impl ModuleT for WalletCreate {
                         ui.label("");
                         ui.separator();
                         ui.label("");
-                        ui.label("Other operations");
+                        ui.label(i18n("Other operations"));
                         ui.label("");
 
-                        if ui.large_button("Import existing").clicked() {
+                        if ui.large_button(i18n("Import existing")).clicked() {
                             // this.context.word_count = WordCount::Words24;
                             import = true;
                         }
@@ -219,7 +219,7 @@ impl ModuleT for WalletCreate {
 
                 let mut submit = false;
                 Panel::new(self)
-                    .with_caption("Import Existing Private Key")
+                    .with_caption(i18n("Import Existing Private Key"))
                     .with_back(|this| {
                         this.state = State::KeySelection;
                     })
@@ -227,24 +227,25 @@ impl ModuleT for WalletCreate {
                     })
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
-                        ui.label("Please select the private key type you would like to import in the new wallet");
+                        ui.label(i18n("Please select the private key type you would like to import in the new wallet"));
                         // ui.label("");
                     })
                     .with_body(|this,ui| {
                         // ui.label("(You can import additional private keys later, once the wallet has been created)");
 
-                        if ui.large_button("12 word mnemonic").clicked() {
+                        if ui.large_button(i18n("12 word mnemonic")).clicked() {
                             this.context.word_count = WordCount::Words12;
                             submit = true;
                         }
 
                         ui.label("");
-                        ui.checkbox(&mut this.context.import_legacy, "I have a legacy account");
-                        ui.label("Select this option if your wallet was create\nvia KDX or kaspanet.io web wallet");
+                        ui.checkbox(&mut this.context.import_legacy, i18n("I have a legacy account"));
+                        ui.label(i18n("Select this option if your wallet was create"));
+                        ui.label(i18n("via KDX or kaspanet.io web wallet"));
 
                         if !this.context.import_legacy {
                             ui.label("");
-                            if ui.large_button("24 word mnemonic").clicked() {
+                            if ui.large_button(i18n("24 word mnemonic")).clicked() {
                                 this.context.word_count = WordCount::Words24;
                                 submit = true;
                             }
@@ -254,10 +255,10 @@ impl ModuleT for WalletCreate {
                         }
 
                         ui.label("");
-                        ui.checkbox(&mut this.context.import_advanced, "Advanced Options");
+                        ui.checkbox(&mut this.context.import_advanced, i18n("Advanced Options"));
                         if this.context.import_advanced {
                             ui.label("");
-                            if ui.large_button("secp256k1 keypair").clicked() {
+                            if ui.large_button(i18n("secp256k1 keypair")).clicked() {
                                 this.context.word_count = WordCount::Words12;
                                 submit = true;
                             }
@@ -281,7 +282,7 @@ impl ModuleT for WalletCreate {
                 let _wallet_exists_result = Payload::<Result<bool>>::new("wallet_exists_result");
 
                 Panel::new(self)
-                    .with_caption("Wallet Name")
+                    .with_caption(i18n("Wallet Name"))
                     .with_back(|this| {
                         this.state = State::KeySelection;
                     })
@@ -289,7 +290,7 @@ impl ModuleT for WalletCreate {
                     })
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
-                        ui.label("Please specify the name of the new wallet");
+                        ui.label(i18n("Please specify the name of the new wallet"));
                     })
                     .with_body(|this,ui| {
                         // let response = 
@@ -301,7 +302,7 @@ impl ModuleT for WalletCreate {
                             Focus::WalletName,
                             |ui, text| {
                                 // ui.add_space(8.);
-                                ui.label(RichText::new("Enter wallet name").size(12.).raised());
+                                ui.label(RichText::new(i18n("Enter wallet name")).size(12.).raised());
                                 ui.add_sized(editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center))
                             },
@@ -323,13 +324,13 @@ impl ModuleT for WalletCreate {
 
                         if this.context.wallet_filename.is_not_empty() {
                             ui.label(" ");
-                            ui.label(format!("Filename: {}", this.context.wallet_filename));
+                            ui.label(format!("{} {}",i18n("Filename:"), this.context.wallet_filename));
                             ui.label(" ");
                         }
 
                     })
                     .with_footer(|this,ui| {
-                        if ui.large_button_enabled(this.context.wallet_name.is_not_empty(), "Continue").clicked() {
+                        if ui.large_button_enabled(this.context.wallet_name.is_not_empty(), i18n("Continue")).clicked() {
                             this.state = State::AccountName;
                             this.focus.next(Focus::AccountName);
                         }
@@ -339,7 +340,7 @@ impl ModuleT for WalletCreate {
             }
             State::AccountName => {
                 Panel::new(self)
-                    .with_caption("Default Account Name")
+                    .with_caption(i18n("Default Account Name"))
                     .with_back(|this| {
                         this.state = State::WalletName;
                         this.focus.next(Focus::WalletName);
@@ -347,11 +348,11 @@ impl ModuleT for WalletCreate {
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
-                        ui.heading("Optional");
+                        ui.heading(i18n("Optional"));
                         ui.label(" ");
-                        ui.label("Please specify the name of the default account. The wallet will be created with a default account. Once created, you will be able to create additional accounts as you need.");
+                        ui.label(i18n("Please specify the name of the default account. The wallet will be created with a default account. Once created, you will be able to create additional accounts as you need."));
                         ui.label(" ");
-                        ui.label("If not specified, the account will be represented by the numeric id.");
+                        ui.label(i18n("If not specified, the account will be represented by the numeric id."));
                     })
                     .with_body(|this,ui| {
 
@@ -361,7 +362,7 @@ impl ModuleT for WalletCreate {
                             Focus::AccountName,
                             |ui, text| {
                                 // ui.add_space(8.);
-                                ui.label(RichText::new("Enter account name").size(12.).raised());
+                                ui.label(RichText::new(i18n("Enter account name")).size(12.).raised());
                                 ui.add_sized(editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center))
                             },
@@ -389,7 +390,7 @@ impl ModuleT for WalletCreate {
             State::PhishingHint => {
 
                 Panel::new(self)
-                    .with_caption("Phishing Hint")
+                    .with_caption(i18n("Phishing Hint"))
                     .with_back(|this| {
                         this.state = State::AccountName;
                         this.focus.next(Focus::AccountName);
@@ -397,8 +398,9 @@ impl ModuleT for WalletCreate {
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
-                        ui.heading("Optional");
+                        ui.heading(i18n("Optional"));
                         ui.label(" ");
+                        // TODO i18n
                         ui.label("\
                             \"Phishing hint\" is a secret word or a phrase that is displayed \
                             when you open your wallet. If you do not see the hint when opening \
@@ -414,7 +416,7 @@ impl ModuleT for WalletCreate {
                             &mut this.focus,
                             Focus::PhishingHint,
                             |ui, text| {
-                                ui.label(RichText::new("Enter phishing hint").size(12.).raised());
+                                ui.label(RichText::new(i18n("Enter phishing hint")).size(12.).raised());
                                 ui.add_sized(editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center))
                             },
@@ -427,7 +429,7 @@ impl ModuleT for WalletCreate {
 
                     })
                     .with_footer(|this,ui| {
-                        if ui.large_button("Continue").clicked() {
+                        if ui.large_button(i18n("Continue")).clicked() {
                             this.state = State::WalletSecret;
                             this.focus.next(Focus::WalletSecret);
                         }
@@ -441,7 +443,7 @@ impl ModuleT for WalletCreate {
             State::WalletSecret => {
 
                 Panel::new(self)
-                    .with_caption("Wallet Encryption Password")
+                    .with_caption(i18n("Wallet Encryption Password"))
                     .with_back(|this| {
                         this.state = State::PhishingHint;
                         this.focus.next(Focus::PhishingHint);
@@ -450,7 +452,7 @@ impl ModuleT for WalletCreate {
                     })
                     .with_header(|_ctx,ui| {
                         ui.label(" ");
-                        ui.label("Wallet password is used to encrypt your wallet data.");
+                        ui.label(i18n("Wallet password is used to encrypt your wallet data."));
                         ui.label(" ");
                     })
                     .with_body(|this,ui| {
@@ -463,7 +465,7 @@ impl ModuleT for WalletCreate {
                             &mut this.focus,
                             Focus::WalletSecret,
                             |ui, text| {
-                                ui.label(RichText::new("Enter wallet password").size(12.).raised());
+                                ui.label(RichText::new(i18n("Enter wallet password")).size(12.).raised());
                                 ui.add_sized(editor_size, TextEdit::singleline(text)
                                     .password(!this.context.wallet_secret_show)
                                     .vertical_align(Align::Center))
@@ -487,7 +489,7 @@ impl ModuleT for WalletCreate {
                             &mut this.focus,
                             Focus::WalletSecretConfirm,
                             |ui, text| {
-                                ui.label(RichText::new("Confirm wallet password").size(12.).raised());
+                                ui.label(RichText::new(i18n("Confirm wallet password")).size(12.).raised());
                                 ui.add_sized(editor_size, TextEdit::singleline(text)
                                     .password(!this.context.wallet_secret_show)
                                     .vertical_align(Align::Center))
@@ -503,7 +505,7 @@ impl ModuleT for WalletCreate {
                         .build(ui);
 
                         ui.label("");
-                        ui.checkbox(&mut this.context.wallet_secret_show, "Show password");
+                        ui.checkbox(&mut this.context.wallet_secret_show, i18n("Show password"));
                         ui.label("");
 
 
@@ -523,7 +525,7 @@ impl ModuleT for WalletCreate {
 
                         if let Some(score) = this.context.wallet_secret_score {
                             ui.label("");
-                            ui.label(format!("Secret score: {}",secret_score_to_text(score)));
+                            ui.label(format!("{} {}",i18n("Secret score:"),secret_score_to_text(score)));
                             if score < 80.0 {
                                 ui.label("");
                                 ui.label(RichText::new(i18n("Secret is too weak")).color(error_color()));
@@ -552,7 +554,7 @@ impl ModuleT for WalletCreate {
                     .with_footer(|this,ui| {
                         let is_weak = !core.settings.developer.password_restrictions_disabled() && this.context.wallet_secret_score.unwrap_or_default() < 80.0;
                         let enabled = this.context.wallet_secret == this.context.wallet_secret_confirm && this.context.wallet_secret.is_not_empty();
-                        if ui.large_button_enabled(enabled && !is_weak, "Continue").clicked() {
+                        if ui.large_button_enabled(enabled && !is_weak, i18n("Continue")).clicked() {
                             this.state = State::PaymentSecret;
                             this.focus.next(Focus::PaymentSecret);
                         }
@@ -562,7 +564,7 @@ impl ModuleT for WalletCreate {
             State::PaymentSecret => {
 
                 Panel::new(self)
-                    .with_caption("Payment & Recovery Password")
+                    .with_caption(i18n("Payment & Recovery Password"))
                     .with_back(|this| {
                         this.state = State::WalletSecret;
                         this.focus.next(Focus::WalletSecret);
@@ -570,8 +572,9 @@ impl ModuleT for WalletCreate {
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
-                        ui.heading("Optional");
+                        ui.heading(i18n("Optional"));
                         ui.label(" ");
+                        // TODO i18n
                         ui.label("The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to \
                             send payments. This passphrase will also be required when recovering your wallet in addition to your mnemonic.\
                             If you loose or forget this passphrase, you will not \
@@ -593,7 +596,7 @@ impl ModuleT for WalletCreate {
                                 Focus::PaymentSecret,
                                 |ui, text| {
                                     // ui.add_space(8.);
-                                    ui.label(RichText::new("Enter BIP39 passphrase").size(12.).raised());
+                                    ui.label(RichText::new(i18n("Enter BIP39 passphrase")).size(12.).raised());
                                     ui.add_sized(editor_size, TextEdit::singleline(text)
                                         .password(this.context.payment_secret_show)
                                         .vertical_align(Align::Center))
@@ -617,7 +620,7 @@ impl ModuleT for WalletCreate {
                                 &mut this.focus,
                                 Focus::PaymentSecretConfirm,
                                 |ui, text| {
-                                    ui.label(RichText::new("Confirm BIP39 passphrase").size(12.).raised());
+                                    ui.label(RichText::new(i18n("Confirm BIP39 passphrase")).size(12.).raised());
                                     ui.add_sized(editor_size, TextEdit::singleline(text)
                                         .password(this.context.payment_secret_show)
                                         .vertical_align(Align::Center))
@@ -629,7 +632,7 @@ impl ModuleT for WalletCreate {
                             .build(ui);
 
                             ui.label("");
-                            ui.checkbox(&mut this.context.payment_secret_show, "Show passphrase");
+                            ui.checkbox(&mut this.context.payment_secret_show, i18n("Show passphrase"));
                             ui.label("");
 
                             if change {
@@ -679,11 +682,11 @@ impl ModuleT for WalletCreate {
                         if this.context.enable_payment_secret {
                             let is_weak = !core.settings.developer.password_restrictions_disabled() && this.context.payment_secret_score.unwrap_or_default() < 80.0;
                             let enabled = this.context.wallet_secret == this.context.wallet_secret_confirm && this.context.wallet_secret.is_not_empty();
-                            if ui.large_button_enabled(enabled && !is_weak, "Continue").clicked() {
+                            if ui.large_button_enabled(enabled && !is_weak, i18n("Continue")).clicked() {
                                 this.state = State::CreateWalletConfirm;
                                 this.focus.clear();
                             }
-                        } else if ui.large_button_enabled(true, "Skip").clicked() {
+                        } else if ui.large_button_enabled(true, i18n("Skip")).clicked() {
                             this.state = State::CreateWalletConfirm;
                             this.focus.clear();
                         }
@@ -698,10 +701,10 @@ impl ModuleT for WalletCreate {
             State::CreateWallet => {
 
                 Panel::new(self)
-                    .with_caption("Creating Wallet")
+                    .with_caption(i18n("Creating Wallet"))
                     .with_header(|_, ui|{
                         ui.label(" ");
-                        ui.label("Please wait...");
+                        ui.label(i18n("Please wait..."));
                         ui.label(" ");
                         ui.label(" ");
                         ui.add_space(64.);
@@ -717,11 +720,11 @@ impl ModuleT for WalletCreate {
                     spawn_with_result(&wallet_create_result, async move {
 
                         if args.enable_payment_secret && args.payment_secret.is_empty() {
-                            return Err(Error::custom("Payment secret is empty"));
+                            return Err(Error::custom(i18n("Payment secret is empty")));
                         }
 
                         if args.enable_phishing_hint && args.phishing_hint.is_empty() {
-                            return Err(Error::custom("Phishing hint is empty"));
+                            return Err(Error::custom(i18n("Phishing hint is empty")));
                         }
 
                         let wallet_secret = Secret::from(args.wallet_secret);
@@ -774,7 +777,7 @@ impl ModuleT for WalletCreate {
                             core.get_mut::<modules::AccountManager>().select(Some(account), device);
                         }
                         Err(err) => {
-                            log_error!("Wallet creation error: {}", err);
+                            log_error!("{} {}",i18n("Wallet creation error:"), err);
                             self.state = State::WalletError(Arc::new(err));
                         }
                     }
@@ -789,12 +792,12 @@ impl ModuleT for WalletCreate {
                 .with_header(move |this,ui| {
                     ui.label(" ");
                     ui.label(" ");
-                    ui.label(RichText::new("Error creating a wallet").color(egui::Color32::from_rgb(255, 120, 120)));
+                    ui.label(RichText::new(i18n("Error creating a wallet")).color(egui::Color32::from_rgb(255, 120, 120)));
                     ui.label(RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
                     ui.label(" ");
                     ui.label(" ");
 
-                    if ui.add_sized(editor_size, egui::Button::new("Restart")).clicked() {
+                    if ui.large_button(i18n("Restart")).clicked() {
                         this.state = State::Start;
                     }
                 })
@@ -806,7 +809,7 @@ impl ModuleT for WalletCreate {
                 let mut finish = false;
 
                 Panel::new(self)
-                    .with_caption("Private Key Mnemonic")
+                    .with_caption(i18n("Private Key Mnemonic"))
                     .with_body(|this,ui| {
 
                         let mut mnemonic_presenter = MnemonicPresenter::new(mnemonic.as_str(), &mut this.context.mnemonic_presenter_context);
@@ -817,9 +820,9 @@ impl ModuleT for WalletCreate {
                         });
 
                         ui.label("");
-                        ui.label(RichText::new("Never share your mnemonic with anyone!").color(Color32::LIGHT_RED));
+                        ui.label(RichText::new(i18n("Never share your mnemonic with anyone!")).color(Color32::LIGHT_RED));
                         ui.label("");
-                        mnemonic_presenter.render(ui, Some("Your default wallet private key mnemonic is:"));
+                        mnemonic_presenter.render(ui, Some(i18n("Your default wallet private key mnemonic is:")));
                         ui.label("");
                 })
                 .with_footer(|_this,ui| {
@@ -839,12 +842,12 @@ impl ModuleT for WalletCreate {
 
             State::ConfirmMnemonic(mnemonic) => {
                 Panel::new(self)
-                    .with_caption("Confirm Mnemonic")
+                    .with_caption(i18n("Confirm Mnemonic"))
                     .with_back(|this|{
                         this.state = State::PresentMnemonic(mnemonic);
                     })
                     .with_header(|_this,ui| {
-                        ui.label("Please validate your mnemonic");
+                        ui.label(i18n("Please validate your mnemonic"));
                     })
                     .with_body(|_this,_ui| {
                         // TODO
@@ -860,14 +863,14 @@ impl ModuleT for WalletCreate {
             State::Finish => {
 
                 Panel::new(self)
-                    .with_caption("Wallet Created")
+                    .with_caption(i18n("Wallet Created"))
                     .with_body(|_this,ui| {
                         ui.label(" ");
-                        ui.label("Your wallet has been created and is ready to use.");
+                        ui.label(i18n("Your wallet has been created and is ready to use."));
                         ui.label(" ");
                     })
                     .with_footer(move |this,ui| {
-                        if ui.add_sized(editor_size, egui::Button::new("Continue")).clicked() {
+                        if ui.large_button(i18n("Continue")).clicked() {
                             this.state = State::Start;
                             core.select::<modules::AccountManager>();
                             core.wallet_update_list();

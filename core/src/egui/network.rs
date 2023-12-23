@@ -51,7 +51,7 @@ impl NetworkInterfaceEditor {
     pub fn ui(&mut self, ui: &mut Ui) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                ui.label("Network Interface");
+                ui.label(i18n("Network Interface"));
                 ui.radio_value(
                     &mut self.kind,
                     NetworkInterfaceKind::Local,
@@ -64,12 +64,12 @@ impl NetworkInterfaceEditor {
             if self.kind == NetworkInterfaceKind::Custom {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
-                        ui.label("Custom Network Interface:");
+                        ui.label(i18n("Custom Network Interface:"));
                         ui.text_edit_singleline(&mut self.custom);
                     });
                     if self.custom.is_empty() {
                         ui.label(
-                            RichText::new("Please enter custom interface address: IP[:PORT]")
+                            RichText::new(i18n("Please enter custom interface address: IP[:PORT]"))
                                 .color(theme_color().warning_color),
                         );
                     } else if let Err(err) = ContextualNetAddress::from_str(self.custom.as_str()) {

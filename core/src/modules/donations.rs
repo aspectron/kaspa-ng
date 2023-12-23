@@ -61,11 +61,11 @@ impl ModuleT for Donations {
                 use egui_phosphor::light::CLIPBOARD_TEXT;
                 
                 ui.add_space(8.);                                    
-                ui.label("This project relies on the support of the community.");
+                ui.label(i18n("This project relies on the support of the community."));
                 ui.label(" ");
-                ui.label("If you are able to contribute by donating, we would greatly appreciate your support.");
+                ui.label(i18n("If you are able to contribute by donating, we would greatly appreciate your support."));
                 ui.label(" ");
-                ui.label("You can send donations to the following address:");
+                ui.label(i18n("You can send donations to the following address:"));
                 ui.label(" ");
                 
                 ui.add(
@@ -79,10 +79,10 @@ impl ModuleT for Donations {
                 let response = ui.add(Label::new(format!("{} {CLIPBOARD_TEXT}", format_address_string(Self::ADDRESS, Some(12)))).sense(Sense::click()))
                 .on_hover_ui_at_pointer(|ui|{
                     ui.vertical(|ui|{
-                        ui.label("Click to copy the donation address to clipboard".to_string());
+                        ui.label(i18n("Click to copy the donation address to clipboard"));
                     });
                 });
-                
+
                 if response.clicked() {
                     ui.output_mut(|o| o.copied_text = Self::ADDRESS.to_owned());
                     runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short())
@@ -92,7 +92,7 @@ impl ModuleT for Donations {
 
             })
             .with_footer(|_this,ui| {
-                if ui.large_button("Close").clicked() {
+                if ui.large_button(i18n("Close")).clicked() {
                     *back.borrow_mut() = true;
                 }
             })

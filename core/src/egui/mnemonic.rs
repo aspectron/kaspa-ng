@@ -113,7 +113,7 @@ impl<'render> MnemonicPresenter<'render> {
             ui.checkbox(&mut self.context.allow_clipboard, " Allow clipboard copy");
             if self.context.allow_clipboard {
                 ui.label("");
-                ui.label("Please note, copying to clipboard carries a risk of exposing your mnemonic to malware.");
+                ui.label(i18n("Please note, copying to clipboard carries a risk of exposing your mnemonic to malware."));
                 ui.label("");
 
                 if ui.medium_button(format!("{CLIPBOARD_TEXT} Copy to clipboard")).clicked() {

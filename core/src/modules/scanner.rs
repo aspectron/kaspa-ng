@@ -110,7 +110,7 @@ impl ModuleT for Scanner {
                     })
                     .with_header(|_this,ui| {
                         if core.state().is_open() && core.state().is_connected() && core.state().is_synced() {
-                            ui.label("Please select account to scan");
+                            ui.label(i18n("Please select account to scan"));
                         }
                     })
                     .with_body(|this, ui|{
@@ -122,10 +122,10 @@ impl ModuleT for Scanner {
                                     .color(theme_color().error_color)
                             );
                             ui.add_space(8.);                                    
-                            ui.label("Scanner requires an open wallet.");
+                            ui.label(i18n("Scanner requires an open wallet."));
                             ui.add_space(16.);
 
-                            if ui.large_button("Close").clicked() {
+                            if ui.large_button(i18n("Close")).clicked() {
                                 *back.borrow_mut() = true;
                             }
                             
@@ -137,10 +137,10 @@ impl ModuleT for Scanner {
                                     .color(theme_color().error_color)
                             );
                             ui.add_space(8.);                                    
-                            ui.label("You are currently not connected to the Kaspa node.");
+                            ui.label(i18n("You are currently not connected to the Kaspa node."));
                             ui.add_space(16.);
                             
-                            if ui.large_button("Close").clicked() {
+                            if ui.large_button(i18n("Close")).clicked() {
                                 *back.borrow_mut() = true;
                             }
 
@@ -152,7 +152,7 @@ impl ModuleT for Scanner {
                                     .color(theme_color().warning_color)
                             );
                             ui.add_space(8.);
-                            ui.label("The node is currently syncing with the Kaspa p2p network. Please wait for the node to sync.");
+                            ui.label(i18n("The node is currently syncing with the Kaspa p2p network. Please wait for the node to sync."));
                             ui.add_space(16.);
 
                             if ui.large_button("Close").clicked() {
@@ -193,7 +193,7 @@ impl ModuleT for Scanner {
             State::Settings { account } => {
 
                 Panel::new(self)
-                    .with_caption("Settings")
+                    .with_caption(i18n("Settings"))
                     .with_back(|this| {
                         this.state = State::Select;
                     })
@@ -202,14 +202,14 @@ impl ModuleT for Scanner {
                     })
                     .with_body(|this,ui| {
 
-                        ui.checkbox(&mut this.context.transfer_funds, "Transfer funds during scan");
+                        ui.checkbox(&mut this.context.transfer_funds, i18n("Transfer funds during scan"));
 
                         ui.label("");
-                        ui.label("This option will transfer any discovered funds to the first change address of this account.");
+                        ui.label(i18n("This option will transfer any discovered funds to the first change address of this account."));
 
                     })
                     .with_footer(|this,ui| {
-                        if ui.large_button("Continue").clicked() {
+                        if ui.large_button(i18n("Continue")).clicked() {
                             this.state = State::WalletSecret { account };
                             this.focus.next(Focus::WalletSecret)
                         }
@@ -221,14 +221,14 @@ impl ModuleT for Scanner {
                 let submit = Rc::new(RefCell::new(false));
 
                 Panel::new(self)
-                    .with_caption("Wallet Secret")
+                    .with_caption(i18n("Wallet Secret"))
                     .with_back(|this| {
                         this.state = State::Select;
                     })
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
-                        ui.label("Please enter the wallet secret");
+                        ui.label(i18n("Please enter the wallet secret"));
                     })
                     .with_body(|this,ui| {
                         TextEditor::new(
@@ -236,7 +236,7 @@ impl ModuleT for Scanner {
                             &mut this.focus,
                             Focus::WalletSecret,
                             |ui, text| {
-                                ui.label(RichText::new("Enter your wallet secret").size(12.).raised());
+                                ui.label(RichText::new(i18n("Enter your wallet secret")).size(12.).raised());
                                 ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center)
                                     .password(true))
@@ -250,7 +250,7 @@ impl ModuleT for Scanner {
                     })
                     .with_footer(|this,ui| {
                         let enabled = !this.context.wallet_secret.is_empty();
-                        if ui.large_button_enabled(enabled,"Continue").clicked() {
+                        if ui.large_button_enabled(enabled,i18n("Continue")).clicked() {
                             *submit.borrow_mut() = true;
                         }
                     })
@@ -285,9 +285,9 @@ impl ModuleT for Scanner {
                                     transfer_funds,
                                     &abortable,
                                     Some(Arc::new(move |index,utxo_count, balance, txid|{
-                                        if let Some(txid) = txid {
+                                        if let Some(_txid) = txid {
                                             // println!("txid: {}", txid);
-                                            println!("scanner - txid: {}, balance: {}", txid, balance);
+                                            // println!("scanner - txid: {}, balance: {}", txid, balance);
                                         } else {
                                             *status.lock().unwrap() = Status::processing(index, utxo_count, balance);
                                         }
@@ -305,9 +305,9 @@ impl ModuleT for Scanner {
 
                 } else {
                     ui.label("");
-                    ui.label("Unable to access the wallet subsystem");
+                    ui.label(i18n("Unable to access the wallet subsystem"));
                     ui.label("");
-                    if ui.large_button("Continue").clicked() {
+                    if ui.large_button(i18n("Continue")).clicked() {
                         self.state = State::Select;
                     }
                 }
@@ -315,11 +315,11 @@ impl ModuleT for Scanner {
             State::Status => {
 
                 Panel::new(self)
-                    .with_caption("Scanner")
+                    .with_caption(i18n("Scanner"))
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
-                        ui.label("Processing...");
+                        ui.label(i18n("Processing..."));
                     })
                     .with_body(|this,ui| {
 
@@ -345,7 +345,7 @@ impl ModuleT for Scanner {
 
                     })
                     .with_footer(|this,ui| {
-                        if ui.large_button("Stop").clicked() {
+                        if ui.large_button(i18n("Stop")).clicked() {
                             this.context.abortable.abort();
                             this.state = State::Finish;
                         }
@@ -359,11 +359,11 @@ impl ModuleT for Scanner {
                 let balance_padding = core.balance_padding();
 
                 Panel::new(self)
-                    .with_caption("Scanner")
+                    .with_caption(i18n("Scanner"))
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
-                        ui.label("Scanning complete...");
+                        ui.label(i18n("Scanning complete..."));
                     })
                     .with_body(|this,ui| {
 
@@ -379,7 +379,7 @@ impl ModuleT for Scanner {
 
                     })
                     .with_footer(|this,ui| {
-                        if ui.large_button("Close").clicked() {
+                        if ui.large_button(i18n("Close")).clicked() {
                             this.context.zeroize();
                             core.select::<modules::AccountManager>();
                         }

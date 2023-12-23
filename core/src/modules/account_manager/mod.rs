@@ -292,9 +292,9 @@ impl AccountManager {
                     if account_collection.is_empty() {
                         Panel::new(self)
                             .with_body(|_this, ui| {
-                                ui.label("Please create an account");
+                                ui.label(i18n("Please create an account"));
                                 ui.label("");
-                                if ui.large_button("Create Account").clicked() {
+                                if ui.large_button(i18n("Create Account")).clicked() {
                                     core.select::<modules::AccountCreate>();
                                 }
                             }).render(ui);
@@ -302,7 +302,7 @@ impl AccountManager {
                         self.select(Some(account_collection.first().unwrap().clone()), core.device().clone());
                     } else {
                         Panel::new(self)
-                            .with_caption("Select Account")
+                            .with_caption(i18n("Select Account"))
                             .with_body(|this, ui| {
 
                                 if !core.state().is_connected() {
@@ -312,7 +312,7 @@ impl AccountManager {
                                             .color(theme_color().icon_color_default)
                                     );
                                     ui.add_space(8.);                                    
-                                    ui.label("You are currently not connected to the Kaspa node.");
+                                    ui.label(i18n("You are currently not connected to the Kaspa node."));
                                     ui.add_space(16.);                                    
                                 } else if !core.state().is_synced() {
                                     ui.label(
@@ -321,7 +321,7 @@ impl AccountManager {
                                             .color(theme_color().icon_color_default)
                                     );
                                     ui.add_space(8.);
-                                    ui.label("The node is currently syncing with the Kaspa p2p network. Account balances may be out of date.");
+                                    ui.label(i18n("The node is currently syncing with the Kaspa p2p network. Account balances may be out of date."));
                                     ui.add_space(16.);
                                 }
 
@@ -339,7 +339,7 @@ impl AccountManager {
                     }
 
                 } else {
-                    ui.label("Unable to access account list");
+                    ui.label(i18n("Unable to access account list"));
                 }
             }
 
@@ -382,15 +382,15 @@ impl AccountManager {
 
                 ui.separator();
 
-                if ui.add(Label::new("UTXOs").sense(Sense::click())).clicked() {
+                if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
                     self.section = AccountManagerSection::UtxoManager;
                 }
                 ui.separator();
-                if ui.add(Label::new("Details").sense(Sense::click())).clicked() {
+                if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
                     self.section = AccountManagerSection::Details;
                 }
                 ui.separator();
-                if ui.add(Label::new("Transactions").sense(Sense::click())).clicked() {
+                if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
                     self.section = AccountManagerSection::Transactions;
                 }
 

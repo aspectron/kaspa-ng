@@ -126,7 +126,7 @@ impl ModuleT for AccountCreate {
                         })
                         .with_header(|_ctx,ui| {
                             // ui.add_space(64.);
-                            ui.label("Please select an account type");
+                            ui.label(i18n("Please select an account type"));
                             ui.label(" ");
                         })
                         .with_body(|this,ui|{
@@ -154,7 +154,7 @@ impl ModuleT for AccountCreate {
                                     ui.add_space(16.);
                                 }
                             } else {
-                                ui.label("No private keys found");
+                                ui.label(i18n("No private keys found"));
                             }
 
                             ui.add(Separator::default().horizontal().shrink(margin));
@@ -166,7 +166,7 @@ impl ModuleT for AccountCreate {
                 State::AccountName => {
 
                     Panel::new(self)
-                        .with_caption("Account Name")
+                        .with_caption(i18n("Account Name"))
                         .with_back(|this| {
                             this.state = State::Start;
                         })
@@ -174,7 +174,7 @@ impl ModuleT for AccountCreate {
                         })
                         .with_header(|_ctx,ui| {
                             ui.add_space(64.);
-                            ui.label("Please enter the account name");
+                            ui.label(i18n("Please enter the account name"));
                         })
                         .with_body(|this,ui| {
 
@@ -184,12 +184,11 @@ impl ModuleT for AccountCreate {
                                 Focus::AccountName,
                                 |ui, text| {
                                     // ui.add_space(8.);
-                                    ui.label(RichText::new("Enter account name (optional)").size(12.).raised());
+                                    ui.label(RichText::new(i18n("Enter account name (optional)")).size(12.).raised());
                                     ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center))
                                 },
                             ).submit(|_,focus| {
-                                println!("submit called...");
                                 this.state = State::WalletSecret;
                                 focus.next(Focus::WalletSecret);
                             })
@@ -197,8 +196,7 @@ impl ModuleT for AccountCreate {
                     
                         })
                         .with_footer(|this,ui| {
-                            let size = theme_style().large_button_size;
-                            if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                            if ui.large_button(i18n("Continue")).clicked() {
                                 this.state = State::WalletSecret;
                                 this.focus.next(Focus::WalletSecret);
                             }
@@ -212,14 +210,14 @@ impl ModuleT for AccountCreate {
                     let submit = Rc::new(RefCell::new(false));
 
                     Panel::new(self)
-                        .with_caption("Wallet Secret")
+                        .with_caption(i18n("Wallet Secret"))
                         .with_back(|this| {
                             this.state = State::AccountName;
                         })
                         .with_close_enabled(false, |_|{
                         })
                         .with_header(|_ctx,ui| {
-                            ui.label("Please enter the wallet secret");
+                            ui.label(i18n("Please enter the wallet secret"));
                         })
                         .with_body(|this,ui| {
                             TextEditor::new(
@@ -227,7 +225,7 @@ impl ModuleT for AccountCreate {
                                 &mut this.focus,
                                 Focus::WalletSecret,
                                 |ui, text| {
-                                    ui.label(RichText::new("Enter your wallet secret").size(12.).raised());
+                                    ui.label(RichText::new(i18n("Enter your wallet secret")).size(12.).raised());
                                     ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center)
                                         .password(true))
@@ -241,7 +239,7 @@ impl ModuleT for AccountCreate {
                         })
                         .with_footer(|this,ui| {
                             let enabled = !this.context.wallet_secret.is_empty();
-                            if ui.large_button_enabled(enabled,"Continue").clicked() {
+                            if ui.large_button_enabled(enabled,i18n("Continue")).clicked() {
                                 *submit.borrow_mut() = true;
                             }
                         })
@@ -259,14 +257,14 @@ impl ModuleT for AccountCreate {
 
                 State::PaymentSecret => {
                     Panel::new(self)
-                        .with_caption("BIP-39 Passphrase")
+                        .with_caption(i18n("BIP-39 Passphrase"))
                         .with_back(|this| {
                             this.state = State::WalletSecret;
                         })
                         .with_close_enabled(false, |_|{
                         })
                         .with_header(|_ctx,ui| {
-                            ui.label(i18n("Your private key requires BIP39 passphrase, please enter it now."));
+                            ui.label(i18n(i18n("Your private key requires BIP39 passphrase, please enter it now.")));
                         })
                         .with_body(|this,_ui| {
                             TextEditor::new(
@@ -274,7 +272,7 @@ impl ModuleT for AccountCreate {
                                 &mut this.focus,
                                 Focus::PaymentSecret,
                                 |ui, text| {
-                                    ui.label(RichText::new("Enter your BIP39 passphrase").size(12.).raised());
+                                    ui.label(RichText::new(i18n("Enter your BIP39 passphrase")).size(12.).raised());
                                     ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                         .vertical_align(Align::Center)
                                         .password(true))
@@ -287,9 +285,8 @@ impl ModuleT for AccountCreate {
                             });
                         })
                         .with_footer(|this,ui| {
-                            let size = theme_style().large_button_size;
                             let enabled = !this.context.payment_secret.is_empty();
-                            if ui.add_enabled(enabled, Button::new("Continue").min_size(size)).clicked() {
+                            if ui.large_button_enabled(enabled,i18n("Continue")).clicked() {
                                 this.state = State::CreateAccount;
                             }
                         })
@@ -309,10 +306,10 @@ impl ModuleT for AccountCreate {
                 State::CreateAccount => {
 
                     Panel::new(self)
-                    .with_caption("Creating Account")
+                    .with_caption(i18n("Creating Account"))
                     .with_header(|_, ui|{
                         ui.label(" ");
-                        ui.label("Please wait...");
+                        ui.label(i18n("Please wait..."));
                         ui.label(" ");
                         ui.label(" ");
                         ui.add_space(64.);
@@ -369,7 +366,7 @@ impl ModuleT for AccountCreate {
                     if let Some(result) = account_create_result.take() {
                         match result {
                             Ok(account_descriptor) => {
-                                println!("Account created successfully");
+                                // println!("Account created successfully");
                                 // let account = Account::from(descriptor);
                                 // core.account_collection.as_mut().expect("account collection").push_unchecked(account.clone());
                                 // core.get_mut::<modules::AccountManager>().select(Some(account));
@@ -413,10 +410,10 @@ impl ModuleT for AccountCreate {
                     .with_header(move |this,ui| {
                         ui.label(" ");
                         ui.label(" ");
-                        ui.label(RichText::new("Error creating account").color(egui::Color32::from_rgb(255, 120, 120)));
+                        ui.label(RichText::new(i18n("Error creating account")).color(egui::Color32::from_rgb(255, 120, 120)));
                         ui.label(RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
 
-                        if ui.add_sized(theme_style().panel_editor_size, egui::Button::new("Restart")).clicked() {
+                        if ui.large_button(i18n("Restart")).clicked() {
                             this.state = State::Start;
                         }
                     })

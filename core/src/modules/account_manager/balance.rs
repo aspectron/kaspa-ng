@@ -88,7 +88,7 @@ impl<'context> BalancePane<'context> {
                 ));
             }
         } else {
-            ui.label("Balance: N/A");
+            ui.label(i18n("Balance: N/A"));
         }
 
 

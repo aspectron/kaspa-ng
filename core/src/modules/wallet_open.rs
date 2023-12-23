@@ -53,7 +53,7 @@ impl ModuleT for WalletOpen {
 
         let unlock_result = Payload::<Result<()>>::new("wallet_unlock_result");
 
-        let text: &str = "Select a wallet to unlock";
+        let text: &str = i18n("Select a wallet to unlock");
 
         match self.state.clone() {
             State::Select => {
@@ -62,7 +62,7 @@ impl ModuleT for WalletOpen {
                 let core = Rc::new(RefCell::new(core));
 
                 Panel::new(self)
-                    .with_caption("Select Wallet")
+                    .with_caption(i18n("Select Wallet"))
                     .with_back_enabled(has_stack, |_| { core.borrow_mut().back() })
                     .with_header(|_ctx, ui| {
                         ui.label(text);
@@ -73,7 +73,7 @@ impl ModuleT for WalletOpen {
                         for wallet_descriptor in wallet_descriptor_list.into_iter() {
                             if ui.add_sized(theme_style().large_button_size(), CompositeButton::image_and_text(
                                 Composite::icon(egui_phosphor::thin::FINGERPRINT_SIMPLE),
-                                wallet_descriptor.title.as_deref().unwrap_or("NO NAME"),
+                                wallet_descriptor.title.as_deref().unwrap_or_else(||i18n("NO NAME")),
                                 wallet_descriptor.filename.clone(),
                             )).clicked() {
                                 this.state = State::Unlock { wallet_descriptor : wallet_descriptor.clone(), error : None };
@@ -83,7 +83,7 @@ impl ModuleT for WalletOpen {
                         ui.separator();
                         ui.label(" ");
                         if ui
-                            .large_button("Create new wallet")
+                            .large_button(i18n("Create new wallet"))
                             .clicked()
                         {
                             core.borrow_mut().select::<modules::WalletCreate>();
@@ -99,13 +99,14 @@ impl ModuleT for WalletOpen {
                 let unlock = Rc::new(RefCell::new(false));
 
                 Panel::new(self)
-                    .with_caption("Unlock Wallet")
+                    .with_caption(i18n("Unlock Wallet"))
                     .with_back(|ctx| {
                         ctx.state = State::Select;
                     })
                     .with_body(|ctx, ui| {
                         ui.label(format!(
-                            "Opening wallet: \"{}\"",
+                            "{} \"{}\"",
+                            i18n("Opening wallet:"),
                             wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str())
                         ));
                         ui.label(" ");
@@ -137,7 +138,7 @@ impl ModuleT for WalletOpen {
 
                     })
                     .with_footer(|_,ui|{
-                        if ui.large_button("Unlock").clicked() {
+                        if ui.large_button(i18n("Unlock")).clicked() {
                             *unlock.borrow_mut() = true;
                         }
 
@@ -162,9 +163,9 @@ impl ModuleT for WalletOpen {
             }
             State::Unlocking { wallet_descriptor } => {
                 ui.vertical_centered(|ui| {
-                    ui.heading("Unlocking");
+                    ui.heading(i18n("Unlocking"));
                     ui.label(" ");
-                    ui.label("Decrypting wallet, please wait...");
+                    ui.label(i18n("Decrypting wallet, please wait..."));
                     ui.label(" ");
                     ui.add_space(64.);
                     ui.add(egui::Spinner::new().size(92.));
@@ -172,12 +173,12 @@ impl ModuleT for WalletOpen {
                     if let Some(result) = unlock_result.take() {
                         match result {
                             Ok(_) => {
-                                println!("Unlock success");
+                                // println!("Unlock success");
                                 core.select::<modules::AccountManager>();
                                 self.state = Default::default();
                             }
                             Err(err) => {
-                                println!("Unlock error: {}", err);
+                                // println!("Unlock error: {}", err);
                                 self.state = State::Unlock { wallet_descriptor, error : Some(Arc::new(err)) };
                             }
                         }

@@ -71,7 +71,7 @@ impl ModuleT for Node {
                             } else if core.metrics.as_ref().map(|m| m.data.node_active_peers).unwrap_or_default() > 0 {
                                 ui.horizontal(|ui| {
                                     ui.spinner();
-                                    ui.label("Updating...");
+                                    ui.label(i18n("Updating..."));
                                 });
                             } else {
                                 ui.colored_label(theme_color().warning_color, i18n("No peers"));
@@ -122,7 +122,7 @@ fn render_peer(ui : &mut Ui, peer: &RpcPeerInfo) {
                     });
                     ui.end_row();
 
-                    ui.label("Metrics");
+                    ui.label(i18n("Metrics"));
                     ui.horizontal(|ui|{
                         ui.label(i18n("Ping:"));
                         ui.colored_label(color, format_duration(peer.last_ping_duration));

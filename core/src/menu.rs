@@ -92,7 +92,7 @@ impl<'core> Menu<'core> {
                             // });
 
                             ui.horizontal(|ui| {
-                                ui.label("Theme Color");
+                                ui.label(i18n("Theme Color"));
 
                                 let current_theme_color_name = theme_color().name();
                                 ui.menu_button(format!("{} ⏷", current_theme_color_name), |ui| {
@@ -111,7 +111,7 @@ impl<'core> Menu<'core> {
                             });
 
                             ui.horizontal(|ui| {
-                                ui.label("Theme Style");
+                                ui.label(i18n("Theme Style"));
 
                                 let current_theme_style_name = theme_style().name();
 

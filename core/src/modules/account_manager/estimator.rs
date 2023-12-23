@@ -92,15 +92,15 @@ impl<'context> Estimator<'context> {
         let ready_to_send = match &*self.context.estimate.lock().unwrap() {
             EstimatorStatus::GeneratorSummary(estimate) => {
                 if let Some(final_transaction_amount) = estimate.final_transaction_amount {
-                    ui.label(format!("Final Amount: {}", sompi_to_kaspa_string_with_suffix(final_transaction_amount + estimate.aggregated_fees, network_type)));
+                    ui.label(format!("{} {}",i18n("Final Amount:"), sompi_to_kaspa_string_with_suffix(final_transaction_amount + estimate.aggregated_fees, network_type)));
                 }
                 let fee_title = if self.context.priority_fees_sompi != 0 {
-                    "Network and Priority Fees:"
+                    i18n("Network and Priority Fees:")
                 } else {
-                    "Network Fees:"
+                    i18n("Network Fees:")
                 };
                 ui.label(format!("{} {}", fee_title, sompi_to_kaspa_string_with_suffix(estimate.aggregated_fees, network_type)));
-                ui.label(format!("Transactions: {} UTXOs: {}", estimate.number_of_generated_transactions, estimate.aggregated_utxos));
+                ui.label(format!("{} {} {} {}",i18n("Transactions:"), estimate.number_of_generated_transactions, i18n("UTXOs:"), estimate.aggregated_utxos));
                 
                 self.context.address_status == AddressStatus::Valid || (self.context.transaction_kind == Some(TransactionKind::Transfer) && self.context.transfer_to_account.is_some())
             }
@@ -109,7 +109,7 @@ impl<'context> Estimator<'context> {
                 false
             }
             EstimatorStatus::None => {
-                ui.label("Please enter KAS amount to send");
+                ui.label(i18n("Please enter KAS amount to send"));
                 false
             }
         };
@@ -119,11 +119,11 @@ impl<'context> Estimator<'context> {
             ui.vertical_centered(|ui|{
                 ui.horizontal(|ui| {
                     CenterLayoutBuilder::new()
-                        .add_enabled(ready_to_send, Button::new(format!("{CHECK} Send")).min_size(theme_style().medium_button_size()), |this: &mut Estimator<'_>| {
+                        .add_enabled(ready_to_send, Button::new(format!("{CHECK} {}", i18n("Send"))).min_size(theme_style().medium_button_size()), |this: &mut Estimator<'_>| {
                             this.context.action = Action::Sending;
                             this.context.focus.next(Focus::WalletSecret);
                         })
-                        .add(Button::new(format!("{X} Cancel")).min_size(theme_style().medium_button_size()), |this| {
+                        .add(Button::new(format!("{X} {}", i18n("Cancel"))).min_size(theme_style().medium_button_size()), |this| {
                             this.context.reset_send_state();
                         })
                         .build(ui, self)
@@ -148,11 +148,11 @@ impl<'context> Estimator<'context> {
                 self.context.send_amount_sompi = sompi;
             }
             Ok(None) => {
-                self.user_error("Please enter an amount".to_string());
+                self.user_error(i18n("Please enter an amount").to_string());
                 valid = false;
             }
             Err(err) => {
-                self.user_error(format!("Invalid amount: {err}"));
+                self.user_error(format!("{} {err}", i18n("Invalid amount:")));
                 valid = false;
             }
         }
@@ -165,7 +165,7 @@ impl<'context> Estimator<'context> {
                 self.context.priority_fees_sompi = 0;
             }
             Err(err) => {
-                self.user_error(format!("Invalid fee amount: {err}"));
+                self.user_error(format!("{} {err}", i18n("Invalid fee amount:")));
                 valid = false;
             }
         }

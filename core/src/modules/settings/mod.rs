@@ -164,7 +164,7 @@ impl Settings {
                             if self.settings.node.kaspad_daemon_args_enable {
                                 
                                 ui.vertical(|ui| {
-                                    ui.label("Resulting daemon arguments:");
+                                    ui.label(i18n("Resulting daemon arguments:"));
                                     ui.add_space(4.);
 
                                     let config = Config::from(self.settings.node.clone());
@@ -173,7 +173,7 @@ impl Settings {
                                     ui.add_space(4.);
 
 
-                                    ui.label("Custom arguments:");
+                                    ui.label(i18n("Custom arguments:"));
                                     let width = ui.available_width() * 0.4;
                                     let height = 48.0;
                                     ui.add_sized(vec2(width,height),TextEdit::multiline(&mut self.settings.node.kaspad_daemon_args).code_editor().font(FontId::monospace(14.0)));
@@ -206,7 +206,7 @@ impl Settings {
                                             );
                                         }
                                         ui.add_space(4.);
-                                        node_settings_error = Some("Invalid daemon arguments");
+                                        node_settings_error = Some(i18n("Invalid daemon arguments"));
                                     }
                                 }
                             }
@@ -215,21 +215,21 @@ impl Settings {
                     });
 
                 if !self.grpc_network_interface.is_valid() {
-                    node_settings_error = Some("Invalid gRPC network interface configuration");
+                    node_settings_error = Some(i18n("Invalid gRPC network interface configuration"));
                 } else {
                     self.settings.node.grpc_network_interface = self.grpc_network_interface.as_ref().try_into().unwrap(); //NetworkInterfaceConfig::try_from(&self.grpc_network_interface).unwrap();
                 }
             });
 
             if self.settings.node.node_kind == KaspadNodeKind::Remote {
-                CollapsingHeader::new("Remote p2p Node Configuration")
+                CollapsingHeader::new(i18n("Remote p2p Node Configuration"))
                     .default_open(true)
                     .show(ui, |ui| {
 
                         // RANDOM, COMMUNITY NODES, CUSTOM
                         // let mut wrpc_url = self.settings.node.wrpc_url.clone();
                         ui.horizontal(|ui|{
-                            ui.label(i18n("wRPC Encoding:"));
+                            ui.label(i18n(i18n("wRPC Encoding:")));
                             WrpcEncoding::iter().for_each(|encoding| {
                                 ui.radio_value(&mut self.settings.node.wrpc_encoding, *encoding, encoding.to_string());
                             });
@@ -237,7 +237,7 @@ impl Settings {
 
 
                         ui.horizontal(|ui|{
-                            ui.label(i18n("wRPC URL:"));
+                            ui.label(i18n(i18n("wRPC URL:")));
                             ui.add(TextEdit::singleline(&mut self.settings.node.wrpc_url));
                             
                         });
@@ -247,15 +247,15 @@ impl Settings {
                                 RichText::new(format!("{err}"))
                                     .color(theme_color().warning_color),
                             );
-                            node_settings_error = Some("Invalid wRPC URL");
+                            node_settings_error = Some(i18n("Invalid wRPC URL"));
                         }
 
                         #[cfg(not(target_arch = "wasm32"))]
                         ui.horizontal_wrapped(|ui|{
-                            ui.set_max_width(half_width);
-                            ui.label("Recommended arguments for the remote node:");
+                            // ui.set_max_width(half_width);
+                            ui.label(i18n("Recommended arguments for the remote node: "));
                             ui.label(RichText::new("kaspad --utxoindex --rpclisten-borsh=0.0.0.0").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
-                            ui.label("If you are running locally, use");
+                            ui.label(i18n("If you are running locally, use: "));
                             ui.label(RichText::new("--rpclisten-borsh=127.0.0.1.").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
                         });
 
@@ -265,11 +265,11 @@ impl Settings {
             #[cfg(not(target_arch = "wasm32"))]
             if self.settings.node.node_kind.is_config_capable() {
 
-                CollapsingHeader::new("Local p2p Node Configuration")
+                CollapsingHeader::new(i18n("Local p2p Node Configuration"))
                     .default_open(true)
                     .show(ui, |ui| {
                         ui.vertical(|ui|{
-                            CollapsingHeader::new("Client RPC")
+                            CollapsingHeader::new(i18n("Client RPC"))
                                 .default_open(true)
                                 .show(ui, |ui| {
                                     ui.vertical(|ui|{
@@ -277,7 +277,7 @@ impl Settings {
                                         ui.checkbox(&mut self.settings.node.enable_grpc, i18n("Enable gRPC"));
                                         if self.settings.node.enable_grpc {
 
-                                            CollapsingHeader::new("gRPC Network Interface & Port")
+                                            CollapsingHeader::new(i18n("gRPC Network Interface & Port"))
                                                 .default_open(true)
                                                 .show(ui, |ui| {
                                                     self.grpc_network_interface.ui(ui);
@@ -290,7 +290,7 @@ impl Settings {
                             });
                         // });
                         
-                            CollapsingHeader::new("p2p RPC")
+                            CollapsingHeader::new(i18n("p2p RPC"))
                                 .default_open(true)
                                 .show(ui, |ui| {
                                     ui.vertical(|ui|{
@@ -304,7 +304,7 @@ impl Settings {
             if let Some(error) = node_settings_error {
                 ui.add_space(4.);
                 ui.label(
-                    RichText::new(error.to_string())
+                    RichText::new(error)
                         .color(theme_color().error_color),
                 );
                 ui.add_space(4.);
@@ -337,11 +337,11 @@ impl Settings {
                 }
             }
 
-            CollapsingHeader::new("Centralized Services")
+            CollapsingHeader::new(i18n("Centralized Services"))
                 .default_open(true)
                 .show(ui, |ui| {
 
-                    CollapsingHeader::new("Market Monitor")
+                    CollapsingHeader::new(i18n("Market Monitor"))
                         .default_open(true)
                         .show(ui, |ui| {
                             if ui.checkbox(&mut self.settings.market_monitor, i18n("Enable Market Monitor")).changed() {
@@ -352,7 +352,7 @@ impl Settings {
                         });
 
                     #[cfg(not(target_arch = "wasm32"))]
-                    CollapsingHeader::new("Check for Updates")
+                    CollapsingHeader::new(i18n("Check for Updates"))
                         .default_open(true)
                         .show(ui, |ui| {
                             if ui.checkbox(&mut self.settings.update_monitor, i18n("Check for Software Updates via GitHub")).changed() {
@@ -363,7 +363,7 @@ impl Settings {
                         });    
                 });
 
-            CollapsingHeader::new("Advanced")
+            CollapsingHeader::new(i18n("Advanced"))
                 .default_open(false)
                 .show(ui, |ui| {
 
@@ -372,7 +372,7 @@ impl Settings {
                         ui.vertical(|ui|{
                             ui.checkbox(&mut self.settings.developer.enable, i18n("Developer Mode"));
                             if !self.settings.developer.enable {
-                                ui.label("Developer mode enables advanced and experimental features");
+                                ui.label(i18n("Developer mode enables advanced and experimental features"));
                             }
                         });
                     });
@@ -437,7 +437,7 @@ impl Settings {
                                 ui.set_max_width(340.);
                                 ui.separator();
                             }
-                            if ui.medium_button("Reset Settings").clicked() {
+                            if ui.medium_button(i18n("Reset Settings")).clicked() {
                                 self.reset_settings = true;
                             }
                         });

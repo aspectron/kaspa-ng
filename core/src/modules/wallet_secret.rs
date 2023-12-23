@@ -91,7 +91,7 @@ impl ModuleT for WalletSecret {
                 let back = Rc::new(RefCell::new(false));
                 if !core.state().is_open() {
                     Panel::new(self)
-                    .with_caption("Change Wallet Secret")
+                    .with_caption(i18n("Change Wallet Secret"))
                         .with_back(|_this| {
                             *back.borrow_mut() = true;
                         })
@@ -105,7 +105,7 @@ impl ModuleT for WalletSecret {
                                     .color(theme_color().error_color)
                             );
                             ui.add_space(16.);                                    
-                            ui.label("This feature requires an open wallet");
+                            ui.label(i18n("This feature requires an open wallet"));
                         })
                         .with_footer(|_,ui| {
                             if ui.large_button("Close").clicked() {
@@ -146,7 +146,7 @@ impl ModuleT for WalletSecret {
                             &mut this.focus,
                             Focus::OldWalletSecret,
                             |ui, text| {
-                                ui.label(RichText::new("Enter your current wallet secret").size(12.).raised());
+                                ui.label(RichText::new(i18n("Enter your current wallet secret")).size(12.).raised());
                                 ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center)
                                     .password(!this.context.show_secrets))
@@ -167,7 +167,7 @@ impl ModuleT for WalletSecret {
                             &mut this.focus,
                             Focus::NewWalletSecret,
                             |ui, text| {
-                                ui.label(RichText::new("Enter new wallet secret").size(12.).raised());
+                                ui.label(RichText::new(i18n("Enter new wallet secret")).size(12.).raised());
                                 ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center)
                                     .password(!this.context.show_secrets))
@@ -189,7 +189,7 @@ impl ModuleT for WalletSecret {
                             &mut this.focus,
                             Focus::NewWalletSecretConfirm,
                             |ui, text| {
-                                ui.label(RichText::new("Validate new wallet secret").size(12.).raised());
+                                ui.label(RichText::new(i18n("Validate new wallet secret")).size(12.).raised());
                                 ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center)
                                     .password(!this.context.show_secrets))
@@ -207,7 +207,7 @@ impl ModuleT for WalletSecret {
 
                         ui.add_space(24.);
                         
-                        ui.checkbox(&mut this.context.show_secrets, "Show secrets in clear text");
+                        ui.checkbox(&mut this.context.show_secrets, i18n("Show secrets in clear text"));
                         ui.add_space(16.);
 
                         if change {
@@ -226,7 +226,7 @@ impl ModuleT for WalletSecret {
 
                         if let Some(score) = this.context.new_wallet_secret_score {
                             ui.label("");
-                            render_secret_score_text(ui, "Secret score:", score);
+                            render_secret_score_text(ui, i18n("Secret score:"), score);
                             if score < 80.0 && !core.settings.developer.password_restrictions_disabled() {
                                 allow = false;
                                 ui.label(RichText::new(i18n("Please enter a stronger secret")).color(error_color()));
@@ -247,7 +247,7 @@ impl ModuleT for WalletSecret {
                             this.context.new_wallet_secret.is_not_empty() &&
                             this.context.new_wallet_secret == this.context.new_wallet_secret_confirm;
 
-                        if ui.large_button_enabled(enabled,"Change Secret").clicked() {
+                        if ui.large_button_enabled(enabled,i18n("Change Secret")).clicked() {
                             submit = true;
                         }
                     })
@@ -265,11 +265,11 @@ impl ModuleT for WalletSecret {
             State::Processing => {
 
                 Panel::new(self)
-                    .with_caption("Change Wallet Secret")
+                    .with_caption(i18n("Change Wallet Secret"))
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
-                        ui.label("Processing...");
+                        ui.label(i18n("Processing..."));
                     })
                     .with_body(|_this,ui| {
 
@@ -306,7 +306,7 @@ impl ModuleT for WalletSecret {
             State::Error { error } => {
 
                 Panel::new(self)
-                    .with_caption("Change Wallet Secret")
+                    .with_caption(i18n("Change Wallet Secret"))
                     .with_header(|_ctx,_ui| {
                     })
                     .with_body(|_this,ui| {
@@ -321,11 +321,11 @@ impl ModuleT for WalletSecret {
 
                     })
                     .with_footer(|this,ui| {
-                        if ui.large_button("Retry").clicked() {
+                        if ui.large_button(i18n("Retry")).clicked() {
                             this.state = State::WalletSecret;
                             this.focus.next(Focus::NewWalletSecret);
                         }
-                        if ui.large_button("Close").clicked() {
+                        if ui.large_button(i18n("Close")).clicked() {
                             this.zeroize();
                             if core.has_stack() {
                                 core.back();
@@ -340,16 +340,16 @@ impl ModuleT for WalletSecret {
             State::Finish => {
 
                 Panel::new(self)
-                    .with_caption("Change Wallet Secret")
+                    .with_caption(i18n("Change Wallet Secret"))
                     .with_header(|_ctx,_ui| {
                     })
                     .with_body(|_this,ui| {
 
-                        ui.label("The wallet secret has been changed successfully.");
+                        ui.label(i18n("The wallet secret has been changed successfully."));
 
                     })
                     .with_footer(|this,ui| {
-                        if ui.large_button("Close").clicked() {
+                        if ui.large_button(i18n("Close")).clicked() {
                             this.zeroize();
                             if core.has_stack() {
                                 core.back();

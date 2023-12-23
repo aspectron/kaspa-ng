@@ -29,15 +29,15 @@ impl ModuleT for Welcome {
         ui: &mut egui::Ui,
     ) {
 
-        ui.heading("Welcome to Kaspa NG");
+        ui.heading(i18n("Welcome to Kaspa NG"));
         ui.add_space(16.0);
-        ui.label("Please configure your Kaspa NG settings");
+        ui.label(i18n("Please configure your Kaspa NG settings"));
         ui.add_space(16.0);
 
-        CollapsingHeader::new("Settings")
+        CollapsingHeader::new(i18n("Settings"))
             .default_open(true)
             .show(ui, |ui| {
-                CollapsingHeader::new("Kaspa Network")
+                CollapsingHeader::new(i18n("Kaspa Network"))
                     .default_open(true)
                     .show(ui, |ui| {
 
@@ -48,7 +48,7 @@ impl ModuleT for Welcome {
                             });
                     });
                 
-                CollapsingHeader::new("Kaspa p2p Node & Connection")
+                CollapsingHeader::new(i18n("Kaspa p2p Node & Connection"))
                     .default_open(true)
                     .show(ui, |ui| {
                         ui.horizontal_wrapped(|ui| {
@@ -66,13 +66,13 @@ impl ModuleT for Welcome {
                         });
                     });
 
-                CollapsingHeader::new("User Interface")
+                CollapsingHeader::new(i18n("User Interface"))
                     .default_open(true)
                     .show(ui, |ui| {
 
                         ui.horizontal(|ui| {
 
-                            ui.label("Language:");
+                            ui.label(i18n("Language:"));
 
                             // let dict = i18n::dict();
                             let language_code = core.settings.language_code.clone();
@@ -89,7 +89,7 @@ impl ModuleT for Welcome {
                                 });
 
                             ui.add_space(16.);
-                            ui.label("Theme Color:");
+                            ui.label(i18n("Theme Color:"));
 
                             let mut theme_color = self.settings.user_interface.theme_color.clone();
                             egui::ComboBox::from_id_source("theme_color_selector")
@@ -108,7 +108,7 @@ impl ModuleT for Welcome {
                             }
 
                             ui.add_space(16.);
-                            ui.label("Theme Style:");
+                            ui.label(i18n("Theme Style:"));
 
                             let mut theme_style = self.settings.user_interface.theme_style.clone();
                             egui::ComboBox::from_id_source("theme_style_selector")
@@ -135,7 +135,7 @@ impl ModuleT for Welcome {
                             - 16.
                             - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x),
                     );
-                    if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, "Apply")).clicked() {
+                    if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))).clicked() {
                         let mut settings = self.settings.clone();
                         settings.initialized = true;
                         // settings.version.clear(); // triggers changelog

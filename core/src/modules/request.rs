@@ -34,7 +34,7 @@ impl ModuleT for Request {
         .with_body(|_this, ui| {
 
             ui.label("");
-            ui.label("Payment request panel");
+            ui.label(i18n("Payment request panel"));
             ui.label("");
         })
         .render(ui);

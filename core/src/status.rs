@@ -131,7 +131,7 @@ impl<'core> Status<'core> {
                                 .color(theme_color().error_color),
                         );
                         ui.separator();
-                        ui.label("Not Connected");
+                        ui.label(i18n("Not Connected"));
                     }
                     KaspadNodeKind::Remote => {
                         ui.label(
@@ -165,7 +165,7 @@ impl<'core> Status<'core> {
                                 }
                             }
                             _ => {
-                                ui.label("Connecting...");
+                                ui.label(i18n("Connecting..."));
                             }
                         }
                     }
@@ -181,7 +181,7 @@ impl<'core> Status<'core> {
                         //         .color(Color32::LIGHT_RED),
                         // );
                         ui.separator();
-                        ui.label("Starting...");
+                        ui.label(i18n("Starting..."));
                     }
                 }
 
@@ -202,7 +202,7 @@ impl<'core> Status<'core> {
                         .color(theme_color().icon_connected_color),
                 );
                 ui.separator();
-                ui.label("CONNECTED").on_hover_ui(|ui| {
+                ui.label(i18n("CONNECTED")).on_hover_ui(|ui| {
                     ui.horizontal(|ui| {
                         ui.label(self.settings().node.wrpc_url.clone());
                     });
@@ -241,7 +241,7 @@ impl<'core> Status<'core> {
                                 .color(theme_color().icon_syncing_color),
                         );
                         ui.separator();
-                        ui.label("CONNECTED");
+                        ui.label(i18n("CONNECTED"));
                         ui.separator();
                         self.render_network_selector(ui);
 

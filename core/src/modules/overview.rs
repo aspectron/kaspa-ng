@@ -287,7 +287,7 @@ impl Overview {
                 .show(ui, |ui| {
                     ui.vertical(|ui|{
                         ui.set_width(ui.available_width() - 48.);
-                        ui.label("Special thanks Kaspa developers and the following community members:");
+                        ui.label(i18n("Special thanks Kaspa developers and the following community members:"));
                         ui.horizontal_wrapped(|ui|{
                             let nicks = [
                                 "0xAndrei",
@@ -328,7 +328,7 @@ impl Overview {
                 CollapsingHeader::new(i18n("Donations"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        ui.label("Please support Kaspa NG development");
+                        ui.label(i18n("Please support Kaspa NG development"));
                         if ui.link(format_address_string(modules::Donations::ADDRESS, Some(12))).clicked() {
                             core.select::<modules::Donations>();
                         }

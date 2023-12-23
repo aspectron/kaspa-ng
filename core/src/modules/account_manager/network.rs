@@ -26,7 +26,7 @@ impl<'context> NetworkState<'context> {
                 );
                 ui.add_space(ICON_SPACING);
                 
-                ui.label("You are currently not connected to the Kaspa node.");
+                ui.label(i18n("You are currently not connected to the Kaspa node."));
             } else if !core.state().is_synced() {
                 
                 ui.add_space(ICON_SPACING);
@@ -37,14 +37,14 @@ impl<'context> NetworkState<'context> {
                 );
                 ui.add_space(ICON_SPACING);
 
-                ui.label("The node is currently syncing with the Kaspa p2p network.");
+                ui.label(i18n("The node is currently syncing with the Kaspa p2p network."));
                 ui.add_space(16.);
-                ui.label("Please wait for the node to sync or connect to a remote node.");
+                ui.label(i18n("Please wait for the node to sync or connect to a remote node."));
             }
             ui.add_space(16.);
-            ui.label("You can configure remote connection in Settings");
+            ui.label(i18n("You can configure remote connection in Settings"));
             ui.add_space(16.);
-            if ui.large_button("Go to Settings").clicked() {
+            if ui.large_button(i18n("Go to Settings")).clicked() {
                 core.select::<modules::Settings>();
             }
         });
