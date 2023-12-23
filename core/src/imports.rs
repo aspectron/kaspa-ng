@@ -74,7 +74,7 @@ pub use crate::primitives::{
 };
 pub use crate::result::Result;
 pub use crate::runtime::{runtime, spawn, spawn_with_result, Payload, Runtime, Service};
-pub use crate::servers::{Server,load_servers};
+pub use crate::servers::{load_servers, Server};
 pub use crate::settings::{
     KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, RpcConfig,
     Settings, UserInterfaceSettings,

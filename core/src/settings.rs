@@ -171,8 +171,6 @@ impl std::fmt::Display for NetworkInterfaceConfig {
     }
 }
 
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum NodeConnectionConfigKind {

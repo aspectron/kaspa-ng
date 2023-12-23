@@ -48,7 +48,7 @@ pub struct Core {
 
     pub device: Device,
     pub market: Option<Market>,
-    pub servers : Arc<Vec<Server>>,
+    pub servers: Arc<Vec<Server>>,
     pub debug: bool,
 }
 
@@ -180,7 +180,7 @@ impl Core {
 
             device: Device::default(),
             market: None,
-            servers : parse_default_servers().clone(),
+            servers: parse_default_servers().clone(),
             debug: false,
         };
 
@@ -744,22 +744,24 @@ impl Core {
                     }
                     CoreWallet::AccountDeactivation { ids: _ } => {}
                     CoreWallet::AccountActivation { ids: _ } => {}
-                    CoreWallet::AccountCreate { account_descriptor } => {
-                        let account = Account::from(account_descriptor);
-                        self.account_collection
-                            .as_mut()
-                            .expect("account collection")
-                            .push_unchecked(account.clone());
-                        let device = self.device().clone();
-                        self.get_mut::<modules::AccountManager>()
-                            .select(Some(account.clone()), device);
-                        self.select::<modules::AccountManager>();
+                    CoreWallet::AccountCreate {
+                        account_descriptor: _,
+                    } => {
+                        // let account = Account::from(account_descriptor);
+                        // self.account_collection
+                        //     .as_mut()
+                        //     .expect("account collection")
+                        //     .push_unchecked(account.clone());
+                        // let device = self.device().clone();
+                        // self.get_mut::<modules::AccountManager>()
+                        //     .select(Some(account.clone()), device);
+                        // // self.select::<modules::AccountManager>();
 
-                        let wallet = self.wallet().clone();
-                        spawn(async move {
-                            wallet.accounts_activate(Some(vec![account.id()])).await?;
-                            Ok(())
-                        });
+                        // let wallet = self.wallet().clone();
+                        // spawn(async move {
+                        //     wallet.accounts_activate(Some(vec![account.id()])).await?;
+                        //     Ok(())
+                        // });
                     }
                     CoreWallet::AccountUpdate { account_descriptor } => {
                         let account_id = account_descriptor.account_id();
@@ -968,6 +970,27 @@ impl Core {
         Ok(())
     }
 
+    pub fn handle_account_creation(&mut self, account_descriptor: AccountDescriptor) -> Account {
+        let account = Account::from(account_descriptor);
+        self.account_collection
+            .as_mut()
+            .expect("account collection")
+            .push_unchecked(account.clone());
+        let device = self.device().clone();
+        self.get_mut::<modules::AccountManager>()
+            .select(Some(account.clone()), device);
+        // self.select::<modules::AccountManager>();
+
+        let account_id = account.id();
+        let wallet = self.wallet().clone();
+        spawn(async move {
+            wallet.accounts_activate(Some(vec![account_id])).await?;
+            Ok(())
+        });
+
+        account
+    }
+
     fn handle_keyboard_events(
         &mut self,
         key: Key,
@@ -1028,13 +1051,8 @@ impl Core {
         let runtime = self.runtime.clone();
         spawn(async move {
             let server_list = load_servers().await?;
-            runtime
-                .send(Events::ServerList {
-                    server_list,
-                })
-                .await?;
+            runtime.send(Events::ServerList { server_list }).await?;
             Ok(())
         });
     }
-
 }

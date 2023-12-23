@@ -21,7 +21,7 @@ impl Donations {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
                 let uri = format!("bytes://{}-{}.svg", Self::ADDRESS, theme_color().name);
-                let qr = render_qrcode(&Self::ADDRESS, 128, 128);
+                let qr = render_qrcode(Self::ADDRESS, 128, 128);
                 entry.insert((uri, qr.as_bytes().to_vec().into()))
             },
         };
@@ -76,17 +76,17 @@ impl ModuleT for Donations {
                 
                 ui.label(" ");
 
-                if ui
-                    .add(Label::new(format!("{} {CLIPBOARD_TEXT}", format_address_string(Self::ADDRESS, Some(12)))).sense(Sense::click()))
-                    .on_hover_ui_at_pointer(|ui|{
-                        ui.vertical(|ui|{
-                            ui.label("Click to copy the donation address to clipboard".to_string());
-                        });
-                    })
-                    .clicked() {
-                        ui.output_mut(|o| o.copied_text = Self::ADDRESS.to_owned());
-                        runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short())
-                    }
+                let response = ui.add(Label::new(format!("{} {CLIPBOARD_TEXT}", format_address_string(Self::ADDRESS, Some(12)))).sense(Sense::click()))
+                .on_hover_ui_at_pointer(|ui|{
+                    ui.vertical(|ui|{
+                        ui.label("Click to copy the donation address to clipboard".to_string());
+                    });
+                });
+                
+                if response.clicked() {
+                    ui.output_mut(|o| o.copied_text = Self::ADDRESS.to_owned());
+                    runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short())
+                }
 
                 ui.label(" ");
 

@@ -2,24 +2,24 @@ use crate::imports::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Server {
-    pub name : Option<String>,
-    pub location : Option<String>,
-    pub protocol : String,
-    pub network : Vec<Network>,
-    pub port : Option<u16>,
-    pub address : String,
+    pub name: Option<String>,
+    pub location: Option<String>,
+    pub protocol: String,
+    pub network: Vec<Network>,
+    pub port: Option<u16>,
+    pub address: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ServerConfig {
-    server : Vec<Server>,
+    server: Vec<Server>,
 }
 
-fn try_parse_servers(toml : &str) -> Result<Arc<Vec<Server>>> {
+fn try_parse_servers(toml: &str) -> Result<Arc<Vec<Server>>> {
     Ok(toml::from_str::<ServerConfig>(toml)?.server.into())
 }
 
-fn parse_servers(toml : &str) -> Arc<Vec<Server>> {
+fn parse_servers(toml: &str) -> Arc<Vec<Server>> {
     match try_parse_servers(toml) {
         Ok(servers) => servers,
         Err(e) => {
@@ -30,17 +30,15 @@ fn parse_servers(toml : &str) -> Arc<Vec<Server>> {
                 } else {
                     log_error!("Error parsing Servers.toml: {}", e);
                     vec![].into()
-                }   
-            }         
+                }
+            }
         }
     }
 }
 
 pub fn parse_default_servers() -> &'static Arc<Vec<Server>> {
     static EMBEDDED_SERVERS: OnceLock<Arc<Vec<Server>>> = OnceLock::new();
-    EMBEDDED_SERVERS.get_or_init(|| {
-        parse_servers(include_str!("../../Servers.toml"))
-    })
+    EMBEDDED_SERVERS.get_or_init(|| parse_servers(include_str!("../../Servers.toml")))
 }
 
 pub async fn load_servers() -> Result<Arc<Vec<Server>>> {

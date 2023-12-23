@@ -293,6 +293,10 @@ impl AccountManager {
                         Panel::new(self)
                             .with_body(|_this, ui| {
                                 ui.label("Please create an account");
+                                ui.label("");
+                                if ui.large_button("Create Account").clicked() {
+                                    core.select::<modules::AccountCreate>();
+                                }
                             }).render(ui);
                     } else if account_collection.len() == 1 {
                         self.select(Some(account_collection.first().unwrap().clone()), core.device().clone());

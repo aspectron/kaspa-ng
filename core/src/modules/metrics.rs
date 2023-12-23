@@ -163,16 +163,12 @@ impl ModuleT for Metrics {
             });
         });
         
-        if graph_range_from != core.settings.user_interface.metrics.graph_range_from {
-            if graph_range_from.abs_diff(graph_range_to) < 15 {
-                graph_range_to = graph_range_from + 15;
-            }
+        if graph_range_from != core.settings.user_interface.metrics.graph_range_from && graph_range_from.abs_diff(graph_range_to) < 15{
+            graph_range_to = graph_range_from + 15;
         }
 
-        if graph_range_to != core.settings.user_interface.metrics.graph_range_to {
-            if graph_range_to.abs_diff(graph_range_from) < 15 {
-                graph_range_from = graph_range_to - 15;
-            }
+        if graph_range_to != core.settings.user_interface.metrics.graph_range_to && graph_range_to.abs_diff(graph_range_from) < 15 {
+            graph_range_from = graph_range_to - 15;
         }
 
         if graph_range_from.abs_diff(graph_range_to) < 15 {
@@ -285,8 +281,8 @@ impl Metrics {
                         let graph_data = {
                             let metrics_data = self.runtime.metrics_service().metrics_data();
                             let data = metrics_data.get(&metric).unwrap();
-                            let mut start = range.start.clamp(METRICS_SAMPLES_START, 0).abs() as usize;
-                            let mut end = range.end.clamp(METRICS_SAMPLES_START, 0).abs() as usize;
+                            let mut start = range.start.clamp(METRICS_SAMPLES_START, 0).unsigned_abs();
+                            let mut end = range.end.clamp(METRICS_SAMPLES_START, 0).unsigned_abs();
                             if start > data.len() {
                                 start = data.len();
                             }

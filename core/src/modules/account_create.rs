@@ -368,15 +368,36 @@ impl ModuleT for AccountCreate {
 
                     if let Some(result) = account_create_result.take() {
                         match result {
-                            Ok(_descriptor) => {
+                            Ok(account_descriptor) => {
                                 println!("Account created successfully");
                                 // let account = Account::from(descriptor);
                                 // core.account_collection.as_mut().expect("account collection").push_unchecked(account.clone());
                                 // core.get_mut::<modules::AccountManager>().select(Some(account));
                                 // core.select::<modules::AccountManager>();
 
+
+
+                                // let account = Account::from(account_descriptor);
+                                // core.account_collection
+                                //     .as_mut()
+                                //     .expect("account collection")
+                                //     .push_unchecked(account.clone());
+                                // let device = core.device().clone();
+                                // core.get_mut::<modules::AccountManager>()
+                                //     .select(Some(account.clone()), device);
+                                // // self.select::<modules::AccountManager>();
+        
+                                // let wallet = core.wallet().clone();
+                                // spawn(async move {
+                                //     wallet.accounts_activate(Some(vec![account.id()])).await?;
+                                //     Ok(())
+                                // });
+
+                                core.handle_account_creation(account_descriptor);
+        
                                 // - RESET STATE
                                 self.state = State::Start;
+
                             }
                             Err(err) => {
                                 println!("Account creation error: {}", err);

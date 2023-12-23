@@ -100,7 +100,7 @@ impl ThemeColor {
             qr_background: Color32::from_rgba(0, 0, 0, 0),
             qr_foreground: Color32::WHITE,
             selection_background_color: Color32::from_rgb(40, 153, 132),
-            selection_text_color: Color32::from_rgb(220,220,220),
+            selection_text_color: Color32::from_rgb(220, 220, 220),
             progress_color: Color32::from_rgb(71, 105, 97),
 
             transaction_incoming: Color32::from_rgb(162, 245, 187),
@@ -168,7 +168,7 @@ impl ThemeColor {
             qr_background: Color32::from_rgba(255, 255, 255, 0),
             qr_foreground: Color32::BLACK,
             selection_background_color: Color32::from_rgb(165, 201, 197),
-            selection_text_color: Color32::from_rgb(20,20,20),
+            selection_text_color: Color32::from_rgb(20, 20, 20),
             progress_color: Color32::from_rgb(165, 201, 197),
 
             transaction_incoming: Color32::from_rgb(15, 77, 35),

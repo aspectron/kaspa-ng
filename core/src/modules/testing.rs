@@ -88,7 +88,7 @@ impl ModuleT for Testing {
                 ui.vertical_centered(|ui|{
                     ui.label("Hello World");
                 });
-                MnemonicPresenter::new(phrase, &mut self.mnemonic_presenter_context).render(ui);
+                MnemonicPresenter::new(phrase, &mut self.mnemonic_presenter_context).render(ui, Some("Testing"));
                 ui.vertical_centered(|ui|{
                     ui.label("Goodbye World");
                 });

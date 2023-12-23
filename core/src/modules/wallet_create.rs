@@ -31,8 +31,8 @@ pub enum State {
     CreateWalletConfirm,
     CreateWallet,
     WalletError(Arc<Error>),
-    PresentMnemonic(Arc<String>),
-    ConfirmMnemonic(Arc<String>),
+    PresentMnemonic(String),
+    ConfirmMnemonic(String),
     Finish,
 }
 
@@ -710,10 +710,9 @@ impl ModuleT for WalletCreate {
                     .render(ui);
 
                 let args = self.context.clone();
-                let wallet_create_result = Payload::<Result<(Arc<String>,AccountDescriptor)>>::new("wallet_create_result");
+                let wallet_create_result = Payload::<Result<(String,AccountDescriptor)>>::new("wallet_create_result");
                 if !wallet_create_result.is_pending() {
 
-                    // TODO CREATE WALLET !
                     let wallet = self.runtime.wallet().clone();
                     spawn_with_result(&wallet_create_result, async move {
 
@@ -735,7 +734,6 @@ impl ModuleT for WalletCreate {
                             args.wallet_filename.is_not_empty().then_some(args.wallet_filename),
                             EncryptionKind::XChaCha20Poly1305,
                             args.enable_phishing_hint.then_some(args.phishing_hint.into()),
-                            // wallet_secret.clone(),
                             false
                         );
                         
@@ -743,16 +741,10 @@ impl ModuleT for WalletCreate {
 
                         let mnemonic = Mnemonic::random(args.word_count, Language::default())?;
                         let mnemonic_phrase_string = mnemonic.phrase_string();
-                        // let account_kind = AccountKind::Bip32;
-
                         let prv_key_data_args = PrvKeyDataCreateArgs::new(
                             None,
                             payment_secret.clone(),
                             mnemonic_phrase_string.clone(),
-                            // mnemonic.phrase_string(),
-                            //payment_secret.clone(),
-                            // - TODO
-                            // WordCount::Words12.into(),
                         );
 
                         let prv_key_data_id = wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?;
@@ -762,33 +754,27 @@ impl ModuleT for WalletCreate {
                             payment_secret.clone(),
                             args.account_name.is_not_empty().then_some(args.account_name),
                             None,
-                            // account_kind,
-                            // wallet_secret.clone(),
-                            // payment_secret.clone(),
                         );
 
                         let account_descriptor = wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?;
-                        
+
                         wallet.clone().flush(wallet_secret).await?;
 
-                        // let WalletCreateResponse { mnemonic, wallet_descriptor: _, account_descriptor, storage_descriptor: _ } = 
-                        // wallet.wallet_create(wallet_secret, wallet_args, prv_key_data_args, account_args).await?;
-                        Ok((Arc::new(mnemonic_phrase_string), account_descriptor))
+                        Ok((mnemonic_phrase_string, account_descriptor))
                     });
                 }
 
                 if let Some(result) = wallet_create_result.take() {
                     match result {
-                        Ok((mnemonic,account)) => {
+                        Ok((mnemonic,account_descriptor)) => {
                             self.context.zeroize();
-
-                            println!("Wallet created successfully");
+                            let account = core.handle_account_creation(account_descriptor);
                             self.state = State::PresentMnemonic(mnemonic);
                             let device = core.device().clone();
-                            core.get_mut::<modules::AccountManager>().select(Some(account.into()), device);
+                            core.get_mut::<modules::AccountManager>().select(Some(account), device);
                         }
                         Err(err) => {
-                            println!("Wallet creation error: {}", err);
+                            log_error!("Wallet creation error: {}", err);
                             self.state = State::WalletError(Arc::new(err));
                         }
                     }
@@ -815,31 +801,39 @@ impl ModuleT for WalletCreate {
                 .render(ui);
             }
 
-            State::PresentMnemonic(mnemonic) => {
-                let phrase = (*mnemonic).clone();
+            State::PresentMnemonic(mut mnemonic) => {
+
+                let mut finish = false;
 
                 Panel::new(self)
                     .with_caption("Private Key Mnemonic")
                     .with_body(|this,ui| {
 
-                        let mut mnemonic_presenter = MnemonicPresenter::new(phrase.as_str(), &mut this.context.mnemonic_presenter_context);
+                        let mut mnemonic_presenter = MnemonicPresenter::new(mnemonic.as_str(), &mut this.context.mnemonic_presenter_context);
 
-                        ui.label(RichText::new(i18n(mnemonic_presenter.notice())).size(14.));
-                        ui.label(" ");
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label(RichText::new(i18n(mnemonic_presenter.notice())).size(14.));
+                            ui.label(RichText::new(i18n(mnemonic_presenter.warning())).size(14.).color(theme_color().warning_color));
+                        });
+
+                        ui.label("");
                         ui.label(RichText::new("Never share your mnemonic with anyone!").color(Color32::LIGHT_RED));
-                        ui.label(" ");
-                        ui.label("Your default wallet private key mnemonic is:");
-                        ui.label(" ");
-
-                        mnemonic_presenter.render(ui);
-
+                        ui.label("");
+                        mnemonic_presenter.render(ui, Some("Your default wallet private key mnemonic is:"));
+                        ui.label("");
                 })
-                .with_footer(|this,ui| {
-                    if ui.add_sized(editor_size, egui::Button::new("Continue")).clicked() {
-                        this.state = State::ConfirmMnemonic(mnemonic);
+                .with_footer(|_this,ui| {
+                    if ui.large_button_enabled(true, "Continue").clicked() {
+                        finish = true;
                     }
                 })
                 .render(ui);
+            
+            if finish {
+                    // this.state = State::ConfirmMnemonic(mnemonic);
+                    mnemonic.zeroize();
+                    self.state = State::Finish;
+                }
 
             }
 
@@ -851,6 +845,9 @@ impl ModuleT for WalletCreate {
                     })
                     .with_header(|_this,ui| {
                         ui.label("Please validate your mnemonic");
+                    })
+                    .with_body(|_this,_ui| {
+                        // TODO
                     })
                     .with_footer(move |this,ui| {
                         if ui.add_sized(editor_size, egui::Button::new("Continue")).clicked() {

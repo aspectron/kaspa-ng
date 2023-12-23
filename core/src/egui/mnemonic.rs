@@ -29,13 +29,24 @@ impl<'render> MnemonicPresenter<'render> {
         initiate a private key recovery."
     }
 
-    pub fn render(&mut self, ui: &mut Ui) {
+    pub fn warning(&self) -> &'static str {
+        "This wallet will never ask you for this mnemonic phrase unless you manually \
+        initiate a private key recovery."
+    }
+
+    pub fn render(&mut self, ui: &mut Ui, caption: Option<impl Into<String>>) {
         ui.vertical_centered(|ui| {
             ui.label(
                 RichText::new("Never share your mnemonic with anyone!")
                     .color(theme_color().alert_color),
             );
-            ui.separator();
+            // ui.separator();
+            ui.label(" ");
+
+            if let Some(caption) = caption {
+                ui.label(caption.into());
+            }
+
             ui.label(" ");
         });
 

@@ -59,7 +59,7 @@ impl Service for UpdateMonitorService {
                     if !self.is_enabled.load(Ordering::Relaxed) {
                         continue;
                     }
-                    
+
                     let _ = check_version().await;
                 },
                 msg = this.as_ref().service_events.receiver.recv().fuse() => {

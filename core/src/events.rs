@@ -18,7 +18,7 @@ pub enum Events {
     },
     Error(Box<String>),
     ServerList {
-        server_list : Arc<Vec<Server>>,
+        server_list: Arc<Vec<Server>>,
     },
     WalletList {
         wallet_list: Arc<Vec<WalletDescriptor>>,
