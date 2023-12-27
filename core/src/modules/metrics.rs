@@ -189,8 +189,6 @@ impl ModuleT for Metrics {
         || graph_range_from != core.settings.user_interface.metrics.graph_range_from 
         || graph_range_to != core.settings.user_interface.metrics.graph_range_to 
         {
-
-            println!("graph_range_from: {} graph_range_to: {}", graph_range_from, graph_range_to);
             core.settings.user_interface.metrics.graph_columns = graph_columns;
             core.settings.user_interface.metrics.graph_height = graph_height;
             core.settings.user_interface.metrics.graph_range_from = graph_range_from;

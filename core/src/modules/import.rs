@@ -215,12 +215,10 @@ impl ModuleT for Import {
                     if let Some(result) = unlock_result.take() {
                         match result {
                             Ok(_) => {
-                                println!("Unlock success");
                                 // self.state = State::Unlock;
                                 core.select::<modules::AccountManager>();
                             }
                             Err(err) => {
-                                println!("Unlock error: {}", err);
                                 self.state = State::Unlock(Some(err.to_string()));
                             }
                         }

@@ -13,7 +13,12 @@ pub fn render_qrcode(text: &str, width: usize, height: usize) -> String {
         .to_string()
 }
 
-pub fn render_qrcode_with_version(text: &str, width: usize, height: usize, version : Version) -> String {
+pub fn render_qrcode_with_version(
+    text: &str,
+    width: usize,
+    height: usize,
+    version: Version,
+) -> String {
     let code = QrCode::with_version(text, version, EcLevel::L).unwrap();
 
     code.render::<svg::Color<'_>>()

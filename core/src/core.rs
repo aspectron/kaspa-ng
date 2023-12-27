@@ -334,7 +334,6 @@ impl eframe::App for Core {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        // println!("update...");
         for event in self.application_events_channel.iter() {
             if let Err(err) = self.handle_events(event.clone(), ctx, frame) {
                 log_error!("error processing wallet runtime event: {}", err);
@@ -858,7 +857,6 @@ impl Core {
                     CoreWallet::Balance { balance, id } => {
                         if let Some(account_collection) = &self.account_collection {
                             if let Some(account) = account_collection.get(&id.into()) {
-                                // println!("*** updating account balance: {}", id);
                                 account.update_balance(balance)?;
                             } else {
                                 log_error!("unable to find account {}", id);

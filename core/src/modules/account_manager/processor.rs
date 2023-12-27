@@ -157,7 +157,7 @@ impl<'context> Processor<'context> {
                         }
                         Err(error) => {
                             println!();
-                            println!("transaction error: {error}");
+                            println!("Transaction error: {error}");
                             println!();
                             self.context.reset_send_state();
                             self.context.action = Action::Error(Arc::new(error));

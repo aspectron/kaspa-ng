@@ -32,7 +32,6 @@ impl InProc {
 impl super::Kaspad for InProc {
     async fn start(self: Arc<Self>, config: Config) -> Result<()> {
         let args = Args::try_from(config)?;
-        println!("ARGS: {:#?}", args);
 
         let fd_total_budget = fd_budget::limit()
             - args.rpc_max_clients as i32
@@ -58,21 +57,15 @@ impl super::Kaspad for InProc {
     async fn stop(self: Arc<Self>) -> Result<()> {
         if let Some(mut inner) = self.inner.lock().unwrap().take() {
             let (core, thread) = {
-                println!("*** TAKING RPC CORE SERVICE...");
                 let rpc_core_service = inner.rpc_core_service.take();
                 drop(rpc_core_service);
-                println!("*** RPC CORE SERVICE TAKEN...");
                 (inner.core, inner.thread)
             };
-            println!("*** SHUTTING DOWN CORE...");
             core.shutdown();
             drop(core);
-            println!("*** CORE SHUT DOWN...");
-            println!("*** WAITING FOR THREAD TO JOIN...");
             thread
                 .join()
                 .map_err(|_| Error::custom("kaspad inproc thread join failure"))?;
-            println!("*** THREAD JOINED...");
         }
         Ok(())
     }
