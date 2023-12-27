@@ -102,9 +102,9 @@ impl super::Kaspad for Daemon {
                     _ = task_ctl.request.recv().fuse() => {
                         if this.inner.termination_method == TerminationMethod::Sigterm && is_unix {
                             let pid = this.inner.pid.lock().unwrap();
-                            if let Some(pid) = *pid {
+                            if let Some(_pid) = *pid {
                                 #[cfg(unix)]
-                                this.sigterm(pid);
+                                this.sigterm(_pid);
                             }
                         } else if let Err(err) = child.start_kill() {
                             println!("kaspa daemon start_kill error: {:?}", err);
