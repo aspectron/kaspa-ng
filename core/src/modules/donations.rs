@@ -8,7 +8,7 @@ pub struct Donations {
 
 impl Donations {
 
-    pub const ADDRESS_KASPA_NG_FUND: &'static str = "kaspatest:qqdr2mv4vkes6kvhgy8elsxhvzwde42629vnpcxe4f802346rnfkklrhz0x7x";
+    pub const ADDRESS_KASPA_NG_FUND: &'static str = "kaspa:qq2efzv0j7vt9gz9gfq44e6ggemjvvcuewhzqpm4ekf4fs5smruvs3c8ur9rp";
 
     pub fn new(_runtime: Runtime) -> Self {
         Self { 

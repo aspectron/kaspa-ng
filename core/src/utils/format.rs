@@ -137,11 +137,11 @@ pub fn s2kws_layout_job(
     }
 }
 
-pub fn format_price(price: f64, precision: usize) -> String {
+pub fn format_currency(price: f64, precision: usize) -> String {
     if precision == 0 {
         price.trunc().separated_string()
     } else {
-        let string = price.to_string();
+        let string = format!("{:.2}",price);
         if let Some(idx) = string.find('.') {
             let (left, right) = string.split_at(idx + 1);
             if right.len() < precision {
@@ -160,8 +160,8 @@ pub fn format_price(price: f64, precision: usize) -> String {
     }
 }
 
-pub fn format_price_with_symbol(price: f64, precision: usize, symbol: &str) -> String {
-    let price = format_price(price, precision);
+pub fn format_currency_with_symbol(price: f64, precision: usize, symbol: &str) -> String {
+    let price = format_currency(price, precision);
     format!("{price} {symbol}")
 }
 

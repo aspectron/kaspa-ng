@@ -128,7 +128,7 @@ impl Overview {
                                                     .show(ui, |ui| {
                                                         let MarketData { price, volume, change, market_cap , precision } = *data;
                                                         ui.label(i18n("Price"));
-                                                        ui.colored_label(theme_color().market_default_color, RichText::new(format_price_with_symbol(price, precision, symbol.as_str()))); // 
+                                                        ui.colored_label(theme_color().market_default_color, RichText::new(format_currency_with_symbol(price, precision, symbol.as_str()))); // 
                                                         ui.end_row();
 
                                                         ui.label(i18n("24h Change"));

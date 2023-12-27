@@ -36,15 +36,17 @@ impl<'context> BalancePane<'context> {
                     if let Some(price_list) = market.price.as_ref() {
                         let mut symbols = price_list.keys().collect::<Vec<_>>();
                         symbols.sort();
-                        ui.horizontal(|ui| {
-                            symbols.into_iter().for_each(|symbol| {
-                                if let Some(data) = price_list.get(symbol) {
-                                    let symbol = symbol.to_uppercase();
-                                    let MarketData { price,  change : _, .. } = data;
-                                    let text = format!("{:.8} {}", sompi_to_kaspa(balance.mature) * (*price), symbol.as_str());
-                                    ui.label(RichText::new(text).font(FontId::proportional(16.)));
-                                }
-                            });
+                        ui.vertical_centered(|ui| {
+                            let text = symbols.into_iter().filter_map(|symbol| {
+                                    price_list.get(symbol).map(|data| {
+                                        let symbol = symbol.to_uppercase();
+                                        let MarketData { price,  precision, .. } = data;
+                                        // let text = 
+                                        let amount = sompi_to_kaspa(balance.mature) * (*price);
+                                        format_currency_with_symbol(amount, *precision, symbol.as_str())
+                                    })
+                            }).collect::<Vec<_>>().join(" ");
+                            ui.label(RichText::new(text).font(FontId::proportional(16.)));
                         });
                     }
                 }
