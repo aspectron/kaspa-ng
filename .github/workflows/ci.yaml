@@ -250,11 +250,10 @@ jobs:
         if: steps.install_llvm.outcome == 'success' && steps.install_llvm.conclusion == 'success'
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cargo install wasm-pack
-        run: cargo install wasm-pack
-
-      - name: Cargo install trunk
-        run: cargo install trunk
+      - name: Cargo install wasm-pack and trunk
+        run: |
+          cargo install wasm-pack
+          cargo install trunk
 
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown
@@ -271,18 +270,19 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build Chrome Browser Extension
-        run: rm -rf ./dist-chrome
-        run: mkdir ./dist-chrome
-        run: mkdir ./dist-chrome/icons
-
-        run: cp -r ./resources/icons ./dist-chrome/
-        run: cp ./resources/style.css ./dist-chrome/
-        run: cp ./extensions/chrome/manifest.json ./dist-chrome/
-        run: cp ./extensions/chrome/popup.html ./dist-chrome/
-        run: cp ./extensions/chrome/popup.js ./dist-chrome/
-        run: cp ./extensions/chrome/background.js ./dist-chrome/
-
-        run: wasm-pack build --target web --out-name kaspa-ng --out-dir ../../dist-chrome ./extensions/chrome
+        run: |
+          rm -rf ./dist-chrome
+          mkdir ./dist-chrome
+          mkdir ./dist-chrome/icons
+          # copy resources
+          cp -r ./resources/icons ./dist-chrome/
+          cp ./resources/style.css ./dist-chrome/
+          cp ./extensions/chrome/manifest.json ./dist-chrome/
+          cp ./extensions/chrome/popup.html ./dist-chrome/
+          cp ./extensions/chrome/popup.js ./dist-chrome/
+          cp ./extensions/chrome/background.js ./dist-chrome/
+          # build
+          wasm-pack build --target web --out-name kaspa-ng --out-dir ../../dist-chrome ./extensions/chrome
 
   build-release:
     name: Build Ubuntu Release
