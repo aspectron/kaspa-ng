@@ -285,7 +285,7 @@ impl Overview {
                 CollapsingHeader::new(i18n("Donations"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        if ui.link(i18n("Please consider supporting Kaspa NG development")).clicked() {
+                        if ui.link(i18n("Supporting Kaspa NG development")).clicked() {
                             core.select::<modules::Donations>();
                         }
                     });

@@ -141,7 +141,7 @@ pub fn format_currency(price: f64, precision: usize) -> String {
     if precision == 0 {
         price.trunc().separated_string()
     } else {
-        let string = format!("{:.2}",price);
+        let string = format!("{:.8}",price);
         if let Some(idx) = string.find('.') {
             let (left, right) = string.split_at(idx + 1);
             if right.len() < precision {

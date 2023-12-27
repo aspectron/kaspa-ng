@@ -82,17 +82,14 @@ impl ModuleT for Donations {
             .with_body(|this,ui| {
                 
                 ui.add_space(8.);                                    
-                ui.label(i18n("This project relies on the support of the community."));
+
+                ui.label(i18n("The Kaspa NG software represents an ongoing effort focused on building a state-of-the-art software platform dedicated to the Kaspa BlockDAG cryptocurrency network. Ideological at its core, this software prioritizes security, privacy, performance, and decentralization."));
                 ui.label(" ");
-                ui.label(i18n("If you are able to contribute by donating, we would greatly appreciate your support."));
+                ui.label(i18n("Because of its focus on security and performance, this software is entirely developed in Rust, demanding significantly more time and effort compared to other traditional modern web-driven software."));
                 ui.label(" ");
-                ui.label(i18n("You can send donations to the following addresses:"));
+                ui.label(i18n("Contributions directed toward this project directly fuel the Kaspa NG software and its ecosystem."));
                 ui.label(" ");
 
-                ui.separator();
-                ui.label(" ");
-                ui.label(i18n("Kaspa NG development fund"));
-                ui.label(" ");
                 let kaspa_ng_fund = this.qr_kaspa_ng_fund();
                 this.render_destination(ui, kaspa_ng_fund);
                 ui.label(" ");

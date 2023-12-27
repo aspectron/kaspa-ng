@@ -45,8 +45,8 @@ impl<'context> BalancePane<'context> {
                                         let amount = sompi_to_kaspa(balance.mature) * (*price);
                                         format_currency_with_symbol(amount, *precision, symbol.as_str())
                                     })
-                            }).collect::<Vec<_>>().join(" ");
-                            ui.label(RichText::new(text).font(FontId::proportional(16.)));
+                            }).collect::<Vec<_>>().join("  ");
+                            ui.label(RichText::new(text).font(FontId::proportional(14.)));
                         });
                     }
                 }
