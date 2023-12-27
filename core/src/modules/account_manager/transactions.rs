@@ -15,6 +15,12 @@ impl Transactions {
             let transactions = account.transactions();
             if transactions.is_empty() {
                 ui.label(i18n("No transactions"));
+
+                #[cfg(target_arch = "wasm32")] {
+                    ui.label("");
+                    ui.label("Please note that transaction storage support in the browser is not yet implemented. Only transactions from the available UTXOs will be shown once the wallet is reloaded.");
+                    ui.label("");
+                }
             } else {
                 let total: u64 = transactions.iter().map(|transaction|transaction.aggregate_input_value()).sum();
                 transactions.iter().for_each(|transaction| {

@@ -14,6 +14,11 @@ impl UtxoManager {
 
         egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
             ui.label(i18n("UTXO Manager"));
+
+            ui.label("");
+            ui.label("UTXO management is not implemented in this alpha release.");
+            ui.label("");
+
         });
 
     }
