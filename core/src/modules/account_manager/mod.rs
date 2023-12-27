@@ -145,7 +145,6 @@ impl ManagerContext {
 
 impl Zeroize for ManagerContext {
     fn zeroize(&mut self) {
-        println!("*** resetting send state...");
 
         self.transfer_to_account = None;
         self.destination_address_string = String::default();

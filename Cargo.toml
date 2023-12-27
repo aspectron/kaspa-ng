@@ -165,6 +165,7 @@ toml = "0.8.8"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3.64", features = ['Window'] }
+xxhash-rust = { version = "0.8.7", features = ["xxh3"] }
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 
 [profile.release]

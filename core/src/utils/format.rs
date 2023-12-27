@@ -40,6 +40,22 @@ pub fn format_address(address: &Address, range: Option<usize>) -> String {
     format_address_string(address, range)
 }
 
+
+pub fn format_partial_string(text: impl Into<String>, range: Option<usize>) -> String {
+    let text: String = text.into();
+    let range = range.unwrap_or(6);
+    if text.len() <= range * 2 {
+        text
+    } else {
+        let start = range;
+        let finish = text.len() - range;
+        let left = &text[0..start];
+        let right = &text[finish..];
+        format!("{left}....{right}")
+    }
+}
+
+
 /// SOMPI (u64) to KASPA (string) with suffix layout job generator
 pub fn s2kws_layout_job(
     enable: bool,

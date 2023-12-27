@@ -61,6 +61,7 @@ slug.workspace = true
 thiserror.workspace = true
 toml.workspace = true
 wasm-bindgen.workspace = true
+xxhash-rust.workspace = true
 zeroize.workspace = true
 
 egui.workspace = true

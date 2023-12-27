@@ -84,8 +84,9 @@ impl<'manager> Overview<'manager> {
                                         });
                                     }
                                     layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme_style().medium_button_size()), |(_,core)| {
+                                        core.get_mut::<modules::Request>().select(rc.account);
                                         core.select::<modules::Request>();
-
+                        
                                     });
 
                                     layout.build(ui,&mut (self,core));
