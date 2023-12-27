@@ -103,6 +103,7 @@ impl super::Kaspad for Daemon {
                         if this.inner.termination_method == TerminationMethod::Sigterm && is_unix {
                             let pid = this.inner.pid.lock().unwrap();
                             if let Some(pid) = *pid {
+                                #[cfg(unix)]
                                 this.sigterm(pid);
                             }
                         } else if let Err(err) = child.start_kill() {

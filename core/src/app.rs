@@ -372,7 +372,7 @@ cfg_if! {
 pub fn try_set_fd_limit(limit: u64) -> std::io::Result<u64> {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "windows")] {
-            Ok(rlimit::setmaxstdio(limit as u32)?.map(|v| v as u64))
+            Ok(rlimit::setmaxstdio(limit as u32).map(|v| v as u64))
         } else if #[cfg(unix)] {
             rlimit::increase_nofile_limit(limit)
         }
