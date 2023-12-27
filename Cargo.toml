@@ -11,7 +11,7 @@ default-members = ["app"]
 [workspace.package]
 version = "0.1.0"
 authors = ["ASPECTRON Inc."]
-license = "MIT/Apache-2.0"
+license = "PROPRIETARY"
 edition = "2021"
 
 [workspace.dependencies]

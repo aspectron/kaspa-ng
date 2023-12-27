@@ -52,10 +52,14 @@ One of the best ways to test this application is to build both desktop and web v
 - [ ] Web App does not currently preserve transaction history. Reloading the page or the wallet will result in the blank transaction list (this does not affect the wallet functionality).  The Web Browser transaction history storage backend is currently under development in the Rusty Kaspa wallet framework.
 - [ ] When the Wen App goes off screen or in the background tab, browser will suspend it preventing it from processing updates. There is a workaround for this, but it is not yet implemented.
 
-### License
 
-This project is dual-licensed under the terms of the [MIT or Apache 2.0 license](LICENSE).
+## License
 
-### Contributing
+Licensed under a PROPRIETARY MIT-style Open Source [LICENSE](LICENSE) with the following restrictions: 
+_You are expressly prohibited from using, adapting, or integrating this software into any cryptocurrency network or related technology other than the specified intended network for which it is developed - The Kaspa BlockDAG cryptocurrency network._
 
-This project is under active development and is open to contributions. Please see the [contribution guidelines](CONTRIBUTING.md) for details.
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, shall be licensed as above, without any
+additional terms or conditions.
