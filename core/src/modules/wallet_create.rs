@@ -234,9 +234,10 @@ impl ModuleT for WalletCreate {
                         }
 
                         ui.label("");
-                        ui.checkbox(&mut this.context.import_legacy, i18n("I have a legacy account"));
-                        ui.label(i18n("Select this option if your wallet was create"));
-                        ui.label(i18n("via KDX or kaspanet.io web wallet"));
+                        ui.checkbox(&mut this.context.import_legacy, i18n("I have a 12 word mnemonic legacy account"));
+                        ui.label(i18n("Select this option if your wallet was created"));
+                        ui.label(i18n("using KDX or kaspanet.io web wallet"));
+                        ui.label(RichText::new("NOT SUPPORTED IN THIS ALPHA RELEASE").size(10.).color(warning_color()));
 
                         if !this.context.import_legacy {
                             ui.label("");
@@ -247,20 +248,23 @@ impl ModuleT for WalletCreate {
                             // ui.label("");
                             // if ui.large_button("MultiSig account").clicked() {
                             // }
-                        }
 
-                        ui.label("");
-                        ui.checkbox(&mut this.context.import_with_bip39_passphrase, i18n("Your mnemonic is protected with a bip39 passphrase"));
-
-                        ui.label("");
-                        ui.checkbox(&mut this.context.import_advanced, i18n("Advanced Options"));
-                        if this.context.import_advanced {
                             ui.label("");
-                            if ui.large_button(i18n("secp256k1 keypair")).clicked() {
-                                this.context.word_count = WordCount::Words12;
-                                submit = true;
+                            ui.checkbox(&mut this.context.import_with_bip39_passphrase, i18n("Your mnemonic is protected with a bip39 passphrase"));
+
+                            ui.label("");
+                            ui.checkbox(&mut this.context.import_advanced, i18n("Advanced Options"));
+                            if this.context.import_advanced {
+                                ui.label("");
+                                if ui.large_button_enabled(false, i18n("secp256k1 keypair")).clicked() {
+                                    this.context.word_count = WordCount::Words12;
+                                    submit = true;
+                                }
+                                ui.label(RichText::new("NOT SUPPORTED IN THIS ALPHA RELEASE").size(10.).color(warning_color()));
                             }
                         }
+
+
 
                     })
                     .with_footer(|_this,_ui| {
