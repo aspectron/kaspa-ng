@@ -381,6 +381,7 @@ impl ModuleT for Scanner {
                     .with_footer(|this,ui| {
                         if ui.large_button(i18n("Close")).clicked() {
                             this.context.zeroize();
+                            this.state = State::Select;
                             core.select::<modules::AccountManager>();
                         }
                     })

@@ -1,6 +1,5 @@
-
 use crate::imports::*;
-use kaspa_wallet_core::{wallet::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs}, encryption::EncryptionKind};
+use kaspa_wallet_core::{wallet::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs}, encryption::EncryptionKind, api::{AccountsDiscoveryRequest, AccountsDiscoveryKind}};
 use slug::slugify;
 use kaspa_bip32::{WordCount, Mnemonic, Language};
 use crate::utils::{secret_score, secret_score_to_text};
@@ -16,6 +15,7 @@ enum Focus {
     WalletSecretConfirm,
     PaymentSecret,
     PaymentSecretConfirm,
+    WalletMnemonic,
 }
 
 #[derive(Clone)]
@@ -23,6 +23,10 @@ pub enum State {
     Start,
     KeySelection,
     ImportSelection,
+    ImportMnemonic,
+    ImportMnemonicWithEditor,
+    ImportMnemonicInteractive,
+    ImportWallet,
     WalletName,
     AccountName,
     PhishingHint,
@@ -36,19 +40,11 @@ pub enum State {
     Finish,
 }
 
-// enum PrivateKeyImportKind {
-
-// }
-
-
 #[derive(Clone, Default)]
 struct Context {
     word_count : WordCount,
-    // custom_wallet_filename : bool,
     wallet_name: String,
-    // TODO generate wallet filename
     wallet_filename: String,
-    // account_title: String,
     account_name: String,
     enable_phishing_hint: bool,
     phishing_hint: String,
@@ -56,21 +52,18 @@ struct Context {
     wallet_secret_confirm: String,
     wallet_secret_show: bool,
     wallet_secret_score: Option<f64>,
-    // TODO add payment secret checkbox
     enable_payment_secret: bool,
     payment_secret: String,
     payment_secret_confirm: String,
     payment_secret_show : bool,
     payment_secret_score: Option<f64>,
     mnemonic_presenter_context : MnemonicPresenterContext,
-    
-    // ---
     import_private_key : bool,
     import_private_key_mnemonic : String,
+    import_private_key_mnemonic_error : Option<String>,
+    import_with_bip39_passphrase : bool,
     import_legacy : bool,
     import_advanced : bool,
-    
-    // mnemonic: Vec<String>,
 }
 
 impl Zeroize for Context {
@@ -83,7 +76,14 @@ impl Zeroize for Context {
         self.wallet_secret_confirm.zeroize();
         self.payment_secret.zeroize();
         self.payment_secret_confirm.zeroize();
-        // self.mnemonic_presenter_context.zeroize();
+        self.mnemonic_presenter_context.zeroize();
+
+        self.import_private_key.zeroize();
+        self.import_private_key_mnemonic.zeroize();
+        self.import_private_key_mnemonic_error.zeroize();
+        self.import_with_bip39_passphrase.zeroize();
+        self.import_legacy.zeroize();
+        self.import_advanced.zeroize();
     }
 }
 
@@ -126,39 +126,36 @@ impl ModuleT for WalletCreate {
 
         match self.state.clone() {
             State::Start => {
-                // let has_origin = self.origin.is_some();
+
+                let mut back = false;
 
                 Panel::new(self)
                     .with_caption("Create Wallet")
                     .with_back_enabled(core.has_stack(), |_|{
-                        // wallet.select_with_type_id(this.origin.take().unwrap())
-                        core.back()
+                        back = true;
                     })
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
-                        ui.label(i18n("The following will guide you through the process of creating a new wallet"));
+                        ui.label(i18n("The following will guide you through the process of creating or importing a wallet."));
                         ui.label(" ");
                         ui.label(i18n("A wallet is stored in a file on your computer."));
-                        ui.label(i18n("You can create multiple wallets, but only one can be loaded at a time."));
+                        ui.label(" ");
+                        ui.label(i18n("You can create multiple wallets, but only one wallet can be open at a time."));
                     })
-                    // .with_footer(|this,ui| {
-                    //     // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
-                    //     let size = theme().large_button_size;
-                    //     if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                    //         this.state = State::WalletName;
-                    //     }
-                    // })
                     .with_handler(|this| {
                         this.state = State::KeySelection;
                     })
                     .render(ui);
+
+                if back {
+                    self.context.zeroize();
+                    core.back();
+                }
             }
             State::KeySelection => {
 
-                // TODO - check if wallet exists
-                // let _wallet_exists_result = Payload::<Result<bool>>::new("wallet_exists_result");
                 let mut submit = false;
                 let mut import = false;
 
@@ -171,7 +168,7 @@ impl ModuleT for WalletCreate {
                     })
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
-                        ui.label(i18n("Please specify the private key type\nfor the new wallet"));
+                        ui.label(i18n("Please specify the private key type for the new wallet"));
                     })
                     .with_body(|this,ui| {
 
@@ -194,7 +191,6 @@ impl ModuleT for WalletCreate {
                         ui.label("");
 
                         if ui.large_button(i18n("Import existing")).clicked() {
-                            // this.context.word_count = WordCount::Words24;
                             import = true;
                         }
                         ui.label("");
@@ -228,7 +224,6 @@ impl ModuleT for WalletCreate {
                     .with_header(|_ctx,ui| {
                         ui.add_space(64.);
                         ui.label(i18n("Please select the private key type you would like to import in the new wallet"));
-                        // ui.label("");
                     })
                     .with_body(|this,ui| {
                         // ui.label("(You can import additional private keys later, once the wallet has been created)");
@@ -255,6 +250,9 @@ impl ModuleT for WalletCreate {
                         }
 
                         ui.label("");
+                        ui.checkbox(&mut this.context.import_with_bip39_passphrase, i18n("Your mnemonic is protected with a bip39 passphrase"));
+
+                        ui.label("");
                         ui.checkbox(&mut this.context.import_advanced, i18n("Advanced Options"));
                         if this.context.import_advanced {
                             ui.label("");
@@ -270,6 +268,7 @@ impl ModuleT for WalletCreate {
                     .render(ui);
 
                     if submit {
+                        self.context.import_private_key = true;
                         self.state = State::WalletName;
                         self.focus.next(Focus::WalletName);
                     }
@@ -278,8 +277,7 @@ impl ModuleT for WalletCreate {
 
             State::WalletName => {
 
-                // TODO - check if wallet exists
-                let _wallet_exists_result = Payload::<Result<bool>>::new("wallet_exists_result");
+                let wallet_exists = Rc::new(RefCell::new(false));
 
                 Panel::new(self)
                     .with_caption(i18n("Wallet Name"))
@@ -326,11 +324,22 @@ impl ModuleT for WalletCreate {
                             ui.label(" ");
                             ui.label(format!("{} {}",i18n("Filename:"), this.context.wallet_filename));
                             ui.label(" ");
+
+                            core.wallet_list().iter().for_each(|wallet| {
+                                if wallet.filename == this.context.wallet_filename {
+                                    *wallet_exists.borrow_mut() = true;
+                                }
+                            });
+
+                            if *wallet_exists.borrow() {
+                                ui.label(RichText::new(i18n("Wallet with this name already exists")).color(error_color()));
+                                ui.label(" ");
+                            }
                         }
 
                     })
                     .with_footer(|this,ui| {
-                        if ui.large_button_enabled(this.context.wallet_name.is_not_empty(), i18n("Continue")).clicked() {
+                        if ui.large_button_enabled(this.context.wallet_name.is_not_empty() && !*wallet_exists.borrow(), i18n("Continue")).clicked() {
                             this.state = State::AccountName;
                             this.focus.next(Focus::AccountName);
                         }
@@ -362,7 +371,7 @@ impl ModuleT for WalletCreate {
                             Focus::AccountName,
                             |ui, text| {
                                 // ui.add_space(8.);
-                                ui.label(RichText::new(i18n("Enter account name")).size(12.).raised());
+                                ui.label(RichText::new(i18n("Enter first account name")).size(12.).raised());
                                 ui.add_sized(editor_size, TextEdit::singleline(text)
                                     .vertical_align(Align::Center))
                             },
@@ -375,15 +384,11 @@ impl ModuleT for WalletCreate {
 
                     })
                     .with_footer(|this,ui| {
-                        // let size = theme().large_button_size;
                         let text = if this.context.account_name.is_not_empty() { "Continue" } else { "Skip" };
                         if ui.large_button(i18n(text)).clicked() {
                             this.state = State::PhishingHint;
                             this.focus.next(Focus::PhishingHint);
                         }
-                        // if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
-                        //     this.state = State::PhishingHint;
-                        // }
                     })
                     .render(ui);
             }
@@ -434,10 +439,6 @@ impl ModuleT for WalletCreate {
                             this.focus.next(Focus::WalletSecret);
                         }
                     })
-                    // .with_handler(|this| {
-                    //     this.state = State::WalletSecret;
-                    //     this.focus = Focus::WalletSecret;
-                    // })
                     .render(ui);
             }
             State::WalletSecret => {
@@ -520,7 +521,7 @@ impl ModuleT for WalletCreate {
                                     .is_not_empty()
                                     .then_some(this.context.wallet_secret_confirm.clone())
                                 );
-                            this.context.wallet_secret_score = wallet_secret.map(secret_score); //Some(password_score(&this.context.wallet_secret));
+                            this.context.wallet_secret_score = wallet_secret.map(secret_score);
                         }
 
                         if let Some(score) = this.context.wallet_secret_score {
@@ -563,6 +564,8 @@ impl ModuleT for WalletCreate {
             }
             State::PaymentSecret => {
 
+                let mut proceed = self.context.import_private_key && !self.context.import_with_bip39_passphrase;
+
                 Panel::new(self)
                     .with_caption(i18n("Payment & Recovery Password"))
                     .with_back(|this| {
@@ -571,22 +574,29 @@ impl ModuleT for WalletCreate {
                     })
                     .with_close_enabled(false, |_|{
                     })
-                    .with_header(|_ctx,ui| {
-                        ui.heading(i18n("Optional"));
-                        ui.label(" ");
-                        // TODO i18n
-                        ui.label("The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to \
+                    .with_header(|this,ui| {
+                        if this.context.import_with_bip39_passphrase {
+
+                        } else {
+                            ui.heading(i18n("Optional"));
+                            ui.label(" ");
+                            // TODO i18n
+                            ui.label("The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to \
                             send payments. This passphrase will also be required when recovering your wallet in addition to your mnemonic.\
                             If you loose or forget this passphrase, you will not \
                             be able to use mnemonic to recover your wallet!");
+                        }
                     })
                     .with_body(|this,ui| {
                         let mut submit = false;
                         let mut change = false;
     
-                        ui.checkbox(&mut this.context.enable_payment_secret, i18n("Enable optional BIP39 passphrase"));
+    
+                        if !this.context.import_with_bip39_passphrase {
+                            ui.checkbox(&mut this.context.enable_payment_secret, i18n("Enable optional BIP39 passphrase"));
+                        }
 
-                        if this.context.enable_payment_secret {
+                        if this.context.enable_payment_secret || this.context.import_with_bip39_passphrase {
                             
                             ui.label("");
 
@@ -654,11 +664,11 @@ impl ModuleT for WalletCreate {
                                 ui.label(secret_score_to_text(score));
                                 if score < 80.0 {
                                     ui.label("");
-                                    ui.label(RichText::new(i18n("Passphrase is too weak")).color(egui::Color32::from_rgb(255, 120, 120)));
-                                    if !core.settings.developer.password_restrictions_disabled() {
-                                        submit = false;
-                                        ui.label(RichText::new(i18n("Please create a stronger passphrase")).color(egui::Color32::from_rgb(255, 120, 120)));
-                                    }
+                                    ui.label(RichText::new(i18n("Passphrase is too weak")).color(warning_color()));
+                                    // if !core.settings.developer.password_restrictions_disabled() {
+                                    //     // submit = false;
+                                    //     ui.label(RichText::new(i18n("Please create a stronger passphrase")).color(egui::Color32::from_rgb(255, 120, 120)));
+                                    // }
                                 }
                             }
                             ui.label("");
@@ -679,21 +689,233 @@ impl ModuleT for WalletCreate {
                         }
                     })
                     .with_footer(|this,ui| {
+
                         if this.context.enable_payment_secret {
                             let is_weak = !core.settings.developer.password_restrictions_disabled() && this.context.payment_secret_score.unwrap_or_default() < 80.0;
                             let enabled = this.context.wallet_secret == this.context.wallet_secret_confirm && this.context.wallet_secret.is_not_empty();
                             if ui.large_button_enabled(enabled && !is_weak, i18n("Continue")).clicked() {
-                                this.state = State::CreateWalletConfirm;
-                                this.focus.clear();
+                                proceed = true;
                             }
                         } else if ui.large_button_enabled(true, i18n("Skip")).clicked() {
-                            this.state = State::CreateWalletConfirm;
-                            this.focus.clear();
+                            proceed = true;
                         }
 
                     })
                     .render(ui);
+
+                    if proceed {
+                        if self.context.import_private_key {
+                            self.state = State::ImportMnemonicWithEditor;
+                        } else {
+                            self.state = State::CreateWalletConfirm;
+                        }
+                        self.focus.clear();
+                        
+                    }
+
             }
+
+            State::ImportMnemonic => {
+                self.state = State::ImportMnemonicWithEditor;
+                self.focus.next(Focus::WalletMnemonic);
+            }
+
+            State::ImportMnemonicWithEditor => {
+
+                let mnemonic_is_ok = Rc::new(RefCell::new(false));
+                let proceed = Rc::new(RefCell::new(false));
+
+                Panel::new(self)
+                    .with_caption(i18n("Mnemonic Import"))
+                    .with_back(|this| {
+                        this.state = State::KeySelection;
+                    })
+                    .with_close_enabled(false, |_|{
+                    })
+                    .with_header(|this,ui| {
+                        ui.add_space(64.);
+                        match this.context.word_count {
+                            WordCount::Words12 => {
+                                ui.label(i18n("Please enter mnemonic comprised of 12 words"));
+                            }
+                            WordCount::Words24 => {
+                                ui.label(i18n("Please enter mnemonic comprised of 24 words"));
+                            }
+                        }
+                    })
+                    .with_body(|this,ui| {
+                        let mut submit = false;
+                        TextEditor::new(
+                            &mut this.context.import_private_key_mnemonic,
+                            &mut this.focus,
+                            Focus::WalletMnemonic,
+                            |ui, text| {
+                                // ui.add_space(8.);
+                                ui.label(RichText::new(i18n("Enter mnemonic")).size(12.).raised());
+                                let mut available_width = ui.available_width();
+                                if available_width > 1024. {
+                                    available_width *= 0.5;
+                                } else if available_width > 512. {
+                                    available_width *= 0.7;
+                                }
+                                ui.add_sized(vec2(available_width, 64.), TextEdit::multiline(text))
+                            },
+                        )
+                        .submit(|_text,_focus| {
+                            submit = true;
+                        })
+                        .build(ui);
+
+                        let phrase = this.context.import_private_key_mnemonic.as_str().split_ascii_whitespace().filter(|s| s.is_not_empty()).collect::<Vec<&str>>();
+                        let needed = match this.context.word_count {
+                            WordCount::Words12 => 12,
+                            WordCount::Words24 => 24,
+                        } as usize;
+                        // TODO - use comparison chain
+                        #[allow(clippy::comparison_chain)]
+                        if phrase.len() < needed {
+                            ui.label("");
+                            ui.label(format!("{} {} {}", i18n("Please enter additional"), needed - phrase.len(), i18n("words")));
+                            ui.label("");
+                        } else if phrase.len() > needed {
+                            ui.label("");
+                            ui.colored_label(error_color(), format!("{} '{}' {}", i18n("Too many words in the"), phrase.len() - needed, i18n("word mnemonic")));
+                            ui.label("");
+                        } else {
+                            let mut phrase = phrase.join(" ");
+                            match Mnemonic::new(phrase.as_str(), Language::default()) {
+                                Ok(_) => {
+                                    *mnemonic_is_ok.borrow_mut() = true;
+                                    if submit {
+                                        *proceed.borrow_mut() = true;
+                                    }
+                                },
+                                Err(err) => {
+                                    phrase.zeroize();
+                                    ui.label("");
+                                    ui.label(RichText::new(format!("Error processing mnemonic; {err}")).color(error_color()));
+                                    ui.label("");
+                                }
+                            }
+                        }
+                    })
+                    .with_footer(|_this,ui| {
+                        if ui.large_button_enabled(*mnemonic_is_ok.borrow(), i18n("Continue")).clicked() {
+                            *proceed.borrow_mut() = true;
+                        }
+                    })
+                    .render(ui);
+
+                if *proceed.borrow() {
+                    self.state = State::ImportWallet;
+                    self.focus.clear();
+                }
+
+            }
+
+            State::ImportMnemonicInteractive => {
+                // TODO
+            }
+
+            State::ImportWallet => {
+
+                Panel::new(self)
+                    .with_caption(i18n("Importing Wallet"))
+                    .with_header(|_, ui|{
+                        ui.label(" ");
+                        ui.label(i18n("Please wait..."));
+                        ui.label(" ");
+                        ui.label(" ");
+                        ui.add_space(64.);
+                        ui.add(egui::Spinner::new().size(92.));
+                    })
+                    .render(ui);
+
+                let mut args = self.context.clone();
+                let wallet_import_result = Payload::<Result<Vec<AccountDescriptor>>>::new("wallet_import_result");
+                if !wallet_import_result.is_pending() {
+
+                    let wallet = self.runtime.wallet().clone();
+                    spawn_with_result(&wallet_import_result, async move {
+
+                        if args.import_with_bip39_passphrase && args.payment_secret.is_empty() {
+                            return Err(Error::custom(i18n("Payment secret is empty")));
+                        }
+
+                        if args.enable_phishing_hint && args.phishing_hint.is_empty() {
+                            return Err(Error::custom(i18n("Phishing hint is empty")));
+                        }
+
+                        let wallet_secret = Secret::from(args.wallet_secret.as_str());
+                        let payment_secret = args.import_with_bip39_passphrase.then_some(Secret::from(args.payment_secret.as_str()));
+                        let mnemonic = sanitize_mnemonic(args.import_private_key_mnemonic.as_str());
+
+
+                        let request = AccountsDiscoveryRequest {
+                            discovery_kind: AccountsDiscoveryKind::Bip44,
+                            address_scan_extent: 32,
+                            account_scan_extent: 16,
+                            bip39_passphrase: payment_secret.clone(),
+                            bip39_mnemonic: mnemonic.clone(),
+                        };
+
+                        let response = wallet.clone().accounts_discovery_call(request).await?;
+                        let number_of_accounts = (response.last_account_index_found + 1) as usize;
+
+                        wallet.clone().batch().await?;
+
+                        let wallet_args = WalletCreateArgs::new(
+                            args.wallet_name.is_not_empty().then_some(args.wallet_name.clone()),
+                            args.wallet_filename.is_not_empty().then_some(args.wallet_filename.clone()),
+                            EncryptionKind::XChaCha20Poly1305,
+                            args.enable_phishing_hint.then_some(args.phishing_hint.as_str().into()),
+                            false
+                        );
+                        
+                        wallet.clone().wallet_create(wallet_secret.clone(), wallet_args).await?;
+
+                        let prv_key_data_args = PrvKeyDataCreateArgs::new(
+                            None,
+                            payment_secret.clone(),
+                            mnemonic,
+                        );
+
+                        let prv_key_data_id = wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?;
+
+                        let mut account_descriptors = Vec::with_capacity(number_of_accounts);
+                        for account_index in 0..number_of_accounts {
+                            let account_create_args = AccountCreateArgs::new_bip32(
+                                prv_key_data_id,
+                                payment_secret.clone(),
+                                args.account_name.is_not_empty().then_some(args.account_name.clone()),
+                                Some(account_index as u64),
+                            );
+                            account_descriptors.push(wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?);
+                        }
+
+                        wallet.clone().flush(wallet_secret).await?;
+
+                        args.zeroize();
+
+                        Ok(account_descriptors)
+                    });
+                }
+
+                if let Some(result) = wallet_import_result.take() {
+                    match result {
+                        Ok(account_descriptors) => {
+                            self.context.zeroize();
+                            core.handle_account_creation(account_descriptors);
+                            self.state = State::Finish;
+                        }
+                        Err(err) => {
+                            log_error!("{} {}",i18n("Wallet creation error:"), err);
+                            self.state = State::WalletError(Arc::new(err));
+                        }
+                    }
+                }
+            }
+
             State::CreateWalletConfirm => {
                 // - TODO: present summary information
                 self.state = State::CreateWallet;
@@ -771,10 +993,8 @@ impl ModuleT for WalletCreate {
                     match result {
                         Ok((mnemonic,account_descriptor)) => {
                             self.context.zeroize();
-                            let account = core.handle_account_creation(account_descriptor);
+                            core.handle_account_creation(vec![account_descriptor]);
                             self.state = State::PresentMnemonic(mnemonic);
-                            let device = core.device().clone();
-                            core.get_mut::<modules::AccountManager>().select(Some(account), device);
                         }
                         Err(err) => {
                             log_error!("{} {}",i18n("Wallet creation error:"), err);
@@ -819,8 +1039,6 @@ impl ModuleT for WalletCreate {
                             ui.label(RichText::new(i18n(mnemonic_presenter.warning())).size(14.).color(theme_color().warning_color));
                         });
 
-                        ui.label("");
-                        ui.label(RichText::new(i18n("Never share your mnemonic with anyone!")).color(Color32::LIGHT_RED));
                         ui.label("");
                         mnemonic_presenter.render(ui, Some(i18n("Your default wallet private key mnemonic is:")));
                         ui.label("");

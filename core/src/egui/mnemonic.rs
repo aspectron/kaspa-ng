@@ -9,6 +9,12 @@ pub struct MnemonicPresenterContext {
     allow_clipboard: bool,
 }
 
+impl Zeroize for MnemonicPresenterContext {
+    fn zeroize(&mut self) {
+        self.allow_clipboard.zeroize();
+    }
+}
+
 pub struct MnemonicPresenter<'render> {
     phrase: &'render str,
     context: &'render mut MnemonicPresenterContext,
@@ -118,6 +124,7 @@ impl<'render> MnemonicPresenter<'render> {
 
                 if ui.medium_button(format!("{CLIPBOARD_TEXT} Copy to clipboard")).clicked() {
                     ui.output_mut(|o| o.copied_text = self.phrase.to_string());
+                    runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short());
                 }
             }
         });

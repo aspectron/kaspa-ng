@@ -59,6 +59,7 @@ egui-notify = "0.11.0"
 # _______________________________________________________
 
 kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
+kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
 kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
 kaspa-cli = { path = "../rusty-kaspa/cli" }
 kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
@@ -74,6 +75,7 @@ kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
 kaspad = { path = "../rusty-kaspa/kaspad" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-cli = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
@@ -94,23 +96,23 @@ kaspad = { path = "../rusty-kaspa/kaspad" }
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-# workflow-core = { version = "0.10.1", features = ["no-unsafe-eval"] }
-# workflow-i18n = { version = "0.10.1", features = ["preserve-order"] }
-# workflow-chrome = "0.10.1"
-# workflow-dom = "0.10.1"
-# workflow-http = "0.10.1"
-# workflow-log = "0.10.1"
-# workflow-store = "0.10.1"
-# workflow-wasm = "0.10.1"
+workflow-core = { version = "0.10.2", features = ["no-unsafe-eval"] }
+workflow-i18n = { version = "0.10.2", features = ["preserve-order"] }
+workflow-chrome = "0.10.2"
+workflow-dom = "0.10.2"
+workflow-http = "0.10.2"
+workflow-log = "0.10.2"
+workflow-store = "0.10.2"
+workflow-wasm = "0.10.2"
 
-workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
-workflow-i18n = { path = "../workflow-rs/i18n", features = ["preserve-order"] }
-workflow-chrome = { path = "../workflow-rs/chrome" }
-workflow-dom = { path = "../workflow-rs/dom" }
-workflow-http = { path = "../workflow-rs/http" }
-workflow-log = { path = "../workflow-rs/log" }
-workflow-store = { path = "../workflow-rs/store" }
-workflow-wasm = { path = "../workflow-rs/wasm" }
+# workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
+# workflow-i18n = { path = "../workflow-rs/i18n", features = ["preserve-order"] }
+# workflow-chrome = { path = "../workflow-rs/chrome" }
+# workflow-dom = { path = "../workflow-rs/dom" }
+# workflow-http = { path = "../workflow-rs/http" }
+# workflow-log = { path = "../workflow-rs/log" }
+# workflow-store = { path = "../workflow-rs/store" }
+# workflow-wasm = { path = "../workflow-rs/wasm" }
 
 # workflow-core = {  git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["no-unsafe-eval"] }
 # workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["preserve-order"] }

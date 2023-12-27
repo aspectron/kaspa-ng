@@ -131,7 +131,7 @@ impl Overview {
                                                         ui.colored_label(theme_color().market_default_color, RichText::new(format_price_with_symbol(price, precision, symbol.as_str()))); // 
                                                         ui.end_row();
 
-                                                        ui.label(i18n("Change"));
+                                                        ui.label(i18n("24h Change"));
                                                         if change > 0. { 
                                                             ui.colored_label(theme_color().market_up_color, RichText::new(format!("+{:.2}%  ",change)));
                                                         } else { 
@@ -256,12 +256,12 @@ impl Overview {
                         ui.label("");
                         ui.label("Kaspa NG");
                         ui.label("Copyright (c) 2023 ASPECTRON");
-                        ui.label("License: MIT or Apache 2.0");
+                        ui.label("Restricted MIT or Apache 2.0 License");
                         ui.hyperlink_url_to_tab("https://github.com/aspectron/kaspa-ng");
                         ui.label("");
                         ui.label("WORKFLOW-RS");
                         ui.label("Copyright (c) 2023 ASPECTRON");
-                        ui.label("License: MIT");
+                        ui.label("License: MIT or Apache 2.0");
                         ui.hyperlink_url_to_tab("https://github.com/workflow-rs/workflow-rs");
                         ui.label("");
                         ui.label("EGUI");
@@ -282,54 +282,10 @@ impl Overview {
                     });
                 });
 
-                CollapsingHeader::new(i18n("Credits"))
-                .default_open(false)
-                .show(ui, |ui| {
-                    ui.vertical(|ui|{
-                        ui.set_width(ui.available_width() - 48.);
-                        ui.label(i18n("Special thanks Kaspa developers and the following community members:"));
-                        ui.horizontal_wrapped(|ui|{
-                            let nicks = [
-                                "0xAndrei",
-                                "142673",
-                                "Bape",
-                                "Bubblegum Lightning",
-                                "coderofstuff",
-                                "CryptoK",
-                                "Dhayse",
-                                "elertan0",
-                                "elichai2",
-                                "Gennady Gorin",
-                                "hashdag",
-                                "Helix",
-                                "jablonx",
-                                "jwj",
-                                "KaffinPX",
-                                "lAmeR",
-                                "matoo",
-                                "msutton",
-                                "n15a",
-                                "Rhubarbarian",
-                                "shaideshe",
-                                "someone235",
-                                "supertypo",
-                                "The AllFather",
-                                "Tim",
-                                "tmrlvi",
-                                "Wolfie",
-                            ];
-
-                            let text = nicks.into_iter().map(|nick|format!("@{nick}  ")).collect::<Vec<_>>().join(" ");
-                            ui.label(text);
-                        });
-                    });
-                });
-
                 CollapsingHeader::new(i18n("Donations"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        ui.label(i18n("Please support Kaspa NG development"));
-                        if ui.link(format_address_string(modules::Donations::ADDRESS, Some(12))).clicked() {
+                        if ui.link(i18n("Please consider supporting Kaspa NG development")).clicked() {
                             core.select::<modules::Donations>();
                         }
                     });

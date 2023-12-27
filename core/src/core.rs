@@ -782,7 +782,22 @@ impl Core {
                         self.state.current_daa_score.replace(current_daa_score);
                     }
                     // Ignore scan notifications
-                    CoreWallet::Discovery { record: _ } => {}
+                    CoreWallet::Discovery { record } => match record.binding().clone() {
+                        Binding::Account(id) => {
+                            self.account_collection
+                                .as_ref()
+                                .and_then(|account_collection| {
+                                    account_collection.get(&id).map(|account| {
+                                        account.transactions().replace_or_insert(
+                                            Transaction::new_confirmed(Arc::new(record)),
+                                        );
+                                    })
+                                });
+                        }
+                        Binding::Custom(_) => {
+                            log_error!("Error while processing transaction {}: custom bindings are not supported", record.id());
+                        }
+                    },
                     // Ignore stasis notifications
                     CoreWallet::Stasis { record: _ } => {}
                     // A transaction has been confirmed
@@ -797,9 +812,6 @@ impl Core {
                                     .as_ref()
                                     .and_then(|account_collection| {
                                         account_collection.get(&id).map(|account| {
-                                            println!();
-                                            println!("$$$ RECEIVING MATURITY");
-                                            println!();
                                             account.transactions().replace_or_insert(
                                                 Transaction::new_confirmed(Arc::new(record)),
                                             );
@@ -807,7 +819,7 @@ impl Core {
                                     });
                             }
                             Binding::Custom(_) => {
-                                panic!("custom binding not supported");
+                                log_error!("Error while processing transaction {}: custom bindings are not supported", record.id());
                             }
                         }
                     }
@@ -817,9 +829,6 @@ impl Core {
                                 .as_ref()
                                 .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
-                                        println!();
-                                        println!("$$$ RECEIVING OUTGOING");
-                                        println!();
                                         account.transactions().replace_or_insert(
                                             Transaction::new_processing(Arc::new(record)),
                                         );
@@ -827,7 +836,7 @@ impl Core {
                                 });
                         }
                         Binding::Custom(_) => {
-                            panic!("custom binding not supported");
+                            log_error!("Error while processing transaction {}: custom bindings are not supported", record.id());
                         }
                     },
 
@@ -842,7 +851,7 @@ impl Core {
                                 });
                         }
                         Binding::Custom(_) => {
-                            panic!("custom binding not supported");
+                            log_error!("Error while processing transaction {}: custom bindings are not supported", record.id());
                         }
                     },
 
@@ -922,12 +931,13 @@ impl Core {
                 .map(|account| (account.id(), account))
                 .collect::<HashMap<_, _>>();
 
+            // TODO - finish progressive transaction loading implementation
             let futures = account_ids
                 .into_iter()
                 .map(|account_id| {
                     runtime
                         .wallet()
-                        .transactions_data_get_range(account_id, network_id, 0..128)
+                        .transactions_data_get_range(account_id, network_id, 0..4096)
                 })
                 .collect::<Vec<_>>();
 
@@ -962,25 +972,39 @@ impl Core {
         Ok(())
     }
 
-    pub fn handle_account_creation(&mut self, account_descriptor: AccountDescriptor) -> Account {
-        let account = Account::from(account_descriptor);
+    pub fn handle_account_creation(
+        &mut self,
+        account_descriptors: Vec<AccountDescriptor>,
+    ) -> Vec<Account> {
+        let accounts = account_descriptors
+            .into_iter()
+            .map(Account::from)
+            .collect::<Vec<_>>(); //(account_descriptor);
         self.account_collection
             .as_mut()
             .expect("account collection")
-            .push_unchecked(account.clone());
-        let device = self.device().clone();
-        self.get_mut::<modules::AccountManager>()
-            .select(Some(account.clone()), device);
+            .extend_unchecked(accounts.clone());
+        // .push_unchecked(account.clone());
+        if let Some(first) = accounts.first() {
+            let device = self.device().clone();
+            self.get_mut::<modules::AccountManager>()
+                .select(Some(first.clone()), device);
+        }
+        // self.get_mut::<modules::AccountManager>()
+        //     .select(Some(account.clone()), device);
         // self.select::<modules::AccountManager>();
-
-        let account_id = account.id();
+        let account_ids = accounts
+            .iter()
+            .map(|account| account.id())
+            .collect::<Vec<_>>();
+        // let account_id = account.id();
         let wallet = self.wallet().clone();
         spawn(async move {
-            wallet.accounts_activate(Some(vec![account_id])).await?;
+            wallet.accounts_activate(Some(account_ids)).await?;
             Ok(())
         });
 
-        account
+        accounts
     }
 
     fn handle_keyboard_events(

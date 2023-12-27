@@ -20,6 +20,8 @@ mod version;
 pub use version::*;
 mod secret;
 pub use secret::*;
+mod mnemonic;
+pub use mnemonic::*;
 
 #[macro_export]
 macro_rules! spawn {

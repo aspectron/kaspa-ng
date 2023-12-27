@@ -1,6 +1,5 @@
 use crate::imports::*;
 
-
 #[derive(Clone, Default)]
 pub enum State {
     #[default]
@@ -53,34 +52,43 @@ impl ModuleT for WalletOpen {
 
         let unlock_result = Payload::<Result<()>>::new("wallet_unlock_result");
 
-        let text: &str = i18n("Select a wallet to unlock");
+        // let text: &str = i18n("Select a wallet to unlock");
 
         match self.state.clone() {
             State::Select => {
 
                 let has_stack = core.has_stack();
                 let core = Rc::new(RefCell::new(core));
+                let mut wallet_descriptor_list = core.borrow_mut().wallet_list.clone();
+                let wallet_descriptor_list_is_empty = wallet_descriptor_list.is_empty();
 
                 Panel::new(self)
                     .with_caption(i18n("Select Wallet"))
                     .with_back_enabled(has_stack, |_| { core.borrow_mut().back() })
                     .with_header(|_ctx, ui| {
-                        ui.label(text);
+                        if !wallet_descriptor_list_is_empty {
+                            ui.label(i18n("Select a wallet to unlock"));
+                        } else {
+                            ui.label(i18n("No wallets found, please create a new wallet"));
+                        }
                     })
                     .with_body(|this, ui| {
-                        let mut wallet_descriptor_list = core.borrow_mut().wallet_list.clone();
-                        wallet_descriptor_list.sort(); //sort_by(|a, b| a.title.cmp(&b.title));
-                        for wallet_descriptor in wallet_descriptor_list.into_iter() {
-                            if ui.add_sized(theme_style().large_button_size(), CompositeButton::image_and_text(
-                                Composite::icon(egui_phosphor::thin::FINGERPRINT_SIMPLE),
-                                wallet_descriptor.title.as_deref().unwrap_or_else(||i18n("NO NAME")),
-                                wallet_descriptor.filename.clone(),
-                            )).clicked() {
-                                this.state = State::Unlock { wallet_descriptor : wallet_descriptor.clone(), error : None };
+
+                        if !wallet_descriptor_list_is_empty {
+                            wallet_descriptor_list.sort();
+                            for wallet_descriptor in wallet_descriptor_list.into_iter() {
+                                if ui.add_sized(theme_style().large_button_size(), CompositeButton::image_and_text(
+                                    Composite::icon(egui_phosphor::thin::FINGERPRINT_SIMPLE),
+                                    wallet_descriptor.title.as_deref().unwrap_or_else(||i18n("NO NAME")),
+                                    wallet_descriptor.filename.clone(),
+                                )).clicked() {
+                                    this.state = State::Unlock { wallet_descriptor : wallet_descriptor.clone(), error : None };
+                                }
                             }
+                            ui.label(" ");
+                            ui.separator();
                         }
-                        ui.label(" ");
-                        ui.separator();
+
                         ui.label(" ");
                         if ui
                             .large_button(i18n("Create new wallet"))

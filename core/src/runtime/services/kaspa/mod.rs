@@ -335,7 +335,7 @@ impl Service for KaspaService {
                                 this.disconnect_all_services().await?;
                             }
                             _ => {
-                                println!("wallet event: {:?}", event);
+                                // println!("wallet event: {:?}", event);
                             }
                         }
                         this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();

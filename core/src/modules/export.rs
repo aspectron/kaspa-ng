@@ -1,17 +1,15 @@
-
-#[allow(unused_imports)]
-use kaspa_wallet_core::api::PrvKeyDataGetRequest;
-
 use crate::imports::*;
 
 #[derive(Clone)]
 pub enum State {
     Select,
     SelectPrvKey,
-    Export { error : Option<Arc<Error>> },
+    Authenticate,
+    Export,
+    Error { error : Arc<Error> },
     Exporting,
-    Mnemonic,
-    Transportable,
+    Mnemonic { mnemonic : String },
+    Transportable { data : Arc<Vec<u8>> },
 }
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
@@ -22,12 +20,11 @@ enum Focus {
     PaymentSecret,
 }
 
-#[derive(Clone, Copy, Describe)]
+#[derive(Default, Clone, Copy, Describe, Eq, PartialEq)]
 pub enum ExportKind {
-    // #[default]
-    // None,
-    Transportable,
+    #[default]
     Mnemonic,
+    Transportable,
 }
 
 impl ExportKind {
@@ -39,6 +36,13 @@ impl ExportKind {
     }
 }
 
+impl Zeroize for ExportKind {
+    fn zeroize(&mut self) {
+        *self = Self::Mnemonic;
+    }
+}
+
+#[derive(Clone)]
 pub enum ExportResult {
     Transportable(Arc<Vec<u8>>),
     Mnemonic(String),
@@ -47,46 +51,37 @@ pub enum ExportResult {
 
 #[derive(Default)]
 struct Context {
-    prv_key_data_id : Option<PrvKeyDataId>,
-    // account_kind: Option<CreateAccountKind>,
-    // _create_private_key: bool,
-    // account_name: String,
-    // enable_payment_secret: bool,
+    prv_key_data_info : Option<Arc<PrvKeyDataInfo>>,
     wallet_secret : String,
     payment_secret: String,
-    // payment_secret_confirm: String,
+    mnemonic_presenter_context : MnemonicPresenterContext,
+    kind : ExportKind,
     focus : FocusManager<Focus>,
-    kind : Option<ExportKind>,
 }
 
-
+impl Zeroize for Context {
+    fn zeroize(&mut self) {
+        self.wallet_secret.zeroize();
+        self.payment_secret.zeroize();
+        self.mnemonic_presenter_context.zeroize();
+        self.kind.zeroize();
+        self.focus.clear();
+    }
+}
 
 pub struct Export {
     #[allow(dead_code)]
     runtime: Runtime,
-    // wallet_secret: String,
-    // payment_secret: String,
     pub state: State,
-    pub message: Option<String>,
     context : Context,
-    // kind: Option<ExportKind>,
-    // prv_key_data_id : Option<PrvKeyDataId>,
-    // focus : Focus,
 }
 
 impl Export {
     pub fn new(runtime: Runtime) -> Self {
         Self {
             runtime,
-            // wallet_secret: String::new(),
-            // payment_secret: String::new(),
             state: State::Select,
-            message: None,
-            // kind: None,
-            // prv_key_data_id: None,
-            // focus : Focus::None,
             context : Default::default(),
-            // selected_wallet: None,
         }
     }
 }
@@ -104,114 +99,74 @@ impl ModuleT for Export {
         ui: &mut egui::Ui,
     ) {
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-            // let size = egui::Vec2::new(200_f32, 40_f32);
-            let export_result = Payload::<Result<()>>::new("wallet_export_result");
+
+            let export_result = Payload::<Result<ExportResult>>::new("wallet_export_result");
 
             match self.state.clone() {
 
                 State::Select => {
-                    // let prv_key_data_list = core.prv_key_data_map.values().cloned().collect::<Vec<_>>();
 
                     let mut submit = false;
                     Panel::new(self)
                         .with_caption("Export")
                         .with_back_enabled(core.has_stack(),|_this| {
-                            // this.state = State::KeySelection;
                             core.back();
                         })
-                        // .with_close_enabled(false, |_|{
-                        // })
                         .with_header(|_ctx,ui| {
                             ui.add_space(64.);
-                            ui.label("Please select the type of export");
-                            // ui.label("");
+                            ui.label("Please select export type");
                         })
                         .with_body(|this,ui| {
-                            // ui.label("(You can import additional private keys later, once the wallet has been created)");
 
-                            for kind in ExportKind::list() {
-                                let (name,info) = kind.info();
-                                ui.horizontal(|ui| {
-                                    if ui.large_button(name).clicked() {
-                                        this.context.kind = Some(kind);
-                                        submit = true;
+                            ui.vertical_centered(|ui| {
+                                for kind in ExportKind::list() {
+                                    if kind == ExportKind::Transportable {
+                                        continue;
                                     }
-                                    ui.add_space(8.);
-                                    ui.label(info);
-                                    ui.add_space(16.);
-                                });
-                            }
-
-
-                            // // ui.vertical(|ui| {
-                            //     if ui.large_button("Private Key Mnemonic").clicked() {
-                            //         this.context.kind = Some(ExportKind::Mnemonic);
-                            //         submit = true;
-                            //     }
-                            //     ui.add_space(8.);
-                            //     ui.label("Private key mnemonic stored in this wallet");
-                            //     ui.add_space(16.);
-
-                            //     if ui.large_button("Transportable").clicked() {
-                            //         this.context.kind = Some(ExportKind::Transportable);
-                            //         submit = true;
-                            //     }
-                            //     ui.add_space(8.);
-                            //     ui.label("Portable encrypted hex-encoded data importable into another KaspaNG instance");
-                            //     ui.add_space(16.);
-                            // // });
-
+                                    let (_name,info) = kind.info();
+                                    ui.radio_value(&mut this.context.kind, kind, info);
+                                }
+                            });
 
                         })
-                        // .with_footer(|_this,_ui| {
-                        // })
+                        .with_footer(|_this,ui| {
+                            if ui.large_button("Continue").clicked() {
+                                submit = true;
+                            }
+                        })
                         .render(ui);
 
                         if submit {
                             match self.context.kind {
-                                Some(ExportKind::Mnemonic) => {
+                                ExportKind::Mnemonic => {
                                     self.state = State::SelectPrvKey;
                                 }
-                                Some(ExportKind::Transportable) => {
-                                    self.state = State::Export { error : None };
-                                }
-                                None => {
-                                    panic!("Invalid export kind")
+                                ExportKind::Transportable => {
+                                    // self.state = State::Transportable;
+                                    // self.state = State::Export { error : None };
                                 }
                             }
-                            self.state = State::Export { error : None };
-                            self.context.focus.next(Focus::WalletSecret);
                         }
                 }
 
                 State::SelectPrvKey => {
-                    let prv_key_data_map = core.prv_key_data_map.clone(); //values().cloned().collect::<Vec<_>>();
+                    let prv_key_data_map = core.prv_key_data_map.clone();
 
                     let mut submit = false;
                     Panel::new(self)
                         .with_caption("Export")
                         .with_back_enabled(core.has_stack(),|_this| {
-                            // this.state = State::KeySelection;
                             core.back();
                         })
-                        // .with_close_enabled(false, |_|{
-                        // })
                         .with_header(|_ctx,ui| {
                             ui.add_space(64.);
-                            ui.label(i18n("Please select the type of export"));
-                            // ui.label("");
+                            ui.label(i18n("Please select the private key to export"));
                         })
                         .with_body(|this,ui| {
-                            // ui.label("(You can import additional private keys later, once the wallet has been created)");
-
-                            ui.label("");
-                            ui.label(i18n("Please select private key to export"));
-                            ui.label("");
-
                             if let Some(prv_key_data_map) = prv_key_data_map {
                                 for prv_key_data_info in prv_key_data_map.values() {
                                     if ui.large_button(prv_key_data_info.name_or_id()).clicked() {
-                                        this.context.prv_key_data_id = Some(*prv_key_data_info.id());
+                                        this.context.prv_key_data_info = Some(prv_key_data_info.clone());
                                         submit = true;
                                     }
                                     ui.label("");
@@ -224,16 +179,15 @@ impl ModuleT for Export {
                         .render(ui);
 
                         if submit {
-                            self.state = State::Export { error : None };
+                            self.state = State::Authenticate;
                             self.context.focus.next(Focus::WalletSecret);
                         }
-
                 }
 
-                State::Export{error} => {
+                State::Authenticate => {
+                    let submit = Rc::new(RefCell::new(false));
 
-                    // let mut submit_via_editor = false;
-                    // let mut submit_via_footer = false;
+                    let requires_bip39_passphrase = self.context.prv_key_data_info.as_ref().unwrap().requires_bip39_passphrase();
 
                     Panel::new(self)
                         .with_caption("Unlock Wallet")
@@ -241,38 +195,8 @@ impl ModuleT for Export {
                             this.state = State::Select;
                         })
                         .with_body(|this, ui| {
-                            // ui.label(format!(
-                            //     "Opening wallet: \"{}\"",
-                            //     wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str())
-                            // ));
-                            // ui.label(" ");
-
-                            if let Some(err) = error {
-                                ui.label(
-                                    RichText::new(err.to_string())
-                                        .color(egui::Color32::from_rgb(255, 120, 120)),
-                                );
-                                ui.label(" ");
-                            }
-
                             ui.label(i18n("Enter the password for your wallet"));
                             ui.label(" ");
-
-                            let mut execute = false;
-
-                            // let response = ui.add_sized(
-                            //         size,
-                            //         TextEdit::singleline(&mut ctx.wallet_secret)
-                            //             // .hint_text("Enter Password...")
-                            //             .password(true)
-                            //             .vertical_align(Align::Center),
-                            //     );
-                            // // ui.memory().request_focus(resp.id);
-                            // if response.text_edit_submit(ui) {
-                            //     unlock = true;
-                            // } else {
-                            //     response.request_focus();
-                            // }
 
                             TextEditor::new(
                                 &mut this.context.wallet_secret,
@@ -284,62 +208,85 @@ impl ModuleT for Export {
                                         .vertical_align(Align::Center)
                                         .password(true))
                                 },
-                            ).submit(|text,_focus| {
-                                if !text.is_empty() {
-                                    execute = true;
+                            ).submit(|text,focus| {
+                                if !text.is_empty() && requires_bip39_passphrase {
+                                    focus.next(Focus::PaymentSecret);
+                                } else if !text.is_empty() {
+                                    *submit.borrow_mut() = true;
                                 }
                             })
                             .build(ui);
 
-                            if ui.large_button_enabled(this.context.wallet_secret.is_not_empty(),"Continue").clicked() {
-                                execute = true;
-                            }
-
-                            if execute {
-
-
-
-                                let wallet_secret = kaspa_wallet_core::secret::Secret::new(
-                                    this.context.wallet_secret.as_bytes().to_vec(),
-                                );
-                                this.context.wallet_secret.zeroize();
-                                let wallet = this.runtime.wallet().clone();
-                                let prv_key_data_id = this.context.prv_key_data_id;
-                                let export_kind = this.context.kind;
-                                // let wallet_descriptor_delegate = wallet_descriptor.clone();
-                                spawn_with_result(&export_result, async move {
-                                    // wallet.wallet_open(wallet_secret, Some(wallet_descriptor_delegate.filename), true, true).await?;
-
-                                    match export_kind {
-                                        Some(ExportKind::Mnemonic) => {
-                                            // wallet.export_mnemonic(prv_key_data_id.unwrap(), wallet_secret).await?;
-
-                                            if let Some(prv_key_data_id) = prv_key_data_id {
-                                                let _result = wallet.prv_key_data_get(prv_key_data_id, wallet_secret).await?;
-                                                // let prv_key_data = wallet.prv_key_data(prv_key_data_id).await?;
-                                                // let mnemonic = prv_key_data.mnemonic().await?;
-                                                // println!("mnemonic: {}", mnemonic);
-                                            }
-
-                                        }
-                                        Some(ExportKind::Transportable) => {
-                                            // wallet.export_transportable(prv_key_data_id.unwrap(), wallet_secret).await?;
-                                        }
-                                        None => {
-                                            panic!("Invalid export kind")
-                                        }
-                                    }
-
-
-                                    Ok(())
-                                });
-
-                                this.state = State::Exporting;
-                            }
-
                             ui.label(" ");
+
+                            if requires_bip39_passphrase {
+
+                                TextEditor::new(
+                                    &mut this.context.payment_secret,
+                                    &mut this.context.focus,
+                                    Focus::PaymentSecret,
+                                    |ui, text| {
+                                        ui.label(RichText::new("Enter your payment secret").size(12.).raised());
+                                        ui.add_sized(theme_style().panel_editor_size, TextEdit::singleline(text)
+                                            .vertical_align(Align::Center)
+                                            .password(true))
+                                    },
+                                ).submit(|text,focus| {
+                                    if !text.is_empty() {
+                                        focus.clear();
+                                    }
+                                })
+                                .build(ui);
+
+                            }
+
+                        })
+                        .with_footer(|this,ui| {
+                            let ok = this.context.wallet_secret.is_not_empty() && (!requires_bip39_passphrase || this.context.payment_secret.is_not_empty());
+                            if ui.large_button_enabled(ok, "Continue").clicked() {
+                                *submit.borrow_mut() = true;
+                            }
                         })
                         .render(ui);
+
+                        if *submit.borrow() {
+                            self.state = State::Export;
+                            self.context.focus.clear();
+                        }
+                }
+
+                State::Export => {
+
+
+                    let wallet_secret = Secret::new(self.context.wallet_secret.as_str().into());
+                    let requires_bip39_passphrase = self.context.prv_key_data_info.as_ref().unwrap().requires_bip39_passphrase();
+                    let payment_secret: Option<Secret> = requires_bip39_passphrase
+                        .then(|| self.context.payment_secret.as_str().into());
+                    self.context.wallet_secret.zeroize();
+                    let wallet = self.runtime.wallet().clone();
+                    let prv_key_data_info = self.context.prv_key_data_info.clone();
+                    let export_kind = self.context.kind;
+                    spawn_with_result(&export_result, async move {
+
+                        match export_kind {
+                            ExportKind::Mnemonic => {
+
+                                if let Some(prv_key_data_info) = prv_key_data_info {
+                                    let prv_key_data = wallet.prv_key_data_get(*prv_key_data_info.id(), wallet_secret).await?;
+                                    let mnemonic = prv_key_data.as_mnemonic(payment_secret.as_ref())?.ok_or(Error::custom("No mnemonic available"))?;
+                                    Ok(ExportResult::Mnemonic(mnemonic.phrase_string()))
+                                } else {
+                                    Err(Error::custom("No private key data available"))
+                                }
+
+                            }
+                            ExportKind::Transportable => {
+                                Ok(ExportResult::Transportable(Arc::new(vec![])))
+                            }
+                        }
+                    });
+
+                    self.state = State::Exporting;
                 }
                 State::Exporting => {
                     ui.heading("Exporting");
@@ -351,35 +298,69 @@ impl ModuleT for Export {
 
                     if let Some(result) = export_result.take() {
                         match result {
-                            Ok(_) => {
-                                // println!("Export success");
-                                // self.state = Default::default();
-                                match self.context.kind {
-                                    Some(ExportKind::Mnemonic) => {
-                                        self.state = State::Mnemonic;
+                            Ok(kind) => {
+                                match kind {
+                                    ExportResult::Mnemonic(mnemonic) => {
+                                        self.state = State::Mnemonic { mnemonic };
                                     }
-                                    Some(ExportKind::Transportable) => {
-                                        self.state = State::Transportable;
-                                    }
-                                    None => {
-                                        panic!("Invalid export kind")
+                                    ExportResult::Transportable(data) => {
+                                        self.state = State::Transportable { data };
                                     }
                                 }
                             }
                             Err(err) => {
-                                println!("Unlock error: {}", err);
-                                self.state = State::Export { error : Some(Arc::new(err)) };
+                                self.state = State::Error { error : Arc::new(err) };
                             }
                         }
                     }
                 }
 
-                State::Mnemonic => {
-                    ui.label("mnemonic goes here");
+                State::Error { error } => {
+                    self.context.zeroize();
+
+                    Panel::new(self)
+                        .with_caption("Export Error")
+                        .with_back(|this| {
+                            this.state = State::Select;
+                        })
+                        .with_body(|_this, ui| {
+                            ui.label(
+                                RichText::new(error.to_string())
+                                    .color(egui::Color32::from_rgb(255, 120, 120)),
+                            );
+                            ui.label(" ");
+                        })
+                        .with_footer(|this,ui| {
+                            if ui.large_button("Restart").clicked() {
+                                this.state = State::Select;
+                            }
+                        })
+                        .render(ui);
+                }
+
+                State::Mnemonic { mnemonic } => {
+                    Panel::new(self)
+                        .with_caption("Mnemonic Export")
+                        .with_body(|this, ui| {
+                            
+                            let mut mnemonic_presenter = MnemonicPresenter::new(mnemonic.as_str(), &mut this.context.mnemonic_presenter_context);
+                            ui.label("");
+                            mnemonic_presenter.render(ui, Some(i18n("Your private key mnemonic is:")));
+                            ui.label("");
+                                    
+                        })
+                        .with_footer(|this,ui| {
+                            if ui.large_button("Continue").clicked() {
+                                this.context.zeroize();
+                                this.state = State::Select;
+                                core.select::<modules::AccountManager>();
+                            }
+                        })
+                        .render(ui);
                 }
                 
-                State::Transportable => {
-                    ui.label("transportable goes here");
+                State::Transportable { data : _ } => {
+                    ui.label("Transportable export is not yet implemented");
                 }
 
             }

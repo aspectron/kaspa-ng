@@ -47,7 +47,7 @@ pub use workflow_log::*;
 pub use ahash::{AHashMap, AHashSet};
 pub use pad::{Alignment, PadStr};
 pub use slug::slugify;
-pub use zeroize::Zeroize;
+pub use zeroize::*;
 
 pub use egui::epaint::{
     text::{LayoutJob, TextFormat},

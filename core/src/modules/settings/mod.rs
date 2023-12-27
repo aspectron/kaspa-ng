@@ -403,6 +403,13 @@ impl Settings {
                                 ).on_hover_text_at_pointer(
                                     i18n("Removes security restrictions, allows for single-letter passwords")
                                 );
+                                
+                                ui.checkbox(
+                                    &mut self.settings.developer.market_monitor_on_testnet, 
+                                    i18n("Show balances in alternate currencies for testnet coins")
+                                ).on_hover_text_at_pointer(
+                                    i18n("Shows balances in alternate currencies (BTC, USD) when using testnet coins as if you are on mainnet")
+                                );
     
                                 #[cfg(not(target_arch = "wasm32"))]
                                 ui.checkbox(

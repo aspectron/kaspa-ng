@@ -8,11 +8,23 @@ use workflow_log::*;
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
-        #[tokio::main]
-        async fn main() {
+        fn main() {
 
-            if let Err(err) = kaspa_ng_main(None).await {
-                log_error!("Error: {err}");
+            kaspa_alloc::init_allocator_with_default_settings();
+
+            let body = async {
+                if let Err(err) = kaspa_ng_main(None).await {
+                    log_error!("Error: {err}");
+                }
+            };
+
+            #[allow(clippy::expect_used, clippy::diverging_sub_expression)]
+            {
+                return tokio::runtime::Builder::new_multi_thread()
+                    .enable_all()
+                    .build()
+                    .expect("Failed building the Runtime")
+                    .block_on(body);
             }
         }
 

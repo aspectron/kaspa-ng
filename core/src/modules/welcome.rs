@@ -44,9 +44,20 @@ impl ModuleT for Welcome {
                             ui.horizontal_wrapped(|ui| {
                                 Network::iter().for_each(|network| {
                                     ui.radio_value(&mut self.settings.node.network, *network, network.describe());
+
                                 });
                             });
-                    });
+
+                            match self.settings.node.network {
+                                Network::Mainnet => {
+                                    ui.colored_label(theme_color().warning_color, i18n("Please note that this is an alpha release. Until this message is removed, avoid using this software with mainnet funds."));
+                                },
+                                Network::Testnet11 => {
+                                    ui.colored_label(theme_color().warning_color, i18n("Testnet 11 is not yet enabled for public testing. You can, however, configure the node to connect to the private developer testnet in the Settings panel."));
+                                },
+                                _ => { }
+                            }
+                        });
                 
                 CollapsingHeader::new(i18n("Kaspa p2p Node & Connection"))
                     .default_open(true)
@@ -74,7 +85,6 @@ impl ModuleT for Welcome {
 
                             ui.label(i18n("Language:"));
 
-                            // let dict = i18n::dict();
                             let language_code = core.settings.language_code.clone();
                             let dictionary = i18n::dictionary();
                             let language = dictionary.language_title(language_code.as_str()).unwrap();//.unwrap();

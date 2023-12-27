@@ -129,7 +129,6 @@ cfg_if! {
         }
 
         pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
-
             use std::sync::Mutex;
 
             match try_set_fd_limit(DESIRED_DAEMON_SOFT_FD_LIMIT) {
@@ -181,7 +180,7 @@ cfg_if! {
 
                     workflow_log::set_colors_enabled(true);
 
-                    println!("kaspa-ng v{} (rusty-kaspa v{})", env!("CARGO_PKG_VERSION"), kaspa_wallet_core::version());
+                    println!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version());
 
                     // Log to stderr (if you run with `RUST_LOG=debug`).
                     env_logger::init();

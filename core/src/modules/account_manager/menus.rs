@@ -70,10 +70,12 @@ impl WalletMenu {
                     ui.separator();
                     ui.label("");
 
-                    if ui.medium_button(
-                        "Create New Wallet",
-                    ).clicked()
-                    {
+                    if ui.add_sized(theme_style().large_button_size,CompositeButton::opt_image_and_text(
+                        // Some(Composite::icon(LIST)),
+                        None,
+                        Some(i18n("Create New Wallet").into()),
+                        None,
+                    )).clicked() {
                         core.select::<modules::WalletCreate>();
                     }
                 });
@@ -155,9 +157,8 @@ impl AccountMenu {
                     ui.add_space(8.);
                     ui.separator();
                     ui.add_space(8.);
-                    if ui.add(CompositeButton::opt_image_and_text(
+                    if ui.add_sized(theme_style().large_button_size,CompositeButton::opt_image_and_text(
                         Some(Composite::icon(LIST)),
-                        // Composite::Icon(egui_phosphor::thin::LOCK_KEY_OPEN),
                         Some(i18n("Create New Account").into()),
                         None,
                     )).clicked() {
@@ -184,7 +185,7 @@ impl ToolsMenu {
     pub fn new() -> Self {
         Self { }
     }
-    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, _account_manager : &mut AccountManager, _rc : &RenderContext<'_>, max_height: f32) {
+    pub fn render(&mut self, core: &mut Core, ui : &mut Ui, _account_manager : &mut AccountManager, _rc : &RenderContext<'_>, max_height: f32) {
 
         PopupPanel::new(ui, "tools_popup",|ui|{ ui.add(Label::new(i18n("Tools ⏷")).sense(Sense::click())) }, |ui, _| {
 
@@ -193,32 +194,14 @@ impl ToolsMenu {
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 
-                    let _ = ui.button(i18n("Create Account"));
-                    let _ = ui.button(i18n("Import"));
-                    let _ = ui.button(i18n("Export"));
-                    // ui.button("Export");
-
-                    // if let Some(account_collection) = core.account_collection() {
-                    //     account_collection.iter().for_each(|account| {
-                    //         if ui
-                    //             .button(format!("Select {}\n{}", account.name_or_id(),account.balance().map(|balance|sompi_to_kaspa_string_with_suffix(balance.mature, network_type)).unwrap_or("N/A".to_string())))
-                    //             .clicked()
-                    //         {
-                    //             account_manager.state = AccountManagerState::Overview {
-                    //                 account: account.clone(),
-                    //             };
-                    //         }
-                    //     });
-
-                    //     ui.label("");
-                    //     ui.separator();
-                    //     ui.label("");
-                    //     use egui_phosphor::light::FOLDER_NOTCH_PLUS;
-                    //     if ui.medium_button(format!("{FOLDER_NOTCH_PLUS} Create New Account")).clicked() {
-                    //         core.select::<modules::AccountCreate>();
-                    //     }
-                    // }
-
+                    // let _ = ui.button(i18n("Create Account"));
+                    // let _ = ui.button(i18n("Import"));
+                    if ui.large_button(i18n("Export Wallet Data")).clicked() {
+                        core.select::<modules::Export>();
+                    }
+                    if ui.large_button(i18n("Address derivation scan")).clicked() {
+                        core.select::<modules::Scanner>();
+                    }
                 });
 
         })

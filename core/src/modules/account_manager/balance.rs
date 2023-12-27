@@ -13,8 +13,6 @@ impl<'context> BalancePane<'context> {
     
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, rc : &RenderContext<'_>) {
     
-
-        // let theme = theme();
         let RenderContext { account, network_type, .. } = rc;
 
         ui.add_space(10.);
@@ -33,18 +31,20 @@ impl<'context> BalancePane<'context> {
                 );
             }
 
-            if core.settings.market_monitor {
+            if core.settings.market_monitor && (core.settings.node.network == Network::Mainnet || core.settings.developer.market_monitor_on_testnet) {
                 if let Some(market) = core.market.as_ref() {
                     if let Some(price_list) = market.price.as_ref() {
                         let mut symbols = price_list.keys().collect::<Vec<_>>();
                         symbols.sort();
-                        symbols.into_iter().for_each(|symbol| {
-                            if let Some(data) = price_list.get(symbol) {
-                                let symbol = symbol.to_uppercase();
-                                let MarketData { price,  change : _, .. } = data;
-                                let text = format!("{:.8} {}", sompi_to_kaspa(balance.mature) * (*price), symbol.as_str());
-                                ui.label(RichText::new(text).font(FontId::proportional(16.)));
-                            }
+                        ui.horizontal(|ui| {
+                            symbols.into_iter().for_each(|symbol| {
+                                if let Some(data) = price_list.get(symbol) {
+                                    let symbol = symbol.to_uppercase();
+                                    let MarketData { price,  change : _, .. } = data;
+                                    let text = format!("{:.8} {}", sompi_to_kaspa(balance.mature) * (*price), symbol.as_str());
+                                    ui.label(RichText::new(text).font(FontId::proportional(16.)));
+                                }
+                            });
                         });
                     }
                 }

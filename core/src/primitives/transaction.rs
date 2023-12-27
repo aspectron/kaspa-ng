@@ -146,6 +146,9 @@ impl Transaction {
             .unwrap_or_else(|| format!("@{} DAA", record.block_daa_score().separated_string()));
         let block_daa_score = record.block_daa_score().separated_string();
         let transaction_id = record.id().to_string();
+        let transaction_binding = record.binding().to_hex();
+        let record_identifier =
+            format!("{}-{}", &transaction_binding[0..16], &transaction_id[0..16]);
 
         let default_color = theme_color().default_color;
         let strong_color = theme_color().strong_color;
@@ -173,16 +176,30 @@ impl Transaction {
                     job = job.icon(ARROW_CIRCLE_RIGHT, TransactionKind::Incoming.as_color());
                 }
 
-                if !maturity.unwrap_or(false) {
-                    let maturity_progress = current_daa_score.and_then(|current_daa_score| {
+                let maturity_progress = if !maturity.unwrap_or(false) {
+                    current_daa_score.and_then(|current_daa_score| {
                         record
                             .maturity_progress(current_daa_score)
                             .map(|progress| format!("{}% - ", (progress * 100.) as usize))
-                    });
+                    })
+                } else {
+                    None
+                };
 
-                    if let Some(maturity_progress) = maturity_progress {
-                        job = job.text(maturity_progress.as_str(), strong_color);
-                    }
+                // if !maturity.unwrap_or(false) {
+                //     let maturity_progress = current_daa_score.and_then(|current_daa_score| {
+                //         record
+                //             .maturity_progress(current_daa_score)
+                //             .map(|progress| format!("{}% - ", (progress * 100.) as usize))
+                //     });
+
+                //     if let Some(maturity_progress) = maturity_progress {
+                //         job = job.text(maturity_progress.as_str(), strong_color);
+                //     }
+                // }
+
+                if let Some(maturity_progress) = maturity_progress.as_ref() {
+                    job = job.text(maturity_progress.as_str(), strong_color);
                 }
 
                 job = job
@@ -225,11 +242,12 @@ impl Transaction {
                 // }, |ui| {
 
                 let mut collapsing_header = CollapsingHeader::new(job)
-                    .id_source(&transaction_id)
+                    .id_source(&record_identifier)
                     .icon(paint_header_icon)
                     .default_open(false);
 
-                if !maturity.unwrap_or(true) {
+                // if !maturity.unwrap_or(true) {
+                if maturity_progress.is_some() {
                     collapsing_header = collapsing_header.icon(|ui, _rect, response| {
                         Spinner::new().paint_at(ui, response.rect.expand(4.));
                     });
@@ -386,7 +404,7 @@ impl Transaction {
 
                 // })
                 let mut collapsing_header = CollapsingHeader::new(job)
-                    .id_source(&transaction_id)
+                    .id_source(&record_identifier)
                     .icon(paint_header_icon)
                     .default_open(false);
                 if !maturity.unwrap_or(true) {
@@ -506,7 +524,7 @@ impl Transaction {
                 );
 
                 let mut collapsing_header = CollapsingHeader::new(job)
-                    .id_source(&transaction_id)
+                    .id_source(&record_identifier)
                     .icon(paint_header_icon)
                     .default_open(false);
 
