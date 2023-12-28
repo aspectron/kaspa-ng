@@ -130,7 +130,6 @@ fn close_maximize_minimize(ui: &mut egui::Ui) {
     if close_response.clicked() {
         ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
     }
-    
 
     cfg_if! {
         if #[cfg(target_os = "macos")] {
@@ -143,47 +142,56 @@ fn close_maximize_minimize(ui: &mut egui::Ui) {
     }
 
     if support_fullscreen {
-
         ui.add_space(spacing);
 
         let is_fullscreen = ui.input(|i| i.viewport().fullscreen.unwrap_or(false));
         if is_fullscreen {
             let fullscreen_response = ui
                 // .add(Button::new(RichText::new("🗗").size(button_height)))
-                .add(Button::new(RichText::new(ARROWS_IN.to_string()).size(button_height)))
+                .add(Button::new(
+                    RichText::new(ARROWS_IN.to_string()).size(button_height),
+                ))
                 .on_hover_text("Exit Full Screen");
             if fullscreen_response.clicked() {
-                ui.ctx().send_viewport_cmd(ViewportCommand::Fullscreen(false));
+                ui.ctx()
+                    .send_viewport_cmd(ViewportCommand::Fullscreen(false));
             }
         } else {
             let fullscreen_response = ui
                 // .add(Button::new(RichText::new("🗗").size(button_height)))
-                .add(Button::new(RichText::new(ARROWS_OUT.to_string()).size(button_height)))
+                .add(Button::new(
+                    RichText::new(ARROWS_OUT.to_string()).size(button_height),
+                ))
                 // .add(Button::new(RichText::new(ARROWS_OUT.to_string()).size(button_height)))
                 .on_hover_text("Full Screen");
             if fullscreen_response.clicked() {
-                ui.ctx().send_viewport_cmd(ViewportCommand::Fullscreen(true));
+                ui.ctx()
+                    .send_viewport_cmd(ViewportCommand::Fullscreen(true));
             }
         }
     }
 
     if support_maximize {
-    
         ui.add_space(spacing);
 
         let is_maximized = ui.input(|i| i.viewport().maximized.unwrap_or(false));
         if is_maximized {
             let maximized_response = ui
                 // .add(Button::new(RichText::new("🗗").size(button_height)))
-                .add(Button::new(RichText::new(RECTANGLE.to_string()).size(button_height)))
+                .add(Button::new(
+                    RichText::new(RECTANGLE.to_string()).size(button_height),
+                ))
                 .on_hover_text("Restore window");
             if maximized_response.clicked() {
-                ui.ctx().send_viewport_cmd(ViewportCommand::Maximized(false));
+                ui.ctx()
+                    .send_viewport_cmd(ViewportCommand::Maximized(false));
             }
         } else {
             let maximized_response = ui
                 // .add(Button::new(RichText::new("🗗").size(button_height)))
-                .add(Button::new(RichText::new(SQUARE.to_string()).size(button_height)))
+                .add(Button::new(
+                    RichText::new(SQUARE.to_string()).size(button_height),
+                ))
                 // .add(Button::new(RichText::new(ARROWS_OUT.to_string()).size(button_height)))
                 .on_hover_text("Maximize window");
             if maximized_response.clicked() {
@@ -192,8 +200,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui) {
         }
     }
 
-
-    ui.add_space(spacing+2.0);
+    ui.add_space(spacing + 2.0);
 
     let minimized_response = ui
         .add(Button::new(RichText::new("🗕").size(button_height)))

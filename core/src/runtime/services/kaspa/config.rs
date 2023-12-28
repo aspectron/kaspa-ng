@@ -1,12 +1,18 @@
+use crate::app::{GIT_DESCRIBE, VERSION};
 use crate::imports::*;
-use kaspa_core::kaspad_env;
-use crate::app::{VERSION,GIT_DESCRIBE};
 use crate::utils::Arglist;
+use kaspa_core::kaspad_env;
 #[cfg(not(target_arch = "wasm32"))]
 pub use kaspad_lib::args::Args;
 
 fn user_agent_comment() -> String {
-    format!("/{}:{}/kaspa-ng:{}-{}/", kaspad_env::name(),kaspad_env::version(), VERSION, GIT_DESCRIBE)
+    format!(
+        "/{}:{}/kaspa-ng:{}-{}/",
+        kaspad_env::name(),
+        kaspad_env::version(),
+        VERSION,
+        GIT_DESCRIBE
+    )
 }
 
 #[derive(Debug, Clone)]
