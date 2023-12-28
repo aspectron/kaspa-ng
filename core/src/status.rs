@@ -118,10 +118,11 @@ impl<'core> Status<'core> {
         let status_area_width = ui.available_width() - 24.;
         let status_icon_size = theme_style().status_icon_size;
         let module = self.module().clone();
+        let left_padding = 8.0;
 
         match state {
             ConnectionStatus::Disconnected => {
-                ui.add_space(4.);
+                ui.add_space(left_padding);
 
                 match self.settings().node.node_kind {
                     KaspadNodeKind::Disable => {
@@ -195,7 +196,7 @@ impl<'core> Status<'core> {
                 peers,
                 tps: _,
             } => {
-                ui.add_space(4.);
+                ui.add_space(left_padding);
                 ui.label(
                     RichText::new(egui_phosphor::light::CPU)
                         .size(status_icon_size)
@@ -234,7 +235,7 @@ impl<'core> Status<'core> {
             ConnectionStatus::Syncing { sync_status, peers } => {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
-                        ui.add_space(4.);
+                        ui.add_space(left_padding);
                         ui.label(
                             RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN)
                                 .size(status_icon_size)

@@ -406,7 +406,10 @@ impl eframe::App for Core {
 
 impl Core {
     fn render_frame(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
-        window_frame(self.window_frame, ctx, "Kaspa NG", |ui| {
+
+        let is_fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
+
+        window_frame(self.window_frame && !is_fullscreen, ctx, "Kaspa NG", |ui| {
             if !self.settings.initialized {
                 cfg_if! {
                     if #[cfg(not(target_arch = "wasm32"))] {
@@ -523,6 +526,7 @@ impl Core {
         });
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn handle_screenshot(&mut self, ctx: &Context, screenshot: Arc<ColorImage>) {
         match rfd::FileDialog::new().save_file() {
             Some(mut path) => {

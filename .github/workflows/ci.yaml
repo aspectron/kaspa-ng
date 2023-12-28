@@ -10,7 +10,7 @@ jobs:
 
       - name: Install desktop dependencies
         run: |
-          sudo apt install -y librust-atk-dev
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
 
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -84,7 +84,6 @@ jobs:
 
           swap-storage: true
 
-
       - name: Install desktop dependencies
         run: |
           sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
@@ -134,6 +133,11 @@ jobs:
     name: Lints
     runs-on: ubuntu-latest
     steps:
+
+      - name: Install desktop dependencies
+        run: |
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
+
       - name: Checkout sources
         uses: actions/checkout@v3
 
@@ -201,7 +205,7 @@ jobs:
 
       - name: Install desktop dependencies
         run: |
-          sudo apt install -y librust-atk-dev
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
 
       - name: Install stable toolchain
         if: steps.install_llvm.outcome == 'success' && steps.install_llvm.conclusion == 'success'
@@ -262,7 +266,7 @@ jobs:
 
       - name: Install desktop dependencies
         run: |
-          sudo apt install -y librust-atk-dev
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
 
       - name: Install stable toolchain
         if: steps.install_llvm.outcome == 'success' && steps.install_llvm.conclusion == 'success'
@@ -306,6 +310,11 @@ jobs:
     name: Build Ubuntu Release
     runs-on: ubuntu-latest
     steps:
+
+      - name: Install desktop dependencies
+        run: |
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
+
       - name: Checkout sources
         uses: actions/checkout@v3
 

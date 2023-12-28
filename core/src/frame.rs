@@ -118,7 +118,8 @@ fn title_bar_ui(ui: &mut egui::Ui, title_bar_rect: eframe::epaint::Rect, title: 
 fn close_maximize_minimize(ui: &mut egui::Ui) {
     use egui_phosphor::light::*;
 
-    let button_height = 14.0;
+    let spacing = 8.0;
+    let button_height = 16.0;
 
     let close_response = ui
         .add(Button::new(
@@ -129,27 +130,75 @@ fn close_maximize_minimize(ui: &mut egui::Ui) {
     if close_response.clicked() {
         ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
     }
+    
 
-    let is_maximized = ui.input(|i| i.viewport().maximized.unwrap_or(false));
-    if is_maximized {
-        let maximized_response = ui
-            .add(Button::new(RichText::new("🗗").size(button_height)))
-            .on_hover_text("Restore window");
-        if maximized_response.clicked() {
-            ui.ctx()
-                .send_viewport_cmd(ViewportCommand::Maximized(false));
-        }
-    } else {
-        let maximized_response = ui
-            .add(Button::new(RichText::new("🗗").size(button_height)))
-            .on_hover_text("Maximize window");
-        if maximized_response.clicked() {
-            ui.ctx().send_viewport_cmd(ViewportCommand::Maximized(true));
+    cfg_if! {
+        if #[cfg(target_os = "macos")] {
+            let support_fullscreen = true;
+            let support_maximize = true;
+        } else {
+            let support_fullscreen = true;
+            let support_maximize = true;
         }
     }
 
+    if support_fullscreen {
+
+        ui.add_space(spacing);
+
+        let is_fullscreen = ui.input(|i| i.viewport().fullscreen.unwrap_or(false));
+        if is_fullscreen {
+            let fullscreen_response = ui
+                // .add(Button::new(RichText::new("🗗").size(button_height)))
+                .add(Button::new(RichText::new(ARROWS_IN.to_string()).size(button_height)))
+                .on_hover_text("Exit Full Screen");
+            if fullscreen_response.clicked() {
+                ui.ctx().send_viewport_cmd(ViewportCommand::Fullscreen(false));
+            }
+        } else {
+            let fullscreen_response = ui
+                // .add(Button::new(RichText::new("🗗").size(button_height)))
+                .add(Button::new(RichText::new(ARROWS_OUT.to_string()).size(button_height)))
+                // .add(Button::new(RichText::new(ARROWS_OUT.to_string()).size(button_height)))
+                .on_hover_text("Full Screen");
+            if fullscreen_response.clicked() {
+                ui.ctx().send_viewport_cmd(ViewportCommand::Fullscreen(true));
+            }
+        }
+    }
+
+    if support_maximize {
+    
+        ui.add_space(spacing);
+
+        let is_maximized = ui.input(|i| i.viewport().maximized.unwrap_or(false));
+        if is_maximized {
+            let maximized_response = ui
+                // .add(Button::new(RichText::new("🗗").size(button_height)))
+                .add(Button::new(RichText::new(RECTANGLE.to_string()).size(button_height)))
+                .on_hover_text("Restore window");
+            if maximized_response.clicked() {
+                ui.ctx().send_viewport_cmd(ViewportCommand::Maximized(false));
+            }
+        } else {
+            let maximized_response = ui
+                // .add(Button::new(RichText::new("🗗").size(button_height)))
+                .add(Button::new(RichText::new(SQUARE.to_string()).size(button_height)))
+                // .add(Button::new(RichText::new(ARROWS_OUT.to_string()).size(button_height)))
+                .on_hover_text("Maximize window");
+            if maximized_response.clicked() {
+                ui.ctx().send_viewport_cmd(ViewportCommand::Maximized(true));
+            }
+        }
+    }
+
+
+    ui.add_space(spacing+2.0);
+
     let minimized_response = ui
         .add(Button::new(RichText::new("🗕").size(button_height)))
+        // .add(Button::new(RichText::new(ARROW_SQUARE_DOWN.to_string()).size(button_height)))
+        // .add(Button::new(RichText::new(ARROW_LINE_DOWN.to_string()).size(button_height)))
         .on_hover_text("Minimize the window");
     if minimized_response.clicked() {
         ui.ctx().send_viewport_cmd(ViewportCommand::Minimized(true));

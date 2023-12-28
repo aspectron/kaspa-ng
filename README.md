@@ -21,7 +21,7 @@ In addition, on linux, you need to perform the following installs:
 
 #### Ubuntu/Debian:
 ```bash
-sudo apt-get install libglib2.0-dev libatk1.0-dev libgtk-3-dev
+sudo apt-get install libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
 ```
 
 #### Fedora:

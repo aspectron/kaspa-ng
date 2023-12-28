@@ -1,8 +1,13 @@
 use crate::imports::*;
+use kaspa_core::kaspad_env;
+use crate::app::{VERSION,GIT_DESCRIBE};
 use crate::utils::Arglist;
-
 #[cfg(not(target_arch = "wasm32"))]
 pub use kaspad_lib::args::Args;
+
+fn user_agent_comment() -> String {
+    format!("/{}:{}/kaspa-ng:{}-{}/", kaspad_env::name(),kaspad_env::version(), VERSION, GIT_DESCRIBE)
+}
 
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -56,6 +61,10 @@ cfg_if! {
                     args.rpclisten = Some(config.grpc_network_interface.into());
                 }
 
+                args.user_agent_comments = vec![user_agent_comment()];
+
+                // TODO - parse custom args and overlap on top of the defaults
+
                 Ok(args)
             }
         }
@@ -91,6 +100,8 @@ cfg_if! {
                 }
 
                 args.push("--rpclisten-borsh=default");
+
+                args.push(format!("--uacomment={}", user_agent_comment()));
 
                 if config.kaspad_daemon_args_enable {
                     config.kaspad_daemon_args.trim().split(' ').filter(|arg|!arg.trim().is_empty()).for_each(|arg| {
