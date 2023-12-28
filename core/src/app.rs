@@ -220,14 +220,25 @@ cfg_if! {
 
                     let runtime: Arc<Mutex<Option<runtime::Runtime>>> = Arc::new(Mutex::new(None));
                     let delegate = runtime.clone();
+
+                    let window_frame = true;
+
+                    let mut viewport = egui::ViewportBuilder::default()
+                        .with_resizable(true)
+                        .with_title(i18n("Kaspa NG"))
+                        .with_min_inner_size([400.0,320.0])
+                        .with_inner_size([1000.0,600.0])
+                        .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, FitTo::Size(256,256)));
+
+                    if window_frame {
+                        viewport = viewport
+                            .with_decorations(false)
+                            .with_transparent(true);
+                    }
+
                     let native_options = eframe::NativeOptions {
                         persist_window : true,
-                        viewport: egui::ViewportBuilder::default()
-                            .with_resizable(true)
-                            .with_title(i18n("Kaspa NG"))
-                            .with_min_inner_size([400.0,320.0])
-                            .with_inner_size([1000.0,600.0])
-                            .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, FitTo::Size(256,256))),
+                        viewport,
                         ..Default::default()
                     };
                     eframe::run_native(
@@ -239,7 +250,7 @@ cfg_if! {
                             runtime::signals::Signals::bind(&runtime);
                             runtime.start();
 
-                            Box::new(kaspa_ng_core::Core::new(cc, runtime, settings))
+                            Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, window_frame))
                         }),
                     )?;
 
@@ -307,7 +318,7 @@ cfg_if! {
                             &JsValue::from(adaptor),
                         ).expect("failed to set adaptor");
 
-                        Box::new(kaspa_ng_core::Core::new(cc, runtime, settings))
+                        Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, false))
                     }),
                 )
                 .await
