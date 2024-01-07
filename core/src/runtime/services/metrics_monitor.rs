@@ -42,20 +42,9 @@ impl MetricsService {
     }
 
     pub fn reset_metrics_data(&self) -> Result<()> {
-        let now = unixtime_as_millis_f64();
-        let mut template = Vec::with_capacity(MAX_METRICS_SAMPLES);
-        let mut plot_point = PlotPoint {
-            x: now - MAX_METRICS_SAMPLES as f64 * 1000.0,
-            y: 0.0,
-        };
-        while template.len() < MAX_METRICS_SAMPLES {
-            template.push(plot_point);
-            plot_point.x += 1000.0;
-        }
-
         let mut metrics_data = self.metrics_data.lock().unwrap();
         for metric in Metric::list().into_iter() {
-            metrics_data.insert(metric, template.clone());
+            metrics_data.insert(metric, Vec::with_capacity(MAX_METRICS_SAMPLES));
         }
         Ok(())
     }
@@ -65,6 +54,15 @@ impl MetricsService {
         let mut metrics_data = self.metrics_data.lock().unwrap();
         for metric in Metric::list().into_iter() {
             let dest = metrics_data.get_mut(&metric).unwrap();
+            if dest.is_empty() {
+                let y = snapshot.get(&metric);
+                let mut timestamp = timestamp - MAX_METRICS_SAMPLES as f64 * 1000.0;
+                for _ in 0..(MAX_METRICS_SAMPLES - 1) {
+                    dest.push(PlotPoint { x: timestamp, y });
+
+                    timestamp += 1000.0;
+                }
+            }
             if dest.len() > MAX_METRICS_SAMPLES {
                 dest.drain(0..dest.len() - MAX_METRICS_SAMPLES);
             }
