@@ -89,8 +89,8 @@ impl<'context> Processor<'context> {
                         self.context.priority_fees_sompi
                     } else { 0 };
 
-                    let wallet_secret = Secret::try_from(self.context.wallet_secret.clone()).expect("expecting wallet secret");
-                    let payment_secret = account.requires_bip39_passphrase(core).then_some(Secret::try_from(self.context.payment_secret.clone()).expect("expecting payment secret"));
+                    let wallet_secret = Secret::from(self.context.wallet_secret.clone());
+                    let payment_secret = account.requires_bip39_passphrase(core).then_some(Secret::from(self.context.payment_secret.clone()));
 
                     match self.context.transaction_kind.unwrap() {
                         TransactionKind::Send => {

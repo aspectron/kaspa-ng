@@ -24,7 +24,7 @@ impl Settings {
     pub fn load(&mut self, settings : crate::settings::Settings) {
         self.settings = settings;
 
-        self.grpc_network_interface = NetworkInterfaceEditor::try_from(&self.settings.node.grpc_network_interface).unwrap();
+        self.grpc_network_interface = NetworkInterfaceEditor::from(&self.settings.node.grpc_network_interface);
     }
 }
 
@@ -329,7 +329,7 @@ impl Settings {
                             },
                             Confirm::Nack => {
                                 self.settings = core.settings.clone();
-                                self.grpc_network_interface = NetworkInterfaceEditor::try_from(&self.settings.node.grpc_network_interface).unwrap();
+                                self.grpc_network_interface = NetworkInterfaceEditor::from(&self.settings.node.grpc_network_interface);
                             }
                         }
                     }

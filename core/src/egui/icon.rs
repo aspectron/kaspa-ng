@@ -1,5 +1,4 @@
 use crate::imports::*;
-pub use egui_phosphor::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IconSize {

@@ -30,7 +30,7 @@ impl Device {
     pub fn set_screen_size(&mut self, rect: &Rect) {
         let size = rect.size();
 
-        if size.x < size.y || size.x < 540.0 {
+        if size.x * 3. < size.y * 2. || size.x < 540.0 {
             self.orientation = Orientation::Portrait;
         } else {
             self.orientation = Orientation::Landscape;
