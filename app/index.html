@@ -9,6 +9,8 @@
     <!-- change this to your project name -->
     <title>Kaspa NG</title>
 
+    <script src="./services.js"></script>
+
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
     <link data-trunk rel="rust" data-wasm-opt="2" href="./Cargo.toml" />
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
@@ -18,6 +20,7 @@
     <link data-trunk rel="icon" href="../resources/icons/favicon.ico">
 
     <link data-trunk rel="copy-file" href="./pwa.js" />
+    <link data-trunk rel="copy-file" href="./services.js" />
     <link data-trunk rel="copy-file" href="./manifest.json" />
     <link data-trunk rel="copy-file" href="./../Servers.toml" />
 

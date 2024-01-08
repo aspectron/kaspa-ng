@@ -3,6 +3,7 @@ use crate::imports::*;
 mod qr;
 pub use qr::*;
 mod i18n;
+#[cfg(not(target_arch = "wasm32"))]
 pub use i18n::*;
 mod math;
 pub use math::*;
