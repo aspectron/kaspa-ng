@@ -92,8 +92,8 @@ impl DaaBucket {
 
     pub fn update(&mut self, settings: &BlockDagGraphSettings) {
         self.blocks
-            .sort_by(|a, b| a.src_y.partial_cmp(&b.src_y).unwrap());
-        // .sort_by(|a, b| a.dst_y.partial_cmp(&b.dst_y).unwrap());
+            // .sort_by(|a, b| a.src_y.partial_cmp(&b.src_y).unwrap());
+            .sort_by(|a, b| a.dst_y.partial_cmp(&b.dst_y).unwrap());
         let y_distance = settings.y_dist;
         let len = self.blocks.len();
         if let Some(mut vspc_idx) = self.blocks.iter().position(|block| block.vspc) {
@@ -130,10 +130,10 @@ impl DaaBucket {
                 block.dst_y = y;
             });
         } else {
-            let mut y = len as f64 * y_distance / 2.0;
+            let mut y = -(len as f64 * y_distance / 2.0);
             (0..len).for_each(|idx| {
                 let block = &mut self.blocks[idx];
-                y -= y_distance;
+                y += y_distance;
                 block.dst_y = y;
             });
         }

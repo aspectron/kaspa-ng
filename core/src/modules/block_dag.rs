@@ -202,7 +202,8 @@ impl ModuleT for BlockDag {
         let mut lines_parent = Vec::new();
         let mut lines_vspc = Vec::new();
 
-        let daa_margin = 10;
+        let daa_range = (self.plot_bounds.max()[0] - self.plot_bounds.min()[0]) * 0.4;
+        let daa_margin = daa_range as u64;
         let daa_min = self.plot_bounds.min()[0] as u64 - daa_margin;
         let daa_max = self.plot_bounds.max()[0] as u64 + daa_margin;
         
