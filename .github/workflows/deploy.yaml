@@ -49,20 +49,6 @@ jobs:
         if: runner.os == 'Linux'
         uses: goto-bus-stop/setup-zig@v2 # needed for cargo-zigbuild
 
-      - name: Build on Linux
-        if: runner.os == 'Linux'
-        # We're using musl to make the binaries statically linked and portable
-        run: |
-          cargo install cargo-zigbuild
-          cargo --verbose zigbuild --bin kaspa-ng --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
-          mkdir kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64 || true
-          cp target/x86_64-unknown-linux-gnu/release/kaspa-ng kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/
-          archive="kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64.zip"
-          asset_name="kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64.zip"
-          zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/*
-          echo "archive=${archive}" >> $GITHUB_ENV
-          echo "asset_name=${asset_name}" >> $GITHUB_ENV
-
       - name: Build on Windows
         if: runner.os == 'Windows'
         shell: bash
@@ -73,7 +59,7 @@ jobs:
           archive="kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/kaspa-ng-${{ github.event.release.tag_name }}-windows-x64.zip"
           asset_name="kaspa-ng-${{ github.event.release.tag_name }}-windows-x64.zip"
           powershell "Compress-Archive kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/* \"${archive}\""
-          echo "archive=${archive}" >> $GITHUB_ENV
+          echo "asset_path=${archive}" >> $GITHUB_ENV
           echo "asset_name=${asset_name}" >> $GITHUB_ENV
 
       - name: Build on MacOS
@@ -85,8 +71,35 @@ jobs:
           archive="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
           asset_name="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
           zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/*
+          echo "asset_path=${archive}" >> $GITHUB_ENV
+          echo "asset_name=${asset_name}" >> $GITHUB_ENV
+
+      - name: Build on Linux
+        if: runner.os == 'Linux'
+        run: |
+          cargo build --bin kaspa-ng --release
+          mkdir -p .debpkg/usr/bin
+          cp target/x86_64-unknown-linux-gnu/release/kaspa-ng .debpkg/usr/bin/
+          mkdir kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64 || true
+          cp target/x86_64-unknown-linux-gnu/release/kaspa-ng kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/
+          archive="kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64.zip"
+          asset_name="kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/*
           echo "archive=${archive}" >> $GITHUB_ENV
           echo "asset_name=${asset_name}" >> $GITHUB_ENV
+
+      - name: Create Linux Debian Package
+        if: runner.os == 'Linux'
+        id: package_debian
+        uses: jiro4989/build-deb-action@v3
+        with:
+          package: kaspa-ng
+          package_root: .debpkg
+          maintainer: ASPECTRON
+          version: ${{ github.ref }} # refs/tags/v*.*.*
+          arch: 'amd64'
+          depends: 'libglib2.0-0, libatk1.0-0, libgtk-3-0'
+          desc: 'Kaspa NG desktop p2p node and wallet'
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
@@ -94,151 +107,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: "./${{ env.archive }}"
+          asset_path: "./${{ env.asset_path }}"
           asset_name: "${{ env.asset_name }}"
           asset_content_type: application/zip
 
-  # build-macos-arm64:
-  #   runs-on: macos-latest-large
-  #   strategy:
-  #     fail-fast: false
-  #     # matrix:
-  #     #   # Build gnu-linux on ubuntu-18.04 and musl on ubuntu latest
-  #     #   # os: [ ubuntu-18.04, ubuntu-latest, windows-latest, macos-latest ]
-  #     #   os: [ ubuntu-latest, windows-latest, macos-latest ]
-  #   name: Building MacOS ARM64
-  #   steps:
-  #     - name: Fix CRLF on Windows
-  #       if: runner.os == 'Windows'
-  #       run: git config --global core.autocrlf false
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: "./${{ env.asset_path }}"
+          asset_name: "${{ env.asset_name }}"
+          asset_content_type: application/zip
 
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v3
+      - name: Upload debian package
+        if: runner.os == 'Linux'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: "./${{ steps.package_debian.outputs.file_name }}"
+          asset_name: "${{ steps.package_debian.outputs.file_name }}"
+          asset_content_type: application/vnd.debian.binary-package
 
-  #     # - name: Install Protoc
-  #     #   uses: arduino/setup-protoc@v1
-  #     #   with:
-  #     #     repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-  #     - name: Install stable toolchain
-  #       uses: dtolnay/rust-toolchain@stable
-
-  #     # - name: Cache
-  #     #   uses: actions/cache@v3
-  #     #   with:
-  #     #     path: |
-  #     #       ~/.cargo/bin/
-  #     #       ~/.cargo/registry/index/
-  #     #       ~/.cargo/registry/cache/
-  #     #       ~/.cargo/git/db/
-  #     #       target/
-  #     #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-  #     # - name: Install zig on linux
-  #     #   if: runner.os == 'Linux'
-  #     #   uses: goto-bus-stop/setup-zig@v2 # needed for cargo-zigbuild
-
-  #     - name: Build on MacOS
-  #       # if: runner.os == 'macOS'
-  #       run: |
-  #         cargo build --bin kaspa-ng --release
-  #         mkdir bin || true
-  #         cp target/release/kaspa-ng bin/
-  #         archive="bin/kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
-  #         asset_name="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
-  #         zip -r "${archive}" ./bin/*
-  #         echo "archive=${archive}" >> $GITHUB_ENV
-  #         echo "asset_name=${asset_name}" >> $GITHUB_ENV
-
-  #     - name: Upload release asset
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: ${{ github.event.release.upload_url }}
-  #         asset_path: "./${{ env.archive }}"
-  #         asset_name: "${{ env.asset_name }}"
-  #         asset_content_type: application/zip
-
-  # build-pwa:
-  #   runs-on: ubuntu-latest
-  #   name: Building Kaspa NG PWA
-  #   steps:
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v3
-
-  #     - name: Install Protoc
-  #       uses: arduino/setup-protoc@v1
-  #       with:
-  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-  #     - name: Install stable toolchain
-  #       uses: dtolnay/rust-toolchain@stable
-
-  #     - name: Install llvm
-  #       id: install_llvm
-  #       continue-on-error: true
-  #       run: |
-  #         wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-  #         sudo apt-get install -y clang-15 lldb-15 lld-15 clangd-15 clang-tidy-15 clang-format-15 clang-tools-15 llvm-15-dev lld-15 lldb-15 llvm-15-tools libomp-15-dev libc++-15-dev libc++abi-15-dev libclang-common-15-dev libclang-15-dev libclang-cpp15-dev libunwind-15-dev
-  #         # Make Clang 15 default
-  #         sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/lib/llvm-15/bin/clang++ 100
-  #         sudo update-alternatives --install /usr/bin/clang clang /usr/lib/llvm-15/bin/clang 100
-  #         sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/lib/llvm-15/bin/clang-format 100
-  #         sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/lib/llvm-15/bin/clang-tidy 100
-  #         sudo update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/lib/llvm-15/bin/run-clang-tidy 100
-  #         # Alias cc to clang
-  #         sudo update-alternatives --install /usr/bin/cc cc /usr/lib/llvm-15/bin/clang 0
-  #         sudo update-alternatives --install /usr/bin/c++ c++ /usr/lib/llvm-15/bin/clang++ 0
-
-  #     - name: Install gcc-multilib
-  #       # gcc-multilib allows clang to find gnu libraries properly
-  #       run: sudo apt install -y gcc-multilib
-
-  #     - name: Install stable toolchain
-  #       if: steps.install_llvm.outcome == 'success' && steps.install_llvm.conclusion == 'success'
-  #       uses: dtolnay/rust-toolchain@stable
-
-  #     - name: Install wasm-pack
-  #       run: cargo install wasm-pack
-
-  #     - name: Install trunk
-  #       run: cargo install trunk
-
-  #     - name: Add wasm32 target
-  #       run: rustup target add wasm32-unknown-unknown
-
-  #     - name: Cache
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           ~/.cargo/bin/
-  #           ~/.cargo/registry/index/
-  #           ~/.cargo/registry/cache/
-  #           ~/.cargo/git/db/
-  #           target/
-  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-  #     - name: Build PWA
-  #       run: |
-  #         trunk build
-  #         # cd wasm
-  #         # wasm-pack build --target nodejs --out-dir wasm32-nodejs-sdk/kaspa
-  #         # wasm-pack build --target web --out-dir wasm32-web-sdk/kaspa
-  #         # cd ..
-  #         mkdir release || true
-  #         archive_pwa="release/kaspa-ng-pwa-${{ github.event.release.tag_name }}.zip"
-  #         asset_name_pwa="kaspa-ng-pwa-${{ github.event.release.tag_name }}.zip"
-  #         zip -jr "${archive_pwa}" ./dist/*
-  #         echo "archive_web=${archive_pwa}" >> $GITHUB_ENV
-  #         echo "asset_name_pwa=${asset_name_pwa}" >> $GITHUB_ENV
-
-  #     - name: Upload PWA
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: ${{ github.event.release.upload_url }}
-  #         asset_path: "./${{ env.archive_pwa }}"
-  #         asset_name: "${{ env.asset_name_pwa }}"
-  #         asset_content_type: application/zip
