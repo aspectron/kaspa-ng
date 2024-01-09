@@ -82,6 +82,8 @@ egui-notify.workspace = true
 [dependencies.web-sys]
 workspace = true
 features = [
+    'Document',
+    'VisibilityState',
     'Window',
 ]
 
