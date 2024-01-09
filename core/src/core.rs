@@ -8,6 +8,7 @@ use kaspa_metrics_core::MetricsSnapshot;
 use kaspa_wallet_core::api::TransactionsDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint, PrvKeyDataInfo};
+use workflow_wasm::callback::CallbackMap;
 use std::borrow::Cow;
 #[allow(unused_imports)]
 use workflow_i18n::*;
@@ -50,6 +51,8 @@ pub struct Core {
     pub market: Option<Market>,
     pub servers: Arc<Vec<Server>>,
     pub debug: bool,
+
+    callback_map : CallbackMap,
 }
 
 impl Core {
@@ -182,6 +185,8 @@ impl Core {
             market: None,
             servers: parse_default_servers().clone(),
             debug: false,
+
+            callback_map: CallbackMap::default(),
         };
 
         modules.values().for_each(|module| {
@@ -190,6 +195,10 @@ impl Core {
 
         this.update_servers();
         this.wallet_update_list();
+
+        #[cfg(target_arch = "wasm32")] {
+            this.register_visibility_handler();
+        }
 
         this
     }
@@ -575,6 +584,7 @@ impl Core {
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
         match event {
+            Events::VisibilityChange(_state) =>  { }
             Events::ServerList { server_list } => {
                 self.servers = server_list;
             }
@@ -1069,4 +1079,36 @@ impl Core {
             Ok(())
         });
     }
+
+    pub fn register_visibility_handler(&self) {
+        use workflow_wasm::callback::*;
+        use workflow_dom::utils::document;
+
+        let block_dag_background_state = self.get::<modules::BlockDag>().background_state();
+
+        let sender = self.sender();
+        let callback = callback!(move || {
+            let visibility_state = document().visibility_state();
+            match visibility_state {
+                VisibilityState::Visible => {
+                    crate::runtime::runtime().block_dag_monitor_service().enable(None);
+                    
+                },
+                VisibilityState::Hidden => {
+                    if !block_dag_background_state.load(Ordering::SeqCst) {
+                        crate::runtime::runtime().block_dag_monitor_service().disable(None);
+                    }
+                },
+                _ => { } 
+            };
+            sender
+                .try_send(Events::VisibilityChange(visibility_state))
+                .unwrap();
+            runtime().egui_ctx().request_repaint();
+        });
+
+        document().set_onvisibilitychange(Some(callback.as_ref()));
+        self.callback_map.retain(callback).unwrap();
+    }
+
 }

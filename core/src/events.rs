@@ -8,6 +8,7 @@ pub type ApplicationEventsChannel = crate::runtime::channel::Channel<Events>;
 
 #[derive(Clone)]
 pub enum Events {
+    VisibilityChange(VisibilityState),
     VersionUpdate(Release),
     ThemeChange,
     StoreSettings,
