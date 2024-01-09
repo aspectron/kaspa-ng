@@ -7,6 +7,45 @@ use egui_plot::{
     // Corner
 };
 
+pub struct Preset {
+    name : &'static str,
+    daa_range : f64,
+    daa_offset : f64,
+    spread : f64,
+    block_scale : f64,
+}
+
+const PRESETS: &[Preset] = &[
+    Preset {
+        name : "Large (1 BPS)",
+        daa_range : 36.0,
+        daa_offset : 8.0,
+        spread : 10.0,
+        block_scale : 1.0,
+    },
+    Preset {
+        name : "Medium Wide",
+        daa_range : 80.0,
+        daa_offset : 8.0,
+        spread : 36.0,
+        block_scale : 1.0,
+    },
+    Preset {
+        name : "Medium Narrow",
+        daa_range : 90.0,
+        daa_offset : 12.0,
+        spread : 22.0,
+        block_scale : 1.2,
+    },
+    Preset {
+        name : "Small (10 BPS)",
+        daa_range : 180.0,
+        daa_offset : 16.0,
+        spread : 36.0,
+        block_scale : 1.4,
+    },
+];
+
 pub struct BlockDag {
     #[allow(dead_code)]
     runtime: Runtime,
@@ -16,11 +55,13 @@ pub struct BlockDag {
     plot_bounds : PlotBounds,
     bezier : bool,
     parent_levels : usize,
+    parent_threshold : usize,
     daa_offset : f64,
     daa_range : f64,
+    block_scale : f64,
     last_repaint : Instant,
     settings: BlockDagGraphSettings,
-    background : bool,
+    background : Arc<AtomicBool>,
 }
 
 impl BlockDag {
@@ -34,12 +75,23 @@ impl BlockDag {
             bezier : true, 
             daa_offset : 8.0,
             daa_range : 28.0,
+            block_scale : 1.0,
             last_repaint : Instant::now(),
             parent_levels : 1,
+            parent_threshold : 25,
             settings: BlockDagGraphSettings::default(),
-            background : false,
+            background : Arc::new(AtomicBool::new(false)),
         }
     }
+
+    pub fn background(&self) -> bool {
+        self.background.load(Ordering::SeqCst)
+    }
+
+    pub fn background_state(&self) -> Arc<AtomicBool> {
+        self.background.clone()
+    }
+
 }
 
 impl ModuleT for BlockDag {
@@ -76,33 +128,97 @@ impl ModuleT for BlockDag {
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 PopupPanel::new(ui, "block_dag_settings",|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
-                    ui.add(
-                        Slider::new(&mut self.daa_range, 1.0..=self.settings.graph_length_daa as f64)
-                            .clamp_to_range(true)
-                            .logarithmic(true)
-                            .text(i18n("DAA Range"))
-                    );
-                    ui.space();
-                    ui.add(
-                        Slider::new(&mut self.daa_offset, 1.0..=50.0)
-                            .clamp_to_range(true)
-                            .text(i18n("DAA Offset"))
-                            // .step_by(1.0)
-                    );
-                    ui.space();
-                    ui.add(
-                        Slider::new(&mut self.settings.y_dist, 1.0..=100.0)
-                            .clamp_to_range(true)
-                            .text(i18n("Spread"))
-                    );
-                    ui.space();
-                    ui.add(
-                        Slider::new(&mut self.parent_levels, 1..=50)
-                            .clamp_to_range(true)
-                            .text(i18n("Parent levels"))
-                            .step_by(1.0)
-                    );
-                    ui.space();
+
+                    // ui.horizontal(|ui|{
+                    //     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    //         ui.add_space(6.);
+                    //         ui.menu_button(RichText::new(format!("{} ⏷", i18n("Presets"))), |ui| {
+                    //             for preset in PRESETS {
+                    //                 if ui.button(i18n(preset.name)).clicked() {
+                    //                     self.daa_range = preset.daa_range;
+                    //                     self.daa_offset = preset.daa_offset;
+                    //                     self.settings.y_dist = preset.spread;
+                    //                     self.block_scale = preset.block_scale;
+                    //                     ui.close_menu();
+                    //                 }
+                    //             }
+                    //         });
+                    //     });
+                    // });
+
+                    CollapsingHeader::new(i18n("Dimensions"))
+                        .open(Some(true))
+                        // .default_open(true)
+                        .show(ui, |ui| {
+                            ui.space();
+
+                            egui::menu::bar(ui, |ui| {
+                                ui.menu_button(RichText::new(format!("{} ⏷", i18n("Presets"))), |ui| {
+                                    for preset in PRESETS {
+                                        if ui.button(i18n(preset.name)).clicked() {
+                                            self.daa_range = preset.daa_range;
+                                            self.daa_offset = preset.daa_offset;
+                                            self.settings.y_dist = preset.spread;
+                                            self.block_scale = preset.block_scale;
+                                            ui.close_menu();
+                                        }
+                                    }
+                                });
+                            });
+
+                            ui.space();
+                            ui.add(
+                                Slider::new(&mut self.daa_range, 1.0..=self.settings.graph_length_daa as f64)
+                                    .clamp_to_range(true)
+                                    .logarithmic(true)
+                                    .text(i18n("DAA Range"))
+                            );
+                            ui.space();
+                            ui.add(
+                                Slider::new(&mut self.daa_offset, 1.0..=50.0)
+                                    .clamp_to_range(true)
+                                    .text(i18n("DAA Offset"))
+                                    // .step_by(1.0)
+                            );
+                            ui.space();
+                            ui.add(
+                                Slider::new(&mut self.settings.y_dist, 1.0..=100.0)
+                                    .clamp_to_range(true)
+                                    .text(i18n("Spread"))
+                            );
+                            ui.space();
+                            ui.add(
+                                Slider::new(&mut self.block_scale, 0.1..=2.5)
+                                    .clamp_to_range(true)
+                                    .logarithmic(true)
+                                    .text(i18n("Block Scale"))
+                            );
+                            ui.space();
+                        });
+
+                    CollapsingHeader::new(i18n("Parents"))
+                        .open(Some(true))
+                        // .default_open(true)
+                        .show(ui, |ui| {
+
+                            ui.space();
+                            
+                            ui.add(
+                                Slider::new(&mut self.parent_levels, 1..=50)
+                                    .clamp_to_range(true)
+                                    .text(i18n("Levels"))
+                                    .step_by(1.0)
+                            );
+                            ui.space();
+                            ui.add(
+                                Slider::new(&mut self.parent_threshold, 50..=1000)
+                                    .clamp_to_range(true)
+                                    .logarithmic(true)
+                                    .text(i18n("Threshold"))
+                            );
+                            ui.space();
+                        });
+
                     ui.separator();
                     ui.space();
                     ui.horizontal_wrapped(|ui| {
@@ -116,7 +232,12 @@ impl ModuleT for BlockDag {
                         ui.space();
                         ui.checkbox(&mut self.bezier, i18n("Bezier Curves"));
                         ui.space();
-                        ui.checkbox(&mut self.background, i18n("Track in the background"));
+                        let background_flag = self.background.load(Ordering::SeqCst);
+                        let mut background_state = background_flag;
+                        ui.checkbox(&mut background_state, i18n("Track in the background"));
+                        if background_state != background_flag {
+                            self.background.store(background_state, Ordering::SeqCst);
+                        }
                     });
                 })
                 .with_min_width(240.)
@@ -202,8 +323,8 @@ impl ModuleT for BlockDag {
         let mut lines_parent = Vec::new();
         let mut lines_vspc = Vec::new();
 
-        let daa_range = (self.plot_bounds.max()[0] - self.plot_bounds.min()[0]) * 0.4;
-        let daa_margin = daa_range;
+        let daa_range = self.plot_bounds.max()[0] - self.plot_bounds.min()[0];
+        let daa_margin = daa_range.min(96.0).max(32.0);
         let daa_min = (self.plot_bounds.min()[0] - daa_margin).max(0.0) as u64;
         let daa_max = (self.plot_bounds.max()[0] + daa_margin).max(0.0) as u64;
         
@@ -241,9 +362,13 @@ impl ModuleT for BlockDag {
                 for parent_hash in parent_level.iter() {
                     if let Some(parent_point) = block_map.get(parent_hash) {
                         let (PlotPoint { x: parent_x, y: parent_y }, parent_vspc) = *parent_point;
+                        let x_len = (x - parent_x).abs();
+                        
+                        if x_len > self.parent_threshold as f64 {
+                            continue;
+                        }
+
                         let points = if self.bezier {
-                            // abs is not needed, but added just in case
-                            let x_len = (x - parent_x).abs();
                             // x dist is sufficient... (let's save some cycles)
                             let line_steps = (x_len * pixels_per_daa * 0.3) as usize;
                             bezier(x,y,parent_x,parent_y,line_steps,0.6) 
@@ -262,7 +387,7 @@ impl ModuleT for BlockDag {
                 }
             }
 
-            let d = 1.5;
+            let d = 1.5 * self.block_scale;
             let points: PlotPoints = [
                 [x+d*0.2, y+d],
                 [x-d*0.2, y+d],
@@ -323,7 +448,7 @@ impl ModuleT for BlockDag {
     }
 
     fn deactivate(&mut self, core: &mut Core) {
-        if !self.background {
+        if !self.background() {
             self.running = false;
             crate::runtime::runtime().block_dag_monitor_service().disable(core.state().current_daa_score());
         }
