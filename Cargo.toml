@@ -174,6 +174,7 @@ opt-level = 2
 # lto = true
 
 [profile.native-release]
+inherits = "release"
 opt-level = 3
 lto = true
 # strip = true
