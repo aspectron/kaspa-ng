@@ -1,3 +1,4 @@
+use crate::frame::window_frame;
 use crate::imports::*;
 use crate::market::*;
 use crate::mobile::MobileMenu;
@@ -51,7 +52,7 @@ pub struct Core {
     pub market: Option<Market>,
     pub servers: Arc<Vec<Server>>,
     pub debug: bool,
-
+    pub window_frame: bool,
     callback_map : CallbackMap,
 }
 
@@ -61,6 +62,7 @@ impl Core {
         cc: &eframe::CreationContext<'_>,
         runtime: crate::runtime::Runtime,
         mut settings: Settings,
+        window_frame: bool,
     ) -> Self {
         crate::fonts::init_fonts(cc);
         egui_extras::install_image_loaders(&cc.egui_ctx);
@@ -185,7 +187,7 @@ impl Core {
             market: None,
             servers: parse_default_servers().clone(),
             debug: false,
-
+            window_frame,
             callback_map: CallbackMap::default(),
         };
 
@@ -340,6 +342,10 @@ impl eframe::App for Core {
         println!("{}", i18n("bye!"));
     }
 
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
+        egui::Rgba::TRANSPARENT.to_array()
+    }
+
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
@@ -390,174 +396,182 @@ impl eframe::App for Core {
         ctx.set_visuals(current_visuals);
         // ---
 
-        // cfg_if! {
-        //     if #[cfg(target_arch = "wasm32")] {
-        //         visuals.interact_cursor = Some(CursorIcon::PointingHand);
-        //     }
-        // }
-
-        if !self.settings.initialized {
-            cfg_if! {
-                if #[cfg(not(target_arch = "wasm32"))] {
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        self.modules
-                        .get(&TypeId::of::<modules::Welcome>())
-                        .unwrap()
-                        .clone()
-                        .render(self, ctx, frame, ui);
-                    });
-
-                    return;
-                }
-            }
-        }
-
-        // let device = runtime().device();
-
         self.device_mut().set_screen_size(&ctx.screen_rect());
 
-        // if ctx.screen_rect().width() < ctx.screen_rect().height() || ctx.screen_rect().width() < 540.0 {
-        //     self.device.orientation = Orientation::Portrait;
-        // } else {
-        //     self.device.orientation = Orientation::Landscape;
-        // }
-        // device.enable_portrait_desired(ctx.screen_rect().width() < 540.0);
-
-        // if !self.module.modal() && !device.single_pane() {
-        if !self.module.modal() && !self.device.mobile() {
-            egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-                Menu::new(self).render(ui);
-                // self.render_menu(ui, frame);
-            });
-        }
-
-        if self.device.orientation() == Orientation::Portrait {
-            CentralPanel::default()
-                .frame(Frame::default().fill(ctx.style().visuals.panel_fill))
-                .show(ctx, |ui| {
-                    egui::TopBottomPanel::bottom("portrait_bottom_panel").show_inside(ui, |ui| {
-                        Status::new(self).render(ui);
-                    });
-
-                    if self.device.mobile() {
-                        egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(ui, |ui| {
-                            MobileMenu::new(self).render(ui);
-                        });
-                    }
-
-                    egui::CentralPanel::default().show_inside(ui, |ui| {
-                        self.module.clone().render(self, ctx, frame, ui);
-                    });
-                });
-        } else if self.device.single_pane() {
-            if !self.device.mobile() {
-                egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-                    Status::new(self).render(ui);
-                    egui::warn_if_debug_build(ui);
-                });
-            }
-
-            let device_width = 390.0;
-            let margin_width = (ctx.screen_rect().width() - device_width) * 0.5;
-
-            SidePanel::right("portrait_right")
-                .exact_width(margin_width)
-                .resizable(false)
-                .show_separator_line(true)
-                .frame(Frame::default().fill(Color32::BLACK))
-                .show(ctx, |_ui| {});
-            SidePanel::left("portrait_left")
-                .exact_width(margin_width)
-                .resizable(false)
-                .show_separator_line(true)
-                .frame(Frame::default().fill(Color32::BLACK))
-                .show(ctx, |_ui| {});
-
-            CentralPanel::default()
-                .frame(Frame::default().fill(ctx.style().visuals.panel_fill))
-                .show(ctx, |ui| {
-                    ui.set_max_width(device_width);
-
-                    egui::TopBottomPanel::bottom("mobile_bottom_panel").show_inside(ui, |ui| {
-                        Status::new(self).render(ui);
-                    });
-
-                    if self.device.mobile() {
-                        egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(ui, |ui| {
-                            MobileMenu::new(self).render(ui);
-                        });
-                    }
-
-                    egui::CentralPanel::default()
-                        .frame(
-                            Frame::default()
-                                .inner_margin(0.)
-                                .outer_margin(4.)
-                                .fill(ctx.style().visuals.panel_fill),
-                        )
-                        .show_inside(ui, |ui| {
-                            self.module.clone().render(self, ctx, frame, ui);
-                        });
-                });
-        } else {
-            egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-                Status::new(self).render(ui);
-                // self.render_status(ui);
-                egui::warn_if_debug_build(ui);
-            });
-
-            egui::CentralPanel::default().show(ctx, |ui| {
-                self.module.clone().render(self, ctx, frame, ui);
-            });
-        }
+        self.render_frame(ctx, frame);
 
         if let Some(module) = self.deactivation.take() {
             module.deactivate(self);
         }
 
         #[cfg(not(target_arch = "wasm32"))]
-        if let Some(screenshot) = self.screenshot.as_ref() {
-            match rfd::FileDialog::new().save_file() {
-                Some(mut path) => {
-                    path.set_extension("png");
-                    let screen_rect = ctx.screen_rect();
-                    let pixels_per_point = ctx.pixels_per_point();
-                    let screenshot = screenshot.clone();
-                    let sender = self.sender();
-                    std::thread::Builder::new()
-                        .name("screenshot".to_string())
-                        .spawn(move || {
-                            let image = screenshot.region(&screen_rect, Some(pixels_per_point));
-                            image::save_buffer(
-                                &path,
-                                image.as_raw(),
-                                image.width() as u32,
-                                image.height() as u32,
-                                image::ColorType::Rgba8,
-                            )
-                            .unwrap();
-
-                            sender
-                                .try_send(Events::Notify {
-                                    user_notification: UserNotification::success(format!(
-                                        "Capture saved to\n{}",
-                                        path.to_string_lossy()
-                                    )),
-                                })
-                                .unwrap()
-                        })
-                        .expect("Unable to spawn screenshot thread");
-                    self.screenshot.take();
-                }
-                None => {
-                    self.screenshot.take();
-                }
-            }
+        if let Some(screenshot) = self.screenshot.clone() {
+            self.handle_screenshot(ctx, screenshot);
         }
     }
 }
 
 impl Core {
+    fn render_frame(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
+        let is_fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
+
+        window_frame(self.window_frame && !is_fullscreen, ctx, "Kaspa NG", |ui| {
+            if !self.settings.initialized {
+                cfg_if! {
+                    if #[cfg(not(target_arch = "wasm32"))] {
+                        egui::CentralPanel::default().show_inside(ui, |ui| {
+                            self.modules
+                            .get(&TypeId::of::<modules::Welcome>())
+                            .unwrap()
+                            .clone()
+                            .render(self, ctx, frame, ui);
+                        });
+
+                        return;
+                    }
+                }
+            }
+
+            if !self.module.modal() && !self.device.mobile() {
+                egui::TopBottomPanel::top("top_panel").show_inside(ui, |ui| {
+                    Menu::new(self).render(ui);
+                    // self.render_menu(ui, frame);
+                });
+            }
+
+            if self.device.orientation() == Orientation::Portrait {
+                CentralPanel::default()
+                    .frame(Frame::default().fill(ctx.style().visuals.panel_fill))
+                    .show_inside(ui, |ui| {
+                        egui::TopBottomPanel::bottom("portrait_bottom_panel").show_inside(
+                            ui,
+                            |ui| {
+                                Status::new(self).render(ui);
+                            },
+                        );
+
+                        if self.device.mobile() {
+                            egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(
+                                ui,
+                                |ui| {
+                                    MobileMenu::new(self).render(ui);
+                                },
+                            );
+                        }
+
+                        egui::CentralPanel::default().show_inside(ui, |ui| {
+                            self.module.clone().render(self, ctx, frame, ui);
+                        });
+                    });
+            } else if self.device.single_pane() {
+                if !self.device.mobile() {
+                    egui::TopBottomPanel::bottom("bottom_panel").show_inside(ui, |ui| {
+                        Status::new(self).render(ui);
+                        egui::warn_if_debug_build(ui);
+                    });
+                }
+
+                let device_width = 390.0;
+                let margin_width = (ctx.screen_rect().width() - device_width) * 0.5;
+
+                SidePanel::right("portrait_right")
+                    .exact_width(margin_width)
+                    .resizable(false)
+                    .show_separator_line(true)
+                    .frame(Frame::default().fill(Color32::BLACK))
+                    .show_inside(ui, |_ui| {});
+                SidePanel::left("portrait_left")
+                    .exact_width(margin_width)
+                    .resizable(false)
+                    .show_separator_line(true)
+                    .frame(Frame::default().fill(Color32::BLACK))
+                    .show_inside(ui, |_ui| {});
+
+                CentralPanel::default()
+                    .frame(Frame::default().fill(ctx.style().visuals.panel_fill))
+                    .show_inside(ui, |ui| {
+                        ui.set_max_width(device_width);
+
+                        egui::TopBottomPanel::bottom("mobile_bottom_panel").show_inside(ui, |ui| {
+                            Status::new(self).render(ui);
+                        });
+
+                        if self.device.mobile() {
+                            egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(
+                                ui,
+                                |ui| {
+                                    MobileMenu::new(self).render(ui);
+                                },
+                            );
+                        }
+
+                        egui::CentralPanel::default()
+                            .frame(
+                                Frame::default()
+                                    .inner_margin(0.)
+                                    .outer_margin(4.)
+                                    .fill(ctx.style().visuals.panel_fill),
+                            )
+                            .show_inside(ui, |ui| {
+                                self.module.clone().render(self, ctx, frame, ui);
+                            });
+                    });
+            } else {
+                egui::TopBottomPanel::bottom("bottom_panel")
+                    // TODO - review margins
+                    .frame(Frame::default().rounding(4.).inner_margin(3.))
+                    .show_inside(ui, |ui| {
+                        Status::new(self).render(ui);
+                        egui::warn_if_debug_build(ui);
+                    });
+
+                egui::CentralPanel::default().show_inside(ui, |ui| {
+                    self.module.clone().render(self, ctx, frame, ui);
+                });
+            }
+        });
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn handle_screenshot(&mut self, ctx: &Context, screenshot: Arc<ColorImage>) {
+        match rfd::FileDialog::new().save_file() {
+            Some(mut path) => {
+                path.set_extension("png");
+                let screen_rect = ctx.screen_rect();
+                let pixels_per_point = ctx.pixels_per_point();
+                let screenshot = screenshot.clone();
+                let sender = self.sender();
+                std::thread::Builder::new()
+                    .name("screenshot".to_string())
+                    .spawn(move || {
+                        let image = screenshot.region(&screen_rect, Some(pixels_per_point));
+                        image::save_buffer(
+                            &path,
+                            image.as_raw(),
+                            image.width() as u32,
+                            image.height() as u32,
+                            image::ColorType::Rgba8,
+                        )
+                        .unwrap();
+
+                        sender
+                            .try_send(Events::Notify {
+                                user_notification: UserNotification::success(format!(
+                                    "Capture saved to\n{}",
+                                    path.to_string_lossy()
+                                )),
+                            })
+                            .unwrap()
+                    })
+                    .expect("Unable to spawn screenshot thread");
+                self.screenshot.take();
+            }
+            None => {
+                self.screenshot.take();
+            }
+        }
+    }
+
     fn _render_splash(&mut self, ui: &mut Ui) {
         let logo_rect = ui.ctx().screen_rect();
         let logo_size = logo_rect.size();

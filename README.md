@@ -17,6 +17,18 @@ With Kaspa-ng you can run a full node and a wallet on your desktop as well as co
 
 To build this project, you need to be able to build Rusty Kaspa. If you have not built Rusty Kaspa before, please follow the Rusty Kaspa [build instructions](https://github.com/kaspanet/rusty-kaspa/blob/master/README.md).
 
+In addition, on linux, you need to perform the following installs:
+
+#### Ubuntu/Debian:
+```bash
+sudo apt-get install libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
+```
+
+#### Fedora:
+```bash
+sudo dnf install glib2-devel atk-devel gtk3-devel
+```
+
 Once you have Rusty Kaspa built, you will be able to build and run this project as follows:
 
 #### Running as Native App

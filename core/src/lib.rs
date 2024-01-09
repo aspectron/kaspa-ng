@@ -13,6 +13,7 @@ pub mod egui;
 pub mod error;
 pub mod events;
 pub mod fonts;
+pub mod frame;
 pub mod imports;
 pub mod market;
 pub mod menu;

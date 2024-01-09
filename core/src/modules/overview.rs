@@ -37,22 +37,27 @@ impl ModuleT for Overview {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        let width = ui.available_width();
 
         if core.device().single_pane() {
             self.render_details(core, ui);
         } else {
-            SidePanel::left("overview_left").exact_width(width/2.).resizable(false).show_separator_line(true).show_inside(ui, |ui| {
-                egui::ScrollArea::vertical()
+            let width = ui.available_width();
+            
+            SidePanel::left("overview_left")
+                .exact_width(width*0.5)
+                .resizable(false)
+                .show_separator_line(true)
+                .show_inside(ui, |ui| {
+                    egui::ScrollArea::vertical()
                     .id_source("overview_metrics")
                     .auto_shrink([false; 2])
                     .show(ui, |ui| {
                         self.render_stats(core,ui);
                     });
-            });
+                });
 
             SidePanel::right("overview_right")
-                .exact_width(width/2.)
+                .exact_width(width*0.5)
                 .resizable(false)
                 .show_separator_line(false)
                 .show_inside(ui, |ui| {
@@ -87,7 +92,7 @@ impl Overview {
         let screen_rect = ui.ctx().screen_rect();
         let logo_size = vec2(648., 994.,) * 0.25;
         let left = screen_rect.width() - logo_size.x - 8.;
-        let top = 32.;
+        let top = if core.window_frame { 64. } else { 32. };
         let logo_rect = Rect::from_min_size(Pos2::new(left, top), logo_size);
 
         if screen_rect.width() > 768.0 && !core.device().single_pane() {
@@ -101,195 +106,195 @@ impl Overview {
             .paint_at(ui, logo_rect);
         }
 
-    egui::ScrollArea::vertical()
-        .id_source("overview_metrics")
-        .auto_shrink([false; 2])
-        .show(ui, |ui| {
+        egui::ScrollArea::vertical()
+            .id_source("overview_metrics")
+            .auto_shrink([false; 2])
+            .show(ui, |ui| {
 
-            if core.settings.market_monitor {
-                if let Some(market) = core.market.as_ref() {
+                if core.settings.market_monitor {
+                    if let Some(market) = core.market.as_ref() {
 
-                    CollapsingHeader::new(i18n("Market"))
-                        .default_open(true)
-                        .show(ui, |ui| {
+                        CollapsingHeader::new(i18n("Market"))
+                            .default_open(true)
+                            .show(ui, |ui| {
 
-                            if let Some(price_list) = market.price.as_ref() {
-                                let mut symbols = price_list.keys().collect::<Vec<_>>();
-                                symbols.sort();
-                                symbols.into_iter().for_each(|symbol| {
-                                    if let Some(data) = price_list.get(symbol) {
-                                        let symbol = symbol.to_uppercase();
-                                        CollapsingHeader::new(symbol.as_str())
-                                            .default_open(true)
-                                            .show(ui, |ui| {
-                                                Grid::new("market_price_info_grid")
-                                                    .num_columns(2)
-                                                    .spacing([16.0,4.0])
-                                                    .show(ui, |ui| {
-                                                        let MarketData { price, volume, change, market_cap , precision } = *data;
-                                                        ui.label(i18n("Price"));
-                                                        ui.colored_label(theme_color().market_default_color, RichText::new(format_currency_with_symbol(price, precision, symbol.as_str()))); // 
-                                                        ui.end_row();
+                                if let Some(price_list) = market.price.as_ref() {
+                                    let mut symbols = price_list.keys().collect::<Vec<_>>();
+                                    symbols.sort();
+                                    symbols.into_iter().for_each(|symbol| {
+                                        if let Some(data) = price_list.get(symbol) {
+                                            let symbol = symbol.to_uppercase();
+                                            CollapsingHeader::new(symbol.as_str())
+                                                .default_open(true)
+                                                .show(ui, |ui| {
+                                                    Grid::new("market_price_info_grid")
+                                                        .num_columns(2)
+                                                        .spacing([16.0,4.0])
+                                                        .show(ui, |ui| {
+                                                            let MarketData { price, volume, change, market_cap , precision } = *data;
+                                                            ui.label(i18n("Price"));
+                                                            ui.colored_label(theme_color().market_default_color, RichText::new(format_currency_with_symbol(price, precision, symbol.as_str()))); // 
+                                                            ui.end_row();
 
-                                                        ui.label(i18n("24h Change"));
-                                                        if change > 0. { 
-                                                            ui.colored_label(theme_color().market_up_color, RichText::new(format!("+{:.2}%  ",change)));
-                                                        } else { 
-                                                            ui.colored_label(theme_color().market_down_color, RichText::new(format!("{:.2}%  ",change)));
-                                                        };
-                                                        ui.end_row();
+                                                            ui.label(i18n("24h Change"));
+                                                            if change > 0. { 
+                                                                ui.colored_label(theme_color().market_up_color, RichText::new(format!("+{:.2}%  ",change)));
+                                                            } else { 
+                                                                ui.colored_label(theme_color().market_down_color, RichText::new(format!("{:.2}%  ",change)));
+                                                            };
+                                                            ui.end_row();
 
-                                                        ui.label(i18n("Volume"));
-                                                        ui.colored_label(theme_color().market_default_color, RichText::new(format!("{} {}",volume.trunc().separated_string(),symbol.to_uppercase())));
-                                                        ui.end_row();
+                                                            ui.label(i18n("Volume"));
+                                                            ui.colored_label(theme_color().market_default_color, RichText::new(format!("{} {}",volume.trunc().separated_string(),symbol.to_uppercase())));
+                                                            ui.end_row();
 
-                                                        ui.label(i18n("Market Cap"));
-                                                        ui.colored_label(theme_color().market_default_color, RichText::new(format!("{} {}",market_cap.trunc().separated_string(),symbol.to_uppercase())));
-                                                        ui.end_row();
-                                                    });
+                                                            ui.label(i18n("Market Cap"));
+                                                            ui.colored_label(theme_color().market_default_color, RichText::new(format!("{} {}",market_cap.trunc().separated_string(),symbol.to_uppercase())));
+                                                            ui.end_row();
+                                                        });
 
-                                            });
-                                    }
-                                })
-                            }
-                        });
+                                                });
+                                        }
+                                    })
+                                }
+                            });
+                        }
+                    }
+
+                CollapsingHeader::new(i18n("Resources"))
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        // egui::special_emojis
+                        // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
+                        ui.hyperlink_to_tab(
+                            format!("• {}",i18n("Kaspa NG on GitHub")),
+                            "https://github.com/aspectron/kaspa-ng"
+                        );
+                        ui.hyperlink_to_tab(
+                            format!("• {}",i18n("Rusty Kaspa on GitHub")),
+                            "https://github.com/kaspanet/rusty-kaspa",
+                        );
+                        ui.hyperlink_to_tab(
+                            format!("• {}",i18n("NPM Modules for NodeJS")),
+                            "https://www.npmjs.com/package/kaspa",
+                        );
+                        ui.hyperlink_to_tab(
+                            format!("• {}",i18n("WASM SDK for JavaScript and TypeScript")),
+                            "https://github.com/kaspanet/rusty-kaspa/wasm",
+                        );
+                        ui.hyperlink_to_tab(
+                            format!("• {}",i18n("Rust Wallet SDK")),
+                            "https://docs.rs/kaspa-wallet-core/",
+                        );
+                        ui.hyperlink_to_tab(
+                            format!("• {}",i18n("Kaspa Discord")),
+                            "https://discord.com/invite/kS3SK5F36R",
+                        );
+                    });
+
+                if let Some(release) = core.release.as_ref() {
+                    if is_wasm() || release.version == crate::app::VERSION {
+                        CollapsingHeader::new(i18n("Redistributables"))
+                            .id_source("redistributables")
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                release.assets.iter().for_each(|asset| {
+                                    Hyperlink::from_label_and_url(
+                                        format!("• {}", asset.name),
+                                        asset.browser_download_url.clone(),
+                                    ).open_in_new_tab(true).ui(ui);
+                                });
+                            });
+                    } else {
+                        CollapsingHeader::new(RichText::new(format!("{} {}",i18n("Update Available to version"), release.version)).color(theme_color().warning_color).strong())
+                            .id_source("redistributables-update")
+                            .default_open(true)
+                            .show(ui, |ui| {
+
+                                if let Some(html_url) = &release.html_url {
+                                    Hyperlink::from_label_and_url(
+                                        format!("• {} {}", i18n("GitHub Release"), release.version),
+                                        html_url,
+                                    ).open_in_new_tab(true).ui(ui);
+                                }
+
+                                release.assets.iter().for_each(|asset| {
+                                    Hyperlink::from_label_and_url(
+                                        format!("• {}", asset.name),
+                                        asset.browser_download_url.clone(),
+                                    ).open_in_new_tab(true).ui(ui);
+                                });
+
+                            });
+
                     }
                 }
 
-            CollapsingHeader::new(i18n("Resources"))
-                .default_open(true)
-                .show(ui, |ui| {
-                    // egui::special_emojis
-                    // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
-                    ui.hyperlink_to_tab(
-                        format!("• {}",i18n("Kaspa NG on GitHub")),
-                        "https://github.com/aspectron/kaspa-ng"
-                    );
-                    ui.hyperlink_to_tab(
-                        format!("• {}",i18n("Rusty Kaspa on GitHub")),
-                        "https://github.com/kaspanet/rusty-kaspa",
-                    );
-                    ui.hyperlink_to_tab(
-                        format!("• {}",i18n("NPM Modules for NodeJS")),
-                        "https://www.npmjs.com/package/kaspa",
-                    );
-                    ui.hyperlink_to_tab(
-                        format!("• {}",i18n("WASM SDK for JavaScript and TypeScript")),
-                        "https://github.com/kaspanet/rusty-kaspa/wasm",
-                    );
-                    ui.hyperlink_to_tab(
-                        format!("• {}",i18n("Rust Wallet SDK")),
-                        "https://docs.rs/kaspa-wallet-core/",
-                    );
-                    ui.hyperlink_to_tab(
-                        format!("• {}",i18n("Kaspa Discord")),
-                        "https://discord.com/invite/kS3SK5F36R",
-                    );
-                });
-
-            if let Some(release) = core.release.as_ref() {
-                if is_wasm() || release.version == crate::app::VERSION {
-                    CollapsingHeader::new(i18n("Redistributables"))
-                        .id_source("redistributables")
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            release.assets.iter().for_each(|asset| {
-                                Hyperlink::from_label_and_url(
-                                    format!("• {}", asset.name),
-                                    asset.browser_download_url.clone(),
-                                ).open_in_new_tab(true).ui(ui);
-                            });
-                        });
-                } else {
-                    CollapsingHeader::new(RichText::new(format!("{} {}",i18n("Update Available to version"), release.version)).color(theme_color().warning_color).strong())
-                        .id_source("redistributables-update")
-                        .default_open(true)
-                        .show(ui, |ui| {
-
-                            if let Some(html_url) = &release.html_url {
-                                Hyperlink::from_label_and_url(
-                                    format!("• {} {}", i18n("GitHub Release"), release.version),
-                                    html_url,
-                                ).open_in_new_tab(true).ui(ui);
-                            }
-
-                            release.assets.iter().for_each(|asset| {
-                                Hyperlink::from_label_and_url(
-                                    format!("• {}", asset.name),
-                                    asset.browser_download_url.clone(),
-                                ).open_in_new_tab(true).ui(ui);
-                            });
-
-                        });
-
-                }
-            }
-
-            CollapsingHeader::new(i18n("Build"))
-                .default_open(true)
-                .show(ui, |ui| {
-                    ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version()));
-                    ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
-                    ui.label(format!("rustc {}-{} {}  llvm {}", 
-                        crate::app::RUSTC_SEMVER,
-                        crate::app::RUSTC_COMMIT_HASH.chars().take(8).collect::<String>(),
-                        crate::app::RUSTC_CHANNEL,
-                        crate::app::RUSTC_LLVM_VERSION,
-                    ));
-                    ui.label(format!("architecture {}", 
-                        crate::app::CARGO_TARGET_TRIPLE
-                    ));
-                });
-
-            if let Some(system) = runtime().system() {
-                system.render(ui);
-            }
-    
-            CollapsingHeader::new(i18n("License Information"))
-                .default_open(false)
-                .show(ui, |ui| {
-                    ui.vertical(|ui|{
-                        ui.label("Rusty Kaspa");
-                        ui.label("Copyright (c) 2023 Kaspa Developers");
-                        ui.label("License: ISC");
-                        ui.hyperlink_url_to_tab("https://github.com/kaspanet/rusty-kaspa");
-                        ui.label("");
-                        ui.label("Kaspa NG");
-                        ui.label("Copyright (c) 2023 ASPECTRON");
-                        ui.label("Restricted MIT or Apache 2.0 License");
-                        ui.hyperlink_url_to_tab("https://github.com/aspectron/kaspa-ng");
-                        ui.label("");
-                        ui.label("WORKFLOW-RS");
-                        ui.label("Copyright (c) 2023 ASPECTRON");
-                        ui.label("License: MIT or Apache 2.0");
-                        ui.hyperlink_url_to_tab("https://github.com/workflow-rs/workflow-rs");
-                        ui.label("");
-                        ui.label("EGUI");
-                        ui.label("Copyright (c) 2023 Rerun");
-                        ui.label("License: MIT or Apache 2.0");
-                        ui.hyperlink_url_to_tab("https://github.com/emilk/egui");
-                        ui.label("");
-                        ui.label("PHOSPHOR ICONS");
-                        ui.label("Copyright (c) 2023 ");
-                        ui.label("License: MIT");
-                        ui.hyperlink_url_to_tab("https://phosphoricons.com/");
-                        ui.label("");
-                        ui.label("Illustration Art");
-                        ui.label("Copyright (c) 2023 Rhubarb Media");
-                        ui.label("License: CC BY 4.0");
-                        ui.hyperlink_url_to_tab("https://rhubarbmedia.ca/");
-                        ui.label("");
-                    });
-                });
-
-                CollapsingHeader::new(i18n("Donations"))
+                CollapsingHeader::new(i18n("Build"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        if ui.link(i18n("Supporting Kaspa NG development")).clicked() {
-                            core.select::<modules::Donations>();
-                        }
+                        ui.label(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version()));
+                        ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
+                        ui.label(format!("rustc {}-{} {}  llvm {}", 
+                            crate::app::RUSTC_SEMVER,
+                            crate::app::RUSTC_COMMIT_HASH.chars().take(8).collect::<String>(),
+                            crate::app::RUSTC_CHANNEL,
+                            crate::app::RUSTC_LLVM_VERSION,
+                        ));
+                        ui.label(format!("architecture {}", 
+                            crate::app::CARGO_TARGET_TRIPLE
+                        ));
                     });
-        });
+
+                if let Some(system) = runtime().system() {
+                    system.render(ui);
+                }
+        
+                CollapsingHeader::new(i18n("License Information"))
+                    .default_open(false)
+                    .show(ui, |ui| {
+                        ui.vertical(|ui|{
+                            ui.label("Rusty Kaspa");
+                            ui.label("Copyright (c) 2023 Kaspa Developers");
+                            ui.label("License: ISC");
+                            ui.hyperlink_url_to_tab("https://github.com/kaspanet/rusty-kaspa");
+                            ui.label("");
+                            ui.label("Kaspa NG");
+                            ui.label("Copyright (c) 2023 ASPECTRON");
+                            ui.label("Restricted MIT or Apache 2.0 License");
+                            ui.hyperlink_url_to_tab("https://github.com/aspectron/kaspa-ng");
+                            ui.label("");
+                            ui.label("WORKFLOW-RS");
+                            ui.label("Copyright (c) 2023 ASPECTRON");
+                            ui.label("License: MIT or Apache 2.0");
+                            ui.hyperlink_url_to_tab("https://github.com/workflow-rs/workflow-rs");
+                            ui.label("");
+                            ui.label("EGUI");
+                            ui.label("Copyright (c) 2023 Rerun");
+                            ui.label("License: MIT or Apache 2.0");
+                            ui.hyperlink_url_to_tab("https://github.com/emilk/egui");
+                            ui.label("");
+                            ui.label("PHOSPHOR ICONS");
+                            ui.label("Copyright (c) 2023 ");
+                            ui.label("License: MIT");
+                            ui.hyperlink_url_to_tab("https://phosphoricons.com/");
+                            ui.label("");
+                            ui.label("Illustration Art");
+                            ui.label("Copyright (c) 2023 Rhubarb Media");
+                            ui.label("License: CC BY 4.0");
+                            ui.hyperlink_url_to_tab("https://rhubarbmedia.ca/");
+                            ui.label("");
+                        });
+                    });
+
+                    CollapsingHeader::new(i18n("Donations"))
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            if ui.link(i18n("Supporting Kaspa NG development")).clicked() {
+                                core.select::<modules::Donations>();
+                            }
+                        });
+            });
     }
 
     fn render_graphs(&mut self, core: &mut Core, ui : &mut Ui) {
