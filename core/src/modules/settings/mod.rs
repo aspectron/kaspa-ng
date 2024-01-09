@@ -57,49 +57,32 @@ impl ModuleT for Settings {
 
 impl Settings {
 
-    fn render_settings(
+    fn render_node_settings(
         &mut self,
         core: &mut Core,
         ui: &mut egui::Ui,
     ) {
-
-        // let theme = theme();
-
-        // - wRPC JSON, wRPC BORSH, gRPC
-        // - PUBLIC RPC LISTEN !
-        // - MAINNET, TESTNET-10, TESTNET-11
-        // - CUSTOM RPC PORTS
-        // - EXTERNAL IP
-        // -
-        // ---
-        // - pub connect_peers: Vec<ContextualNetAddress>,
-        // - pub add_peers: Vec<ContextualNetAddress>,
-        // - pub outbound_target: usize,
-        // - pub inbound_limit: usize,
-        // - pub rpc_max_clients: usize, gRPC
-        // - pub enable_unsynced_mining: bool,
-        // - pub enable_mainnet_mining: bool,
-        // - pub perf_metrics: bool,
-        // - pub perf_metrics_interval_sec: u64,
-
         #[allow(unused_variables)]
         let half_width = ui.ctx().screen_rect().width() * 0.5;
+
         let mut node_settings_error = None;
 
         CollapsingHeader::new("Kaspa p2p Network & Node Connection")
             .default_open(true)
             .show(ui, |ui| {
 
-                CollapsingHeader::new("Kaspa Network")
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        ui.horizontal_wrapped(|ui|{
-                            Network::iter().for_each(|network| {
-                                ui.radio_value(&mut self.settings.node.network, *network, network.to_string());
+                // if !disable_node_settings {
+                    CollapsingHeader::new("Kaspa Network")
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            ui.horizontal_wrapped(|ui|{
+                                Network::iter().for_each(|network| {
+                                    ui.radio_value(&mut self.settings.node.network, *network, network.to_string());
+                                });
                             });
                         });
-                    });
 
+                
                 CollapsingHeader::new("Kaspa Node")
                     .default_open(true)
                     .show(ui, |ui| {
@@ -337,144 +320,158 @@ impl Settings {
                 }
             }
 
-            CollapsingHeader::new(i18n("Centralized Services"))
-                .default_open(true)
-                .show(ui, |ui| {
 
-                    CollapsingHeader::new(i18n("Market Monitor"))
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            if ui.checkbox(&mut self.settings.market_monitor, i18n("Enable Market Monitor")).changed() {
-                                core.settings.market_monitor = self.settings.market_monitor;
-                                self.runtime.market_monitor_service().enable(core.settings.market_monitor);
-                                core.store_settings();
-                            }
-                        });
+    }
 
-                    #[cfg(not(target_arch = "wasm32"))]
-                    CollapsingHeader::new(i18n("Check for Updates"))
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            if ui.checkbox(&mut self.settings.update_monitor, i18n("Check for Software Updates via GitHub")).changed() {
-                                core.settings.update_monitor = self.settings.update_monitor;
-                                self.runtime.update_monitor_service().enable(core.settings.update_monitor);
-                                core.store_settings();
-                            }
-                        });    
-                });
 
-            CollapsingHeader::new(i18n("Advanced"))
-                .default_open(false)
-                .show(ui, |ui| {
+    fn render_settings(
+        &mut self,
+        core: &mut Core,
+        ui: &mut egui::Ui,
+    ) {
 
-                    ui.horizontal(|ui| {
-                        ui.add_space(2.);
-                        ui.vertical(|ui|{
-                            ui.checkbox(&mut self.settings.developer.enable, i18n("Developer Mode"));
-                            if !self.settings.developer.enable {
-                                ui.label(i18n("Developer mode enables advanced and experimental features"));
-                            }
-                        });
+        if !core.settings.disable_node_settings {
+            self.render_node_settings(core,ui);
+        }
+
+        CollapsingHeader::new(i18n("Centralized Services"))
+            .default_open(true)
+            .show(ui, |ui| {
+
+                CollapsingHeader::new(i18n("Market Monitor"))
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        if ui.checkbox(&mut self.settings.market_monitor, i18n("Enable Market Monitor")).changed() {
+                            core.settings.market_monitor = self.settings.market_monitor;
+                            self.runtime.market_monitor_service().enable(core.settings.market_monitor);
+                            core.store_settings();
+                        }
                     });
 
-                    if self.settings.developer.enable {
-                        ui.indent("developer_mode_settings", |ui | {
-
-                            // ui.vertical(|ui|{
-                                #[cfg(not(target_arch = "wasm32"))]
-                                ui.checkbox(
-                                    &mut self.settings.developer.enable_experimental_features, 
-                                    i18n("Enable experimental features")
-                                ).on_hover_text_at_pointer(
-                                    i18n("Enables features currently in development")
-                                );
-                                
-                                #[cfg(not(target_arch = "wasm32"))]
-                                ui.checkbox(
-                                    &mut self.settings.developer.enable_custom_daemon_args, 
-                                    i18n("Enable custom daemon arguments")
-                                ).on_hover_text_at_pointer(
-                                    i18n("Allow custom arguments for the Rusty Kaspa daemon")
-                                );
-                                
-                                ui.checkbox(
-                                    &mut self.settings.developer.disable_password_restrictions, 
-                                    i18n("Disable password score restrictions")
-                                ).on_hover_text_at_pointer(
-                                    i18n("Removes security restrictions, allows for single-letter passwords")
-                                );
-                                
-                                ui.checkbox(
-                                    &mut self.settings.developer.market_monitor_on_testnet, 
-                                    i18n("Show balances in alternate currencies for testnet coins")
-                                ).on_hover_text_at_pointer(
-                                    i18n("Shows balances in alternate currencies (BTC, USD) when using testnet coins as if you are on mainnet")
-                                );
-    
-                                #[cfg(not(target_arch = "wasm32"))]
-                                ui.checkbox(
-                                    &mut self.settings.developer.enable_screen_capture, 
-                                    i18n("Enable screen capture")
-                                ).on_hover_text_at_pointer(
-                                    i18n("Allows you to take screenshots from within the application")
-                                );
-                            // });
-                        });
-                    }
-
-                    if self.settings.developer != core.settings.developer {
-                        ui.add_space(16.);
-                        if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
-                            match response {
-                                Confirm::Ack => {
-                                    core.settings.developer = self.settings.developer.clone();
-                                    core.settings.store_sync().unwrap();
-                                },
-                                Confirm::Nack => {
-                                    self.settings.developer = core.settings.developer.clone();
-                                }
-                            }
+                #[cfg(not(target_arch = "wasm32"))]
+                CollapsingHeader::new(i18n("Check for Updates"))
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        if ui.checkbox(&mut self.settings.update_monitor, i18n("Check for Software Updates via GitHub")).changed() {
+                            core.settings.update_monitor = self.settings.update_monitor;
+                            self.runtime.update_monitor_service().enable(core.settings.update_monitor);
+                            core.store_settings();
                         }
-                        ui.separator();
-                    }
+                    });    
+            });
 
-                    if !self.reset_settings {
-                        ui.vertical(|ui|{
-                            if self.settings.developer == core.settings.developer {
-                                ui.set_max_width(340.);
-                                ui.separator();
-                            }
-                            if ui.medium_button(i18n("Reset Settings")).clicked() {
-                                self.reset_settings = true;
-                            }
-                        });
-                    } else {
-                        ui.add_space(16.);
-                        ui.label(RichText::new(i18n("Are you sure you want to reset all settings?")).color(theme_color().warning_color));
-                        ui.add_space(16.);
-                        if let Some(response) = ui.confirm_medium_apply_cancel(Align::Min) {
-                            match response {
-                                Confirm::Ack => {
-                                    let settings = crate::settings::Settings {
-                                        initialized : true,
-                                        ..Default::default()
-                                    };
-                                    self.settings = settings.clone();
-                                    settings.store_sync().unwrap();
-                                    #[cfg(target_arch = "wasm32")]
-                                    workflow_dom::utils::window().location().reload().ok();
-                                },
-                                Confirm::Nack => {
-                                    self.reset_settings = false;
-                                }
-                            }
+        CollapsingHeader::new(i18n("Advanced"))
+            .default_open(false)
+            .show(ui, |ui| {
+
+                ui.horizontal(|ui| {
+                    ui.add_space(2.);
+                    ui.vertical(|ui|{
+                        ui.checkbox(&mut self.settings.developer.enable, i18n("Developer Mode"));
+                        if !self.settings.developer.enable {
+                            ui.label(i18n("Developer mode enables advanced and experimental features"));
                         }
-                        ui.separator();
-                    }
-
-
-
+                    });
                 });
+
+                if self.settings.developer.enable {
+                    ui.indent("developer_mode_settings", |ui | {
+
+                        // ui.vertical(|ui|{
+                            #[cfg(not(target_arch = "wasm32"))]
+                            ui.checkbox(
+                                &mut self.settings.developer.enable_experimental_features, 
+                                i18n("Enable experimental features")
+                            ).on_hover_text_at_pointer(
+                                i18n("Enables features currently in development")
+                            );
+                            
+                            #[cfg(not(target_arch = "wasm32"))]
+                            ui.checkbox(
+                                &mut self.settings.developer.enable_custom_daemon_args, 
+                                i18n("Enable custom daemon arguments")
+                            ).on_hover_text_at_pointer(
+                                i18n("Allow custom arguments for the Rusty Kaspa daemon")
+                            );
+                            
+                            ui.checkbox(
+                                &mut self.settings.developer.disable_password_restrictions, 
+                                i18n("Disable password score restrictions")
+                            ).on_hover_text_at_pointer(
+                                i18n("Removes security restrictions, allows for single-letter passwords")
+                            );
+                            
+                            ui.checkbox(
+                                &mut self.settings.developer.market_monitor_on_testnet, 
+                                i18n("Show balances in alternate currencies for testnet coins")
+                            ).on_hover_text_at_pointer(
+                                i18n("Shows balances in alternate currencies (BTC, USD) when using testnet coins as if you are on mainnet")
+                            );
+
+                            #[cfg(not(target_arch = "wasm32"))]
+                            ui.checkbox(
+                                &mut self.settings.developer.enable_screen_capture, 
+                                i18n("Enable screen capture")
+                            ).on_hover_text_at_pointer(
+                                i18n("Allows you to take screenshots from within the application")
+                            );
+                        // });
+                    });
+                }
+
+                if self.settings.developer != core.settings.developer {
+                    ui.add_space(16.);
+                    if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
+                        match response {
+                            Confirm::Ack => {
+                                core.settings.developer = self.settings.developer.clone();
+                                core.settings.store_sync().unwrap();
+                            },
+                            Confirm::Nack => {
+                                self.settings.developer = core.settings.developer.clone();
+                            }
+                        }
+                    }
+                    ui.separator();
+                }
+
+                if !self.reset_settings {
+                    ui.vertical(|ui|{
+                        if self.settings.developer == core.settings.developer {
+                            ui.set_max_width(340.);
+                            ui.separator();
+                        }
+                        if ui.medium_button(i18n("Reset Settings")).clicked() {
+                            self.reset_settings = true;
+                        }
+                    });
+                } else {
+                    ui.add_space(16.);
+                    ui.label(RichText::new(i18n("Are you sure you want to reset all settings?")).color(theme_color().warning_color));
+                    ui.add_space(16.);
+                    if let Some(response) = ui.confirm_medium_apply_cancel(Align::Min) {
+                        match response {
+                            Confirm::Ack => {
+                                let settings = crate::settings::Settings {
+                                    initialized : true,
+                                    ..Default::default()
+                                };
+                                self.settings = settings.clone();
+                                settings.store_sync().unwrap();
+                                #[cfg(target_arch = "wasm32")]
+                                workflow_dom::utils::window().location().reload().ok();
+                            },
+                            Confirm::Nack => {
+                                self.reset_settings = false;
+                            }
+                        }
+                    }
+                    ui.separator();
+                }
+
+
+
+            });
 
             // if ui.button("Test Toast").clicked() {
             //     self.runtime.try_send(Events::Notify {

@@ -93,6 +93,20 @@ impl KaspadNodeKind {
     }
 }
 
+// #[cfg(target_arch = "wasm32")]
+fn get_hostname() -> Option<String> {
+    use workflow_dom::utils::*;
+    use workflow_core::runtime;
+    if runtime::is_chrome_extension() {
+        None
+    } else {
+        let location = location().unwrap();
+        let hostname = location.hostname().expect("KaspadNodeKind: Unable to get hostname");
+        Some(hostname.to_string())
+    }
+}
+
+
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub enum RpcKind {
     #[default]
@@ -203,16 +217,25 @@ impl Default for NodeSettings {
     fn default() -> Self {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
+                let network = Network::Testnet10;
                 let wrpc_url = "127.0.0.1";
             } else {
-                use workflow_dom::utils::*;
-                use workflow_core::runtime;
-                let wrpc_url = if runtime::is_chrome_extension() {
-                    "ws://127.0.0.1".to_string()
+
+                let (network, wrpc_url) = if let Some(hostname) = get_hostname() {
+
+                    if hostname.contains(".kaspa-ng.") {
+                        let network = hostname.split('.').first().map(|s| s.to_string()).unwrap_or_default()
+                            .parse::<Network>().unwrap_or(Network::Mainnet);
+                        let wrpc_url = format!("wss://{hostname}/{network}");
+                        (network, wrpc_url)
+                    } else if hostname.contains("127.0.0.1") || hostname.contains("localhost") {
+                        (Network::default(), "ws://127.0.0.1".to_string())
+                    } else {
+                        (Network::default(), hostname)
+                    }
                 } else {
-                    let location = location().unwrap();
-                    let hostname = location.hostname().expect("KaspadNodeKind: Unable to get hostname");
-                    hostname.to_string()
+                    // TODO - handle chrome extension / server lists
+                    (Network::Mainnet, "ws://127.0.0.1".to_string())
                 };
             }
         }
@@ -227,7 +250,7 @@ impl Default for NodeSettings {
             grpc_network_interface: NetworkInterfaceConfig::default(),
             enable_upnp: true,
             // network: Network::Mainnet,
-            network: Network::Testnet10,
+            network,//: Network::Testnet10,
             // network: Network::default(),
             node_kind: KaspadNodeKind::default(),
             kaspad_daemon_binary: String::default(),
@@ -391,6 +414,7 @@ impl DeveloperSettings {
 pub struct Settings {
     pub initialized: bool,
     pub splash_screen: bool,
+    pub disable_node_settings : bool,
     pub version: String,
     pub developer: DeveloperSettings,
     pub node: NodeSettings,
@@ -402,12 +426,26 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Self {
+
+        cfg_if! {
+            if #[cfg(not(target_arch = "wasm32"))] {
+                let disable_node_settings = if let Some(hostname) = get_hostname() {
+                    hostname.contains(".kaspa-ng.")
+                } else {
+                    false
+                };
+            } else {
+                let disable_node_settings = false;
+            }
+        }
+
         Self {
             #[cfg(not(target_arch = "wasm32"))]
             initialized: false,
             #[cfg(target_arch = "wasm32")]
             initialized: true,
 
+            disable_node_settings,
             splash_screen: true,
             version: "0.0.0".to_string(),
             developer: DeveloperSettings::default(),

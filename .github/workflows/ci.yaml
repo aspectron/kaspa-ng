@@ -326,9 +326,9 @@ jobs:
           depends: 'libglib2.0-0, libatk1.0-0, libgtk-3-0'
           desc: 'Kaspa NG desktop p2p node and wallet'
 
-      - name: Package Details
-        if: runner.os == 'Linux'
-        run: |
-          ls -la
-          dpkg-deb -I ${{ steps.package_debian.outputs.file_name }}
-          dpkg-deb -c ${{ steps.package_debian.outputs.file_name }}
+      # - name: Package Details
+      #   if: runner.os == 'Linux'
+      #   run: |
+      #     ls -la
+      #     dpkg-deb -I ${{ steps.package_debian.outputs.file_name }}
+      #     dpkg-deb -c ${{ steps.package_debian.outputs.file_name }}
