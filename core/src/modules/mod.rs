@@ -194,6 +194,14 @@ impl std::fmt::Debug for Module {
     }
 }
 
+impl Eq for Module { }
+
+impl PartialEq for Module {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner.type_id == other.inner.type_id
+    }
+}
+
 impl<T> From<Rc<RefCell<T>>> for Module
 where
     T: ModuleT + 'static,
