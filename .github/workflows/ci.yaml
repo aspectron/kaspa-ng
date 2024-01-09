@@ -202,9 +202,12 @@ jobs:
           sudo apt-get update
           sudo apt install -y gcc-multilib
 
-      - name: Install desktop dependencies
-        run: |
-          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev
+      - name: Install apt prerequisites
+        if: ${{ runner.os == 'Linux' }}
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libglib2.0-dev libatk1.0-dev libgtk-3-dev
+          version: 1.0
 
       - name: Install stable toolchain
         if: steps.install_llvm.outcome == 'success' && steps.install_llvm.conclusion == 'success'
@@ -267,7 +270,6 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         uses: awalsh128/cache-apt-pkgs-action@v1
         with:
-          # packages: libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev 
           packages: libglib2.0-dev libatk1.0-dev libgtk-3-dev
           version: 1.0
 
@@ -298,7 +300,7 @@ jobs:
         run: |
           cargo build --bin kaspa-ng --release
           mkdir -p .debpkg/usr/bin
-          cp target/x86_64-unknown-linux-gnu/release/kaspa-ng .debpkg/usr/bin/
+          cp target/release/kaspa-ng .debpkg/usr/bin/
 
       - name: Build on Windows
         if: runner.os == 'Windows'

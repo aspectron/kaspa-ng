@@ -79,9 +79,9 @@ jobs:
         run: |
           cargo build --bin kaspa-ng --release
           mkdir -p .debpkg/usr/bin
-          cp target/x86_64-unknown-linux-gnu/release/kaspa-ng .debpkg/usr/bin/
+          cp target/release/kaspa-ng .debpkg/usr/bin/
           mkdir kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64 || true
-          cp target/x86_64-unknown-linux-gnu/release/kaspa-ng kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/
+          cp target/release/kaspa-ng kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/
           archive="kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64.zip"
           asset_name="kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64.zip"
           zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/*
