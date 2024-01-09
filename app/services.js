@@ -54,7 +54,6 @@
     try {
         worker = new Worker (workerScript);
         window.setInterval = function (callback, time /* , parameters */) {
-            console.log("setInterval", time);
             const id = getId();
             callbacks[id] = {
                 callback: () => { callback() },
@@ -77,7 +76,6 @@
             }
         };
         window.setTimeout = function (callback, time /* , parameters */) {
-            console.log("setTimeout", time);
             const id = getId();
             callbacks[id] = {
                 callback: callback,
