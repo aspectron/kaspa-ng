@@ -343,9 +343,9 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install zig on linux
-        if: runner.os == 'Linux'
-        uses: goto-bus-stop/setup-zig@v2 # needed for cargo-zigbuild
+      # - name: Install zig on linux
+      #   if: runner.os == 'Linux'
+      #   uses: goto-bus-stop/setup-zig@v2 # needed for cargo-zigbuild
 
       # - name: Install zig on linux
       #   if: runner.os == 'Linux'
@@ -355,11 +355,13 @@ jobs:
       - name: Build on Linux
         if: runner.os == 'Linux'
         # We're using musl to make the binaries statically linked and portable
-        run: |
-          cargo install cargo-zigbuild
-          cargo --verbose zigbuild --bin kaspa-ng --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
+        # run: |
+          # cargo install cargo-zigbuild
+          # cargo --verbose zigbuild --bin kaspa-ng --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
         # run: |
         #   cargo build --bin kaspa-ng --release --target x86_64-unknown-linux-musl
+        run: |
+          cargo build --bin kaspa-ng --release
 
       - name: Build on Windows
         if: runner.os == 'Windows'
