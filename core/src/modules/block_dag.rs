@@ -211,7 +211,7 @@ impl ModuleT for BlockDag {
                             );
                             ui.space();
                             ui.add(
-                                Slider::new(&mut self.parent_threshold, 50..=1000)
+                                Slider::new(&mut self.parent_threshold, 200..=1000)
                                     .clamp_to_range(true)
                                     .logarithmic(true)
                                     .text(i18n("Threshold"))

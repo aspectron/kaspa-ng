@@ -317,7 +317,8 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         uses: awalsh128/cache-apt-pkgs-action@v1
         with:
-          packages: musl-tools libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev 
+          # packages: musl-tools libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev 
+          packages: libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev 
           version: 1.0
 
       - name: Checkout sources
@@ -346,19 +347,19 @@ jobs:
         if: runner.os == 'Linux'
         uses: goto-bus-stop/setup-zig@v2 # needed for cargo-zigbuild
 
-      - name: Install zig on linux
-        if: runner.os == 'Linux'
-        run: |
-          rustup target add x86_64-unknown-linux-musl
+      # - name: Install zig on linux
+      #   if: runner.os == 'Linux'
+      #   run: |
+      #     rustup target add x86_64-unknown-linux-musl
 
       - name: Build on Linux
         if: runner.os == 'Linux'
         # We're using musl to make the binaries statically linked and portable
-        # run: |
-        #   cargo install cargo-zigbuild
-        #   cargo --verbose zigbuild --bin kaspa-ng --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
         run: |
-          cargo build --bin kaspa-ng --release --target x86_64-unknown-linux-musl
+          cargo install cargo-zigbuild
+          cargo --verbose zigbuild --bin kaspa-ng --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
+        # run: |
+        #   cargo build --bin kaspa-ng --release --target x86_64-unknown-linux-musl
 
       - name: Build on Windows
         if: runner.os == 'Windows'
