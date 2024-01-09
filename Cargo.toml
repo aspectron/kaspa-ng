@@ -26,11 +26,11 @@ kaspa-ng-macros = { version = "0.1.0", path = "macros/" }
 #  |___ |__] |__| | 
 # ___________________
 
-egui = "0.24.0"
-epaint = "0.24.0"
-egui_plot = "0.24.0"
-egui_extras = { version = "0.24.0", features = ["svg","image"] }
-eframe = { version = "0.24.0", default-features = false, features = [
+egui = "=0.24.0"
+epaint = "=0.24.0"
+egui_plot = "=0.24.0"
+egui_extras = { version = "=0.24.0", features = ["svg","image"] }
+eframe = { version = "=0.24.0", default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
@@ -169,4 +169,6 @@ xxhash-rust = { version = "0.8.7", features = ["xxh3"] }
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 
 [profile.release]
-opt-level = 2 # fast and small wasm
+opt-level = 2
+# opt-level = 3
+# lto = true

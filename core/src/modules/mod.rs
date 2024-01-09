@@ -194,7 +194,7 @@ impl std::fmt::Debug for Module {
     }
 }
 
-impl Eq for Module { }
+impl Eq for Module {}
 
 impl PartialEq for Module {
     fn eq(&self, other: &Self) -> bool {

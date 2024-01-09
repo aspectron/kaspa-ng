@@ -34,6 +34,7 @@ pub use std::sync::OnceLock;
 pub use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 pub use std::time::Duration;
 
+pub use web_sys::VisibilityState;
 pub use workflow_core::abortable::Abortable;
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::enums::Describe;
@@ -43,7 +44,6 @@ pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
 pub use workflow_http as http;
 pub use workflow_i18n::*;
 pub use workflow_log::*;
-pub use web_sys::VisibilityState;
 
 pub use ahash::{AHashMap, AHashSet};
 pub use pad::{Alignment, PadStr};

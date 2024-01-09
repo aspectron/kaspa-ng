@@ -251,14 +251,65 @@ jobs:
           # build
           wasm-pack build --target web --out-name kaspa-ng --out-dir ../../dist-chrome ./extensions/chrome
 
+  # build-release:
+  #   name: Ubuntu Release
+  #   runs-on: ubuntu-latest
+  #   steps:
+
+  #     - name: Install desktop dependencies
+  #       run: |
+  #         sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev
+
+  #     - name: Checkout sources
+  #       uses: actions/checkout@v3
+
+  #     - name: Install Protoc
+  #       uses: arduino/setup-protoc@v1
+  #       with:
+  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Install stable toolchain
+  #       uses: dtolnay/rust-toolchain@stable
+
+  #     - name: Cache
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           ~/.cargo/bin/
+  #           ~/.cargo/registry/index/
+  #           ~/.cargo/registry/cache/
+  #           ~/.cargo/git/db/
+  #           target/
+  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+  #     - name: Install zig
+  #       if: runner.os == 'Linux'
+  #       uses: goto-bus-stop/setup-zig@v2 # needed for cargo-zigbuild
+
+  #     - name: Build on Linux
+  #       if: runner.os == 'Linux'
+  #       # We're using musl to make the binaries statically linked and portable
+  #       run: |
+  #         cargo install cargo-zigbuild
+  #         cargo --verbose zigbuild --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
   build-release:
-    name: Ubuntu Release
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Build gnu-linux on ubuntu-18.04 and musl on ubuntu latest
+        # os: [ ubuntu-18.04, ubuntu-latest, windows-latest, macos-latest ]
+        # os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ windows-latest, macos-latest ]
+    name: Building, ${{ matrix.os }}
     steps:
+      - name: Fix CRLF on Windows
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
 
       - name: Install desktop dependencies
         run: |
-          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
 
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -282,7 +333,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install zig
+      - name: Install zig on linux
         if: runner.os == 'Linux'
         uses: goto-bus-stop/setup-zig@v2 # needed for cargo-zigbuild
 
@@ -291,4 +342,36 @@ jobs:
         # We're using musl to make the binaries statically linked and portable
         run: |
           cargo install cargo-zigbuild
-          cargo --verbose zigbuild --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
+          cargo --verbose zigbuild --bin kaspa-ng --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
+          mkdir kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64 || true
+          cp target/x86_64-unknown-linux-gnu/release/kaspa-ng kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/
+          archive="kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64.zip"
+          asset_name="kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-linux-gnu-amd64/*
+          echo "archive=${archive}" >> $GITHUB_ENV
+          echo "asset_name=${asset_name}" >> $GITHUB_ENV
+
+      - name: Build on Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cargo build --bin kaspa-ng --release
+          mkdir kaspa-ng-${{ github.event.release.tag_name }}-windows-x64 || true
+          cp target/release/kaspa-ng.exe kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/
+          archive="kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/kaspa-ng-${{ github.event.release.tag_name }}-windows-x64.zip"
+          asset_name="kaspa-ng-${{ github.event.release.tag_name }}-windows-x64.zip"
+          powershell "Compress-Archive kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/* \"${archive}\""
+          echo "archive=${archive}" >> $GITHUB_ENV
+          echo "asset_name=${asset_name}" >> $GITHUB_ENV
+
+      - name: Build on MacOS
+        if: runner.os == 'macOS'
+        run: |
+          cargo build --bin kaspa-ng --release
+          mkdir kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64 || true
+          cp target/release/kaspa-ng kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/
+          archive="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
+          asset_name="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/*
+          echo "archive=${archive}" >> $GITHUB_ENV
+          echo "asset_name=${asset_name}" >> $GITHUB_ENV
