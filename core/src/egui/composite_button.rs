@@ -21,7 +21,7 @@ impl<'a> Composite<'a> {
 ///
 /// See also [`Ui::button`].
 ///
-/// ```
+/// ```ignore
 /// # egui::__run_test_ui(|ui| {
 /// # fn do_stuff() {}
 ///

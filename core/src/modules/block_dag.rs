@@ -78,7 +78,7 @@ impl BlockDag {
             block_scale : 1.0,
             last_repaint : Instant::now(),
             parent_levels : 1,
-            parent_threshold : 25,
+            parent_threshold : 200,
             settings: BlockDagGraphSettings::default(),
             background : Arc::new(AtomicBool::new(false)),
         }
