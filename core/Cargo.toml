@@ -86,6 +86,7 @@ features = [
     'Document',
     'VisibilityState',
     'Window',
+    'Element',
 ]
 
 

@@ -106,7 +106,6 @@ impl Network {
 
     pub fn tps(&self) -> u64 {
         let params = Params::from(*self);
-        // println!("{}, bps: {}, block mass: {} tx size: {} tx/block : {}",self, params.bps(),  params.max_block_mass, MAXIMUM_STANDARD_TRANSACTION_MASS, params.max_block_mass / MAXIMUM_STANDARD_TRANSACTION_MASS);
         params.max_block_mass / BASIC_TRANSACTION_MASS * params.bps()
     }
 }

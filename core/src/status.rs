@@ -242,7 +242,11 @@ impl<'core> Status<'core> {
                                 .color(theme_color().icon_syncing_color),
                         );
                         ui.separator();
-                        ui.label(i18n("CONNECTED"));
+                        ui.label(i18n("CONNECTED")).on_hover_ui(|ui| {
+                            ui.horizontal(|ui| {
+                                ui.label(self.settings().node.wrpc_url.clone());
+                            });
+                        });
                         ui.separator();
                         self.render_network_selector(ui);
 

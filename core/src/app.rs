@@ -268,6 +268,7 @@ cfg_if! {
 
         pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
             use wasm_bindgen::prelude::*;
+            use workflow_dom::utils::document;
 
             // ------------------------------------------------------------
             // ------------------------------------------------------------
@@ -302,6 +303,11 @@ cfg_if! {
             // wasm_bindgen_futures::spawn_local(async {
             use workflow_log::*;
             log_info!("Welcome to Kaspa NG! Have a great day!");
+
+            if let Some(element) = document().get_element_by_id("loading") {
+                element.remove();
+            }
+
             eframe::WebRunner::new()
                 .start(
                     "kaspa-ng",

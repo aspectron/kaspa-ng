@@ -640,7 +640,6 @@ impl Core {
                 self.metrics = Some(snapshot);
             }
             Events::MempoolSize { mempool_size } => {
-                // println!("mempool_size: {} tps: {}", mempool_size,self.settings.node.network.tps());
                 let load = mempool_size as f32 / self.settings.node.network.tps() as f32;
                 self.network_load_samples.push_back(load);
                 if self.network_load_samples.len() > MAX_NETWORK_LOAD_SAMPLES {
@@ -649,8 +648,6 @@ impl Core {
                 let network_load = self.network_load_samples.iter().sum::<f32>()
                     / self.network_load_samples.len() as f32;
                 self.state.network_load.replace(network_load);
-
-                // println!("network_load: {}", network_load);
             }
             Events::Exit => {
                 cfg_if! {

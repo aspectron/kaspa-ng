@@ -255,27 +255,27 @@ impl Overview {
                     .show(ui, |ui| {
                         ui.vertical(|ui|{
                             ui.label("Rusty Kaspa");
-                            ui.label("Copyright (c) 2023 Kaspa Developers");
+                            ui.label("Copyright (c) 2024 Kaspa Developers");
                             ui.label("License: ISC");
                             ui.hyperlink_url_to_tab("https://github.com/kaspanet/rusty-kaspa");
                             ui.label("");
                             ui.label("Kaspa NG");
-                            ui.label("Copyright (c) 2023 ASPECTRON");
-                            ui.label("Restricted MIT or Apache 2.0 License");
+                            ui.label("Copyright (c) 2024 ASPECTRON");
+                            ui.label("License: MIT (RESTRICTED)");
                             ui.hyperlink_url_to_tab("https://github.com/aspectron/kaspa-ng");
                             ui.label("");
                             ui.label("WORKFLOW-RS");
-                            ui.label("Copyright (c) 2023 ASPECTRON");
+                            ui.label("Copyright (c) 2024 ASPECTRON");
                             ui.label("License: MIT or Apache 2.0");
                             ui.hyperlink_url_to_tab("https://github.com/workflow-rs/workflow-rs");
                             ui.label("");
                             ui.label("EGUI");
-                            ui.label("Copyright (c) 2023 Rerun");
+                            ui.label("Copyright (c) 2024 Rerun");
                             ui.label("License: MIT or Apache 2.0");
                             ui.hyperlink_url_to_tab("https://github.com/emilk/egui");
                             ui.label("");
                             ui.label("PHOSPHOR ICONS");
-                            ui.label("Copyright (c) 2023 ");
+                            ui.label("Copyright (c) 2024 ");
                             ui.label("License: MIT");
                             ui.hyperlink_url_to_tab("https://phosphoricons.com/");
                             ui.label("");

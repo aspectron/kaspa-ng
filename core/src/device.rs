@@ -25,7 +25,7 @@ impl Device {
             orientation: Orientation::default(),
             orientation_forced: None,
             screen_size: Vec2::ZERO,
-            top_offset: if window_frame { 0.0 } else { 32.0 },
+            top_offset: if window_frame { 32.0 } else { 0.0 },
         }
     }
 
