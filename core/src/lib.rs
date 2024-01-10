@@ -30,3 +30,6 @@ pub mod state;
 pub mod status;
 pub mod sync;
 pub mod utils;
+
+#[cfg(test)]
+mod tests;

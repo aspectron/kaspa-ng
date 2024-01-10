@@ -1,7 +1,7 @@
-use kaspa_consensus_core::config::params::Params;
-use kaspa_wallet_core::tx::MAXIMUM_STANDARD_TRANSACTION_MASS;
-
 use crate::imports::*;
+use kaspa_consensus_core::config::params::Params;
+
+const BASIC_TRANSACTION_MASS: u64 = 1281;
 
 #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "kebab-case")]
@@ -47,6 +47,16 @@ impl From<Network> for NetworkType {
     }
 }
 
+impl From<&Network> for NetworkType {
+    fn from(network: &Network) -> Self {
+        match network {
+            Network::Mainnet => NetworkType::Mainnet,
+            Network::Testnet10 => NetworkType::Testnet,
+            Network::Testnet11 => NetworkType::Testnet,
+        }
+    }
+}
+
 impl From<Network> for NetworkId {
     fn from(network: Network) -> Self {
         match network {
@@ -57,8 +67,24 @@ impl From<Network> for NetworkId {
     }
 }
 
+impl From<&Network> for NetworkId {
+    fn from(network: &Network) -> Self {
+        match network {
+            Network::Mainnet => NetworkId::new(network.into()),
+            Network::Testnet10 => NetworkId::with_suffix(network.into(), 10),
+            Network::Testnet11 => NetworkId::with_suffix(network.into(), 11),
+        }
+    }
+}
+
 impl From<Network> for Params {
     fn from(network: Network) -> Self {
+        NetworkId::from(network).into()
+    }
+}
+
+impl From<&Network> for Params {
+    fn from(network: &Network) -> Self {
         NetworkId::from(network).into()
     }
 }
@@ -81,6 +107,6 @@ impl Network {
     pub fn tps(&self) -> u64 {
         let params = Params::from(*self);
         // println!("{}, bps: {}, block mass: {} tx size: {} tx/block : {}",self, params.bps(),  params.max_block_mass, MAXIMUM_STANDARD_TRANSACTION_MASS, params.max_block_mass / MAXIMUM_STANDARD_TRANSACTION_MASS);
-        params.max_block_mass / MAXIMUM_STANDARD_TRANSACTION_MASS * params.bps()
+        params.max_block_mass / BASIC_TRANSACTION_MASS * params.bps()
     }
 }

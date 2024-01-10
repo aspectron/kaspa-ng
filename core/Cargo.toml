@@ -58,6 +58,7 @@ separator.workspace = true
 serde_json.workspace = true
 serde.workspace = true
 slug.workspace = true
+smallvec.workspace = true
 thiserror.workspace = true
 toml.workspace = true
 wasm-bindgen.workspace = true
