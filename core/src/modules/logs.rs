@@ -17,12 +17,14 @@ impl ModuleT for Logs {
 
     fn render(
         &mut self,
-        _core: &mut Core,
+        core: &mut Core,
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
         use egui_phosphor::light::CLIPBOARD_TEXT;
+
+        let available_width = ui.available_width();
 
         #[cfg(not(target_arch = "wasm32"))]
         egui::ScrollArea::vertical()
@@ -38,9 +40,8 @@ impl ModuleT for Logs {
 
         let copy_to_clipboard = Button::new(RichText::new(format!(" {CLIPBOARD_TEXT} ")).size(20.));
 
-        let screen_rect = ui.ctx().screen_rect();
         let button_rect = Rect::from_min_size(
-            pos2(screen_rect.max.x - 48.0, screen_rect.min.y + 32.0),
+            pos2(available_width - 48.0, core.device().top_offset() + 32.0),
             vec2(38.0, 20.0),
         );
 

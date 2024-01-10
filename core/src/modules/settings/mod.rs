@@ -7,17 +7,28 @@ pub struct Settings {
     settings : crate::settings::Settings,
     grpc_network_interface : NetworkInterfaceEditor,
     reset_settings : bool,
-
-
+    secure_wrpc_only : bool,
 }
 
 impl Settings {
     pub fn new(runtime: Runtime) -> Self {
+
+        cfg_if!{
+            if #[cfg(target_arch = "wasm32")] {
+                use workflow_dom::utils::*;
+                let protocol = window().location().protocol().unwrap();
+                let secure_wrpc_only = protocol == "https:";
+            } else {
+                let secure_wrpc_only = false;
+            }
+        } 
+
         Self { 
             runtime,
             settings : crate::settings::Settings::default(),
             grpc_network_interface : NetworkInterfaceEditor::default(),
             reset_settings : false,
+            secure_wrpc_only,
         }
     }
 
@@ -57,6 +68,68 @@ impl ModuleT for Settings {
 
 impl Settings {
 
+
+    fn render_available_servers(
+        &mut self,
+        core: &mut Core,
+        ui: &mut egui::Ui,
+    ) {
+
+        let servers = core.servers.iter().filter(|server| {
+            if server.network.contains(&self.settings.node.network) {
+                !(self.secure_wrpc_only && !(server.address.starts_with("wss://") || server.address.starts_with("wrpcs://")))
+            } else {
+                false
+            }
+        }).collect::<Vec<_>>();
+        let server_count = servers.len();
+
+        CollapsingHeader::new(format!("{} {} {}", i18n("Public p2p Nodes for"), self.settings.node.network, server_count))
+            .default_open(true)
+            .show(ui, |ui| {
+                ui.add_space(4.);
+
+                let use_popup = false;
+
+                if !use_popup {
+
+                    for server in servers {
+                        if ui.add(Label::new(format!("• {server}")).sense(Sense::click())).clicked() {
+                            self.settings.node.wrpc_encoding = server.wrpc_encoding();
+                            self.settings.node.wrpc_url = server.address();
+                        } 
+                    }
+
+                } else {
+
+                    PopupPanel::new(ui, "server_selector_popup",|ui|{ ui.add(Label::new(format!("{} ⏷",i18n("Select Available Server"))).sense(Sense::click())) }, |ui, _close| {
+                        egui::ScrollArea::vertical()
+                            .id_source("server_selector_popup_scroll")
+                            .auto_shrink([true; 2])
+                            .show(ui, |ui| {
+                                for server in servers {
+                                    if ui.add_sized(theme_style().large_button_size,CompositeButton::opt_image_and_text(
+                                        None,
+                                        Some(server.to_string().into()),
+                                        None,
+                                    )).clicked() {
+                                        self.settings.node.wrpc_encoding = server.wrpc_encoding();
+                                        self.settings.node.wrpc_url = server.address();
+                                    }
+                                }
+                            });
+                    })
+                    .with_min_width(240.)
+                    .with_max_height(core.device().screen_size.y * 0.5)
+                    .with_close_on_interaction(true)
+                    .build(ui);
+                }
+
+                ui.add_space(4.);
+            });
+
+    }
+
     fn render_node_settings(
         &mut self,
         core: &mut Core,
@@ -71,18 +144,17 @@ impl Settings {
             .default_open(true)
             .show(ui, |ui| {
 
-                // if !disable_node_settings {
-                    CollapsingHeader::new("Kaspa Network")
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            ui.horizontal_wrapped(|ui|{
-                                Network::iter().for_each(|network| {
-                                    ui.radio_value(&mut self.settings.node.network, *network, network.to_string());
-                                });
+                CollapsingHeader::new("Kaspa Network")
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        ui.horizontal_wrapped(|ui|{
+                            Network::iter().for_each(|network| {
+                                ui.radio_value(&mut self.settings.node.network, *network, network.to_string());
                             });
                         });
+                    });
 
-                
+
                 CollapsingHeader::new("Kaspa Node")
                     .default_open(true)
                     .show(ui, |ui| {
@@ -135,7 +207,7 @@ impl Settings {
                         }
 
                         #[cfg(not(target_arch = "wasm32"))]
-                        if core.settings.developer.custom_daemon_args_enabled() && core.settings.node.node_kind.is_config_capable() {
+                        if core.settings.developer.custom_daemon_args_enabled() && self.settings.node.node_kind.is_config_capable() {
                             use kaspad_lib::args::Args;
                             use clap::error::ErrorKind as ClapErrorKind;
                             use crate::runtime::services::kaspa::Config;
@@ -202,9 +274,16 @@ impl Settings {
                 } else {
                     self.settings.node.grpc_network_interface = self.grpc_network_interface.as_ref().try_into().unwrap(); //NetworkInterfaceConfig::try_from(&self.grpc_network_interface).unwrap();
                 }
+
+                ui.add_space(4.);
             });
 
             if self.settings.node.node_kind == KaspadNodeKind::Remote {
+
+                self.render_available_servers(core,ui);
+
+
+
                 CollapsingHeader::new(i18n("Remote p2p Node Configuration"))
                     .default_open(true)
                     .show(ui, |ui| {
@@ -233,14 +312,18 @@ impl Settings {
                             node_settings_error = Some(i18n("Invalid wRPC URL"));
                         }
 
-                        #[cfg(not(target_arch = "wasm32"))]
-                        ui.horizontal_wrapped(|ui|{
-                            // ui.set_max_width(half_width);
-                            ui.label(i18n("Recommended arguments for the remote node: "));
-                            ui.label(RichText::new("kaspad --utxoindex --rpclisten-borsh=0.0.0.0").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
-                            ui.label(i18n("If you are running locally, use: "));
-                            ui.label(RichText::new("--rpclisten-borsh=127.0.0.1.").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
-                        });
+                        cfg_if! {
+                            if #[cfg(not(target_arch = "wasm32"))] {
+                                ui.horizontal_wrapped(|ui|{
+                                    ui.label(i18n("Recommended arguments for the remote node: "));
+                                    ui.label(RichText::new("kaspad --utxoindex --rpclisten-borsh=0.0.0.0").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
+                                });
+                                ui.horizontal_wrapped(|ui|{
+                                    ui.label(i18n("If you are running locally, use: "));
+                                    ui.label(RichText::new("--rpclisten-borsh=127.0.0.1.").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
+                                });
+                            }
+                        }
 
                     });
             }
@@ -330,9 +413,7 @@ impl Settings {
         ui: &mut egui::Ui,
     ) {
 
-        if !core.settings.disable_node_settings {
-            self.render_node_settings(core,ui);
-        }
+        self.render_node_settings(core,ui);
 
         CollapsingHeader::new(i18n("Centralized Services"))
             .default_open(true)

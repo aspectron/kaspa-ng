@@ -92,7 +92,7 @@ impl Overview {
         let screen_rect = ui.ctx().screen_rect();
         let logo_size = vec2(648., 994.,) * 0.25;
         let left = screen_rect.width() - logo_size.x - 8.;
-        let top = if core.window_frame { 64. } else { 32. };
+        let top = core.device().top_offset() + 32.0;
         let logo_rect = Rect::from_min_size(Pos2::new(left, top), logo_size);
 
         if screen_rect.width() > 768.0 && !core.device().single_pane() {

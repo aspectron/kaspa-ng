@@ -17,6 +17,9 @@ pub enum Events {
     Metrics {
         snapshot: Box<MetricsSnapshot>,
     },
+    MempoolSize {
+        mempool_size: usize,
+    },
     Error(Box<String>),
     ServerList {
         server_list: Arc<Vec<Server>>,

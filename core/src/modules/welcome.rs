@@ -51,11 +51,9 @@ impl ModuleT for Welcome {
                             match self.settings.node.network {
                                 Network::Mainnet => {
                                     ui.colored_label(theme_color().warning_color, i18n("Please note that this is an alpha release. Until this message is removed, avoid using this software with mainnet funds."));
-                                },
-                                Network::Testnet11 => {
-                                    ui.colored_label(theme_color().warning_color, i18n("Testnet 11 is not yet enabled for public testing. You can, however, configure the node to connect to the private developer testnet in the Settings panel."));
-                                },
-                                _ => { }
+                                }
+                                Network::Testnet10 => { }
+                                Network::Testnet11 => { }
                             }
                         });
                 

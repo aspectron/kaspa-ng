@@ -4,10 +4,35 @@ use crate::imports::*;
 pub struct Server {
     pub name: Option<String>,
     pub location: Option<String>,
-    pub protocol: String,
+    pub protocol: WrpcEncoding,
     pub network: Vec<Network>,
     pub port: Option<u16>,
     pub address: String,
+}
+
+impl std::fmt::Display for Server {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut title = self.name.clone().unwrap_or(self.address.to_string());
+        if let Some(location) = self.location.as_ref() {
+            title += format!(" ({location})").as_str();
+        }
+
+        write!(f, "{}", title)
+    }
+}
+
+impl Server {
+    pub fn address(&self) -> String {
+        if let Some(port) = self.port {
+            format!("{}:{port}", self.address)
+        } else {
+            self.address.clone()
+        }
+    }
+
+    pub fn wrpc_encoding(&self) -> WrpcEncoding {
+        self.protocol
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

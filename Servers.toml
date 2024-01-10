@@ -1,24 +1,32 @@
 [[server]]
-# if port is not present, port is automatically
-# determined by the protocol+network combination
-# this means the address is capable of serving
-# multiple networks. Supported networks must be
-# specified in the network field.
-name = "local network agnostic server"
+name = "kaspa-ng.org"
 location = "EU"
-protocol = "wrpc:borsh"
-network = ["mainnet","testnet-10"]
+protocol = "borsh"
+network = ["mainnet"]
+address = "wss://kaspa-ng.org:443/mainnet"
+
+[[server]]
+name = "kaspa-ng.org"
+location = "EU"
+protocol = "borsh"
+network = ["testnet-11"]
+address = "wss://kaspa-ng.org:443/testnet-11"
+
+[[server]]
+name = "localhost"
+protocol = "borsh"
+network = ["mainnet"]
 address = "127.0.0.1"
 
 [[server]]
-# if the port is present, this means the address
-# is only capable of serving a single network
-# on a dedicated port. The network field should
-# contains a single network entry.
-name = "local testnet server"
-location = "EU"
-protocol = "wrpc:borsh"
+name = "localhost"
+protocol = "borsh"
 network = ["testnet-10"]
 address = "127.0.0.1"
-port = 17210
+
+[[server]]
+name = "localhost"
+protocol = "borsh"
+network = ["testnet-11"]
+address = "127.0.0.1"
 

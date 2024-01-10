@@ -1,3 +1,6 @@
+use kaspa_consensus_core::config::params::Params;
+use kaspa_wallet_core::tx::MAXIMUM_STANDARD_TRANSACTION_MASS;
+
 use crate::imports::*;
 
 #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
@@ -17,6 +20,19 @@ impl std::fmt::Display for Network {
             Network::Mainnet => write!(f, "mainnet"),
             Network::Testnet10 => write!(f, "testnet-10"),
             Network::Testnet11 => write!(f, "testnet-11"),
+        }
+    }
+}
+
+impl FromStr for Network {
+    type Err = Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "mainnet" => Ok(Network::Mainnet),
+            "testnet-10" => Ok(Network::Testnet10),
+            "testnet-11" => Ok(Network::Testnet11),
+            _ => Err(Error::InvalidNetwork(s.to_string())),
         }
     }
 }
@@ -41,6 +57,12 @@ impl From<Network> for NetworkId {
     }
 }
 
+impl From<Network> for Params {
+    fn from(network: Network) -> Self {
+        NetworkId::from(network).into()
+    }
+}
+
 const NETWORKS: [Network; 3] = [Network::Mainnet, Network::Testnet10, Network::Testnet11];
 
 impl Network {
@@ -54,5 +76,11 @@ impl Network {
             Network::Testnet10 => i18n("Testnet-10 (1 BPS)"),
             Network::Testnet11 => i18n("Testnet-11 (10 BPS)"),
         }
+    }
+
+    pub fn tps(&self) -> u64 {
+        let params = Params::from(*self);
+        // println!("{}, bps: {}, block mass: {} tx size: {} tx/block : {}",self, params.bps(),  params.max_block_mass, MAXIMUM_STANDARD_TRANSACTION_MASS, params.max_block_mass / MAXIMUM_STANDARD_TRANSACTION_MASS);
+        params.max_block_mass / MAXIMUM_STANDARD_TRANSACTION_MASS * params.bps()
     }
 }

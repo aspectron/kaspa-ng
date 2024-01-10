@@ -14,6 +14,8 @@ use std::borrow::Cow;
 use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
 
+const MAX_NETWORK_LOAD_SAMPLES: usize = 16;
+
 pub enum Exception {
     UtxoIndexNotEnabled { url: Option<String> },
 }
@@ -54,6 +56,7 @@ pub struct Core {
     pub debug: bool,
     pub window_frame: bool,
     callback_map: CallbackMap,
+    network_load_samples: VecDeque<f32>,
 }
 
 impl Core {
@@ -183,12 +186,13 @@ impl Core {
 
             release: None,
 
-            device: Device::default(),
+            device: Device::new(window_frame),
             market: None,
             servers: parse_default_servers().clone(),
             debug: false,
             window_frame,
             callback_map: CallbackMap::default(),
+            network_load_samples: VecDeque::default(),
         };
 
         modules.values().for_each(|module| {
@@ -635,6 +639,19 @@ impl Core {
             Events::Metrics { snapshot } => {
                 self.metrics = Some(snapshot);
             }
+            Events::MempoolSize { mempool_size } => {
+                // println!("mempool_size: {} tps: {}", mempool_size,self.settings.node.network.tps());
+                let load = mempool_size as f32 / self.settings.node.network.tps() as f32;
+                self.network_load_samples.push_back(load);
+                if self.network_load_samples.len() > MAX_NETWORK_LOAD_SAMPLES {
+                    self.network_load_samples.pop_front();
+                }
+                let network_load = self.network_load_samples.iter().sum::<f32>()
+                    / self.network_load_samples.len() as f32;
+                self.state.network_load.replace(network_load);
+
+                // println!("network_load: {}", network_load);
+            }
             Events::Exit => {
                 cfg_if! {
                     if #[cfg(not(target_arch = "wasm32"))] {
@@ -692,7 +709,9 @@ impl Core {
                         self.state.url = None;
                         self.state.network_id = None;
                         self.state.current_daa_score = None;
+                        self.state.network_load = None;
                         self.metrics = Some(Box::default());
+                        self.network_load_samples.clear();
                     }
                     CoreWallet::UtxoIndexNotEnabled { url } => {
                         self.exception = Some(Exception::UtxoIndexNotEnabled { url });
