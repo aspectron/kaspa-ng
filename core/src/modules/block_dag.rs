@@ -117,6 +117,12 @@ impl BlockDag {
         self.block_scale = preset.block_scale;
     }
 
+    fn reset_state(&mut self) {
+        self.running = false;
+        self.daa_cursor = 0.0; 
+        self.last_daa_score = 0; 
+    }
+
 }
 
 impl ModuleT for BlockDag {
@@ -477,10 +483,12 @@ impl ModuleT for BlockDag {
     }
 
     fn disconnect(&mut self, _core: &mut Core) {
-        self.running = false;
-        self.daa_cursor = 0.0; 
-        self.last_daa_score = 0; 
-}
+        self.reset_state();
+    }
+
+    fn show(&mut self, _core: &mut Core) {
+        self.reset_state();
+    }
 
 }
 

@@ -62,7 +62,7 @@ impl Core {
     pub fn new(
         cc: &eframe::CreationContext<'_>,
         runtime: crate::runtime::Runtime,
-        mut settings: Settings,
+        #[allow(unused_mut)] mut settings: Settings,
         window_frame: bool,
     ) -> Self {
         crate::fonts::init_fonts(cc);
@@ -136,11 +136,13 @@ impl Core {
             }
         };
 
+        #[allow(unused_mut)]
         let mut module = modules
             .get(&TypeId::of::<modules::Overview>())
             .unwrap()
             .clone();
 
+        #[cfg(not(target_arch = "wasm32"))]
         if settings.version != env!("CARGO_PKG_VERSION") {
             settings.version = env!("CARGO_PKG_VERSION").to_string();
             settings.store_sync().unwrap();
@@ -609,7 +611,15 @@ impl Core {
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
         match event {
-            Events::VisibilityChange(_state) => {}
+            Events::VisibilityChange(state) => match state {
+                VisibilityState::Visible => {
+                    self.module.clone().show(self);
+                }
+                VisibilityState::Hidden => {
+                    self.module.clone().hide(self);
+                }
+                _ => {}
+            },
             Events::Market(update) => {
                 if self.market.is_none() {
                     self.market = Some(Market::default());

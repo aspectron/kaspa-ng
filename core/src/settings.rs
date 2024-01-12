@@ -261,7 +261,6 @@ pub struct NodeSettings {
 
 impl Default for NodeSettings {
     fn default() -> Self {
-
         Self {
             connection_config_kind: NodeConnectionConfigKind::default(),
             public_servers: HashMap::default(),
@@ -477,7 +476,7 @@ impl Default for Settings {
         Self {
             initialized: false,
             revision: SETTINGS_REVISION.to_string(),
-            
+
             splash_screen: true,
             version: "0.0.0".to_string(),
             developer: DeveloperSettings::default(),

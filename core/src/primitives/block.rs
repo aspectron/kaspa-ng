@@ -105,6 +105,8 @@ impl DaaBucket {
             .sort_by(|a, b| a.dst_y.partial_cmp(&b.dst_y).unwrap());
         let y_distance = settings.y_dist;
         let len = self.blocks.len();
+
+        #[allow(clippy::collapsible_else_if)]
         if let Some(mut vspc_idx) = self.blocks.iter().position(|block| block.vspc) {
             if settings.center_vspc && len > 2 {
                 let mid = len / 2;

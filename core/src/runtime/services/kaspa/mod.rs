@@ -8,6 +8,8 @@ use kaspa_wallet_core::rpc::{
     ConnectOptions, ConnectStrategy, NotificationMode, Rpc, RpcCtl, WrpcEncoding,
 };
 
+const ENABLE_PREEMPTIVE_DISCONNECT: bool = true;
+
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
         #[cfg(not(target_arch = "wasm32"))]
@@ -233,9 +235,40 @@ impl KaspaService {
         }
     }
 
+    fn is_wrpc_client(&self) -> bool {
+        self.wallet.has_rpc()
+            && self
+                .wallet()
+                .rpc_api()
+                .clone()
+                .downcast_arc::<KaspaRpcClient>()
+                .is_ok()
+    }
+
+    async fn disconnect_rpc(&self) -> Result<()> {
+        if let Ok(wrpc_client) = self
+            .wallet()
+            .rpc_api()
+            .clone()
+            .downcast_arc::<KaspaRpcClient>()
+        {
+            wrpc_client.disconnect().await?;
+        } else {
+            self.wallet().rpc_ctl().signal_close().await?;
+        }
+
+        Ok(())
+    }
+
     pub async fn stop_all_services(&self) -> Result<()> {
         if !self.wallet().has_rpc() {
             return Ok(());
+        }
+
+        let preemptive_disconnect = ENABLE_PREEMPTIVE_DISCONNECT && self.is_wrpc_client();
+
+        if preemptive_disconnect {
+            self.disconnect_rpc().await?;
         }
 
         for service in crate::runtime::runtime().services().into_iter() {
@@ -250,15 +283,8 @@ impl KaspaService {
             }
         }
 
-        if let Ok(wrpc_client) = self
-            .wallet()
-            .rpc_api()
-            .clone()
-            .downcast_arc::<KaspaRpcClient>()
-        {
-            wrpc_client.disconnect().await?;
-        } else {
-            self.wallet().rpc_ctl().signal_close().await?;
+        if !preemptive_disconnect {
+            self.disconnect_rpc().await?;
         }
 
         self.wallet().stop().await.expect("Unable to stop wallet");
