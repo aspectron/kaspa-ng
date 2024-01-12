@@ -320,6 +320,10 @@ impl NodeSettings {
                     Some(true)
                 } else if self.node_kind != other.node_kind {
                     Some(true)
+                } else if self.connection_config_kind != other.connection_config_kind
+                || (other.connection_config_kind == NodeConnectionConfigKind::PublicServerCustom && !self.public_servers.compare(&other.public_servers))
+                {
+                    Some(true)
                 } else if self.rpc_kind != other.rpc_kind
                     || self.wrpc_url != other.wrpc_url
                     || self.wrpc_encoding != other.wrpc_encoding
