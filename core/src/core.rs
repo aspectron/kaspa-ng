@@ -695,10 +695,14 @@ impl Core {
                     CoreWallet::Error { message } => {
                         println!("{message}");
                     }
-                    CoreWallet::UtxoProcStart => {}
+                    CoreWallet::UtxoProcStart => {
+                        self.state.error = None;
+                    }
                     CoreWallet::UtxoProcStop => {}
-                    CoreWallet::UtxoProcError { message: _ } => {
-                        // terrorln!(this,"{err}");
+                    CoreWallet::UtxoProcError { message } => {
+                        if message.contains("network type") {
+                            self.state.error = Some(message);
+                        }
                     }
                     #[allow(unused_variables)]
                     CoreWallet::Connect { url, network_id } => {
@@ -722,6 +726,7 @@ impl Core {
                         self.state.network_id = None;
                         self.state.current_daa_score = None;
                         self.state.network_load = None;
+                        self.state.error = None;
                         self.metrics = None;
                         self.network_load_samples.clear();
 

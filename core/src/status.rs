@@ -14,6 +14,9 @@ enum ConnectionStatus {
         sync_status: Option<SyncStatus>,
         peers: Option<usize>,
     },
+    Error {
+        error: String,
+    },
 }
 
 pub struct Status<'core> {
@@ -59,9 +62,16 @@ impl<'core> Status<'core> {
                     .metrics()
                     .as_ref()
                     .map(|metrics| metrics.network_transactions_per_second);
-                
+
                 ui.horizontal(|ui| {
-                    if self.state().is_synced() {
+                    if let Some(error) = self.state().error() {
+                        self.render_connected_state(
+                            ui,
+                            ConnectionStatus::Error {
+                                error: error.clone(),
+                            },
+                        );
+                    } else if self.state().is_synced() {
                         self.render_connected_state(
                             ui,
                             ConnectionStatus::Connected {
@@ -93,22 +103,18 @@ impl<'core> Status<'core> {
 
         if let Some(peers) = peers {
             if peers != 0 {
-                ui.label(format!("{} peers", peers));
+                ui.label(format!("{peers} {}", i18n("peers")));
             } else {
                 ui.label(
                     RichText::new(egui_phosphor::light::CLOUD_SLASH)
                         .size(status_icon_size)
                         .color(theme_color().error_color),
                 );
-                ui.label(RichText::new("No peers").color(theme_color().error_color));
+                ui.label(RichText::new(i18n("No peers")).color(theme_color().error_color));
             }
         } else {
-            ui.add(egui::Spinner::new());
-            // ui.label(
-            //     RichText::new(egui_phosphor::light::DNA)
-            //         .size(status_icon_size)
-            //         .color(theme_color().warning_color),
-            // );
+            ui.label(RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN).size(status_icon_size));
+            ui.label(RichText::new(i18n("...")));
         }
     }
 
@@ -189,12 +195,17 @@ impl<'core> Status<'core> {
                                         settings.node.network.into(),
                                     ) {
                                         Ok(url) => {
-                                            ui.label(format!("Connecting to {} ...", url));
+                                            ui.label(format!(
+                                                "{} {} ...",
+                                                i18n("Connecting to"),
+                                                url
+                                            ));
                                         }
                                         Err(err) => {
                                             ui.label(
                                                 RichText::new(format!(
-                                                    "Error connecting to {}: {err}",
+                                                    "{} {}: {err}",
+                                                    i18n("Error connecting to"),
                                                     settings.node.wrpc_url
                                                 ))
                                                 .color(theme_color().warning_color),
@@ -204,12 +215,20 @@ impl<'core> Status<'core> {
                                 }
                                 NodeConnectionConfigKind::PublicServerCustom => {
                                     if let Some(rpc_url) = runtime().kaspa_service().rpc_url() {
-                                        ui.label(format!("Connecting to {} ...", rpc_url));
+                                        ui.label(format!(
+                                            "{} {} ...",
+                                            i18n("Connecting to"),
+                                            rpc_url
+                                        ));
                                     }
                                 }
                                 NodeConnectionConfigKind::PublicServerRandom => {
                                     if let Some(rpc_url) = runtime().kaspa_service().rpc_url() {
-                                        ui.label(format!("Connecting to {} ...", rpc_url));
+                                        ui.label(format!(
+                                            "{} {} ...",
+                                            i18n("Connecting to"),
+                                            rpc_url
+                                        ));
                                     }
                                 }
                             },
@@ -246,23 +265,27 @@ impl<'core> Status<'core> {
             } => {
                 ui.add_space(left_padding);
 
-                cfg_if! {
-                    if #[cfg(target_arch = "wasm32")] {
-                        let icon = egui_phosphor::light::CPU;
-                    } else {
-                        let icon = if self.core.settings.node.node_kind.is_local() {
-                            egui_phosphor::light::CPU
+                if peers.is_some() {
+                    cfg_if! {
+                        if #[cfg(target_arch = "wasm32")] {
+                            let icon = egui_phosphor::light::CPU;
                         } else {
-                            egui_phosphor::light::CLOUD
-                        };
+                            let icon = if self.core.settings.node.node_kind.is_local() {
+                                egui_phosphor::light::CPU
+                            } else {
+                                egui_phosphor::light::CLOUD
+                            };
+                        }
                     }
-                }
 
-                ui.label(
-                    RichText::new(icon)
-                        .size(status_icon_size)
-                        .color(theme_color().icon_connected_color),
-                );
+                    ui.label(
+                        RichText::new(icon)
+                            .size(status_icon_size)
+                            .color(theme_color().icon_connected_color),
+                    );
+                } else {
+                    ui.add(egui::Spinner::new());
+                }
                 ui.separator();
                 ui.label(i18n("CONNECTED")).on_hover_ui(|ui| {
                     if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
@@ -292,11 +315,17 @@ impl<'core> Status<'core> {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
                         ui.add_space(left_padding);
-                        ui.label(
-                            RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN)
-                                .size(status_icon_size)
-                                .color(theme_color().icon_syncing_color),
-                        );
+
+                        if peers.is_some() {
+                            ui.label(
+                                RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN)
+                                    .size(status_icon_size)
+                                    .color(theme_color().icon_syncing_color),
+                            );
+                        } else {
+                            ui.add(egui::Spinner::new());
+                        }
+
                         ui.separator();
                         ui.label(i18n("CONNECTED")).on_hover_ui(|ui| {
                             if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
@@ -330,6 +359,18 @@ impl<'core> Status<'core> {
                         }
                     }
                 });
+            }
+
+            ConnectionStatus::Error { error } => {
+                ui.add_space(left_padding);
+
+                ui.label(
+                    RichText::new(egui_phosphor::light::SEAL_WARNING)
+                        .size(status_icon_size)
+                        .color(theme_color().error_color),
+                );
+                ui.separator();
+                ui.label(i18n(error.as_str()));
             }
         }
     }
