@@ -63,6 +63,8 @@ pub trait ModuleT: Downcast {
     fn activate(&mut self, _core: &mut Core) {}
     fn deactivate(&mut self, _core: &mut Core) {}
     fn reset(&mut self, _core: &mut Core) {}
+    fn connect(&mut self, _core: &mut Core) {}
+    fn disconnect(&mut self, _core: &mut Core) {}
 
     fn init(&mut self, _core: &mut Core) {}
 
@@ -106,6 +108,14 @@ impl Module {
 
     pub fn reset(&self, core: &mut Core) {
         self.inner.module.borrow_mut().reset(core)
+    }
+
+    pub fn connect(&self, core: &mut Core) {
+        self.inner.module.borrow_mut().connect(core)
+    }
+
+    pub fn disconnect(&self, core: &mut Core) {
+        self.inner.module.borrow_mut().disconnect(core)
     }
 
     pub fn status_bar(&self, core: &mut Core, ui: &mut Ui) {

@@ -103,15 +103,42 @@ impl<'core> Status<'core> {
         }
     }
 
-    fn render_network_selector(&self, ui: &mut Ui) {
-        ui.label(self.settings().node.network.to_string());
-        // ui.menu_button(self.settings.node.network.to_string(), |ui| {
-        //     Network::iter().for_each(|network| {
-        //         if ui.button(network.to_string()).clicked() {
-        //             ui.close_menu();
-        //         }
-        //     });
-        // });
+    fn render_network_selector(&mut self, ui: &mut Ui) {
+        use egui_phosphor::light::CHECK;
+
+        let network_selector = !self.core.module().modal();
+
+        if !network_selector {
+            ui.label(self.settings().node.network.to_string());
+        } else {
+            let response = ui.add(
+                Label::new(RichText::new(self.settings().node.network.to_string()))
+                    .sense(Sense::click()),
+            );
+            PopupPanel::new(
+                ui,
+                "network_selector_popup",
+                |_ui| response,
+                |ui, close| {
+                    set_menu_style(ui.style_mut());
+
+                    Network::iter().for_each(|network| {
+                        let name = if *network == self.settings().node.network {
+                            format!("{network} {CHECK}")
+                        } else {
+                            network.to_string()
+                        };
+
+                        if ui.button(name).clicked() {
+                            *close = true;
+                            self.core.change_current_network(*network);
+                        }
+                    });
+                },
+            )
+            .with_min_width(100.0)
+            .build(ui);
+        }
     }
 
     fn render_connected_state(&mut self, ui: &mut egui::Ui, state: ConnectionStatus) {
@@ -145,26 +172,38 @@ impl<'core> Status<'core> {
 
                         let settings = self.settings();
                         match settings.node.node_kind {
-                            KaspadNodeKind::Remote => {
-                                match KaspaRpcClient::parse_url(
-                                    settings.node.wrpc_url.clone(),
-                                    settings.node.wrpc_encoding,
-                                    settings.node.network.into(),
-                                ) {
-                                    Ok(url) => {
-                                        ui.label(format!("Connecting to {} ...", url));
-                                    }
-                                    Err(err) => {
-                                        ui.label(
-                                            RichText::new(format!(
-                                                "Error connecting to {}: {err}",
-                                                settings.node.wrpc_url
-                                            ))
-                                            .color(theme_color().warning_color),
-                                        );
+                            KaspadNodeKind::Remote => match settings.node.connection_config_kind {
+                                NodeConnectionConfigKind::Custom => {
+                                    match KaspaRpcClient::parse_url(
+                                        settings.node.wrpc_url.clone(),
+                                        settings.node.wrpc_encoding,
+                                        settings.node.network.into(),
+                                    ) {
+                                        Ok(url) => {
+                                            ui.label(format!("Connecting to {} ...", url));
+                                        }
+                                        Err(err) => {
+                                            ui.label(
+                                                RichText::new(format!(
+                                                    "Error connecting to {}: {err}",
+                                                    settings.node.wrpc_url
+                                                ))
+                                                .color(theme_color().warning_color),
+                                            );
+                                        }
                                     }
                                 }
-                            }
+                                NodeConnectionConfigKind::PublicServerCustom => {
+                                    if let Some(rpc_url) = runtime().kaspa_service().rpc_url() {
+                                        ui.label(format!("Connecting to {} ...", rpc_url));
+                                    }
+                                }
+                                NodeConnectionConfigKind::PublicServerRandom => {
+                                    if let Some(rpc_url) = runtime().kaspa_service().rpc_url() {
+                                        ui.label(format!("Connecting to {} ...", rpc_url));
+                                    }
+                                }
+                            },
                             _ => {
                                 ui.label(i18n("Connecting..."));
                             }
@@ -204,20 +243,15 @@ impl<'core> Status<'core> {
                 );
                 ui.separator();
                 ui.label(i18n("CONNECTED")).on_hover_ui(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.label(self.settings().node.wrpc_url.clone());
-                    });
+                    if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
+                        ui.horizontal(|ui| {
+                            ui.label(wrpc_url);
+                        });
+                    }
                 });
                 // }
                 ui.separator();
                 self.render_network_selector(ui);
-                // ui.menu_button(self.settings.node.network.to_string(), |ui| {
-                //     Network::iter().for_each(|network| {
-                //         if ui.button(network.to_string()).clicked() {
-                //             ui.close_menu();
-                //         }
-                //     });
-                // });
 
                 if !self.device().mobile() {
                     ui.separator();
@@ -243,9 +277,11 @@ impl<'core> Status<'core> {
                         );
                         ui.separator();
                         ui.label(i18n("CONNECTED")).on_hover_ui(|ui| {
-                            ui.horizontal(|ui| {
-                                ui.label(self.settings().node.wrpc_url.clone());
-                            });
+                            if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
+                                ui.horizontal(|ui| {
+                                    ui.label(wrpc_url);
+                                });
+                            }
                         });
                         ui.separator();
                         self.render_network_selector(ui);

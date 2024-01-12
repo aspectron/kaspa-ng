@@ -27,6 +27,15 @@ impl Default for BlockDagGraphSettings {
     }
 }
 
+impl BlockDagGraphSettings {
+    pub fn new(spread: f64) -> Self {
+        Self {
+            y_scale: spread,
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct DagBlock {
     pub data: Arc<RpcBlock>,
@@ -130,12 +139,14 @@ impl DaaBucket {
                 block.dst_y = y;
             });
         } else {
-            let mut y = -(len as f64 * y_distance / 2.0);
-            (0..len).for_each(|idx| {
-                let block = &mut self.blocks[idx];
-                y += y_distance;
-                block.dst_y = y;
-            });
+            if len > 1 {
+                let mut y = -(len as f64 * y_distance / 2.0);
+                (0..len).for_each(|idx| {
+                    let block = &mut self.blocks[idx];
+                    y += y_distance;
+                    block.dst_y = y;
+                });
+            }
         }
     }
 

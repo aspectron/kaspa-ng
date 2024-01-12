@@ -95,7 +95,7 @@ impl ThemeColor {
             market_down_color: Color32::from_rgb(255, 136, 136),
 
             raised_text_color: Color32::from_rgb(255, 255, 255),
-            raised_text_shadow: Color32::from_rgb(0, 0, 0),
+            raised_text_shadow: Color32::from_rgba(0, 0, 0, 96),
 
             qr_background: Color32::from_rgba(0, 0, 0, 0),
             qr_foreground: Color32::WHITE,
@@ -163,7 +163,7 @@ impl ThemeColor {
             market_down_color: Color32::from_rgb(77, 41, 41),
 
             raised_text_color: Color32::from_rgb(0, 0, 0),
-            raised_text_shadow: Color32::from_rgb(255, 255, 255),
+            raised_text_shadow: Color32::from_rgba(255, 255, 255, 64),
 
             qr_background: Color32::from_rgba(255, 255, 255, 0),
             qr_foreground: Color32::BLACK,

@@ -3,7 +3,9 @@ use kaspa_consensus_core::config::params::Params;
 
 const BASIC_TRANSACTION_MASS: u64 = 1281;
 
-#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum Network {
     #[default]
@@ -96,11 +98,19 @@ impl Network {
         NETWORKS.iter()
     }
 
+    pub fn name(&self) -> &str {
+        match self {
+            Network::Mainnet => i18n("Mainnet"),
+            Network::Testnet10 => i18n("Testnet-10"),
+            Network::Testnet11 => i18n("Testnet-11"),
+        }
+    }
+
     pub fn describe(&self) -> &str {
         match self {
-            Network::Mainnet => i18n("Mainnet (Main Kaspa network)"),
-            Network::Testnet10 => i18n("Testnet-10 (1 BPS)"),
-            Network::Testnet11 => i18n("Testnet-11 (10 BPS)"),
+            Network::Mainnet => i18n("Main Kaspa network"),
+            Network::Testnet10 => i18n("1 BPS test network"),
+            Network::Testnet11 => i18n("10 BPS test network"),
         }
     }
 

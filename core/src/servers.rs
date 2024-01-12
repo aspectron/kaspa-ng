@@ -1,13 +1,22 @@
 use crate::imports::*;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+type ServerCollection = Arc<Mutex<Arc<HashMap<Network, Vec<Server>>>>>;
+
+pub fn public_server_config() -> &'static ServerCollection {
+    static SERVERS: OnceLock<ServerCollection> = OnceLock::new();
+    SERVERS.get_or_init(|| Arc::new(Mutex::new(parse_default_servers().clone())))
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct Server {
     pub name: Option<String>,
     pub location: Option<String>,
     pub protocol: WrpcEncoding,
-    pub network: Vec<Network>,
     pub port: Option<u16>,
     pub address: String,
+    pub enable: Option<bool>,
+    pub link: Option<String>,
+    pub network: Network,
 }
 
 impl std::fmt::Display for Server {
@@ -40,11 +49,20 @@ pub struct ServerConfig {
     server: Vec<Server>,
 }
 
-fn try_parse_servers(toml: &str) -> Result<Arc<Vec<Server>>> {
-    Ok(toml::from_str::<ServerConfig>(toml)?.server.into())
+fn try_parse_servers(toml: &str) -> Result<Arc<HashMap<Network, Vec<Server>>>> {
+    let servers: Vec<Server> = toml::from_str::<ServerConfig>(toml)?
+        .server
+        .into_iter()
+        .filter(|server| server.enable.unwrap_or(true))
+        .collect::<Vec<_>>();
+
+    let servers = HashMap::group_from(servers.into_iter().map(|server| (server.network, server)));
+
+    Ok(servers.into())
 }
 
-fn parse_servers(toml: &str) -> Arc<Vec<Server>> {
+// fn parse_servers(toml: &str) -> Arc<Vec<Server>> {
+fn parse_servers(toml: &str) -> Arc<HashMap<Network, Vec<Server>>> {
     match try_parse_servers(toml) {
         Ok(servers) => servers,
         Err(e) => {
@@ -54,23 +72,35 @@ fn parse_servers(toml: &str) -> Arc<Vec<Server>> {
                     panic!("Error parsing Servers.toml: {}", e);
                 } else {
                     log_error!("Error parsing Servers.toml: {}", e);
-                    vec![].into()
+                    HashMap::default().into()
                 }
             }
         }
     }
 }
 
-pub fn parse_default_servers() -> &'static Arc<Vec<Server>> {
-    static EMBEDDED_SERVERS: OnceLock<Arc<Vec<Server>>> = OnceLock::new();
+pub fn parse_default_servers() -> &'static Arc<HashMap<Network, Vec<Server>>> {
+    static EMBEDDED_SERVERS: OnceLock<Arc<HashMap<Network, Vec<Server>>>> = OnceLock::new();
     EMBEDDED_SERVERS.get_or_init(|| parse_servers(include_str!("../../Servers.toml")))
 }
 
-pub async fn load_servers() -> Result<Arc<Vec<Server>>> {
+pub fn update_public_servers() {
+    spawn(async move {
+        let servers = fetch_public_servers().await?;
+        *public_server_config().lock().unwrap() = servers;
+        Ok(())
+    });
+}
+
+pub fn load_public_servers() {
+    parse_default_servers();
+    update_public_servers();
+}
+
+async fn fetch_public_servers() -> Result<Arc<HashMap<Network, Vec<Server>>>> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            use workflow_dom::utils::*;
-            let href = window().location().href()?;
+            let href = location()?.href()?;
             let location = if let Some(index) = href.find('#') {
                 let (location, _) = href.split_at(index);
                 location.to_string()
@@ -85,4 +115,132 @@ pub async fn load_servers() -> Result<Arc<Vec<Server>>> {
             Ok(parse_default_servers().clone())
         }
     }
+}
+
+pub fn tls() -> bool {
+    static TLS: OnceLock<bool> = OnceLock::new();
+    *TLS.get_or_init(|| {
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                location().expect("expecting location").protocol().expect("expecting protocol").as_str() == "https:"
+            } else {
+                false
+            }
+        }
+    })
+}
+
+pub fn public_servers(network: &Network) -> Vec<Server> {
+    let servers = public_server_config().lock().unwrap().clone();
+    let servers = servers.get(network).unwrap();
+    servers
+        .iter()
+        .filter(|server| {
+            server.enable.unwrap_or(true)
+                && !(tls()
+                    && !(server.address.starts_with("wss://")
+                        || server.address.starts_with("wrpcs://")))
+        })
+        .cloned()
+        .collect::<Vec<_>>()
+}
+
+pub fn random_public_server(network: &Network) -> Option<Server> {
+    let servers = public_server_config().lock().unwrap().clone();
+    if let Some(servers) = servers.get(network) {
+        let servers = servers
+            .iter()
+            .filter(|server| {
+                server.enable.unwrap_or(true)
+                    && !server.address.contains("localhost")
+                    && !server.address.contains("127.0.0.1")
+                    && !(tls()
+                        && !(server.address.starts_with("wss://")
+                            || server.address.starts_with("wrpcs://")))
+            })
+            .collect::<Vec<_>>();
+
+        if servers.is_empty() {
+            log_error!("Unable to select random public server: no servers available");
+            None
+        } else {
+            let idx = rand::thread_rng().gen::<usize>() % servers.len();
+            Some(servers[idx].clone())
+        }
+    } else {
+        log_error!("Unable to select random public server: no servers available for this network");
+        None
+    }
+}
+
+pub fn render_public_server_selector(
+    core: &mut Core,
+    ui: &mut egui::Ui,
+    settings: &mut NodeSettings,
+) {
+    let servers = public_servers(&settings.network);
+
+    ui.add_space(4.);
+
+    let (text, _secondary) = if let Some(server) = settings.public_servers.get(&settings.network) {
+        (server.to_string(), Option::<String>::None)
+    } else {
+        (i18n("Select Public Node").to_string(), None)
+    };
+
+    let response = ui.add_sized(
+        theme_style().large_button_size,
+        CompositeButton::opt_image_and_text(None, Some(text.into()), None)
+            .with_pulldown_selector(true),
+    );
+
+    PopupPanel::new(
+        ui,
+        "server_selector_popup",
+        |_ui| response,
+        |ui, close| {
+            egui::ScrollArea::vertical()
+                .id_source("server_selector_popup_scroll")
+                .auto_shrink([true; 2])
+                .show(ui, |ui| {
+                    let mut first = true;
+                    for server in servers {
+                        if !first {
+                            ui.separator();
+                        } else {
+                            first = false;
+                        }
+                        if ui
+                            .add_sized(
+                                theme_style().large_button_size,
+                                CompositeButton::opt_image_and_text(
+                                    None,
+                                    Some(server.to_string().into()),
+                                    None,
+                                ),
+                            )
+                            .clicked()
+                        {
+                            settings
+                                .public_servers
+                                .insert(settings.network, server.clone());
+                            *close = true;
+                        }
+
+                        ui.add_space(4.);
+                        if let Some(link) = server.link.as_ref() {
+                            ui.hyperlink_url_to_tab(link);
+                        }
+                        ui.add_space(4.);
+                    }
+                });
+        },
+    )
+    .with_min_width(240.)
+    .with_max_height(core.device().screen_size.y * 0.5)
+    .with_close_button(true)
+    .with_padding(false)
+    .build(ui);
+
+    ui.add_space(4.);
 }

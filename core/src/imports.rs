@@ -41,12 +41,14 @@ pub use workflow_core::enums::Describe;
 pub use workflow_core::extensions::is_not_empty::*;
 pub use workflow_core::task::interval;
 pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
+pub use workflow_dom::utils::*;
 pub use workflow_http as http;
 pub use workflow_i18n::*;
 pub use workflow_log::*;
 
 pub use ahash::{AHashMap, AHashSet};
 pub use pad::{Alignment, PadStr};
+pub use rand::Rng;
 pub use slug::slugify;
 pub use zeroize::*;
 
@@ -63,6 +65,7 @@ pub use crate::device::{Device, Orientation};
 pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};
+pub use crate::extensions::*;
 pub use crate::market::MarketData;
 pub use crate::menu::Menu;
 pub use crate::modules;
@@ -75,10 +78,10 @@ pub use crate::primitives::{
 };
 pub use crate::result::Result;
 pub use crate::runtime::{runtime, spawn, spawn_with_result, Payload, Runtime, Service};
-pub use crate::servers::{load_servers, Server};
+pub use crate::servers::{load_public_servers, public_servers, Server};
 pub use crate::settings::{
-    KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, RpcConfig,
-    Settings, UserInterfaceSettings,
+    KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeConnectionConfigKind,
+    NodeSettings, RpcConfig, Settings, UserInterfaceSettings,
 };
 pub use crate::state::State;
 pub use crate::status::Status;

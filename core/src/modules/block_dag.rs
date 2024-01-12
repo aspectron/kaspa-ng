@@ -7,6 +7,7 @@ use egui_plot::{
     // Corner
 };
 
+#[derive(Clone)]
 pub struct Preset {
     name : &'static str,
     daa_range : f64,
@@ -19,32 +20,42 @@ const PRESETS: &[Preset] = &[
     Preset {
         name : "Large (1 BPS)",
         daa_range : 36.0,
-        daa_offset : 8.0,
+        daa_offset : 10.0,
         spread : 10.0,
         block_scale : 1.0,
     },
     Preset {
         name : "Medium Wide",
-        daa_range : 80.0,
-        daa_offset : 8.0,
+        daa_range : 100.0,
+        daa_offset : 16.0,
         spread : 36.0,
         block_scale : 1.0,
     },
     Preset {
         name : "Medium Narrow",
-        daa_range : 90.0,
-        daa_offset : 12.0,
+        daa_range : 80.0,
+        daa_offset : 16.0,
         spread : 22.0,
         block_scale : 1.2,
     },
     Preset {
         name : "Small (10 BPS)",
         daa_range : 180.0,
-        daa_offset : 16.0,
+        daa_offset : 32.0,
         spread : 36.0,
         block_scale : 1.4,
     },
 ];
+
+impl From<Network> for Preset {
+    fn from(network: Network) -> Self {
+        match network {
+            Network::Mainnet => PRESETS[0].clone(),
+            Network::Testnet10 => PRESETS[0].clone(),
+            Network::Testnet11 => PRESETS[3].clone(),
+        }
+    }
+}
 
 pub struct BlockDag {
     #[allow(dead_code)]
@@ -62,10 +73,16 @@ pub struct BlockDag {
     last_repaint : Instant,
     settings: BlockDagGraphSettings,
     background : Arc<AtomicBool>,
+    network : Network,
 }
 
 impl BlockDag {
     pub fn new(runtime: Runtime) -> Self {
+
+        let preset = Preset::from(Network::Mainnet);
+        let settings = BlockDagGraphSettings::new(preset.spread);
+        runtime.block_dag_monitor_service().update_settings(settings.clone());
+
         Self { 
             runtime, 
             daa_cursor : 0.0, 
@@ -73,14 +90,15 @@ impl BlockDag {
             running : false, 
             plot_bounds : PlotBounds::NOTHING, 
             bezier : true, 
-            daa_offset : 8.0,
-            daa_range : 28.0,
-            block_scale : 1.0,
+            daa_offset : preset.daa_offset,
+            daa_range : preset.daa_range,
+            block_scale : preset.block_scale,
             last_repaint : Instant::now(),
             parent_levels : 1,
             parent_threshold : 200,
-            settings: BlockDagGraphSettings::default(),
+            settings,
             background : Arc::new(AtomicBool::new(false)),
+            network : Network::Mainnet,
         }
     }
 
@@ -90,6 +108,13 @@ impl BlockDag {
 
     pub fn background_state(&self) -> Arc<AtomicBool> {
         self.background.clone()
+    }
+
+    pub fn load_preset(&mut self, preset : &Preset) {
+        self.daa_range = preset.daa_range;
+        self.daa_offset = preset.daa_offset;
+        self.settings.y_dist = preset.spread;
+        self.block_scale = preset.block_scale;
     }
 
 }
@@ -123,48 +148,23 @@ impl ModuleT for BlockDag {
         let y_dist = self.settings.y_dist;
         let vspc_center = self.settings.center_vspc;
 
+        if core.settings.node.network != self.network {
+            self.network = core.settings.node.network;
+            self.load_preset(&self.network.into());
+            runtime().block_dag_monitor_service().update_settings(self.settings.clone());
+        }
+
         ui.horizontal(|ui| {
             ui.heading("Block DAG");
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 PopupPanel::new(ui, "block_dag_settings",|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
 
-                    // ui.horizontal(|ui|{
-                    //     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    //         ui.add_space(6.);
-                    //         ui.menu_button(RichText::new(format!("{} ⏷", i18n("Presets"))), |ui| {
-                    //             for preset in PRESETS {
-                    //                 if ui.button(i18n(preset.name)).clicked() {
-                    //                     self.daa_range = preset.daa_range;
-                    //                     self.daa_offset = preset.daa_offset;
-                    //                     self.settings.y_dist = preset.spread;
-                    //                     self.block_scale = preset.block_scale;
-                    //                     ui.close_menu();
-                    //                 }
-                    //             }
-                    //         });
-                    //     });
-                    // });
-
                     CollapsingHeader::new(i18n("Dimensions"))
                         .open(Some(true))
                         // .default_open(true)
                         .show(ui, |ui| {
                             ui.space();
-
-                            egui::menu::bar(ui, |ui| {
-                                ui.menu_button(RichText::new(format!("{} ⏷", i18n("Presets"))), |ui| {
-                                    for preset in PRESETS {
-                                        if ui.button(i18n(preset.name)).clicked() {
-                                            self.daa_range = preset.daa_range;
-                                            self.daa_offset = preset.daa_offset;
-                                            self.settings.y_dist = preset.spread;
-                                            self.block_scale = preset.block_scale;
-                                            ui.close_menu();
-                                        }
-                                    }
-                                });
-                            });
 
                             ui.space();
                             ui.add(
@@ -232,18 +232,40 @@ impl ModuleT for BlockDag {
                         ui.space();
                         ui.checkbox(&mut self.bezier, i18n("Bezier Curves"));
                         ui.space();
-                        let background_flag = self.background.load(Ordering::SeqCst);
-                        let mut background_state = background_flag;
-                        ui.checkbox(&mut background_state, i18n("Track in the background"));
-                        if background_state != background_flag {
-                            self.background.store(background_state, Ordering::SeqCst);
+
+                        if core.settings.node.node_kind.is_local() {
+                            let background_flag = self.background.load(Ordering::SeqCst);
+                            let mut background_state = background_flag;
+                            ui.checkbox(&mut background_state, i18n("Track in the background"));
+                            if background_state != background_flag {
+                                self.background.store(background_state, Ordering::SeqCst);
+                            }
                         }
                     });
                 })
                 .with_min_width(240.)
-                .with_caption("Settings")
+                .with_caption(i18n("Settings"))
                 .with_close_button(true)
                 .build(ui);
+
+                let response = ui
+                        .add(Label::new(RichText::new(format!("{} ⏷", i18n("Presets")))).sense(Sense::click()));
+                PopupPanel::new(
+                    ui,
+                    "network_selector_popup",
+                    |_ui| response,
+                    |ui, close| {
+                        set_menu_style(ui.style_mut());
+                        for preset in PRESETS {
+                            if ui.button(i18n(preset.name)).clicked() {
+                                self.load_preset(preset);
+                                *close = true;
+                            }
+                        }
+                })
+                .with_min_width(100.0)
+                .build(ui);
+
             });
         });
         ui.separator();
@@ -453,5 +475,12 @@ impl ModuleT for BlockDag {
             crate::runtime::runtime().block_dag_monitor_service().disable(core.state().current_daa_score());
         }
     }
+
+    fn disconnect(&mut self, _core: &mut Core) {
+        self.running = false;
+        self.daa_cursor = 0.0; 
+        self.last_daa_score = 0; 
+}
+
 }
 

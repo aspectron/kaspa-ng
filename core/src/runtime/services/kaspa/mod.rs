@@ -218,13 +218,36 @@ impl KaspaService {
         }
     }
 
+    pub fn rpc_url(&self) -> Option<String> {
+        if !self.wallet().has_rpc() {
+            None
+        } else if let Ok(wrpc_client) = self
+            .wallet()
+            .rpc_api()
+            .clone()
+            .downcast_arc::<KaspaRpcClient>()
+        {
+            Some(wrpc_client.url().to_string())
+        } else {
+            None
+        }
+    }
+
     pub async fn stop_all_services(&self) -> Result<()> {
         if !self.wallet().has_rpc() {
             return Ok(());
         }
 
         for service in crate::runtime::runtime().services().into_iter() {
-            service.detach_rpc().await?;
+            let instant = Instant::now();
+            service.clone().detach_rpc().await?;
+            if instant.elapsed().as_millis() > 1_000 {
+                log_warning!(
+                    "WARNING: detach_rpc() for '{}' took {} msec",
+                    service.name(),
+                    instant.elapsed().as_millis()
+                );
+            }
         }
 
         if let Ok(wrpc_client) = self
@@ -415,7 +438,6 @@ impl Service for KaspaService {
                                 this.connect_rpc_client().await?;
                             },
                             KaspadServiceEvents::StartRemoteConnection { rpc_config, network } => {
-
                                 self.stop_all_services().await?;
 
                                 let rpc = Self::create_rpc_client(&rpc_config, network).expect("Kaspad Service - unable to create wRPC client");

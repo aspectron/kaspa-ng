@@ -8,7 +8,8 @@ use std::sync::Arc;
 use workflow_i18n::*;
 use workflow_log::*;
 
-pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
+// pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
+pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-node.svg");
 pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-ng.svg");
 pub const I18N_EMBEDDED: &str = include_str!("../../resources/i18n/i18n.json");
 pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
@@ -28,8 +29,8 @@ cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
         use kaspad_lib::daemon::{
             create_core,
-            DESIRED_DAEMON_SOFT_FD_LIMIT,
-            MINIMUM_DAEMON_SOFT_FD_LIMIT
+            // DESIRED_DAEMON_SOFT_FD_LIMIT,
+            // MINIMUM_DAEMON_SOFT_FD_LIMIT
         };
         use kaspad_lib::args::Args as NodeArgs;
         use kaspa_utils::fd_budget;
@@ -38,6 +39,9 @@ cfg_if! {
         use crate::utils::*;
         use runtime::panic::*;
         use std::fs;
+
+        const DESIRED_DAEMON_SOFT_FD_LIMIT: u64 = 4 * 1024;
+        const MINIMUM_DAEMON_SOFT_FD_LIMIT: u64 = 2 * 1024;
 
         #[derive(Debug)]
         enum I18n {

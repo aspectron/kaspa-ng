@@ -2,7 +2,6 @@ use crate::frame::window_frame;
 use crate::imports::*;
 use crate::market::*;
 use crate::mobile::MobileMenu;
-use crate::servers::parse_default_servers;
 use egui::load::Bytes;
 use egui_notify::Toasts;
 use kaspa_metrics_core::MetricsSnapshot;
@@ -52,7 +51,6 @@ pub struct Core {
 
     pub device: Device,
     pub market: Option<Market>,
-    pub servers: Arc<Vec<Server>>,
     pub debug: bool,
     pub window_frame: bool,
     callback_map: CallbackMap,
@@ -188,7 +186,6 @@ impl Core {
 
             device: Device::new(window_frame),
             market: None,
-            servers: parse_default_servers().clone(),
             debug: false,
             window_frame,
             callback_map: CallbackMap::default(),
@@ -199,7 +196,8 @@ impl Core {
             module.init(&mut this);
         });
 
-        this.update_servers();
+        load_public_servers();
+
         this.wallet_update_list();
 
         #[cfg(target_arch = "wasm32")]
@@ -337,6 +335,18 @@ impl Core {
                 .expect("unable to downcast_mut module")
         })
     }
+
+    pub fn change_current_network(&mut self, network: Network) {
+        if self.settings.node.network != network {
+            self.settings.node.network = network;
+            self.get_mut::<modules::Settings>()
+                .change_current_network(network);
+            self.store_settings();
+            self.runtime
+                .kaspa_service()
+                .update_services(&self.settings.node);
+        }
+    }
 }
 
 impl eframe::App for Core {
@@ -422,19 +432,15 @@ impl Core {
 
         window_frame(self.window_frame && !is_fullscreen, ctx, "Kaspa NG", |ui| {
             if !self.settings.initialized {
-                cfg_if! {
-                    if #[cfg(not(target_arch = "wasm32"))] {
-                        egui::CentralPanel::default().show_inside(ui, |ui| {
-                            self.modules
-                            .get(&TypeId::of::<modules::Welcome>())
-                            .unwrap()
-                            .clone()
-                            .render(self, ctx, frame, ui);
-                        });
+                egui::CentralPanel::default().show_inside(ui, |ui| {
+                    self.modules
+                        .get(&TypeId::of::<modules::Welcome>())
+                        .unwrap()
+                        .clone()
+                        .render(self, ctx, frame, ui);
+                });
 
-                        return;
-                    }
-                }
+                return;
             }
 
             if !self.module.modal() && !self.device.mobile() {
@@ -604,9 +610,6 @@ impl Core {
     ) -> Result<()> {
         match event {
             Events::VisibilityChange(_state) => {}
-            Events::ServerList { server_list } => {
-                self.servers = server_list;
-            }
             Events::Market(update) => {
                 if self.market.is_none() {
                     self.market = Some(Market::default());
@@ -693,6 +696,8 @@ impl Core {
                         self.state.is_connected = true;
                         self.state.url = url;
                         self.state.network_id = Some(network_id);
+
+                        self.module.clone().connect(self);
                     }
                     #[allow(unused_variables)]
                     CoreWallet::Disconnect {
@@ -709,6 +714,8 @@ impl Core {
                         self.state.network_load = None;
                         self.metrics = Some(Box::default());
                         self.network_load_samples.clear();
+
+                        self.module.clone().disconnect(self);
                     }
                     CoreWallet::UtxoIndexNotEnabled { url } => {
                         self.exception = Some(Exception::UtxoIndexNotEnabled { url });
@@ -1102,17 +1109,7 @@ impl Core {
         ui.style_mut().text_styles = self.default_style.text_styles.clone();
     }
 
-    pub fn update_servers(&self) {
-        let runtime = self.runtime.clone();
-        spawn(async move {
-            let server_list = load_servers().await?;
-            runtime.send(Events::ServerList { server_list }).await?;
-            Ok(())
-        });
-    }
-
     pub fn register_visibility_handler(&self) {
-        use workflow_dom::utils::document;
         use workflow_wasm::callback::*;
 
         let block_dag_background_state = self.get::<modules::BlockDag>().background_state();

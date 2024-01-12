@@ -21,9 +21,6 @@ pub enum Events {
         mempool_size: usize,
     },
     Error(Box<String>),
-    ServerList {
-        server_list: Arc<Vec<Server>>,
-    },
     WalletList {
         wallet_list: Arc<Vec<WalletDescriptor>>,
     },

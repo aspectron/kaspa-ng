@@ -60,12 +60,6 @@ This is an alpha release, please help us test this software.
 
 One of the best ways to test this application is to build both desktop and web versions and run them side-by-side, connecting the web app to the node running within the desktop app. You can then create a wallet in both instances and transfer funds between them.
 
-### Known Issues
-
-- [ ] The Web App does not currently preserve transaction history. Reloading the page or the wallet will result in the blank transaction list (this does not affect the wallet functionality).  The Web Browser transaction history storage backend is currently under development in the Rusty Kaspa wallet framework.
-- [ ] When the Web App goes off screen or in the background tab, browser will suspend it preventing it from processing updates. There is a workaround for this, but it is not yet implemented.
-
-
 ## License
 
 Licensed under a [PROPRIETARY MIT-style Open Source LICENSE](LICENSE) with the following restrictions: 

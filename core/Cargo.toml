@@ -52,6 +52,7 @@ log.workspace = true
 pad.workspace = true
 passwords.workspace = true
 qrcode.workspace = true
+rand.workspace = true
 rfd.workspace = true
 ritehash.workspace = true
 separator.workspace = true

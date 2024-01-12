@@ -8,6 +8,7 @@ pub enum BlockDagMonitorEvents {
     Enable,
     Disable,
     Settings(Arc<BlockDagGraphSettings>),
+    Reset,
     Exit,
 }
 
@@ -167,6 +168,7 @@ impl Service for BlockDagMonitorService {
         if self.is_enabled.load(Ordering::Relaxed) {
             self.register_notification_listener().await?;
         }
+
         Ok(())
     }
 
@@ -175,6 +177,12 @@ impl Service for BlockDagMonitorService {
         if self.listener_id.lock().unwrap().is_some() {
             self.unregister_notification_listener().await?;
         }
+
+        self.service_events
+            .sender
+            .try_send(BlockDagMonitorEvents::Reset)
+            .unwrap();
+
         Ok(())
     }
 
@@ -282,6 +290,10 @@ impl Service for BlockDagMonitorService {
                                 }
 
                                 break;
+                            }
+                            BlockDagMonitorEvents::Reset => {
+                                self.chain.lock().unwrap().clear();
+                                blocks_by_hash.clear();
                             }
                             BlockDagMonitorEvents::Settings(new_settings) => {
                                 *self.settings.lock().unwrap() = new_settings.clone();

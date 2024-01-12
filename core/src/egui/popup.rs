@@ -12,6 +12,8 @@ pub struct PopupPanel<'panel> {
     caption: Option<String>,
     with_close_button: bool,
     close_on_interaction: bool,
+    above_or_below: AboveOrBelow,
+    with_padding: bool,
 }
 
 impl<'panel> PopupPanel<'panel> {
@@ -32,6 +34,8 @@ impl<'panel> PopupPanel<'panel> {
             caption: None,
             with_close_button: false,
             close_on_interaction: false,
+            above_or_below: AboveOrBelow::Below,
+            with_padding: true,
         }
     }
 
@@ -60,6 +64,16 @@ impl<'panel> PopupPanel<'panel> {
         self
     }
 
+    pub fn with_above_or_below(mut self, above_or_below: AboveOrBelow) -> Self {
+        self.above_or_below = above_or_below;
+        self
+    }
+
+    pub fn with_padding(mut self, with_padding: bool) -> Self {
+        self.with_padding = with_padding;
+        self
+    }
+
     pub fn build(self, ui: &mut Ui) {
         let response = (self.widget)(ui);
         if response.clicked() {
@@ -74,7 +88,7 @@ impl<'panel> PopupPanel<'panel> {
             ui,
             self.id,
             &response,
-            AboveOrBelow::Below,
+            self.above_or_below,
             self.close_on_interaction,
             |ui| {
                 if let Some(width) = self.min_width {
@@ -101,14 +115,18 @@ impl<'panel> PopupPanel<'panel> {
                     });
 
                     ui.separator();
-                    ui.space();
+                    if self.with_padding {
+                        ui.space();
+                    }
                 }
 
                 let mut close_popup = false;
                 (self.content)(ui, &mut close_popup);
 
                 if self.with_close_button {
-                    ui.space();
+                    if self.with_padding {
+                        ui.space();
+                    }
                     ui.separator();
 
                     ui.add_space(8.);

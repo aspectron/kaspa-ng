@@ -389,14 +389,21 @@ impl Overview {
 
                 let text = format!("{} {}", i18n(metric.title().1).to_uppercase(), metric.format(value, true, true));
                 let rich_text_top = RichText::new(&text).size(10.).color(theme_color().raised_text_color);
-                let rich_text_back = RichText::new(text).size(10.).color(theme_color().raised_text_shadow);
                 let label_top = Label::new(rich_text_top).wrap(false);
-                let label_back = Label::new(rich_text_back).wrap(false);
                 let mut rect_top = plot_result.response.rect;
                 rect_top.set_bottom(rect_top.top() + 12.);
-                let mut rect_back = rect_top;
-                rect_back.set_center(rect_back.center()+vec2(0.8,0.8));
-                ui.put(rect_back, label_back);
+
+                [
+                    vec2(-1.0,0.0),vec2(1.0,0.0),vec2(0.0,-1.0),vec2(0.0,1.0),
+                    vec2(1.0,1.0),vec2(1.0,-1.0),vec2(-1.0,1.0),vec2(-1.0,-1.0),
+                ].iter().for_each(|offset| {
+                    let rich_text_back = RichText::new(&text).size(10.).color(theme_color().raised_text_shadow);
+                    let label_back = Label::new(rich_text_back).wrap(false);
+                    let mut rect_back = rect_top;
+                    rect_back.set_center(rect_back.center()+*offset);
+                    ui.put(rect_back, label_back);
+                });
+
                 ui.put(rect_top, label_top);
             });
         });

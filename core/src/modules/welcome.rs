@@ -8,24 +8,19 @@ pub struct Welcome {
 
 impl Welcome {
     pub fn new(runtime: Runtime) -> Self {
+
+        let mut settings = Settings::default();
+        settings.node.node_kind = KaspadNodeKind::Remote;
+
         Self { 
             runtime, 
-            settings : Settings::default(),
+            settings,
         }
     }
-}
 
-impl ModuleT for Welcome {
-
-    fn style(&self) -> ModuleStyle {
-        ModuleStyle::Default
-    }
-
-    fn render(
+    pub fn render_native(
         &mut self,
         core: &mut Core,
-        _ctx: &egui::Context,
-        _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
 
@@ -43,7 +38,7 @@ impl ModuleT for Welcome {
 
                             ui.horizontal_wrapped(|ui| {
                                 Network::iter().for_each(|network| {
-                                    ui.radio_value(&mut self.settings.node.network, *network, network.describe());
+                                    ui.radio_value(&mut self.settings.node.network, *network, format!("{} ({})",network.name(),network.describe()));
 
                                 });
                             });
@@ -73,6 +68,10 @@ impl ModuleT for Welcome {
                                 ui.radio_value(&mut self.settings.node.node_kind, *node_kind, node_kind.to_string()).on_hover_text_at_pointer(node_kind.describe());
                             });
                         });
+
+                        if self.settings.node.node_kind == KaspadNodeKind::Remote {
+                            crate::modules::settings::Settings::render_remote_settings(core,ui,&mut self.settings.node);
+                        }
                     });
 
                 CollapsingHeader::new(i18n("User Interface"))
@@ -146,7 +145,6 @@ impl ModuleT for Welcome {
                     if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))).clicked() {
                         let mut settings = self.settings.clone();
                         settings.initialized = true;
-                        // settings.version.clear(); // triggers changelog
                         settings.store_sync().expect("Unable to store settings");
                         self.runtime.kaspa_service().update_services(&self.settings.node);
                         core.settings = settings.clone();
@@ -169,4 +167,88 @@ impl ModuleT for Welcome {
     
         });
     }
+
+    pub fn render_web(
+        &mut self,
+        core: &mut Core,
+        ui: &mut egui::Ui,
+    ) {
+        let mut proceed = false;
+
+        Panel::new(self)
+            .with_caption(i18n("Welcome to Kaspa NG"))
+            .with_header(|_this, ui| {
+                ui.label(i18n("Please select Kaspa network"));
+            })
+            .with_body(|this, ui| {
+                Network::iter().for_each(|network| {
+                    if ui.add_sized(
+                            theme_style().large_button_size,
+                            CompositeButton::opt_image_and_text(
+                                None,
+                                Some(network.name().into()),
+                                Some(network.describe().into()),
+                            ),
+                        )
+                        .clicked()
+                    {
+                        this.settings.node.network = *network;
+                        proceed = true;
+                    }
+
+                    ui.add_space(8.);
+                });
+
+                ui.add_space(32.0);
+                
+                ui.colored_label(theme_color().alert_color, RichText::new("α").size(64.0));
+                ui.add_space(8.0);
+                ui.colored_label(theme_color().alert_color, "Please note - this is an alpha release - Kaspa NG is still in early development and is not yet ready for production use.");
+            })
+            .render(ui);        
+
+        if proceed {
+            let mut settings = self.settings.clone();
+            settings.initialized = true;
+
+            settings.store_sync().expect("Unable to store settings");
+            core.settings = settings.clone();
+            self.runtime.kaspa_service().update_services(&settings.node);
+
+            core.get_mut::<modules::Settings>().load(settings);
+            core.select::<modules::Overview>();
+        }
+
+    }
+
+}
+
+impl ModuleT for Welcome {
+
+    fn style(&self) -> ModuleStyle {
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                ModuleStyle::Mobile
+            } else {
+                ModuleStyle::Default
+            }
+        }
+    }
+
+    fn render(
+        &mut self,
+        core: &mut Core,
+        _ctx: &egui::Context,
+        _frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
+        cfg_if! {
+            if #[cfg(not(target_arch = "wasm32"))] {
+                self.render_native(core, ui)
+            } else {
+                self.render_web(core, ui)
+            }
+        }
+    }
+
 }

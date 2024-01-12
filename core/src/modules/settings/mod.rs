@@ -1,5 +1,6 @@
 
 use crate::imports::*;
+use crate::servers::render_public_server_selector;
 
 pub struct Settings {
     #[allow(dead_code)]
@@ -7,28 +8,15 @@ pub struct Settings {
     settings : crate::settings::Settings,
     grpc_network_interface : NetworkInterfaceEditor,
     reset_settings : bool,
-    secure_wrpc_only : bool,
 }
 
 impl Settings {
     pub fn new(runtime: Runtime) -> Self {
-
-        cfg_if!{
-            if #[cfg(target_arch = "wasm32")] {
-                use workflow_dom::utils::*;
-                let protocol = window().location().protocol().unwrap();
-                let secure_wrpc_only = protocol == "https:";
-            } else {
-                let secure_wrpc_only = false;
-            }
-        } 
-
         Self { 
             runtime,
             settings : crate::settings::Settings::default(),
             grpc_network_interface : NetworkInterfaceEditor::default(),
             reset_settings : false,
-            secure_wrpc_only,
         }
     }
 
@@ -36,6 +24,87 @@ impl Settings {
         self.settings = settings;
 
         self.grpc_network_interface = NetworkInterfaceEditor::from(&self.settings.node.grpc_network_interface);
+    }
+
+    pub fn change_current_network(&mut self, network : Network) {
+        self.settings.node.network = network;
+    }
+
+    pub fn render_remote_settings(core: &mut Core, ui: &mut Ui, settings : &mut NodeSettings) -> Option<&'static str> {
+
+        let mut node_settings_error = None;
+
+        CollapsingHeader::new(i18n("Remote p2p Node Configuration"))
+        .default_open(true)
+        .show(ui, |ui| {
+
+
+            ui.horizontal(|ui|{
+                ui.label(i18n(i18n("Remote Connection:")));
+                NodeConnectionConfigKind::iter().for_each(|kind| {
+                    ui.radio_value(&mut settings.connection_config_kind, *kind, kind.to_string());
+                });
+            });
+
+            match settings.connection_config_kind {
+                NodeConnectionConfigKind::Custom => {
+
+                    CollapsingHeader::new(i18n("wRPC Connection Settings"))
+                        .default_open(true)
+                        .show(ui, |ui| {
+
+
+                            ui.horizontal(|ui|{
+                                ui.label(i18n(i18n("wRPC Encoding:")));
+                                WrpcEncoding::iter().for_each(|encoding| {
+                                    ui.radio_value(&mut settings.wrpc_encoding, *encoding, encoding.to_string());
+                                });
+                            });
+
+
+                            ui.horizontal(|ui|{
+                                ui.label(i18n(i18n("wRPC URL:")));
+                                ui.add(TextEdit::singleline(&mut settings.wrpc_url));
+                                
+                            });
+
+                            if let Err(err) = KaspaRpcClient::parse_url(settings.wrpc_url.clone(), settings.wrpc_encoding, settings.network.into()) {
+                                ui.label(
+                                    RichText::new(format!("{err}"))
+                                        .color(theme_color().warning_color),
+                                );
+                                node_settings_error = Some(i18n("Invalid wRPC URL"));
+                            }
+                        });
+                    // cfg_if! {
+                    //     if #[cfg(not(target_arch = "wasm32"))] {
+                    //         ui.horizontal_wrapped(|ui|{
+                    //             ui.label(i18n("Recommended arguments for the remote node: "));
+                    //             ui.label(RichText::new("kaspad --utxoindex --rpclisten-borsh=0.0.0.0").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
+                    //         });
+                    //         ui.horizontal_wrapped(|ui|{
+                    //             ui.label(i18n("If you are running locally, use: "));
+                    //             ui.label(RichText::new("--rpclisten-borsh=127.0.0.1.").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
+                    //         });
+                    //     }
+                    // }
+
+                },
+                NodeConnectionConfigKind::PublicServerCustom => {
+                    CollapsingHeader::new(i18n("Public Node"))
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            render_public_server_selector(core, ui, settings);
+                        });
+                },
+                NodeConnectionConfigKind::PublicServerRandom => {
+                    ui.label(i18n("A random server will be selected on startup"));
+                },
+            }
+
+        });
+
+        node_settings_error
     }
 }
 
@@ -69,66 +138,6 @@ impl ModuleT for Settings {
 impl Settings {
 
 
-    fn render_available_servers(
-        &mut self,
-        core: &mut Core,
-        ui: &mut egui::Ui,
-    ) {
-
-        let servers = core.servers.iter().filter(|server| {
-            if server.network.contains(&self.settings.node.network) {
-                !(self.secure_wrpc_only && !(server.address.starts_with("wss://") || server.address.starts_with("wrpcs://")))
-            } else {
-                false
-            }
-        }).collect::<Vec<_>>();
-        let server_count = servers.len();
-
-        CollapsingHeader::new(format!("{} {} {}", i18n("Public p2p Nodes for"), self.settings.node.network, server_count))
-            .default_open(true)
-            .show(ui, |ui| {
-                ui.add_space(4.);
-
-                let use_popup = false;
-
-                if !use_popup {
-
-                    for server in servers {
-                        if ui.add(Label::new(format!("• {server}")).sense(Sense::click())).clicked() {
-                            self.settings.node.wrpc_encoding = server.wrpc_encoding();
-                            self.settings.node.wrpc_url = server.address();
-                        } 
-                    }
-
-                } else {
-
-                    PopupPanel::new(ui, "server_selector_popup",|ui|{ ui.add(Label::new(format!("{} ⏷",i18n("Select Available Server"))).sense(Sense::click())) }, |ui, _close| {
-                        egui::ScrollArea::vertical()
-                            .id_source("server_selector_popup_scroll")
-                            .auto_shrink([true; 2])
-                            .show(ui, |ui| {
-                                for server in servers {
-                                    if ui.add_sized(theme_style().large_button_size,CompositeButton::opt_image_and_text(
-                                        None,
-                                        Some(server.to_string().into()),
-                                        None,
-                                    )).clicked() {
-                                        self.settings.node.wrpc_encoding = server.wrpc_encoding();
-                                        self.settings.node.wrpc_url = server.address();
-                                    }
-                                }
-                            });
-                    })
-                    .with_min_width(240.)
-                    .with_max_height(core.device().screen_size.y * 0.5)
-                    .with_close_on_interaction(true)
-                    .build(ui);
-                }
-
-                ui.add_space(4.);
-            });
-
-    }
 
     fn render_node_settings(
         &mut self,
@@ -143,6 +152,7 @@ impl Settings {
         CollapsingHeader::new("Kaspa p2p Network & Node Connection")
             .default_open(true)
             .show(ui, |ui| {
+
 
                 CollapsingHeader::new("Kaspa Network")
                     .default_open(true)
@@ -269,103 +279,59 @@ impl Settings {
 
                     });
 
+
                 if !self.grpc_network_interface.is_valid() {
                     node_settings_error = Some(i18n("Invalid gRPC network interface configuration"));
                 } else {
                     self.settings.node.grpc_network_interface = self.grpc_network_interface.as_ref().try_into().unwrap(); //NetworkInterfaceConfig::try_from(&self.grpc_network_interface).unwrap();
                 }
 
-                ui.add_space(4.);
-            });
+                // ui.add_space(4.);
 
-            if self.settings.node.node_kind == KaspadNodeKind::Remote {
+                if self.settings.node.node_kind == KaspadNodeKind::Remote {
+                    node_settings_error = Self::render_remote_settings(core, ui, &mut self.settings.node);
+                }
 
-                self.render_available_servers(core,ui);
+                #[cfg(not(target_arch = "wasm32"))]
+                if self.settings.node.node_kind.is_config_capable() {
 
+                    CollapsingHeader::new(i18n("Local p2p Node Configuration"))
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            ui.vertical(|ui|{
+                                CollapsingHeader::new(i18n("Client RPC"))
+                                    .default_open(true)
+                                    .show(ui, |ui| {
+                                        ui.vertical(|ui|{
 
+                                            ui.checkbox(&mut self.settings.node.enable_grpc, i18n("Enable gRPC"));
+                                            if self.settings.node.enable_grpc {
 
-                CollapsingHeader::new(i18n("Remote p2p Node Configuration"))
-                    .default_open(true)
-                    .show(ui, |ui| {
+                                                CollapsingHeader::new(i18n("gRPC Network Interface & Port"))
+                                                    .default_open(true)
+                                                    .show(ui, |ui| {
+                                                        self.grpc_network_interface.ui(ui);
+                                                    });
+                                                // - TODO
+                                                // ui.add(TextEdit::singleline(&mut self.settings.node.grpc_network_interface));
+                                            }
+                                        });
 
-                        // RANDOM, COMMUNITY NODES, CUSTOM
-                        // let mut wrpc_url = self.settings.node.wrpc_url.clone();
-                        ui.horizontal(|ui|{
-                            ui.label(i18n(i18n("wRPC Encoding:")));
-                            WrpcEncoding::iter().for_each(|encoding| {
-                                ui.radio_value(&mut self.settings.node.wrpc_encoding, *encoding, encoding.to_string());
-                            });
-                        });
-
-
-                        ui.horizontal(|ui|{
-                            ui.label(i18n(i18n("wRPC URL:")));
-                            ui.add(TextEdit::singleline(&mut self.settings.node.wrpc_url));
+                                });
+                            // });
                             
+                                CollapsingHeader::new(i18n("p2p RPC"))
+                                    .default_open(true)
+                                    .show(ui, |ui| {
+                                        ui.vertical(|ui|{
+                                            ui.checkbox(&mut self.settings.node.enable_upnp, i18n("Enable UPnP"));
+                                        });
+                                    });
+                                });
                         });
+                } // is_config_capable
 
-                        if let Err(err) = KaspaRpcClient::parse_url(self.settings.node.wrpc_url.clone(), self.settings.node.wrpc_encoding, self.settings.node.network.into()) {
-                            ui.label(
-                                RichText::new(format!("{err}"))
-                                    .color(theme_color().warning_color),
-                            );
-                            node_settings_error = Some(i18n("Invalid wRPC URL"));
-                        }
-
-                        cfg_if! {
-                            if #[cfg(not(target_arch = "wasm32"))] {
-                                ui.horizontal_wrapped(|ui|{
-                                    ui.label(i18n("Recommended arguments for the remote node: "));
-                                    ui.label(RichText::new("kaspad --utxoindex --rpclisten-borsh=0.0.0.0").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
-                                });
-                                ui.horizontal_wrapped(|ui|{
-                                    ui.label(i18n("If you are running locally, use: "));
-                                    ui.label(RichText::new("--rpclisten-borsh=127.0.0.1.").code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
-                                });
-                            }
-                        }
-
-                    });
-            }
-
-            #[cfg(not(target_arch = "wasm32"))]
-            if self.settings.node.node_kind.is_config_capable() {
-
-                CollapsingHeader::new(i18n("Local p2p Node Configuration"))
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        ui.vertical(|ui|{
-                            CollapsingHeader::new(i18n("Client RPC"))
-                                .default_open(true)
-                                .show(ui, |ui| {
-                                    ui.vertical(|ui|{
-
-                                        ui.checkbox(&mut self.settings.node.enable_grpc, i18n("Enable gRPC"));
-                                        if self.settings.node.enable_grpc {
-
-                                            CollapsingHeader::new(i18n("gRPC Network Interface & Port"))
-                                                .default_open(true)
-                                                .show(ui, |ui| {
-                                                    self.grpc_network_interface.ui(ui);
-                                                });
-                                            // - TODO
-                                            // ui.add(TextEdit::singleline(&mut self.settings.node.grpc_network_interface));
-                                        }
-                                    });
-
-                            });
-                        // });
-                        
-                            CollapsingHeader::new(i18n("p2p RPC"))
-                                .default_open(true)
-                                .show(ui, |ui| {
-                                    ui.vertical(|ui|{
-                                        ui.checkbox(&mut self.settings.node.enable_upnp, i18n("Enable UPnP"));
-                                    });
-                                });
-                            });
-                    });
-            } // is_config_capable
+            }); // Kaspa p2p Network & Node Connection
 
             if let Some(error) = node_settings_error {
                 ui.add_space(4.);
@@ -415,7 +381,7 @@ impl Settings {
 
         self.render_node_settings(core,ui);
 
-        CollapsingHeader::new(i18n("Centralized Services"))
+        CollapsingHeader::new(i18n("Services"))
             .default_open(true)
             .show(ui, |ui| {
 

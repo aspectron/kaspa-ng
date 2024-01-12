@@ -151,19 +151,6 @@ impl<'core> Menu<'core> {
                     )
                     .with_min_width(64.)
                     .build(ui);
-
-                    // // let icon_size = theme.panel_icon_size();
-                    // let icon = CompositeIcon::new(egui_phosphor::light::MONITOR).icon_size(18.);
-                    // // .padding(Some(icon_padding));
-                    // // if ui.add_enabled(true, icon).clicked() {
-                    // if ui.add(icon).clicked() {
-                    //     // close(self.this);
-                    // }
-
-                    // if ui.button("Theme").clicked() {
-                    //     self.select::<modules::Logs>();
-                    // }
-                    // ui.separator();
                 });
             });
         });
@@ -211,10 +198,12 @@ impl<'core> Menu<'core> {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            ui.separator();
-            if ui.button("Node").clicked() {
-                self.select::<modules::Node>();
-                ui.close_menu();
+            if self.core.settings.node.node_kind.is_local() {
+                ui.separator();
+                if ui.button("Node").clicked() {
+                    self.select::<modules::Node>();
+                    ui.close_menu();
+                }
             }
         }
 
@@ -227,10 +216,12 @@ impl<'core> Menu<'core> {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            ui.separator();
-            if ui.button("Logs").clicked() {
-                self.select::<modules::Logs>();
-                ui.close_menu();
+            if self.core.settings.node.node_kind.is_local() {
+                ui.separator();
+                if ui.button("Logs").clicked() {
+                    self.select::<modules::Logs>();
+                    ui.close_menu();
+                }
             }
         }
     }

@@ -1,32 +1,22 @@
-[[server]]
-name = "kaspa-ng.org"
-location = "EU"
-protocol = "borsh"
-network = ["mainnet"]
-address = "wss://kaspa-ng.org:443/mainnet"
 
 [[server]]
 name = "kaspa-ng.org"
 location = "EU"
 protocol = "borsh"
-network = ["testnet-11"]
-address = "wss://kaspa-ng.org:443/testnet-11"
+network = "mainnet"
+address = "wss://eu-1.kaspa-ng.org:443/mainnet"
 
 [[server]]
-name = "localhost"
+name = "kaspa-ng.org"
+location = "EU"
 protocol = "borsh"
-network = ["mainnet"]
-address = "127.0.0.1"
+network = "testnet-10"
+address = "wss://eu-1.kaspa-ng.org:443/testnet-10"
 
 [[server]]
-name = "localhost"
+name = "kaspa-ng.org"
+location = "EU"
 protocol = "borsh"
-network = ["testnet-10"]
-address = "127.0.0.1"
-
-[[server]]
-name = "localhost"
-protocol = "borsh"
-network = ["testnet-11"]
-address = "127.0.0.1"
+network = "testnet-11"
+address = "wss://eu-1.kaspa-ng.org:443/testnet-11"
 

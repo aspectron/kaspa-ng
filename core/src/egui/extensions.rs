@@ -348,3 +348,11 @@ impl WidgetSpacerExtension for Ui {
         self.add_space(theme_style().widget_spacing);
     }
 }
+
+pub fn set_menu_style(style: &mut Style) {
+    style.spacing.button_padding = vec2(2.0, 0.0);
+    style.visuals.widgets.active.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.hovered.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.inactive.weak_bg_fill = Color32::TRANSPARENT;
+    style.visuals.widgets.inactive.bg_stroke = Stroke::NONE;
+}

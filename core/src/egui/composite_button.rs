@@ -55,6 +55,7 @@ pub struct CompositeButton<'a> {
     padding: Option<Vec2>,
     selected: bool,
     show_loading_spinner: Option<bool>,
+    pulldown_selector: bool,
 }
 
 impl<'a> CompositeButton<'a> {
@@ -113,6 +114,7 @@ impl<'a> CompositeButton<'a> {
             selected: false,
             show_loading_spinner: None,
             secondary_text,
+            pulldown_selector: false,
         }
     }
 
@@ -213,6 +215,12 @@ impl<'a> CompositeButton<'a> {
         self.show_loading_spinner = Some(show);
         self
     }
+
+    #[inline]
+    pub fn with_pulldown_selector(mut self, pulldown_selector: bool) -> Self {
+        self.pulldown_selector = pulldown_selector;
+        self
+    }
 }
 
 impl Widget for CompositeButton<'_> {
@@ -234,6 +242,7 @@ impl Widget for CompositeButton<'_> {
             selected,
             show_loading_spinner,
             secondary_text,
+            pulldown_selector,
         } = self;
 
         let frame = frame.unwrap_or_else(|| ui.visuals().button_frame);
@@ -246,6 +255,8 @@ impl Widget for CompositeButton<'_> {
         if small {
             button_padding.y = 0.0;
         }
+
+        let pulldown_padding = if pulldown_selector { 20.0 } else { 0.0 };
 
         let space_available_for_image = if let Some(text) = &text {
             let font_height = ui.fonts(|fonts| font_height(text, fonts, ui.style()));
@@ -286,7 +297,7 @@ impl Widget for CompositeButton<'_> {
         let shortcut_text = (!shortcut_text.is_empty())
             .then(|| shortcut_text.into_galley(ui, Some(false), f32::INFINITY, TextStyle::Button));
 
-        let mut desired_size = Vec2::ZERO;
+        let mut desired_size = Vec2::new(pulldown_padding, 0.0); //Vec2::ZERO;
         let mut img_plus_spacing_width = 0.0;
         if image.is_some() {
             desired_size.x += image_size.x;
@@ -447,6 +458,28 @@ impl Widget for CompositeButton<'_> {
                     ui.painter(),
                     shortcut_text_pos,
                     ui.visuals().weak_text_color(),
+                );
+            }
+
+            if pulldown_selector {
+                let galley = WidgetText::RichText(RichText::new("⏷").size(14.)).into_galley(
+                    ui,
+                    wrap,
+                    text_wrap_width,
+                    TextStyle::Button,
+                );
+                let image_rect = Rect::from_min_size(
+                    pos2(
+                        rect.max.x - button_padding.x - 20.0,
+                        rect.center().y - 0.5 - (galley.size().y / 2.0),
+                    ),
+                    galley.size(),
+                );
+
+                galley.paint_with_fallback_color(
+                    ui.painter(),
+                    image_rect.min,
+                    visuals.fg_stroke.color,
                 );
             }
         }
