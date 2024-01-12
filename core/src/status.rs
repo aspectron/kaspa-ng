@@ -59,6 +59,7 @@ impl<'core> Status<'core> {
                     .metrics()
                     .as_ref()
                     .map(|metrics| metrics.network_transactions_per_second);
+                
                 ui.horizontal(|ui| {
                     if self.state().is_synced() {
                         self.render_connected_state(
@@ -90,16 +91,24 @@ impl<'core> Status<'core> {
     fn render_peers(&self, ui: &mut egui::Ui, peers: Option<usize>) {
         let status_icon_size = theme_style().status_icon_size;
 
-        let peers = peers.unwrap_or(0);
-        if peers != 0 {
-            ui.label(format!("{} peers", peers));
+        if let Some(peers) = peers {
+            if peers != 0 {
+                ui.label(format!("{} peers", peers));
+            } else {
+                ui.label(
+                    RichText::new(egui_phosphor::light::CLOUD_SLASH)
+                        .size(status_icon_size)
+                        .color(theme_color().error_color),
+                );
+                ui.label(RichText::new("No peers").color(theme_color().error_color));
+            }
         } else {
-            ui.label(
-                RichText::new(egui_phosphor::light::CLOUD_SLASH)
-                    .size(status_icon_size)
-                    .color(theme_color().error_color),
-            );
-            ui.label(RichText::new("No peers").color(theme_color().error_color));
+            ui.add(egui::Spinner::new());
+            // ui.label(
+            //     RichText::new(egui_phosphor::light::DNA)
+            //         .size(status_icon_size)
+            //         .color(theme_color().warning_color),
+            // );
         }
     }
 
@@ -236,8 +245,21 @@ impl<'core> Status<'core> {
                 tps: _,
             } => {
                 ui.add_space(left_padding);
+
+                cfg_if! {
+                    if #[cfg(target_arch = "wasm32")] {
+                        let icon = egui_phosphor::light::CPU;
+                    } else {
+                        let icon = if self.core.settings.node.node_kind.is_local() {
+                            egui_phosphor::light::CPU
+                        } else {
+                            egui_phosphor::light::CLOUD
+                        };
+                    }
+                }
+
                 ui.label(
-                    RichText::new(egui_phosphor::light::CPU)
+                    RichText::new(icon)
                         .size(status_icon_size)
                         .color(theme_color().icon_connected_color),
                 );

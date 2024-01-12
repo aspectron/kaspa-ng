@@ -722,7 +722,7 @@ impl Core {
                         self.state.network_id = None;
                         self.state.current_daa_score = None;
                         self.state.network_load = None;
-                        self.metrics = Some(Box::default());
+                        self.metrics = None;
                         self.network_load_samples.clear();
 
                         self.module.clone().disconnect(self);
@@ -1129,15 +1129,19 @@ impl Core {
             let visibility_state = document().visibility_state();
             match visibility_state {
                 VisibilityState::Visible => {
-                    crate::runtime::runtime()
-                        .block_dag_monitor_service()
-                        .enable(None);
+                    let block_dag_monitor_service =
+                        crate::runtime::runtime().block_dag_monitor_service();
+                    if block_dag_monitor_service.is_active() {
+                        block_dag_monitor_service.enable(None);
+                    }
                 }
                 VisibilityState::Hidden => {
-                    if !block_dag_background_state.load(Ordering::SeqCst) {
-                        crate::runtime::runtime()
-                            .block_dag_monitor_service()
-                            .disable(None);
+                    let block_dag_monitor_service =
+                        crate::runtime::runtime().block_dag_monitor_service();
+                    if !block_dag_background_state.load(Ordering::SeqCst)
+                        && block_dag_monitor_service.is_active()
+                    {
+                        block_dag_monitor_service.disable(None);
                     }
                 }
                 _ => {}

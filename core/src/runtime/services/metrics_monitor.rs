@@ -104,8 +104,11 @@ impl Service for MetricsService {
         let this = self.clone();
         self.metrics
             .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
-                if let Err(err) = this.ingest_metrics_snapshot(Box::new(snapshot)) {
-                    println!("Error ingesting metrics snapshot: {}", err);
+                // TODO - remove this once adjusted in rusty kaspa
+                if snapshot.node_cpu_cores > 0.0 {
+                    if let Err(err) = this.ingest_metrics_snapshot(Box::new(snapshot)) {
+                        println!("Error ingesting metrics snapshot: {}", err);
+                    }
                 }
                 None
             })));
