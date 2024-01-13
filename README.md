@@ -32,33 +32,9 @@ sudo dnf install glib2-devel atk-devel gtk3-devel
 
 Once you have Rusty Kaspa built, you will be able to build and run this project as follows:
 
-#### Running as Native App
 ```bash
 cargo run --release
 ```
-
-#### Running as Web App
-```bash
-cargo install trunk
-trunk serve --release
-```
-Access via [https://localhost:8080](https://localhost:8080)
-
-While the application is a static serve, you can not load it from the local file system due to CORS restrictions. Due to this, a web server is required. This application is designed to be built with [Trunk](https://trunkrs.dev/) and is served from the `dist/` folder.  This is a self-contained client-side application - once the application is loaded, the web server is no longer required.
-
-#### Running as a Browser Extension
-
-This project currently supports Chrome browser extension target, but this part of the project is under development and is not ready for use.
-
-```bash
-./build-chrome
-```
-
-### Testing
-
-This is an alpha release, please help us test this software.
-
-One of the best ways to test this application is to build both desktop and web versions and run them side-by-side, connecting the web app to the node running within the desktop app. You can then create a wallet in both instances and transfer funds between them.
 
 ## License
 
