@@ -559,7 +559,7 @@ impl KaspadServiceEvents {
                         Ok(KaspadServiceEvents::Disable { network : node_settings.network })
                     }
                     KaspadNodeKind::Remote => {
-                        Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : node_settings.into(), network : node_settings.network })
+                        Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : RpcConfig::from_node_settings(node_settings,options), network : node_settings.network })
                     }
                 }
             }
