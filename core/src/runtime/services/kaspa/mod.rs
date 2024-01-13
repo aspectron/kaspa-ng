@@ -103,7 +103,7 @@ impl KaspaService {
         // enqueue startup event to the service channel to
         // start kaspad or initiate connection to remote kaspad
         if settings.initialized {
-            match KaspadServiceEvents::try_from(&settings.node) {
+            match KaspadServiceEvents::from_node_settings(&settings.node, None) {
                 Ok(event) => {
                     service_events.sender.try_send(event).unwrap_or_else(|err| {
                         log_error!("KaspadService error: {}", err);
@@ -332,8 +332,8 @@ impl KaspaService {
         Ok(())
     }
 
-    pub fn update_services(&self, node_settings: &NodeSettings) {
-        match KaspadServiceEvents::try_from(node_settings) {
+    pub fn update_services(&self, node_settings: &NodeSettings, options: Option<RpcOptions>) {
+        match KaspadServiceEvents::from_node_settings(node_settings, options) {
             Ok(event) => {
                 self.service_events
                     .sender
@@ -524,9 +524,11 @@ impl Service for KaspaService {
     }
 }
 
-impl TryFrom<&NodeSettings> for KaspadServiceEvents {
-    type Error = Error;
-    fn try_from(node_settings: &NodeSettings) -> std::result::Result<Self, Self::Error> {
+impl KaspadServiceEvents {
+    pub fn from_node_settings(
+        node_settings: &NodeSettings,
+        options: Option<RpcOptions>,
+    ) -> Result<Self> {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
 
@@ -546,7 +548,7 @@ impl TryFrom<&NodeSettings> for KaspadServiceEvents {
                         Ok(KaspadServiceEvents::StartExternalAsDaemon { path : PathBuf::from(path), config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::Remote => {
-                        Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : node_settings.into(), network : node_settings.network })
+                        Ok(KaspadServiceEvents::StartRemoteConnection { rpc_config : RpcConfig::from_node_settings(node_settings,options), network : node_settings.network })
                     }
                 }
 

@@ -183,7 +183,6 @@ impl<'core> Status<'core> {
                                 .color(theme_color().error_color),
                         );
                         ui.separator();
-                        // ui.label("Connecting...");
 
                         let settings = self.settings();
                         match settings.node.node_kind {
@@ -241,9 +240,17 @@ impl<'core> Status<'core> {
                                                 )
                                                 .clicked()
                                             {
-                                                runtime()
+                                                let options = runtime()
                                                     .kaspa_service()
-                                                    .update_services(&self.core.settings.node);
+                                                    .rpc_url()
+                                                    .map(|rpc_url| {
+                                                        RpcOptions::new().blacklist(rpc_url)
+                                                    });
+
+                                                runtime().kaspa_service().update_services(
+                                                    &self.core.settings.node,
+                                                    options,
+                                                );
                                             }
 
                                             ui.separator();

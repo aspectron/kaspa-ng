@@ -81,7 +81,7 @@ pub use crate::runtime::{runtime, spawn, spawn_with_result, Payload, Runtime, Se
 pub use crate::servers::{load_public_servers, public_servers, Server};
 pub use crate::settings::{
     KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeConnectionConfigKind,
-    NodeSettings, RpcConfig, Settings, UserInterfaceSettings,
+    NodeSettings, RpcConfig, RpcOptions, Settings, UserInterfaceSettings,
 };
 pub use crate::state::State;
 pub use crate::status::Status;

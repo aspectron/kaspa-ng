@@ -352,7 +352,7 @@ impl Core {
             self.store_settings();
             self.runtime
                 .kaspa_service()
-                .update_services(&self.settings.node);
+                .update_services(&self.settings.node, None);
         }
     }
 }

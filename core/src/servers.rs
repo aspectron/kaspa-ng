@@ -145,9 +145,13 @@ pub fn public_servers(network: &Network) -> Vec<Server> {
         .collect::<Vec<_>>()
 }
 
-pub fn random_public_server(network: &Network) -> Option<Server> {
+pub fn random_public_server(network: &Network, options: Option<RpcOptions>) -> Option<Server> {
+    let blacklist = options
+        .map(|options| options.blacklist_servers.clone())
+        .unwrap_or_default();
     let servers = public_server_config().lock().unwrap().clone();
     if let Some(servers) = servers.get(network) {
+        #[allow(clippy::nonminimal_bool)]
         let servers = servers
             .iter()
             .filter(|server| {
@@ -157,6 +161,7 @@ pub fn random_public_server(network: &Network) -> Option<Server> {
                     && !(tls()
                         && !(server.address.starts_with("wss://")
                             || server.address.starts_with("wrpcs://")))
+                    && !blacklist.contains(&server.address)
             })
             .collect::<Vec<_>>();
 
@@ -164,8 +169,7 @@ pub fn random_public_server(network: &Network) -> Option<Server> {
             log_error!("Unable to select random public server: no servers available");
             None
         } else {
-            let idx = rand::thread_rng().gen::<usize>() % servers.len();
-            Some(servers[idx].clone())
+            Some(servers[rand::thread_rng().gen::<usize>() % servers.len()].clone())
         }
     } else {
         log_error!("Unable to select random public server: no servers available for this network");

@@ -108,20 +108,21 @@ impl KaspadNodeKind {
     }
 }
 
-// #[cfg(target_arch = "wasm32")]
-// fn get_hostname() -> Option<String> {
-//     use workflow_core::runtime;
-//     use workflow_dom::utils::*;
-//     if runtime::is_chrome_extension() {
-//         None
-//     } else {
-//         let hostname = location()
-//             .unwrap()
-//             .hostname()
-//             .expect("KaspadNodeKind: Unable to get hostname");
-//         Some(hostname.to_string())
-//     }
-// }
+#[derive(Default)]
+pub struct RpcOptions {
+    pub blacklist_servers: Vec<String>,
+}
+
+impl RpcOptions {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn blacklist(mut self, server: String) -> Self {
+        self.blacklist_servers.push(server);
+        self
+    }
+}
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub enum RpcKind {
@@ -338,8 +339,8 @@ impl NodeSettings {
     }
 }
 
-impl From<&NodeSettings> for RpcConfig {
-    fn from(settings: &NodeSettings) -> Self {
+impl RpcConfig {
+    pub fn from_node_settings(settings: &NodeSettings, options: Option<RpcOptions>) -> Self {
         match settings.connection_config_kind {
             NodeConnectionConfigKind::Custom => match settings.rpc_kind {
                 RpcKind::Wrpc => RpcConfig::Wrpc {
@@ -361,7 +362,7 @@ impl From<&NodeSettings> for RpcConfig {
                 }
             }
             NodeConnectionConfigKind::PublicServerRandom => {
-                if let Some(public_server) = random_public_server(&settings.network) {
+                if let Some(public_server) = random_public_server(&settings.network, options) {
                     RpcConfig::Wrpc {
                         url: Some(public_server.address()),
                         encoding: public_server.wrpc_encoding(),

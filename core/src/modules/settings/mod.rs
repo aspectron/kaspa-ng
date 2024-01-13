@@ -39,7 +39,7 @@ impl Settings {
         .show(ui, |ui| {
 
 
-            ui.horizontal(|ui|{
+            ui.horizontal_wrapped(|ui|{
                 ui.label(i18n(i18n("Remote Connection:")));
                 NodeConnectionConfigKind::iter().for_each(|kind| {
                     ui.radio_value(&mut settings.connection_config_kind, *kind, kind.to_string());
@@ -356,7 +356,7 @@ impl Settings {
                                 core.settings = self.settings.clone();
                                 core.settings.store_sync().unwrap();
                                 if restart {
-                                    self.runtime.kaspa_service().update_services(&self.settings.node);
+                                    self.runtime.kaspa_service().update_services(&self.settings.node, None);
                                 }
                             },
                             Confirm::Nack => {

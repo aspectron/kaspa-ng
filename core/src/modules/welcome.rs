@@ -146,7 +146,7 @@ impl Welcome {
                         let mut settings = self.settings.clone();
                         settings.initialized = true;
                         settings.store_sync().expect("Unable to store settings");
-                        self.runtime.kaspa_service().update_services(&self.settings.node);
+                        self.runtime.kaspa_service().update_services(&self.settings.node, None);
                         core.settings = settings.clone();
                         core.get_mut::<modules::Settings>().load(settings);
                         core.select::<modules::Changelog>();
@@ -213,7 +213,7 @@ impl Welcome {
 
             settings.store_sync().expect("Unable to store settings");
             core.settings = settings.clone();
-            self.runtime.kaspa_service().update_services(&settings.node);
+            self.runtime.kaspa_service().update_services(&settings.node, None);
 
             core.get_mut::<modules::Settings>().load(settings);
             core.select::<modules::Overview>();
