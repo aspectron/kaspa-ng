@@ -7,6 +7,7 @@ pub struct BlockDagGraphSettings {
     pub y_dist: f64,
     pub graph_length_daa: usize,
     pub center_vspc: bool,
+    pub balance_vspc: bool,
     pub show_vspc: bool,
     pub show_daa: bool,
     pub show_grid: bool,
@@ -16,10 +17,10 @@ impl Default for BlockDagGraphSettings {
     fn default() -> Self {
         Self {
             y_scale: 10.0,
-            // y_dist: 70.0,
             y_dist: 7.0,
             graph_length_daa: 1024,
             center_vspc: false,
+            balance_vspc: true,
             show_vspc: true,
             show_daa: true,
             show_grid: true,
@@ -106,49 +107,57 @@ impl DaaBucket {
         let y_distance = settings.y_dist;
         let len = self.blocks.len();
 
-        #[allow(clippy::collapsible_else_if)]
-        if let Some(mut vspc_idx) = self.blocks.iter().position(|block| block.vspc) {
-            if settings.center_vspc && len > 2 {
-                let mid = len / 2;
-                if vspc_idx != mid {
-                    self.blocks.swap(vspc_idx, mid);
-                    vspc_idx = mid;
-                    self.blocks.iter_mut().for_each(|block| {
-                        block.settled = false;
-                    });
+        if settings.balance_vspc {
+            #[allow(clippy::collapsible_else_if)]
+            if let Some(mut vspc_idx) = self.blocks.iter().position(|block| block.vspc) {
+                if settings.center_vspc && len > 2 {
+                    let mid = len / 2;
+                    if vspc_idx != mid {
+                        self.blocks.swap(vspc_idx, mid);
+                        vspc_idx = mid;
+                        self.blocks.iter_mut().for_each(|block| {
+                            block.settled = false;
+                        });
+                    }
                 }
-            }
 
-            let vspc_y = if settings.center_vspc {
-                0.0
-            } else {
-                self.blocks
-                    .get(vspc_idx)
-                    .map(|block| block.dst_y)
-                    .unwrap_or_default()
-            };
+                let vspc_y = if settings.center_vspc {
+                    0.0
+                } else {
+                    self.blocks
+                        .get(vspc_idx)
+                        .map(|block| block.dst_y)
+                        .unwrap_or_default()
+                };
 
-            let mut y = vspc_y;
-            (0..vspc_idx).rev().for_each(|idx| {
-                let block = &mut self.blocks[idx];
-                y -= y_distance;
-                block.dst_y = y;
-            });
-            y = vspc_y;
-            ((vspc_idx + 1)..len).for_each(|idx| {
-                let block = &mut self.blocks[idx];
-                y += y_distance;
-                block.dst_y = y;
-            });
-        } else {
-            if len > 1 {
-                let mut y = -(len as f64 * y_distance / 2.0);
-                (0..len).for_each(|idx| {
+                let mut y = vspc_y;
+                (0..vspc_idx).rev().for_each(|idx| {
+                    let block = &mut self.blocks[idx];
+                    y -= y_distance;
+                    block.dst_y = y;
+                });
+                y = vspc_y;
+                ((vspc_idx + 1)..len).for_each(|idx| {
                     let block = &mut self.blocks[idx];
                     y += y_distance;
                     block.dst_y = y;
                 });
+            } else {
+                if len > 1 {
+                    let mut y = -(len as f64 * y_distance / 2.0);
+                    (0..len).for_each(|idx| {
+                        let block = &mut self.blocks[idx];
+                        y += y_distance;
+                        block.dst_y = y;
+                    });
+                }
             }
+        } else {
+            (0..len).for_each(|idx| {
+                let block = &mut self.blocks[idx];
+                block.dst_y =
+                    hash_to_y_coord(&block.data.header.hash, settings.y_scale) * y_distance * 0.3;
+            });
         }
     }
 

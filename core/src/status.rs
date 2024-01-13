@@ -223,12 +223,41 @@ impl<'core> Status<'core> {
                                     }
                                 }
                                 NodeConnectionConfigKind::PublicServerRandom => {
+                                    if let Some(instant) = runtime()
+                                        .kaspa_service()
+                                        .services_start_instant
+                                        .lock()
+                                        .unwrap()
+                                        .as_ref()
+                                    {
+                                        let elapsed = instant.elapsed();
+                                        if elapsed.as_millis() > 2_500 {
+                                            if ui
+                                                .add(
+                                                    Label::new(RichText::new(i18n(
+                                                        "Click to try an another server...",
+                                                    )))
+                                                    .sense(Sense::click()),
+                                                )
+                                                .clicked()
+                                            {
+                                                runtime()
+                                                    .kaspa_service()
+                                                    .update_services(&self.core.settings.node);
+                                            }
+
+                                            ui.separator();
+                                        }
+                                    }
+
                                     if let Some(rpc_url) = runtime().kaspa_service().rpc_url() {
                                         ui.label(format!(
                                             "{} {} ...",
                                             i18n("Connecting to"),
                                             rpc_url
                                         ));
+
+                                        ui.ctx().request_repaint_after(Duration::from_millis(250));
                                     }
                                 }
                             },

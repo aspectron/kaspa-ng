@@ -77,6 +77,7 @@ pub struct KaspaService {
     pub task_ctl: Channel<()>,
     pub network: Mutex<Network>,
     pub wallet: Arc<CoreWallet>,
+    pub services_start_instant: Mutex<Option<Instant>>,
     #[cfg(not(target_arch = "wasm32"))]
     pub kaspad: Mutex<Option<Arc<dyn Kaspad + Send + Sync + 'static>>>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -122,6 +123,7 @@ impl KaspaService {
             task_ctl: Channel::oneshot(),
             network: Mutex::new(settings.node.network),
             wallet: Arc::new(wallet),
+            services_start_instant: Mutex::new(None),
             #[cfg(not(target_arch = "wasm32"))]
             kaspad: Mutex::new(None),
             #[cfg(not(target_arch = "wasm32"))]
@@ -261,6 +263,8 @@ impl KaspaService {
     }
 
     pub async fn stop_all_services(&self) -> Result<()> {
+        self.services_start_instant.lock().unwrap().take();
+
         if !self.wallet().has_rpc() {
             return Ok(());
         }
@@ -304,6 +308,11 @@ impl KaspaService {
     }
 
     pub async fn start_all_services(self: &Arc<Self>, rpc: Rpc, network: Network) -> Result<()> {
+        self.services_start_instant
+            .lock()
+            .unwrap()
+            .replace(Instant::now());
+
         let rpc_api = rpc.rpc_api().clone();
 
         self.wallet()
