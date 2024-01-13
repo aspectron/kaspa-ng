@@ -71,7 +71,7 @@ pub use crate::menu::Menu;
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
 pub use crate::network::Network;
-pub use crate::notifications::{UserNotification, UserNotifyKind};
+pub use crate::notifications::{Notifications, UserNotification, UserNotifyKind};
 pub use crate::primitives::{
     Account, AccountCollection, AccountSelectorButtonExtension, BlockDagGraphSettings, DaaBucket,
     DagBlock, Transaction, TransactionCollection,

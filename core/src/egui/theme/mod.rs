@@ -159,6 +159,16 @@ pub fn warning_color() -> Color32 {
     theme_color().warning_color
 }
 
+#[inline(always)]
+pub fn info_color() -> Color32 {
+    theme_color().info_color
+}
+
+#[inline(always)]
+pub fn strong_color() -> Color32 {
+    theme_color().strong_color
+}
+
 // ~
 
 pub trait MetricGroupExtension {

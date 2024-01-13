@@ -124,7 +124,7 @@ impl<'render> MnemonicPresenter<'render> {
 
                 if ui.medium_button(format!("{CLIPBOARD_TEXT} Copy to clipboard")).clicked() {
                     ui.output_mut(|o| o.copied_text = self.phrase.to_string());
-                    runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short());
+                    runtime().notify_clipboard(i18n("Copied to clipboard"));
                 }
             }
         });

@@ -48,7 +48,7 @@ impl Donations {
 
         if response.clicked() {
             ui.output_mut(|o| o.copied_text = Self::ADDRESS_KASPA_NG_FUND.to_owned());
-            runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short());
+            runtime().notify_clipboard(i18n("Copied to clipboard"));
         }
 
         ui.label(" ");

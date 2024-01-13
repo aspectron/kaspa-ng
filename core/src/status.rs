@@ -114,7 +114,7 @@ impl<'core> Status<'core> {
             }
         } else {
             ui.label(RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN).size(status_icon_size));
-            ui.label(RichText::new(i18n("...")));
+            ui.label(RichText::new("..."));
         }
     }
 

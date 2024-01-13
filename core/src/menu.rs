@@ -151,6 +151,11 @@ impl<'core> Menu<'core> {
                     )
                     .with_min_width(64.)
                     .build(ui);
+
+                    if self.core.notifications().has_some() {
+                        ui.separator();
+                        self.core.notifications().render(ui);
+                    }
                 });
             });
         });

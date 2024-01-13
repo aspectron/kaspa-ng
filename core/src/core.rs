@@ -55,6 +55,7 @@ pub struct Core {
     pub window_frame: bool,
     callback_map: CallbackMap,
     network_load_samples: VecDeque<f32>,
+    notifications: Notifications,
 }
 
 impl Core {
@@ -192,6 +193,7 @@ impl Core {
             window_frame,
             callback_map: CallbackMap::default(),
             network_load_samples: VecDeque::default(),
+            notifications: Notifications::default(),
         };
 
         modules.values().for_each(|module| {
@@ -308,6 +310,10 @@ impl Core {
 
     pub fn device_mut(&mut self) -> &mut Device {
         &mut self.device
+    }
+
+    pub fn notifications(&mut self) -> &mut Notifications {
+        &mut self.notifications
     }
 
     pub fn module(&self) -> &Module {
@@ -572,7 +578,8 @@ impl Core {
                                 user_notification: UserNotification::success(format!(
                                     "Capture saved to\n{}",
                                     path.to_string_lossy()
-                                )),
+                                ))
+                                .as_toast(),
                             })
                             .unwrap()
                     })
@@ -680,7 +687,11 @@ impl Core {
             Events::Notify {
                 user_notification: notification,
             } => {
-                notification.render(&mut self.toasts);
+                if notification.is_toast() {
+                    notification.toast(&mut self.toasts);
+                } else {
+                    self.notifications.push(notification);
+                }
             }
             Events::Close { .. } => {}
             Events::UnlockSuccess => {}
@@ -693,6 +704,7 @@ impl Core {
             Events::Wallet { event } => {
                 match *event {
                     CoreWallet::Error { message } => {
+                        // runtime().notify(UserNotification::error(message.as_str()));
                         println!("{message}");
                     }
                     CoreWallet::UtxoProcStart => {
@@ -700,6 +712,8 @@ impl Core {
                     }
                     CoreWallet::UtxoProcStop => {}
                     CoreWallet::UtxoProcError { message } => {
+                        runtime().notify(UserNotification::error(message.as_str()));
+
                         if message.contains("network type") {
                             self.state.error = Some(message);
                         }

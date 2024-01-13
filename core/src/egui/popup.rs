@@ -12,11 +12,16 @@ pub struct PopupPanel<'panel> {
     caption: Option<String>,
     with_close_button: bool,
     close_on_interaction: bool,
+    close_on_escape: bool,
     above_or_below: AboveOrBelow,
     with_padding: bool,
 }
 
 impl<'panel> PopupPanel<'panel> {
+    pub fn id(ui: &mut Ui, id: impl Into<String>) -> Id {
+        ui.make_persistent_id(id.into())
+    }
+
     pub fn new(
         ui: &mut Ui,
         id: impl Into<String>,
@@ -34,6 +39,7 @@ impl<'panel> PopupPanel<'panel> {
             caption: None,
             with_close_button: false,
             close_on_interaction: false,
+            close_on_escape: true,
             above_or_below: AboveOrBelow::Below,
             with_padding: true,
         }
@@ -90,6 +96,7 @@ impl<'panel> PopupPanel<'panel> {
             &response,
             self.above_or_below,
             self.close_on_interaction,
+            self.close_on_escape,
             |ui| {
                 if let Some(width) = self.min_width {
                     ui.set_min_width(width);
@@ -152,6 +159,7 @@ pub fn popup_above_or_below_widget_local<R>(
     widget_response: &Response,
     above_or_below: AboveOrBelow,
     close_on_interaction: bool,
+    close_on_escape: bool,
     add_contents: impl FnOnce(&mut Ui) -> R,
 ) -> Option<R> {
     if ui.memory(|mem| mem.is_popup_open(popup_id)) {
@@ -186,7 +194,9 @@ pub fn popup_above_or_below_widget_local<R>(
             if ui.input(|i| i.key_pressed(Key::Escape)) || widget_response.clicked_elsewhere() {
                 close_popup = true;
             }
-        } else if ui.input(|i| i.key_pressed(Key::Escape)) || widget_response.clicked_elsewhere() {
+        } else if close_on_escape
+            && (ui.input(|i| i.key_pressed(Key::Escape)) || widget_response.clicked_elsewhere())
+        {
             let response = inner.response;
             ui.ctx().input(|i| {
                 let pointer = &i.pointer;
