@@ -7,7 +7,17 @@ pub enum UserNotifyKind {
     Success,
     Warning,
     Error,
-    Basic,
+}
+
+impl std::fmt::Display for UserNotifyKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UserNotifyKind::Info => write!(f, "info"),
+            UserNotifyKind::Success => write!(f, "success"),
+            UserNotifyKind::Warning => write!(f, "warning"),
+            UserNotifyKind::Error => write!(f, "error"),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -69,10 +79,6 @@ impl UserNotification {
         Self::new(UserNotifyKind::Success, text)
     }
 
-    pub fn basic(text: impl Into<String>) -> Self {
-        Self::new(UserNotifyKind::Basic, text)
-    }
-
     pub fn duration(mut self, duration: Duration) -> Self {
         self.duration = Some(duration);
         self
@@ -113,13 +119,6 @@ impl UserNotification {
                     .set_show_progress_bar(self.progress)
                     .set_closable(self.closable);
             }
-            UserNotifyKind::Basic => {
-                toasts
-                    .basic(self.message)
-                    .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress)
-                    .set_closable(self.closable);
-            }
         }
     }
 
@@ -131,7 +130,6 @@ impl UserNotification {
             UserNotifyKind::Success => RichText::new(INFO).color(strong_color()),
             UserNotifyKind::Warning => RichText::new(WARNING).color(warning_color()),
             UserNotifyKind::Error => RichText::new(SEAL_WARNING).color(error_color()),
-            UserNotifyKind::Basic => RichText::new(INFO).color(info_color()),
         }
     }
 
@@ -141,7 +139,6 @@ impl UserNotification {
             UserNotifyKind::Success => RichText::new(&self.message),
             UserNotifyKind::Warning => RichText::new(&self.message).color(warning_color()),
             UserNotifyKind::Error => RichText::new(&self.message).color(error_color()),
-            UserNotifyKind::Basic => RichText::new(&self.message),
         }
     }
 }
@@ -216,20 +213,18 @@ impl Notifications {
                     .auto_shrink([false; 2])
                     .stick_to_bottom(true)
                     .show(ui, |ui| {
-                        Grid::new("notification_popup_grid")
-                            .num_columns(2)
-                            // .spacing([2.0,2.0])
-                            .show(ui, |ui| {
-                                for notification in self.notifications.iter() {
-                                    // ui.label(notification.icon().size(24.));
-                                    // ui.label(notification.text().size(16.));
-                                    ui.label(notification.icon().size(20.));
+                        ui.vertical(|ui| {
+                            for notification in self.notifications.iter() {
+                                ui.horizontal(|ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.label(notification.icon().size(20.));
+                                    });
                                     ui.horizontal_wrapped(|ui| {
                                         ui.label(notification.text().size(14.));
                                     });
-                                    ui.end_row();
-                                }
-                            });
+                                });
+                            }
+                        });
                     });
 
                 ui.separator();
@@ -249,7 +244,10 @@ impl Notifications {
                         let notifications = self
                             .notifications
                             .iter()
-                            .map(|notification| notification.message.to_string())
+                            .map(|notification| {
+                                let UserNotification { message, kind, .. } = notification;
+                                format!("[{}] {}", kind.to_string().to_uppercase(), message)
+                            })
                             .collect::<Vec<String>>()
                             .join("\n");
                         ui.output_mut(|o| o.copied_text = notifications);
