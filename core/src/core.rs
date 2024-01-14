@@ -13,8 +13,6 @@ use std::borrow::Cow;
 use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
 
-const MAX_NETWORK_LOAD_SAMPLES: usize = 16;
-
 pub enum Exception {
     UtxoIndexNotEnabled { url: Option<String> },
 }
@@ -54,7 +52,7 @@ pub struct Core {
     pub debug: bool,
     pub window_frame: bool,
     callback_map: CallbackMap,
-    network_load_samples: VecDeque<f32>,
+    pub network_pressure: NetworkPressure,
     notifications: Notifications,
 }
 
@@ -192,7 +190,7 @@ impl Core {
             debug: false,
             window_frame,
             callback_map: CallbackMap::default(),
-            network_load_samples: VecDeque::default(),
+            network_pressure: NetworkPressure::default(),
             notifications: Notifications::default(),
         };
 
@@ -660,14 +658,8 @@ impl Core {
                 self.metrics = Some(snapshot);
             }
             Events::MempoolSize { mempool_size } => {
-                let load = mempool_size as f32 / self.settings.node.network.tps() as f32;
-                self.network_load_samples.push_back(load);
-                if self.network_load_samples.len() > MAX_NETWORK_LOAD_SAMPLES {
-                    self.network_load_samples.pop_front();
-                }
-                let network_load = self.network_load_samples.iter().sum::<f32>()
-                    / self.network_load_samples.len() as f32;
-                self.state.network_load.replace(network_load);
+                self.network_pressure
+                    .update_mempool_size(mempool_size, &self.settings.node.network);
             }
             Events::Exit => {
                 cfg_if! {
@@ -739,10 +731,9 @@ impl Core {
                         self.state.url = None;
                         self.state.network_id = None;
                         self.state.current_daa_score = None;
-                        self.state.network_load = None;
                         self.state.error = None;
                         self.metrics = None;
-                        self.network_load_samples.clear();
+                        self.network_pressure.clear();
 
                         self.module.clone().disconnect(self);
                     }

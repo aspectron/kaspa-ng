@@ -237,9 +237,16 @@ impl ModuleT for Metrics {
 
                 ui.style_mut().text_styles = core.mobile_style.text_styles.clone();
 
-                ui.label(i18n("Metrics are not available"));
+                ui.label(i18n("Metrics are not currently available"));
                 ui.add_space(32.);
-                ui.label(i18n("Please connect to kaspa p2p node"));
+                
+                if core.settings.node.node_kind != KaspadNodeKind::Disable {
+                    ui.add_space(64.);
+                    ui.add(egui::Spinner::new().size(92.));
+                } else {
+                    ui.label(i18n("Please connect to Kaspa p2p node"));
+                }
+
             });
         }
 

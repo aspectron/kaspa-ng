@@ -217,63 +217,80 @@ impl Settings {
                         }
 
                         #[cfg(not(target_arch = "wasm32"))]
+                        if self.settings.node.node_kind.is_config_capable() {
+
+                            CollapsingHeader::new("Cache Memory Size")
+                                .default_open(true)
+                                .show(ui, |ui| {
+                                    ui.horizontal_wrapped(|ui|{
+                                        NodeMemoryScale::iter().for_each(|kind| {
+                                            ui.radio_value(&mut self.settings.node.memory_scale, *kind, kind.to_string());
+                                        });
+                                    });
+                                    ui.label(self.settings.node.memory_scale.describe());
+                                });
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
                         if core.settings.developer.custom_daemon_args_enabled() && self.settings.node.node_kind.is_config_capable() {
                             use kaspad_lib::args::Args;
                             use clap::error::ErrorKind as ClapErrorKind;
                             use crate::runtime::services::kaspa::Config;
 
-                            ui.add_space(4.);
-                            ui.checkbox(&mut self.settings.node.kaspad_daemon_args_enable, i18n("Activate custom daemon arguments"));
-                            ui.add_space(4.);
+                            ui.horizontal(|ui| {
+                                ui.add_space(2.);
+                                ui.checkbox(&mut self.settings.node.kaspad_daemon_args_enable, i18n("Activate custom daemon arguments"));
+                            });
 
                             if self.settings.node.kaspad_daemon_args_enable {
-                                
-                                ui.vertical(|ui| {
-                                    ui.label(i18n("Resulting daemon arguments:"));
-                                    ui.add_space(4.);
-
-                                    let config = Config::from(self.settings.node.clone());
-                                    let config = Vec::<String>::from(config).join(" ");
-                                    ui.label(RichText::new(config).code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
-                                    ui.add_space(4.);
-
-
-                                    ui.label(i18n("Custom arguments:"));
-                                    let width = ui.available_width() * 0.4;
-                                    let height = 48.0;
-                                    ui.add_sized(vec2(width,height),TextEdit::multiline(&mut self.settings.node.kaspad_daemon_args).code_editor().font(FontId::monospace(14.0)));
-                                    ui.add_space(4.);
-                                });
-
-                                let args = format!("kaspad {}",self.settings.node.kaspad_daemon_args.trim());
-                                let args = args.trim().split(' ').collect::<Vec<&str>>();
-                                match Args::parse(args.iter()) {
-                                    Ok(_) => { },
-                                    Err(err) => {
-
-                                        if matches!(err.kind(), ClapErrorKind::DisplayHelp | ClapErrorKind::DisplayVersion) {
-                                            ui.label(
-                                                RichText::new("--help and --version are not allowed")
-                                                    .color(theme_color().warning_color),
-                                            );
-                                        } else {
-                                            let help = err.to_string();
-                                            let lines = help.split('\n').collect::<Vec<&str>>();
-                                            let text = if let Some(idx) = lines.iter().position(|line| line.starts_with("For more info") || line.starts_with("Usage:")) {
-                                                lines[0..idx].join("\n")
-                                            } else {
-                                                lines.join("\n")
-                                            };
-
-                                            ui.label(
-                                                RichText::new(text.trim())
-                                                    .color(theme_color().warning_color),
-                                            );
-                                        }
+                                ui.indent("kaspad_daemon_args", |ui| {
+                                    ui.vertical(|ui| {
+                                        ui.label(i18n("Resulting daemon arguments:"));
                                         ui.add_space(4.);
-                                        node_settings_error = Some(i18n("Invalid daemon arguments"));
+
+                                        let config = Config::from(self.settings.node.clone());
+                                        let config = Vec::<String>::from(config).join(" ");
+                                        ui.label(RichText::new(config).code().font(FontId::monospace(14.0)).color(theme_color().strong_color));
+                                        ui.add_space(4.);
+
+
+                                        ui.label(i18n("Custom arguments:"));
+                                        let width = ui.available_width() * 0.4;
+                                        let height = 48.0;
+                                        ui.add_sized(vec2(width,height),TextEdit::multiline(&mut self.settings.node.kaspad_daemon_args).code_editor().font(FontId::monospace(14.0)));
+                                        ui.add_space(4.);
+                                    });
+
+                                    let args = format!("kaspad {}",self.settings.node.kaspad_daemon_args.trim());
+                                    let args = args.trim().split(' ').collect::<Vec<&str>>();
+                                    match Args::parse(args.iter()) {
+                                        Ok(_) => { },
+                                        Err(err) => {
+
+                                            if matches!(err.kind(), ClapErrorKind::DisplayHelp | ClapErrorKind::DisplayVersion) {
+                                                ui.label(
+                                                    RichText::new("--help and --version are not allowed")
+                                                        .color(theme_color().warning_color),
+                                                );
+                                            } else {
+                                                let help = err.to_string();
+                                                let lines = help.split('\n').collect::<Vec<&str>>();
+                                                let text = if let Some(idx) = lines.iter().position(|line| line.starts_with("For more info") || line.starts_with("Usage:")) {
+                                                    lines[0..idx].join("\n")
+                                                } else {
+                                                    lines.join("\n")
+                                                };
+
+                                                ui.label(
+                                                    RichText::new(text.trim())
+                                                        .color(theme_color().warning_color),
+                                                );
+                                            }
+                                            ui.add_space(4.);
+                                            node_settings_error = Some(i18n("Invalid daemon arguments"));
+                                        }
                                     }
-                                }
+                                });
                             }
                         }
 

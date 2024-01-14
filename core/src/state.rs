@@ -11,7 +11,6 @@ pub struct State {
     pub url: Option<String>,
     pub network_id: Option<NetworkId>,
     pub current_daa_score: Option<u64>,
-    pub network_load: Option<f32>,
     pub error: Option<String>,
 }
 

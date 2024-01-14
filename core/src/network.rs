@@ -119,3 +119,66 @@ impl Network {
         params.max_block_mass / BASIC_TRANSACTION_MASS * params.bps()
     }
 }
+
+const MAX_NETWORK_PRESSURE_SAMPLES: usize = 16;
+const NETWORK_PRESSURE_ALPHA_HIGH: f32 = 0.8;
+const NETWORK_PRESSURE_ALPHA_LOW: f32 = 0.5;
+const NETWORK_PRESSURE_THRESHOLD_HIGH: f32 = 0.4;
+const NETWORK_PRESSURE_THRESHOLD_LOW: f32 = 0.2;
+
+#[derive(Default, Debug, Clone)]
+pub struct NetworkPressure {
+    pub network_pressure_samples: VecDeque<f32>,
+    pub pressure: f32,
+    pub is_high: bool,
+}
+
+impl NetworkPressure {
+    pub fn clear(&mut self) {
+        self.network_pressure_samples.clear();
+        self.pressure = 0.0;
+    }
+
+    fn insert_sample(&mut self, pressure: f32, alpha: f32) {
+        let pressure = alpha * pressure + (1.0 - alpha) * self.pressure;
+        self.network_pressure_samples.push_back(pressure);
+        if self.network_pressure_samples.len() > MAX_NETWORK_PRESSURE_SAMPLES {
+            self.network_pressure_samples.pop_front();
+        }
+    }
+
+    pub fn update_mempool_size(&mut self, mempool_size: usize, network: &Network) {
+        let pressure = mempool_size as f32 / network.tps() as f32;
+
+        if pressure > self.pressure {
+            self.insert_sample(pressure, NETWORK_PRESSURE_ALPHA_HIGH);
+        } else {
+            self.insert_sample(pressure, NETWORK_PRESSURE_ALPHA_LOW);
+        }
+
+        let average_pressure = self.network_pressure_samples.iter().sum::<f32>()
+            / self.network_pressure_samples.len() as f32;
+
+        self.pressure = average_pressure;
+        if self.is_high {
+            self.is_high = self.pressure > NETWORK_PRESSURE_THRESHOLD_LOW;
+        } else {
+            self.is_high = self.pressure > NETWORK_PRESSURE_THRESHOLD_HIGH;
+        }
+
+        // println!("{:?}", self.network_pressure_samples);
+        // println!("mempool: {} capacity: {}% avg pressure: {} is high: {}", mempool_size, self.capacity(), self.pressure, self.is_high());
+    }
+
+    pub fn is_high(&self) -> bool {
+        self.is_high
+    }
+
+    pub fn pressure(&self) -> f32 {
+        self.pressure
+    }
+
+    pub fn capacity(&self) -> usize {
+        (self.pressure * 100.0).min(100.0) as usize
+    }
+}

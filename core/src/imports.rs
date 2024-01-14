@@ -70,7 +70,7 @@ pub use crate::market::MarketData;
 pub use crate::menu::Menu;
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
-pub use crate::network::Network;
+pub use crate::network::{Network, NetworkPressure};
 pub use crate::notifications::{Notifications, UserNotification, UserNotifyKind};
 pub use crate::primitives::{
     Account, AccountCollection, AccountSelectorButtonExtension, BlockDagGraphSettings, DaaBucket,
@@ -81,7 +81,7 @@ pub use crate::runtime::{runtime, spawn, spawn_with_result, Payload, Runtime, Se
 pub use crate::servers::{load_public_servers, public_servers, Server};
 pub use crate::settings::{
     KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeConnectionConfigKind,
-    NodeSettings, RpcConfig, RpcOptions, Settings, UserInterfaceSettings,
+    NodeMemoryScale, NodeSettings, RpcConfig, RpcOptions, Settings, UserInterfaceSettings,
 };
 pub use crate::state::State;
 pub use crate::status::Status;

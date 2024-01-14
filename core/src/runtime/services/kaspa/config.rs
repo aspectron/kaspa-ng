@@ -7,6 +7,11 @@ use kaspa_core::kaspad_env;
 pub use kaspad_lib::args::Args;
 
 fn user_agent_comment() -> String {
+    format!("kaspa-ng:{}-{}", VERSION, GIT_DESCRIBE)
+}
+
+#[allow(dead_code)]
+fn user_agent() -> String {
     format!(
         "/{}:{}/kaspa-ng:{}-{}/",
         kaspad_env::name(),

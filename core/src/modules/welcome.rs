@@ -9,8 +9,12 @@ pub struct Welcome {
 impl Welcome {
     pub fn new(runtime: Runtime) -> Self {
 
+        #[allow(unused_mut)]
         let mut settings = Settings::default();
-        settings.node.node_kind = KaspadNodeKind::Remote;
+
+        #[cfg(target_arch = "wasm32")] {
+            settings.node.node_kind = KaspadNodeKind::Remote;
+        }
 
         Self { 
             runtime, 
@@ -45,7 +49,7 @@ impl Welcome {
 
                             match self.settings.node.network {
                                 Network::Mainnet => {
-                                    ui.colored_label(theme_color().warning_color, i18n("Please note that this is an alpha release. Until this message is removed, avoid using this software with mainnet funds."));
+                                    ui.colored_label(theme_color().warning_color, i18n("Please note that this is an alpha release. Until this message is removed, please avoid using the wallet with mainnet funds."));
                                 }
                                 Network::Testnet10 => { }
                                 Network::Testnet11 => { }

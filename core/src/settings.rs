@@ -239,13 +239,24 @@ impl NodeConnectionConfigKind {
     }
 }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum NodeMemoryScale {
     #[default]
     Default,
     Conservative,
     Performance,
+}
+
+impl NodeMemoryScale {
+    pub fn iter() -> impl Iterator<Item = &'static NodeMemoryScale> {
+        [
+            NodeMemoryScale::Default,
+            NodeMemoryScale::Conservative,
+            NodeMemoryScale::Performance,
+        ]
+        .iter()
+    }
 }
 
 impl std::fmt::Display for NodeMemoryScale {
@@ -269,9 +280,9 @@ const MEMORY_128GB: u64 = 128 * GIGABYTE;
 impl NodeMemoryScale {
     pub fn describe(&self) -> &str {
         match self {
-            NodeMemoryScale::Default => i18n("Managed by the Rusty Kaspa daemon."),
-            NodeMemoryScale::Conservative => i18n("Target ~50% of available system memory."),
-            NodeMemoryScale::Performance => i18n("Target all available system memory."),
+            NodeMemoryScale::Default => i18n("Managed by the Rusty Kaspa daemon"),
+            NodeMemoryScale::Conservative => i18n("Use 50%-75% of available system memory"),
+            NodeMemoryScale::Performance => i18n("Use all available system memory"),
         }
     }
 
@@ -377,6 +388,8 @@ impl NodeSettings {
                 if self.network != other.network {
                     Some(true)
                 } else if self.node_kind != other.node_kind {
+                    Some(true)
+                } else if self.memory_scale != other.memory_scale {
                     Some(true)
                 } else if self.connection_config_kind != other.connection_config_kind
                     || (other.connection_config_kind == NodeConnectionConfigKind::PublicServerCustom && !self.public_servers.compare(&other.public_servers))

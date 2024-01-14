@@ -55,9 +55,17 @@ impl<'context> Estimator<'context> {
             }
         }
 
+        // TODO - improve the logic
+        if core.network_pressure.is_high() {
+            ui.label(format!("The network is currently experiencing high load (~{}% of its capacity). \
+                It is recommended that you add a priority fee of at least {:0.3} {} \
+                to ensure faster transaction acceptance.", 
+                core.network_pressure.capacity(), 0.001, kaspa_suffix(network_type)));
+        }
+
         ui.add_space(8.);
         if ui
-            .checkbox(&mut self.context.enable_priority_fees,i18n("Include Priority Fees"))
+            .checkbox(&mut self.context.enable_priority_fees,i18n("Include QoS Priority Fees"))
             // .on_hover_text_at_pointer(i18n("Add priority fees to ensure faster confirmation.\nUseful only if the network is congested."))
             .changed() {
             if self.context.enable_priority_fees {
