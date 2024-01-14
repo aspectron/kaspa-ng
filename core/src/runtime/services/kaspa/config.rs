@@ -1,5 +1,6 @@
 use crate::app::{GIT_DESCRIBE, VERSION};
 use crate::imports::*;
+use crate::settings::NodeMemoryScale;
 use crate::utils::Arglist;
 use kaspa_core::kaspad_env;
 #[cfg(not(target_arch = "wasm32"))]
@@ -23,6 +24,7 @@ pub struct Config {
     grpc_network_interface: NetworkInterfaceConfig,
     kaspad_daemon_args_enable: bool,
     kaspad_daemon_args: String,
+    memory_scale: NodeMemoryScale,
 }
 
 impl From<NodeSettings> for Config {
@@ -34,6 +36,7 @@ impl From<NodeSettings> for Config {
             grpc_network_interface: node_settings.grpc_network_interface,
             kaspad_daemon_args_enable: node_settings.kaspad_daemon_args_enable,
             kaspad_daemon_args: node_settings.kaspad_daemon_args,
+            memory_scale: node_settings.memory_scale,
         }
     }
 }
@@ -96,6 +99,12 @@ cfg_if! {
                 args.push("--yes");
                 args.push("--utxoindex");
 
+                match config.memory_scale {
+                    NodeMemoryScale::Default => {},
+                    _ => {
+                        args.push(format!("--ram-scale={:1.2}", config.memory_scale.get()));
+                    }
+                }
 
                 if !config.enable_upnp {
                     args.push("--disable-upnp");
@@ -103,6 +112,8 @@ cfg_if! {
 
                 if config.enable_grpc {
                     args.push(format!("--rpclisten={}", config.grpc_network_interface));
+                } else {
+                    args.push("--nogrpc");
                 }
 
                 args.push("--rpclisten-borsh=default");

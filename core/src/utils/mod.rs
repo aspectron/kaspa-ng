@@ -24,6 +24,11 @@ pub use secret::*;
 mod mnemonic;
 pub use mnemonic::*;
 
+pub fn is_mobile() -> bool {
+    use workflow_core::runtime::{is_android, is_ios};
+    is_ios() || is_android()
+}
+
 #[macro_export]
 macro_rules! spawn {
     ($args: expr) => {{

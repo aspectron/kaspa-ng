@@ -239,6 +239,91 @@ impl NodeConnectionConfigKind {
     }
 }
 
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum NodeMemoryScale {
+    #[default]
+    Default,
+    Conservative,
+    Performance,
+}
+
+impl std::fmt::Display for NodeMemoryScale {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NodeMemoryScale::Default => write!(f, "{}", i18n("Default")),
+            NodeMemoryScale::Conservative => write!(f, "{}", i18n("Conservative")),
+            NodeMemoryScale::Performance => write!(f, "{}", i18n("Performance")),
+        }
+    }
+}
+
+const GIGABYTE: u64 = 1024 * 1024 * 1024;
+const MEMORY_8GB: u64 = 8 * GIGABYTE;
+const MEMORY_16GB: u64 = 16 * GIGABYTE;
+const MEMORY_32GB: u64 = 32 * GIGABYTE;
+const MEMORY_64GB: u64 = 64 * GIGABYTE;
+const MEMORY_96GB: u64 = 96 * GIGABYTE;
+const MEMORY_128GB: u64 = 128 * GIGABYTE;
+
+impl NodeMemoryScale {
+    pub fn describe(&self) -> &str {
+        match self {
+            NodeMemoryScale::Default => i18n("Managed by the Rusty Kaspa daemon."),
+            NodeMemoryScale::Conservative => i18n("Target ~50% of available system memory."),
+            NodeMemoryScale::Performance => i18n("Target all available system memory."),
+        }
+    }
+
+    pub fn get(&self) -> f64 {
+        cfg_if! {
+            if #[cfg(not(target_arch = "wasm32"))] {
+                let total_memory = runtime().system().as_ref().map(|system|system.total_memory).unwrap_or(MEMORY_16GB);
+            } else {
+                panic!("NodeMemoryScale::get() is not supported on this platform");
+            }
+        }
+
+        let target_memory = if total_memory <= MEMORY_8GB {
+            MEMORY_8GB
+        } else if total_memory <= MEMORY_16GB {
+            MEMORY_16GB
+        } else if total_memory <= MEMORY_32GB {
+            MEMORY_32GB
+        } else if total_memory <= MEMORY_64GB {
+            MEMORY_64GB
+        } else if total_memory <= MEMORY_96GB {
+            MEMORY_96GB
+        } else if total_memory <= MEMORY_128GB {
+            MEMORY_128GB
+        } else {
+            MEMORY_16GB
+        };
+
+        match self {
+            NodeMemoryScale::Default => 1.0,
+            NodeMemoryScale::Conservative => match target_memory {
+                MEMORY_8GB => 0.3,
+                MEMORY_16GB => 1.0,
+                MEMORY_32GB => 1.5,
+                MEMORY_64GB => 2.0,
+                MEMORY_96GB => 3.0,
+                MEMORY_128GB => 4.0,
+                _ => 1.0,
+            },
+            NodeMemoryScale::Performance => match target_memory {
+                MEMORY_8GB => 0.4,
+                MEMORY_16GB => 1.0,
+                MEMORY_32GB => 2.0,
+                MEMORY_64GB => 4.0,
+                MEMORY_96GB => 6.0,
+                MEMORY_128GB => 8.0,
+                _ => 1.0,
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct NodeSettings {
@@ -252,6 +337,7 @@ pub struct NodeSettings {
     pub enable_grpc: bool,
     pub grpc_network_interface: NetworkInterfaceConfig,
     pub enable_upnp: bool,
+    pub memory_scale: NodeMemoryScale,
 
     pub network: Network,
     pub node_kind: KaspadNodeKind,
@@ -273,6 +359,7 @@ impl Default for NodeSettings {
             enable_grpc: false,
             grpc_network_interface: NetworkInterfaceConfig::default(),
             enable_upnp: true,
+            memory_scale: NodeMemoryScale::default(),
             network: Network::default(),
             node_kind: KaspadNodeKind::default(),
             kaspad_daemon_binary: String::default(),

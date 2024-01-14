@@ -161,7 +161,7 @@ impl ModuleT for BlockDag {
         }
 
         ui.horizontal(|ui| {
-            ui.heading("Block DAG");
+            ui.heading(i18n("Block DAG"));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 PopupPanel::new(ui, "block_dag_settings",|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
