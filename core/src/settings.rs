@@ -291,6 +291,7 @@ impl NodeMemoryScale {
             if #[cfg(not(target_arch = "wasm32"))] {
                 let total_memory = runtime().system().as_ref().map(|system|system.total_memory).unwrap_or(MEMORY_16GB);
             } else {
+                let total_memory = 0;
                 panic!("NodeMemoryScale::get() is not supported on this platform");
             }
         }
