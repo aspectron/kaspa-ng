@@ -94,7 +94,9 @@ impl Settings {
                     CollapsingHeader::new(i18n("Public Node"))
                         .default_open(true)
                         .show(ui, |ui| {
-                            render_public_server_selector(core, ui, settings);
+                            if let Some(error) = render_public_server_selector(core, ui, settings) {
+                                node_settings_error = Some(error);
+                            }
                         });
                 },
                 NodeConnectionConfigKind::PublicServerRandom => {

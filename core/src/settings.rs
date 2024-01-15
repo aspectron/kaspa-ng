@@ -111,6 +111,7 @@ impl KaspadNodeKind {
 #[derive(Default)]
 pub struct RpcOptions {
     pub blacklist_servers: Vec<String>,
+    pub force_server: Option<Server>,
 }
 
 impl RpcOptions {
@@ -120,6 +121,11 @@ impl RpcOptions {
 
     pub fn blacklist(mut self, server: String) -> Self {
         self.blacklist_servers.push(server);
+        self
+    }
+
+    pub fn force(mut self, server: Server) -> Self {
+        self.force_server = Some(server);
         self
     }
 }
@@ -236,6 +242,14 @@ impl NodeConnectionConfigKind {
             // NodeConnectionConfigKind::Local,
         ]
         .iter()
+    }
+
+    pub fn is_public(&self) -> bool {
+        matches!(
+            self,
+            NodeConnectionConfigKind::PublicServerRandom
+                | NodeConnectionConfigKind::PublicServerCustom
+        )
     }
 }
 

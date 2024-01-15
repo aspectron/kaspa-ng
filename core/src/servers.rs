@@ -146,10 +146,17 @@ pub fn public_servers(network: &Network) -> Vec<Server> {
 }
 
 pub fn random_public_server(network: &Network, options: Option<RpcOptions>) -> Option<Server> {
-    let blacklist = options
-        .map(|options| options.blacklist_servers.clone())
-        .unwrap_or_default();
     let servers = public_server_config().lock().unwrap().clone();
+
+    let RpcOptions {
+        force_server,
+        blacklist_servers,
+    } = options.unwrap_or_default();
+
+    if let Some(server) = force_server.clone() {
+        return Some(server);
+    }
+
     if let Some(servers) = servers.get(network) {
         #[allow(clippy::nonminimal_bool)]
         let servers = servers
@@ -161,7 +168,7 @@ pub fn random_public_server(network: &Network, options: Option<RpcOptions>) -> O
                     && !(tls()
                         && !(server.address.starts_with("wss://")
                             || server.address.starts_with("wrpcs://")))
-                    && !blacklist.contains(&server.address)
+                    && !blacklist_servers.contains(&server.address)
             })
             .collect::<Vec<_>>();
 
@@ -181,7 +188,9 @@ pub fn render_public_server_selector(
     core: &mut Core,
     ui: &mut egui::Ui,
     settings: &mut NodeSettings,
-) {
+) -> Option<&'static str> {
+    let mut node_settings_error = None;
+
     let servers = public_servers(&settings.network);
 
     ui.add_space(4.);
@@ -189,6 +198,7 @@ pub fn render_public_server_selector(
     let (text, _secondary) = if let Some(server) = settings.public_servers.get(&settings.network) {
         (server.to_string(), Option::<String>::None)
     } else {
+        node_settings_error = Some(i18n("No public node selected"));
         (i18n("Select Public Node").to_string(), None)
     };
 
@@ -247,4 +257,6 @@ pub fn render_public_server_selector(
     .build(ui);
 
     ui.add_space(4.);
+
+    node_settings_error
 }
