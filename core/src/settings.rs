@@ -332,7 +332,6 @@ impl NodeMemoryScale {
                 panic!("NodeMemoryScale::get() is not supported on this platform");
             }
         }
-
     }
 }
 
