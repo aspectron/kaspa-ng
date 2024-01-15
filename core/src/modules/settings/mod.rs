@@ -359,9 +359,17 @@ impl Settings {
                         .color(theme_color().error_color),
                 );
                 ui.add_space(4.);
-                ui.label(i18n("Unable to change node settings until the problem is resolved."));
+                ui.label(i18n("Unable to change node settings until the problem is resolved"));
 
                 ui.add_space(8.);
+
+                if let Some(response) = ui.confirm_medium_cancel(Align::Max) {
+                    if matches!(response, Confirm::Nack) {
+                        self.settings.node = core.settings.node.clone();
+                        self.grpc_network_interface = NetworkInterfaceEditor::from(&self.settings.node.grpc_network_interface);
+                    }
+                }
+
                 ui.separator();
 
             } else if node_settings_error.is_none() {
