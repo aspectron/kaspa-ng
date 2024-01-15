@@ -290,49 +290,49 @@ impl NodeMemoryScale {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
                 let total_memory = runtime().system().as_ref().map(|system|system.total_memory).unwrap_or(MEMORY_16GB);
+
+                let target_memory = if total_memory <= MEMORY_8GB {
+                    MEMORY_8GB
+                } else if total_memory <= MEMORY_16GB {
+                    MEMORY_16GB
+                } else if total_memory <= MEMORY_32GB {
+                    MEMORY_32GB
+                } else if total_memory <= MEMORY_64GB {
+                    MEMORY_64GB
+                } else if total_memory <= MEMORY_96GB {
+                    MEMORY_96GB
+                } else if total_memory <= MEMORY_128GB {
+                    MEMORY_128GB
+                } else {
+                    MEMORY_16GB
+                };
+
+                match self {
+                    NodeMemoryScale::Default => 1.0,
+                    NodeMemoryScale::Conservative => match target_memory {
+                        MEMORY_8GB => 0.3,
+                        MEMORY_16GB => 1.0,
+                        MEMORY_32GB => 1.5,
+                        MEMORY_64GB => 2.0,
+                        MEMORY_96GB => 3.0,
+                        MEMORY_128GB => 4.0,
+                        _ => 1.0,
+                    },
+                    NodeMemoryScale::Performance => match target_memory {
+                        MEMORY_8GB => 0.4,
+                        MEMORY_16GB => 1.0,
+                        MEMORY_32GB => 2.0,
+                        MEMORY_64GB => 4.0,
+                        MEMORY_96GB => 6.0,
+                        MEMORY_128GB => 8.0,
+                        _ => 1.0,
+                    },
+                }
             } else {
-                let total_memory = 0;
                 panic!("NodeMemoryScale::get() is not supported on this platform");
             }
         }
 
-        let target_memory = if total_memory <= MEMORY_8GB {
-            MEMORY_8GB
-        } else if total_memory <= MEMORY_16GB {
-            MEMORY_16GB
-        } else if total_memory <= MEMORY_32GB {
-            MEMORY_32GB
-        } else if total_memory <= MEMORY_64GB {
-            MEMORY_64GB
-        } else if total_memory <= MEMORY_96GB {
-            MEMORY_96GB
-        } else if total_memory <= MEMORY_128GB {
-            MEMORY_128GB
-        } else {
-            MEMORY_16GB
-        };
-
-        match self {
-            NodeMemoryScale::Default => 1.0,
-            NodeMemoryScale::Conservative => match target_memory {
-                MEMORY_8GB => 0.3,
-                MEMORY_16GB => 1.0,
-                MEMORY_32GB => 1.5,
-                MEMORY_64GB => 2.0,
-                MEMORY_96GB => 3.0,
-                MEMORY_128GB => 4.0,
-                _ => 1.0,
-            },
-            NodeMemoryScale::Performance => match target_memory {
-                MEMORY_8GB => 0.4,
-                MEMORY_16GB => 1.0,
-                MEMORY_32GB => 2.0,
-                MEMORY_64GB => 4.0,
-                MEMORY_96GB => 6.0,
-                MEMORY_128GB => 8.0,
-                _ => 1.0,
-            },
-        }
     }
 }
 

@@ -98,7 +98,7 @@ impl Settings {
                         });
                 },
                 NodeConnectionConfigKind::PublicServerRandom => {
-                    ui.label(i18n("A random server will be selected on startup"));
+                    ui.label(i18n("A random node will be selected on startup"));
                 },
             }
 
