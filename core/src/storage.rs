@@ -22,7 +22,7 @@ impl PartialOrd for StorageFolder {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct StorageUpdateOptions {
     pub update_if_not_present: bool,
     pub network: Option<Network>,

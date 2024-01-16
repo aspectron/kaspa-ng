@@ -1,7 +1,7 @@
 use crate::imports::*;
 use egui_notify::Toasts;
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum UserNotifyKind {
     Info,
     Success,
@@ -20,7 +20,7 @@ impl std::fmt::Display for UserNotifyKind {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct UserNotification {
     pub kind: UserNotifyKind,
     pub message: String,

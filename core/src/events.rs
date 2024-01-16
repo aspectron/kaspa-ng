@@ -7,7 +7,7 @@ use kaspa_wallet_core::{events as kaspa, storage::PrvKeyDataInfo};
 
 pub type ApplicationEventsChannel = crate::runtime::channel::Channel<Events>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Events {
     UpdateStorage(StorageUpdateOptions),
     VisibilityChange(VisibilityState),
