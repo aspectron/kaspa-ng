@@ -39,7 +39,7 @@ pub use workflow_core::abortable::Abortable;
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::enums::Describe;
 pub use workflow_core::extensions::is_not_empty::*;
-pub use workflow_core::task::interval;
+pub use workflow_core::task;
 pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
 pub use workflow_dom::utils::*;
 pub use workflow_http as http;
@@ -85,5 +85,6 @@ pub use crate::settings::{
 };
 pub use crate::state::State;
 pub use crate::status::Status;
+pub use crate::storage::{Storage, StorageUpdateOptions};
 pub use crate::utils::spawn;
 pub use crate::utils::*;

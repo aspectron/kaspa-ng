@@ -47,7 +47,7 @@ impl Service for RepaintService {
 
     async fn spawn(self: Arc<Self>) -> Result<()> {
         let _application_events_sender = self.application_events.sender.clone();
-        let interval = interval(Duration::from_millis(REPAINT_INTERVAL_MILLIS));
+        let interval = task::interval(Duration::from_millis(REPAINT_INTERVAL_MILLIS));
         pin_mut!(interval);
 
         loop {

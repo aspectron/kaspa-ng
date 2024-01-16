@@ -1,4 +1,3 @@
-
 use crate::imports::*;
 use crate::servers::render_public_server_selector;
 
@@ -117,10 +116,8 @@ impl ModuleT for Settings {
     }
 
     fn style(&self) -> ModuleStyle {
-        // ModuleStyle::Large
         ModuleStyle::Default
     }
-
 
     fn render(
         &mut self,
@@ -135,11 +132,15 @@ impl ModuleT for Settings {
                 self.render_settings(core,ui);
             });
     }
+
+    fn deactivate(&mut self, _core: &mut Core) {
+        #[cfg(not(target_arch = "wasm32"))]
+        _core.storage.clear_settings();
+    }
+
 }
 
 impl Settings {
-
-
 
     fn render_node_settings(
         &mut self,
@@ -197,23 +198,19 @@ impl Settings {
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadNodeKind::ExternalAsDaemon => {
 
-                                // let binary_path = self.settings.node.kaspad_daemon_binary.clone();
-
                                 ui.horizontal(|ui|{
                                     ui.label(i18n("Rusty Kaspa Daemon Path:"));
                                     ui.add(TextEdit::singleline(&mut self.settings.node.kaspad_daemon_binary));
                                 });
 
-                                // if binary_path != self.settings.node.kaspad_daemon_binary {
-                                    let path = std::path::PathBuf::from(&self.settings.node.kaspad_daemon_binary);
-                                    if path.exists() && !path.is_file() {
-                                        ui.label(
-                                            RichText::new(format!("Rusty Kaspa Daemon not found at '{path}'", path = self.settings.node.kaspad_daemon_binary))
-                                                .color(theme_color().error_color),
-                                        );
-                                        node_settings_error = Some("Rusty Kaspa Daemon not found");
-                                    }
-                                // }
+                                let path = std::path::PathBuf::from(&self.settings.node.kaspad_daemon_binary);
+                                if path.exists() && !path.is_file() {
+                                    ui.label(
+                                        RichText::new(format!("Rusty Kaspa Daemon not found at '{path}'", path = self.settings.node.kaspad_daemon_binary))
+                                            .color(theme_color().error_color),
+                                    );
+                                    node_settings_error = Some("Rusty Kaspa Daemon not found");
+                                }
                             },
                             _ => { }
                         }
@@ -298,14 +295,11 @@ impl Settings {
 
                     });
 
-
                 if !self.grpc_network_interface.is_valid() {
                     node_settings_error = Some(i18n("Invalid gRPC network interface configuration"));
                 } else {
                     self.settings.node.grpc_network_interface = self.grpc_network_interface.as_ref().try_into().unwrap(); //NetworkInterfaceConfig::try_from(&self.grpc_network_interface).unwrap();
                 }
-
-                // ui.add_space(4.);
 
                 if self.settings.node.node_kind == KaspadNodeKind::Remote {
                     node_settings_error = Self::render_remote_settings(core, ui, &mut self.settings.node);
@@ -395,10 +389,7 @@ impl Settings {
                     ui.separator();
                 }
             }
-
-
     }
-
 
     fn render_settings(
         &mut self,
@@ -434,6 +425,9 @@ impl Settings {
                     });    
             });
 
+        #[cfg(not(target_arch = "wasm32"))]
+        core.storage.clone().render_settings(core, ui);
+
         CollapsingHeader::new(i18n("Advanced"))
             .default_open(false)
             .show(ui, |ui| {
@@ -451,45 +445,43 @@ impl Settings {
                 if self.settings.developer.enable {
                     ui.indent("developer_mode_settings", |ui | {
 
-                        // ui.vertical(|ui|{
-                            #[cfg(not(target_arch = "wasm32"))]
-                            ui.checkbox(
-                                &mut self.settings.developer.enable_experimental_features, 
-                                i18n("Enable experimental features")
-                            ).on_hover_text_at_pointer(
-                                i18n("Enables features currently in development")
-                            );
-                            
-                            #[cfg(not(target_arch = "wasm32"))]
-                            ui.checkbox(
-                                &mut self.settings.developer.enable_custom_daemon_args, 
-                                i18n("Enable custom daemon arguments")
-                            ).on_hover_text_at_pointer(
-                                i18n("Allow custom arguments for the Rusty Kaspa daemon")
-                            );
-                            
-                            ui.checkbox(
-                                &mut self.settings.developer.disable_password_restrictions, 
-                                i18n("Disable password score restrictions")
-                            ).on_hover_text_at_pointer(
-                                i18n("Removes security restrictions, allows for single-letter passwords")
-                            );
-                            
-                            ui.checkbox(
-                                &mut self.settings.developer.market_monitor_on_testnet, 
-                                i18n("Show balances in alternate currencies for testnet coins")
-                            ).on_hover_text_at_pointer(
-                                i18n("Shows balances in alternate currencies (BTC, USD) when using testnet coins as if you are on mainnet")
-                            );
+                        #[cfg(not(target_arch = "wasm32"))]
+                        ui.checkbox(
+                            &mut self.settings.developer.enable_experimental_features, 
+                            i18n("Enable experimental features")
+                        ).on_hover_text_at_pointer(
+                            i18n("Enables features currently in development")
+                        );
+                        
+                        #[cfg(not(target_arch = "wasm32"))]
+                        ui.checkbox(
+                            &mut self.settings.developer.enable_custom_daemon_args, 
+                            i18n("Enable custom daemon arguments")
+                        ).on_hover_text_at_pointer(
+                            i18n("Allow custom arguments for the Rusty Kaspa daemon")
+                        );
+                        
+                        ui.checkbox(
+                            &mut self.settings.developer.disable_password_restrictions, 
+                            i18n("Disable password score restrictions")
+                        ).on_hover_text_at_pointer(
+                            i18n("Removes security restrictions, allows for single-letter passwords")
+                        );
+                        
+                        ui.checkbox(
+                            &mut self.settings.developer.market_monitor_on_testnet, 
+                            i18n("Show balances in alternate currencies for testnet coins")
+                        ).on_hover_text_at_pointer(
+                            i18n("Shows balances in alternate currencies (BTC, USD) when using testnet coins as if you are on mainnet")
+                        );
 
-                            #[cfg(not(target_arch = "wasm32"))]
-                            ui.checkbox(
-                                &mut self.settings.developer.enable_screen_capture, 
-                                i18n("Enable screen capture")
-                            ).on_hover_text_at_pointer(
-                                i18n("Allows you to take screenshots from within the application")
-                            );
-                        // });
+                        #[cfg(not(target_arch = "wasm32"))]
+                        ui.checkbox(
+                            &mut self.settings.developer.enable_screen_capture, 
+                            i18n("Enable screen capture")
+                        ).on_hover_text_at_pointer(
+                            i18n("Allows you to take screenshots from within the application")
+                        );
                     });
                 }
 
@@ -542,21 +534,7 @@ impl Settings {
                     }
                     ui.separator();
                 }
-
-
-
             });
-
-            // if ui.button("Test Toast").clicked() {
-            //     self.runtime.try_send(Events::Notify {
-            //         notification : UserNotification::info("Test Toast")
-            //     }).unwrap();
-            // }
-            // ui.add_space(32.);
-            // if ui.button("Test Panic").clicked() {
-            //     panic!("Testing panic...");
-            // }
-
     }
 }
 

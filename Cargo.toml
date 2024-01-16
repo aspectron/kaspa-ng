@@ -133,8 +133,8 @@ cfg-if = "1.0.0"
 chrome-sys = "0.1.0"
 # chrome-sys = {path = "../chrome-sys"}
 chrono = "0.4.31"
-convert_case = "0.6.0"
 clap = { version = "4.4.7", features = ["derive", "string", "cargo"] }
+convert_case = "0.6.0"
 ctrlc = { version = "3.2", features = ["termination"] }
 derivative = "2.2.0"
 downcast = "0.11.0"
@@ -147,6 +147,7 @@ js-sys = "0.3.64"
 log = "0.4.20"
 nix = "0.27.1"
 num_cpus = "1.15.0"
+open = "5.0.1"
 pad = "0.1.6"
 passwords = "3.1.16"
 qrcode = "0.12.0"
@@ -163,6 +164,7 @@ sysinfo = "0.29.10"
 thiserror = "1.0.50"
 tokio = { version = "1", features = ["sync", "rt-multi-thread", "process"] }
 toml = "0.8.8"
+walkdir = "2.4.0"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3.64", features = ['Window'] }

@@ -1,5 +1,6 @@
 use crate::imports::*;
 use crate::market::*;
+use crate::storage::StorageUpdateOptions;
 use crate::utils::Release;
 use kaspa_metrics_core::MetricsSnapshot;
 use kaspa_wallet_core::{events as kaspa, storage::PrvKeyDataInfo};
@@ -8,6 +9,7 @@ pub type ApplicationEventsChannel = crate::runtime::channel::Channel<Events>;
 
 #[derive(Clone)]
 pub enum Events {
+    UpdateStorage(StorageUpdateOptions),
     VisibilityChange(VisibilityState),
     VersionUpdate(Release),
     ThemeChange,

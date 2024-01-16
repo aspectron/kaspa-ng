@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
@@ -363,6 +361,17 @@ impl KaspaService {
 
         Ok(())
     }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn update_storage(&self) {
+        const STORAGE_UPDATE_DELAY: Duration = Duration::from_millis(3000);
+
+        let options = StorageUpdateOptions::default()
+            .if_not_present()
+            .with_delay(STORAGE_UPDATE_DELAY);
+
+        runtime().update_storage(options);
+    }
 }
 
 #[async_trait]
@@ -372,8 +381,7 @@ impl Service for KaspaService {
     }
 
     async fn spawn(self: Arc<Self>) -> Result<()> {
-        let this = self.clone();
-        let wallet_events = this.wallet.multiplexer().channel();
+        let wallet_events = self.wallet.multiplexer().channel();
         let _application_events_sender = self.application_events.sender.clone();
 
         loop {
@@ -387,22 +395,22 @@ impl Service for KaspaService {
                             CoreWallet::DAAScoreChange{ .. } => {
                             }
                             CoreWallet::Connect { .. } => {
-                                this.connect_all_services().await?;
+                                self.connect_all_services().await?;
                             }
                             CoreWallet::Disconnect { .. } => {
-                                this.disconnect_all_services().await?;
+                                self.disconnect_all_services().await?;
                             }
                             _ => {
                                 // println!("wallet event: {:?}", event);
                             }
                         }
-                        this.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
+                        self.application_events.sender.send(crate::events::Events::Wallet{event}).await.unwrap();
                     } else {
                         break;
                     }
                 }
 
-                msg = this.as_ref().service_events.receiver.recv().fuse() => {
+                msg = self.as_ref().service_events.receiver.recv().fuse() => {
 
                     if let Ok(event) = msg {
 
@@ -411,20 +419,20 @@ impl Service for KaspaService {
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::Stdout { line } => {
 
-                                if !this.wallet().utxo_processor().is_synced() {
-                                    this.wallet().utxo_processor().sync_proc().handle_stdout(&line).await?;
+                                if !self.wallet().utxo_processor().is_synced() {
+                                    self.wallet().utxo_processor().sync_proc().handle_stdout(&line).await?;
                                 }
 
-                                this.update_logs(line).await;
+                                self.update_logs(line).await;
                             }
 
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::StartInternalInProc { config, network } => {
 
-                                this.stop_all_services().await?;
+                                self.stop_all_services().await?;
 
                                 let kaspad = Arc::new(inproc::InProc::default());
-                                this.retain(kaspad.clone());
+                                self.retain(kaspad.clone());
                                 // this.kaspad.lock().unwrap().replace(kaspad.clone());
 
                                 kaspad.clone().start(config).await.unwrap();
@@ -433,16 +441,17 @@ impl Service for KaspaService {
                                 let rpc_ctl = RpcCtl::new();
                                 let rpc = Rpc::new(rpc_api, rpc_ctl.clone());
 
-                                this.start_all_services(rpc, network).await?;
-                                this.connect_rpc_client().await?;
+                                self.start_all_services(rpc, network).await?;
+                                self.connect_rpc_client().await?;
 
+                                self.update_storage();
                             },
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::StartInternalAsDaemon { config, network } => {
                                 self.stop_all_services().await?;
 
-                                let kaspad = Arc::new(daemon::Daemon::new(None, &this.service_events));
-                                this.retain(kaspad.clone());
+                                let kaspad = Arc::new(daemon::Daemon::new(None, &self.service_events));
+                                self.retain(kaspad.clone());
                                 kaspad.clone().start(config).await.unwrap();
 
                                 let rpc_config = RpcConfig::Wrpc {
@@ -451,15 +460,17 @@ impl Service for KaspaService {
                                 };
 
                                 let rpc = Self::create_rpc_client(&rpc_config, network).expect("Kaspad Service - unable to create wRPC client");
-                                this.start_all_services(rpc, network).await?;
-                                this.connect_rpc_client().await?;
+                                self.start_all_services(rpc, network).await?;
+                                self.connect_rpc_client().await?;
+
+                                self.update_storage();
                             },
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::StartExternalAsDaemon { path, config, network } => {
                                 self.stop_all_services().await?;
 
-                                let kaspad = Arc::new(daemon::Daemon::new(Some(path), &this.service_events));
-                                this.retain(kaspad.clone());
+                                let kaspad = Arc::new(daemon::Daemon::new(Some(path), &self.service_events));
+                                self.retain(kaspad.clone());
 
                                 kaspad.clone().start(config).await.unwrap();
 
@@ -469,15 +480,17 @@ impl Service for KaspaService {
                                 };
 
                                 let rpc = Self::create_rpc_client(&rpc_config, network).expect("Kaspad Service - unable to create wRPC client");
-                                this.start_all_services(rpc, network).await?;
-                                this.connect_rpc_client().await?;
+                                self.start_all_services(rpc, network).await?;
+                                self.connect_rpc_client().await?;
+
+                                self.update_storage();
                             },
                             KaspadServiceEvents::StartRemoteConnection { rpc_config, network } => {
                                 self.stop_all_services().await?;
 
                                 let rpc = Self::create_rpc_client(&rpc_config, network).expect("Kaspad Service - unable to create wRPC client");
-                                this.start_all_services(rpc, network).await?;
-                                this.connect_rpc_client().await?;
+                                self.start_all_services(rpc, network).await?;
+                                self.connect_rpc_client().await?;
                             },
 
                             KaspadServiceEvents::Disable { network } => {
@@ -505,8 +518,8 @@ impl Service for KaspaService {
             }
         }
 
-        this.stop_all_services().await?;
-        this.task_ctl.send(()).await.unwrap();
+        self.stop_all_services().await?;
+        self.task_ctl.send(()).await.unwrap();
 
         Ok(())
     }

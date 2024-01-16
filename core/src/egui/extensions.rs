@@ -34,6 +34,7 @@ pub trait UiExtension {
     ) -> Option<Confirm>;
     fn confirm_medium_apply_cancel(&mut self, align: Align) -> Option<Confirm>;
     fn confirm_medium_cancel(&mut self, align: Align) -> Option<Confirm>;
+    fn sized_separator(&mut self, size: Vec2) -> Response;
 }
 
 impl UiExtension for Ui {
@@ -102,6 +103,10 @@ impl UiExtension for Ui {
             Option::<&str>::None,
             format!("{} {}", egui_phosphor::light::X, i18n("Cancel")),
         )
+    }
+
+    fn sized_separator(&mut self, size: Vec2) -> Response {
+        self.add_sized(size, Separator::default())
     }
 }
 

@@ -20,27 +20,39 @@ impl SyncStatus {
                 if level == 0 {
                     SyncStatus {
                         stage: Some(1),
-                        caption: "Syncing Proof...".to_string(),
+                        caption: i18n("Syncing Cryptographic Proof...").to_string(),
                         ..Default::default()
                     }
                 } else {
                     SyncStatus {
                         stage: Some(1),
-                        caption: format!("Syncing Proof {}", level.separated_string()),
+                        caption: format!(
+                            "{} {}",
+                            i18n("Syncing Cryptographic Proof..."),
+                            level.separated_string()
+                        ),
                         ..Default::default()
                     }
                 }
             }
             SyncState::Headers { headers, progress } => SyncStatus {
                 stage: Some(2),
-                caption: format!("Syncing Headers... {}", headers.separated_string()),
+                caption: format!(
+                    "{} {}",
+                    i18n("Syncing Headers..."),
+                    headers.separated_string()
+                ),
                 progress_bar_percentage: Some(progress as f32 / 100_f32),
                 progress_bar_text: Some(format!("{}%", progress)),
                 ..Default::default()
             },
             SyncState::Blocks { blocks, progress } => SyncStatus {
                 stage: Some(3),
-                caption: format!("Syncing DAG Blocks... {}", blocks.separated_string()),
+                caption: format!(
+                    "{} {}",
+                    i18n("Syncing DAG Blocks..."),
+                    blocks.separated_string()
+                ),
                 // caption: "Syncing DAG Blocks...".to_string(),
                 progress_bar_percentage: Some(progress as f32 / 100_f32),
                 progress_bar_text: Some(format!("{}%", progress)),
@@ -51,7 +63,11 @@ impl SyncStatus {
 
                 SyncStatus {
                     stage: Some(4),
-                    caption: format!("Syncing DAG Trust... {}", processed.separated_string()),
+                    caption: format!(
+                        "{} {}",
+                        i18n("Syncing DAG Trust..."),
+                        processed.separated_string()
+                    ),
                     // caption: "Syncing DAG Trust...".to_string(),
                     progress_bar_percentage: Some(progress as f32 / 100_f32),
                     progress_bar_text: Some(format!("{}%", progress)),
@@ -61,21 +77,25 @@ impl SyncStatus {
             }
             SyncState::UtxoSync { total, .. } => SyncStatus {
                 stage: Some(5),
-                caption: format!("Syncing UTXO entries... {}", total.separated_string()),
+                caption: format!(
+                    "{} {}",
+                    i18n("Syncing UTXO entries..."),
+                    total.separated_string()
+                ),
                 // caption: "Syncing UTXO entries...".to_string(),
                 // progress_bar_text: Some(total.separated_string()),
                 ..Default::default()
             },
             SyncState::UtxoResync => SyncStatus {
-                caption: "Syncing...".to_string(),
+                caption: i18n("Syncing...").to_string(),
                 ..Default::default()
             },
             SyncState::NotSynced => SyncStatus {
-                caption: "Syncing...".to_string(),
+                caption: i18n("Syncing...").to_string(),
                 ..Default::default()
             },
             SyncState::Synced { .. } => SyncStatus {
-                caption: "Ready...".to_string(),
+                caption: i18n("Ready...").to_string(),
                 synced: true,
                 ..Default::default()
             },
@@ -102,7 +122,11 @@ impl SyncStatus {
 
     pub fn render_text_state(&self, ui: &mut egui::Ui) {
         if let Some(stage) = self.stage {
-            ui.label(format!("Stage {stage} of {SYNC_STAGES}"));
+            ui.label(format!(
+                "{} {stage} {} {SYNC_STAGES}",
+                i18n("Stage"),
+                i18n("of")
+            ));
             ui.separator();
         }
         ui.label(self.caption.as_str());

@@ -249,6 +249,9 @@ impl Overview {
                 if let Some(system) = runtime().system() {
                     system.render(ui);
                 }
+
+                #[cfg(not(target_arch = "wasm32"))]
+                core.storage.render(ui);
         
                 CollapsingHeader::new(i18n("License Information"))
                     .default_open(false)

@@ -103,7 +103,12 @@ impl<'core> Status<'core> {
 
         if let Some(peers) = peers {
             if peers != 0 {
-                ui.label(format!("{peers} {}", i18n("peers")));
+                let text = if peers > 1 {
+                    i18n("peers")
+                } else {
+                    i18n("peer")
+                };
+                ui.label(format!("{peers} {text}"));
             } else {
                 ui.label(
                     RichText::new(egui_phosphor::light::CLOUD_SLASH)

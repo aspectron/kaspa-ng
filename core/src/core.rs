@@ -54,6 +54,7 @@ pub struct Core {
     callback_map: CallbackMap,
     pub network_pressure: NetworkPressure,
     notifications: Notifications,
+    pub storage: Storage,
 }
 
 impl Core {
@@ -192,6 +193,7 @@ impl Core {
             callback_map: CallbackMap::default(),
             network_pressure: NetworkPressure::default(),
             notifications: Notifications::default(),
+            storage: Storage::default(),
         };
 
         modules.values().for_each(|module| {
@@ -202,9 +204,18 @@ impl Core {
 
         this.wallet_update_list();
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            this.register_visibility_handler();
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                this.register_visibility_handler();
+            } else {
+                let storage = this.storage.clone();
+                spawn(async move {
+                    loop {
+                        storage.update(None);
+                        task::sleep(Duration::from_secs(60)).await;
+                    }
+                });
+            }
         }
 
         this
@@ -616,6 +627,11 @@ impl Core {
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
         match event {
+            Events::UpdateStorage(_options) => {
+                #[cfg(not(target_arch = "wasm32"))]
+                self.storage
+                    .update(Some(_options.with_network(self.settings.node.network)));
+            }
             Events::VisibilityChange(state) => match state {
                 VisibilityState::Visible => {
                     self.module.clone().show(self);

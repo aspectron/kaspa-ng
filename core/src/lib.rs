@@ -29,6 +29,7 @@ pub mod servers;
 pub mod settings;
 pub mod state;
 pub mod status;
+pub mod storage;
 pub mod sync;
 pub mod utils;
 

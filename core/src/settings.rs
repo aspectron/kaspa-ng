@@ -283,14 +283,6 @@ impl std::fmt::Display for NodeMemoryScale {
     }
 }
 
-const GIGABYTE: u64 = 1024 * 1024 * 1024;
-const MEMORY_8GB: u64 = 8 * GIGABYTE;
-const MEMORY_16GB: u64 = 16 * GIGABYTE;
-const MEMORY_32GB: u64 = 32 * GIGABYTE;
-const MEMORY_64GB: u64 = 64 * GIGABYTE;
-const MEMORY_96GB: u64 = 96 * GIGABYTE;
-const MEMORY_128GB: u64 = 128 * GIGABYTE;
-
 impl NodeMemoryScale {
     pub fn describe(&self) -> &str {
         match self {
@@ -303,6 +295,15 @@ impl NodeMemoryScale {
     pub fn get(&self) -> f64 {
         cfg_if! {
             if #[cfg(not(target_arch = "wasm32"))] {
+
+                const GIGABYTE: u64 = 1024 * 1024 * 1024;
+                const MEMORY_8GB: u64 = 8 * GIGABYTE;
+                const MEMORY_16GB: u64 = 16 * GIGABYTE;
+                const MEMORY_32GB: u64 = 32 * GIGABYTE;
+                const MEMORY_64GB: u64 = 64 * GIGABYTE;
+                const MEMORY_96GB: u64 = 96 * GIGABYTE;
+                const MEMORY_128GB: u64 = 128 * GIGABYTE;
+
                 let total_memory = runtime().system().as_ref().map(|system|system.total_memory).unwrap_or(MEMORY_16GB);
 
                 let target_memory = if total_memory <= MEMORY_8GB {
