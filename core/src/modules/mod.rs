@@ -63,8 +63,9 @@ pub trait ModuleT: Downcast {
     fn activate(&mut self, _core: &mut Core) {}
     fn deactivate(&mut self, _core: &mut Core) {}
     fn reset(&mut self, _core: &mut Core) {}
-    fn connect(&mut self, _core: &mut Core) {}
+    fn connect(&mut self, _core: &mut Core, _network: Network) {}
     fn disconnect(&mut self, _core: &mut Core) {}
+    fn network_change(&mut self, _core: &mut Core, _network: Network) {}
     fn hide(&mut self, _core: &mut Core) {}
     fn show(&mut self, _core: &mut Core) {}
 
@@ -112,12 +113,16 @@ impl Module {
         self.inner.module.borrow_mut().reset(core)
     }
 
-    pub fn connect(&self, core: &mut Core) {
-        self.inner.module.borrow_mut().connect(core)
+    pub fn connect(&self, core: &mut Core, network: Network) {
+        self.inner.module.borrow_mut().connect(core, network)
     }
 
     pub fn disconnect(&self, core: &mut Core) {
         self.inner.module.borrow_mut().disconnect(core)
+    }
+
+    pub fn network_change(&self, core: &mut Core, network: Network) {
+        self.inner.module.borrow_mut().network_change(core, network)
     }
 
     pub fn hide(&self, core: &mut Core) {

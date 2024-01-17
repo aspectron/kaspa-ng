@@ -9,6 +9,7 @@ pub type ApplicationEventsChannel = crate::runtime::channel::Channel<Events>;
 
 #[derive(Clone, Debug)]
 pub enum Events {
+    NetworkChange(Network),
     UpdateStorage(StorageUpdateOptions),
     VisibilityChange(VisibilityState),
     VersionUpdate(Release),
@@ -29,6 +30,7 @@ pub enum Events {
     Wallet {
         event: Box<kaspa::Events>,
     },
+    WalletUpdate,
     PrvKeyDataInfo {
         prv_key_data_info_map: HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>,
     },

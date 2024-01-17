@@ -79,6 +79,22 @@ impl From<&Network> for NetworkId {
     }
 }
 
+impl From<NetworkId> for Network {
+    fn from(value: NetworkId) -> Self {
+        match value.network_type {
+            NetworkType::Mainnet => Network::Mainnet,
+            NetworkType::Testnet => match value.suffix {
+                Some(10) => Network::Testnet10,
+                Some(11) => Network::Testnet11,
+                Some(x) => unreachable!("Testnet suffix {} is not supported", x),
+                None => panic!("Testnet suffix not provided"),
+            },
+            NetworkType::Devnet => unreachable!("Devnet is not supported"),
+            NetworkType::Simnet => unreachable!("Simnet is not supported"),
+        }
+    }
+}
+
 impl From<Network> for Params {
     fn from(network: Network) -> Self {
         NetworkId::from(network).into()

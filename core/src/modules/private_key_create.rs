@@ -104,6 +104,9 @@ impl PrivateKeyCreate {
 }
 
 impl ModuleT for PrivateKeyCreate {
+
+    fn modal(&self) -> bool { true }
+
     fn render(
         &mut self,
         core: &mut Core,
@@ -441,7 +444,7 @@ impl ModuleT for PrivateKeyCreate {
 
                                 // TODO - add account to wallet ^^^
                                 let descriptor = account.descriptor().unwrap();
-                                let account = Account::from(descriptor);
+                                let account = Account::from(core.network(), descriptor);
                                 core.account_collection.as_mut().unwrap().push_unchecked(account.clone());
 
                                 core.select::<modules::AccountManager>();

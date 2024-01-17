@@ -311,6 +311,8 @@ impl KaspaService {
             .unwrap()
             .replace(Instant::now());
 
+        *self.network.lock().unwrap() = network;
+
         let rpc_api = rpc.rpc_api().clone();
 
         self.wallet()
@@ -344,6 +346,20 @@ impl KaspaService {
                 println!("KaspadServiceEvents::try_from() error: {}", err);
             }
         }
+    }
+
+    fn network(&self) -> Network {
+        *self.network.lock().unwrap()
+    }
+
+    async fn handle_network_change(&self, network: Network) -> Result<()> {
+        if network != self.network() {
+            self.application_events
+                .send(Events::NetworkChange(network))
+                .await?;
+        }
+
+        Ok(())
     }
 
     pub async fn connect_all_services(&self) -> Result<()> {
@@ -428,8 +444,9 @@ impl Service for KaspaService {
 
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::StartInternalInProc { config, network } => {
-
                                 self.stop_all_services().await?;
+
+                                self.handle_network_change(network).await?;
 
                                 let kaspad = Arc::new(inproc::InProc::default());
                                 self.retain(kaspad.clone());
@@ -450,6 +467,8 @@ impl Service for KaspaService {
                             KaspadServiceEvents::StartInternalAsDaemon { config, network } => {
                                 self.stop_all_services().await?;
 
+                                self.handle_network_change(network).await?;
+
                                 let kaspad = Arc::new(daemon::Daemon::new(None, &self.service_events));
                                 self.retain(kaspad.clone());
                                 kaspad.clone().start(config).await.unwrap();
@@ -468,6 +487,8 @@ impl Service for KaspaService {
                             #[cfg(not(target_arch = "wasm32"))]
                             KaspadServiceEvents::StartExternalAsDaemon { path, config, network } => {
                                 self.stop_all_services().await?;
+
+                                self.handle_network_change(network).await?;
 
                                 let kaspad = Arc::new(daemon::Daemon::new(Some(path), &self.service_events));
                                 self.retain(kaspad.clone());
@@ -488,6 +509,8 @@ impl Service for KaspaService {
                             KaspadServiceEvents::StartRemoteConnection { rpc_config, network } => {
                                 self.stop_all_services().await?;
 
+                                self.handle_network_change(network).await?;
+
                                 let rpc = Self::create_rpc_client(&rpc_config, network).expect("Kaspad Service - unable to create wRPC client");
                                 self.start_all_services(rpc, network).await?;
                                 self.connect_rpc_client().await?;
@@ -495,6 +518,8 @@ impl Service for KaspaService {
 
                             KaspadServiceEvents::Disable { network } => {
                                 self.stop_all_services().await?;
+
+                                self.handle_network_change(network).await?;
 
                                 if self.wallet().is_open() {
                                     self.wallet().close().await.ok();

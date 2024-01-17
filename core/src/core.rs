@@ -285,6 +285,10 @@ impl Core {
             .unwrap();
     }
 
+    pub fn network(&self) -> Network {
+        self.settings.node.network
+    }
+
     pub fn wallet(&self) -> &Arc<dyn WalletApi> {
         &self.wallet
     }
@@ -626,7 +630,13 @@ impl Core {
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
+        // println!("event: {:?}", event);
         match event {
+            Events::NetworkChange(network) => {
+                self.modules.clone().values().for_each(|module| {
+                    module.network_change(self, network);
+                });
+            }
             Events::UpdateStorage(_options) => {
                 #[cfg(not(target_arch = "wasm32"))]
                 self.storage
@@ -692,6 +702,18 @@ impl Core {
                 self.wallet_list = (*wallet_list).clone();
                 self.wallet_list.sort();
             }
+            Events::WalletUpdate => {
+                if let Some(account_collection) = self.account_collection.as_ref() {
+                    let mut account_manager = self
+                        .modules
+                        .get(&TypeId::of::<modules::AccountManager>())
+                        .unwrap()
+                        .clone();
+                    account_manager
+                        .get_mut::<modules::AccountManager>()
+                        .update(account_collection);
+                }
+            }
             Events::Notify {
                 user_notification: notification,
             } => {
@@ -710,6 +732,7 @@ impl Core {
                 self.prv_key_data_map = Some(prv_key_data_info_map);
             }
             Events::Wallet { event } => {
+                // println!("event: {:?}", event);
                 match *event {
                     CoreWallet::Error { message } => {
                         // runtime().notify(UserNotification::error(message.as_str()));
@@ -717,6 +740,14 @@ impl Core {
                     }
                     CoreWallet::UtxoProcStart => {
                         self.state.error = None;
+
+                        if self.state().is_open() {
+                            let wallet = self.wallet().clone();
+                            spawn(async move {
+                                wallet.wallet_reload(false).await?;
+                                Ok(())
+                            });
+                        }
                     }
                     CoreWallet::UtxoProcStop => {}
                     CoreWallet::UtxoProcError { message } => {
@@ -733,7 +764,9 @@ impl Core {
                         self.state.url = url;
                         self.state.network_id = Some(network_id);
 
-                        self.module.clone().connect(self);
+                        self.modules.clone().values().for_each(|module| {
+                            module.connect(self, Network::from(network_id));
+                        });
                     }
                     #[allow(unused_variables)]
                     CoreWallet::Disconnect {
@@ -751,7 +784,9 @@ impl Core {
                         self.metrics = None;
                         self.network_pressure.clear();
 
-                        self.module.clone().disconnect(self);
+                        self.modules.clone().values().for_each(|module| {
+                            module.disconnect(self);
+                        });
                     }
                     CoreWallet::UtxoIndexNotEnabled { url } => {
                         self.exception = Some(Exception::UtxoIndexNotEnabled { url });
@@ -774,20 +809,11 @@ impl Core {
                         self.hint = hint;
                         self.discard_hint = false;
                     }
-                    // TODO remove reloading notification
-                    CoreWallet::WalletReload { .. } => {}
-                    CoreWallet::WalletOpen {
+                    CoreWallet::WalletReload {
                         wallet_descriptor,
                         account_descriptors,
-                        // }
-                        // | CoreWallet::WalletReload {
-                        //     wallet_descriptor,
-                        //     account_descriptors,
                     } => {
-                        self.state.is_open = true;
-
                         self.wallet_descriptor = wallet_descriptor;
-                        // let network_id = self.state.network_id.ok_or(Error::WalletOpenNetworkId)?;
                         let network_id = self
                             .state
                             .network_id
@@ -795,7 +821,21 @@ impl Core {
                         let account_descriptors =
                             account_descriptors.ok_or(Error::WalletOpenAccountDescriptors)?;
                         self.load_accounts(network_id, account_descriptors)?;
-                        // self.update_account_list();
+                    }
+                    CoreWallet::WalletOpen {
+                        wallet_descriptor,
+                        account_descriptors,
+                    } => {
+                        self.state.is_open = true;
+
+                        self.wallet_descriptor = wallet_descriptor;
+                        let network_id = self
+                            .state
+                            .network_id
+                            .unwrap_or(self.settings.node.network.into());
+                        let account_descriptors =
+                            account_descriptors.ok_or(Error::WalletOpenAccountDescriptors)?;
+                        self.load_accounts(network_id, account_descriptors)?;
                     }
                     CoreWallet::WalletCreate {
                         wallet_descriptor,
@@ -821,23 +861,7 @@ impl Core {
                     CoreWallet::AccountActivation { ids: _ } => {}
                     CoreWallet::AccountCreate {
                         account_descriptor: _,
-                    } => {
-                        // let account = Account::from(account_descriptor);
-                        // self.account_collection
-                        //     .as_mut()
-                        //     .expect("account collection")
-                        //     .push_unchecked(account.clone());
-                        // let device = self.device().clone();
-                        // self.get_mut::<modules::AccountManager>()
-                        //     .select(Some(account.clone()), device);
-                        // // self.select::<modules::AccountManager>();
-
-                        // let wallet = self.wallet().clone();
-                        // spawn(async move {
-                        //     wallet.accounts_activate(Some(vec![account.id()])).await?;
-                        //     Ok(())
-                        // });
-                    }
+                    } => {}
                     CoreWallet::AccountUpdate { account_descriptor } => {
                         let account_id = account_descriptor.account_id();
                         if let Some(account_collection) = self.account_collection.as_ref() {
@@ -976,11 +1000,16 @@ impl Core {
         network_id: NetworkId,
         account_descriptors: Vec<AccountDescriptor>,
     ) -> Result<()> {
+        let network = Network::from(network_id);
+        if self.network() != network {
+            return Err(Error::InvalidNetwork(network.to_string()));
+        }
+
         let application_events_sender = self.application_events_channel.sender.clone();
 
         let account_list = account_descriptors
             .into_iter()
-            .map(Account::from)
+            .map(|account_descriptor| Account::from(network, account_descriptor))
             .collect::<Vec<_>>();
 
         self.account_collection = Some(account_list.clone().into());
@@ -1019,7 +1048,7 @@ impl Core {
                 .map(|account_id| {
                     runtime
                         .wallet()
-                        .transactions_data_get_range(account_id, network_id, 0..4096)
+                        .transactions_data_get_range(account_id, network_id, 0..8192)
                 })
                 .collect::<Vec<_>>();
 
@@ -1048,6 +1077,8 @@ impl Core {
 
             runtime.wallet().accounts_activate(None).await?;
 
+            application_events_sender.send(Events::WalletUpdate).await?;
+
             Ok(())
         });
 
@@ -1058,28 +1089,29 @@ impl Core {
         &mut self,
         account_descriptors: Vec<AccountDescriptor>,
     ) -> Vec<Account> {
+        let network = self.network();
+
         let accounts = account_descriptors
             .into_iter()
-            .map(Account::from)
-            .collect::<Vec<_>>(); //(account_descriptor);
+            .map(|account_descriptor| Account::from(network, account_descriptor))
+            .collect::<Vec<_>>();
+
         self.account_collection
             .as_mut()
             .expect("account collection")
             .extend_unchecked(accounts.clone());
-        // .push_unchecked(account.clone());
+
         if let Some(first) = accounts.first() {
             let device = self.device().clone();
             self.get_mut::<modules::AccountManager>()
                 .select(Some(first.clone()), device);
         }
-        // self.get_mut::<modules::AccountManager>()
-        //     .select(Some(account.clone()), device);
-        // self.select::<modules::AccountManager>();
+
         let account_ids = accounts
             .iter()
             .map(|account| account.id())
             .collect::<Vec<_>>();
-        // let account_id = account.id();
+
         let wallet = self.wallet().clone();
         spawn(async move {
             wallet.accounts_activate(Some(account_ids)).await?;

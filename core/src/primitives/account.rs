@@ -48,10 +48,11 @@ struct Inner {
     transactions: Mutex<TransactionCollection>,
     total_transaction_count: AtomicU64,
     is_loading: AtomicBool,
+    network: Mutex<Network>,
 }
 
 impl Inner {
-    fn new(descriptor: AccountDescriptor) -> Self {
+    fn new(network: Network, descriptor: AccountDescriptor) -> Self {
         let context = AccountContext::new(&descriptor);
         Self {
             id: *descriptor.account_id(),
@@ -62,6 +63,7 @@ impl Inner {
             transactions: Mutex::new(TransactionCollection::default()),
             total_transaction_count: AtomicU64::new(0),
             is_loading: AtomicBool::new(true),
+            network: Mutex::new(network),
         }
     }
 }
@@ -71,15 +73,21 @@ pub struct Account {
     inner: Arc<Inner>,
 }
 
-impl From<AccountDescriptor> for Account {
-    fn from(descriptor: AccountDescriptor) -> Self {
-        Self {
-            inner: Arc::new(Inner::new(descriptor)),
-        }
-    }
-}
+// impl From<AccountDescriptor> for Account {
+//     fn from(descriptor: AccountDescriptor) -> Self {
+//         Self {
+//             inner: Arc::new(Inner::new(network, descriptor)),
+//         }
+//     }
+// }
 
 impl Account {
+    pub fn from(network: Network, descriptor: AccountDescriptor) -> Self {
+        Self {
+            inner: Arc::new(Inner::new(network, descriptor)),
+        }
+    }
+
     pub fn descriptor(&self) -> MutexGuard<'_, AccountDescriptor> {
         self.inner.descriptor.lock().unwrap()
     }
@@ -140,6 +148,8 @@ impl Account {
     }
 
     pub fn update(&self, descriptor: AccountDescriptor) {
+        println!("$$$$$ UPDATING ACCOUNT: {:?}", descriptor);
+
         *self.inner.context.lock().unwrap() = AccountContext::new(&descriptor);
         *self.inner.descriptor.lock().unwrap() = descriptor;
     }
@@ -148,6 +158,10 @@ impl Account {
         *self.inner.balance.lock().unwrap() = balance;
 
         Ok(())
+    }
+
+    pub fn update_network(&self, network: Network) {
+        *self.inner.network.lock().unwrap() = network;
     }
 
     pub fn set_loading(&self, is_loading: bool) {
@@ -170,14 +184,24 @@ impl Account {
 
     pub fn load_transactions(
         &self,
-        transactions: Vec<Arc<TransactionRecord>>,
+        mut transactions: Vec<Arc<TransactionRecord>>,
         total: u64,
     ) -> Result<()> {
+        // TODO - pagination
+        self.transactions().clear();
+
+        transactions.sort_by(|a, b| b.block_daa_score.cmp(&a.block_daa_score));
+
         self.set_transaction_count(total);
         self.transactions()
             .load(transactions.into_iter().map(|t| t.into()));
 
         Ok(())
+    }
+
+    pub fn clear_transactions(&self) {
+        self.set_transaction_count(0);
+        self.transactions().clear();
     }
 }
 

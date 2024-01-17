@@ -87,7 +87,9 @@ impl AccountCreate {
 }
 
 impl ModuleT for AccountCreate {
+
     fn modal(&self) -> bool { true }
+
     fn style(&self) -> ModuleStyle {
         ModuleStyle::Mobile
     }
