@@ -166,6 +166,8 @@ impl Overview {
                     .show(ui, |ui| {
                         // egui::special_emojis
                         // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
+
+                        #[cfg(not(target_arch = "wasm32"))]
                         ui.hyperlink_to_tab(
                             format!("• {}",i18n("Kaspa NG Web App")),
                             "https://kaspa-ng.org"

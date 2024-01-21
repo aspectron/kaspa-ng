@@ -245,6 +245,8 @@ impl ModuleT for BlockDag {
                         ui.space();
                         ui.checkbox(&mut self.settings.show_vspc, i18n("Show VSPC"));
                         ui.space();
+                        // ui.checkbox(&mut self.settings.reset_vspc, i18n("Reset VSPC"));
+                        // ui.space();
                         ui.checkbox(&mut self.settings.show_grid, i18n("Show Grid"));
                         ui.space();
                         ui.checkbox(&mut self.settings.show_daa, i18n("Show DAA"));

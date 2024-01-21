@@ -9,6 +9,7 @@ pub struct BlockDagGraphSettings {
     pub graph_length_daa: usize,
     pub center_vspc: bool,
     pub balance_vspc: bool,
+    pub reset_vspc: bool,
     pub show_vspc: bool,
     pub show_daa: bool,
     pub show_grid: bool,
@@ -23,6 +24,7 @@ impl Default for BlockDagGraphSettings {
             graph_length_daa: 1024,
             center_vspc: false,
             balance_vspc: true,
+            reset_vspc: true,
             show_vspc: true,
             show_daa: true,
             show_grid: true,
@@ -167,15 +169,16 @@ impl DaaBucket {
     }
 
     pub fn reset(&mut self, settings: &BlockDagGraphSettings) {
-        self.blocks.iter_mut().for_each(|block| {
-            // block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
-            block.settled = false;
-            if block.vspc && settings.center_vspc {
-                block.dst_y = 0.0;
-            } else {
-                block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
-            }
-        });
+        if settings.reset_vspc {
+            self.blocks.iter_mut().for_each(|block| {
+                block.settled = false;
+                if block.vspc && settings.center_vspc {
+                    block.dst_y = 0.0;
+                } else {
+                    block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
+                }
+            });
+        }
 
         self.update(settings);
     }
