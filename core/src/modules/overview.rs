@@ -169,7 +169,7 @@ impl Overview {
 
                         #[cfg(not(target_arch = "wasm32"))]
                         ui.hyperlink_to_tab(
-                            format!("• {}",i18n("Kaspa NG Web App")),
+                            format!("• {}",i18n("Kaspa NG Online")),
                             "https://kaspa-ng.org"
                         );
                         ui.hyperlink_to_tab(
