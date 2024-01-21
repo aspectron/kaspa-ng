@@ -60,7 +60,7 @@ fn test_generic_transaction_mass() {
     );
 
     for network in Network::iter() {
-        let calc = MassCalculator::new(&network.into());
+        let calc = MassCalculator::new(&network.into(), &network.into());
         let mass = calc.calc_mass_for_signed_transaction(&tx, 1);
         println!("basic transaction mass for {} is {}", network, mass);
     }

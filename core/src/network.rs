@@ -1,5 +1,6 @@
 use crate::imports::*;
 use kaspa_consensus_core::config::params::Params;
+use kaspa_wallet_core::utxo::NetworkParams;
 
 const BASIC_TRANSACTION_MASS: u64 = 1281;
 
@@ -102,6 +103,18 @@ impl From<Network> for Params {
 }
 
 impl From<&Network> for Params {
+    fn from(network: &Network) -> Self {
+        NetworkId::from(network).into()
+    }
+}
+
+impl From<Network> for NetworkParams {
+    fn from(network: Network) -> Self {
+        NetworkId::from(network).into()
+    }
+}
+
+impl From<&Network> for NetworkParams {
     fn from(network: &Network) -> Self {
         NetworkId::from(network).into()
     }
