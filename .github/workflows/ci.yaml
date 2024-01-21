@@ -328,7 +328,7 @@ jobs:
       - name: Install and Test Debian Package
         if: runner.os == 'Linux'
         run: |
-          sudo dpkg -i "${{ steps.package_debian.outputs.file_path }}"
+          sudo dpkg -i "${{ steps.package_debian.outputs.file_name }}"
           kaspa-ng --version || echo "Failed to execute kaspa-ng --version"
       # - name: Package Details
       #   if: runner.os == 'Linux'
