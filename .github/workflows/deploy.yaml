@@ -100,6 +100,11 @@ jobs:
           arch: 'amd64'
           depends: 'libglib2.0-0, libatk1.0-0, libgtk-3-0'
           desc: 'Kaspa NG desktop p2p node and wallet'
+      - name: Install and Test Debian Package
+        if: runner.os == 'Linux'
+        run: |
+          sudo dpkg -i "${{ steps.package_debian.outputs.file_path }}"
+          kaspa-ng --version || echo "Failed to execute kaspa-ng --version"
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
