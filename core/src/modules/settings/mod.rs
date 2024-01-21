@@ -417,7 +417,7 @@ impl Settings {
                 CollapsingHeader::new(i18n("Check for Updates"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        if ui.checkbox(&mut self.settings.update_monitor, i18n("Check for Software Updates via GitHub")).changed() {
+                        if ui.checkbox(&mut self.settings.update_monitor, i18n("Check for Software Updates on GitHub")).changed() {
                             core.settings.update_monitor = self.settings.update_monitor;
                             self.runtime.update_monitor_service().enable(core.settings.update_monitor);
                             core.store_settings();

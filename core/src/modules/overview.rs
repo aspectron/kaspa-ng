@@ -167,6 +167,10 @@ impl Overview {
                         // egui::special_emojis
                         // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
                         ui.hyperlink_to_tab(
+                            format!("• {}",i18n("Kaspa NG Web App")),
+                            "https://kaspa-ng.org"
+                        );
+                        ui.hyperlink_to_tab(
                             format!("• {}",i18n("Kaspa NG on GitHub")),
                             "https://github.com/aspectron/kaspa-ng"
                         );

@@ -23,14 +23,14 @@ impl<'panel> PopupPanel<'panel> {
     }
 
     pub fn new(
-        ui: &mut Ui,
-        id: impl Into<String>,
+        id: Id,
         widget: impl FnOnce(&mut Ui) -> Response + 'panel,
         content: impl FnOnce(&mut Ui, &mut bool) + 'panel,
     ) -> Self {
-        let id = ui.make_persistent_id(id.into());
+        // let id = ui.make_persistent_id(id.into());
 
         Self {
+            // id : id.into(),
             id,
             min_width: None,
             max_height: None,
@@ -43,6 +43,34 @@ impl<'panel> PopupPanel<'panel> {
             above_or_below: AboveOrBelow::Below,
             with_padding: true,
         }
+    }
+
+    // pub fn new_with_string_id(
+    //     ui: &mut Ui,
+    //     id: impl Into<String>,
+    //     // id: Id,
+    //     widget: impl FnOnce(&mut Ui) -> Response + 'panel,
+    //     content: impl FnOnce(&mut Ui, &mut bool) + 'panel,
+    // ) -> Self {
+    //     let id = ui.make_persistent_id(id.into());
+
+    //     Self {
+    //         id,
+    //         min_width: None,
+    //         max_height: None,
+    //         widget: Box::new(widget),
+    //         content: Box::new(content),
+    //         caption: None,
+    //         with_close_button: false,
+    //         close_on_interaction: false,
+    //         close_on_escape: true,
+    //         above_or_below: AboveOrBelow::Below,
+    //         with_padding: true,
+    //     }
+    // }
+
+    pub fn is_open(ui: &mut Ui, popup_id: Id) -> bool {
+        ui.memory(|mem| mem.is_popup_open(popup_id))
     }
 
     pub fn with_min_width(mut self, min_width: f32) -> Self {

@@ -64,8 +64,7 @@ impl<'core> Menu<'core> {
                     ui.separator();
 
                     PopupPanel::new(
-                        ui,
-                        "display_settings",
+                        PopupPanel::id(ui, "display_settings"),
                         |ui| {
                             ui.add(
                                 Label::new(RichText::new(egui_phosphor::light::MONITOR).size(16.))

@@ -66,7 +66,7 @@ impl ModuleT for Metrics {
         ui.horizontal(|ui|{
             ui.heading(i18n("Metrics"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                PopupPanel::new(ui, "metrics_settings",|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
+                PopupPanel::new(PopupPanel::id(ui,"metrics_settings"),|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
                     ui.add(
                         Slider::new(&mut graph_columns, 1..=8)
                             .text("Columns")

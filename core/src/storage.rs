@@ -210,12 +210,12 @@ impl Storage {
                                 let is_running = core.settings.node.network == *network && core.settings.node.node_kind.is_local();
 
                                 ui.horizontal(|ui|{
-                                    if ui.medium_button(i18n("Open Folder")).clicked() {
+                                    if ui.medium_button(i18n("Open Data Folder")).clicked() {
                                         if let Err(err) = open::that(path) {
                                             runtime().error(format!("Error opening folder: {:?}", err));
                                         }
                                     }
-                                    if ui.medium_button_enabled(!is_running && !*confirm_deletion, i18n("Delete Database & Logs")).clicked() {
+                                    if ui.medium_button_enabled(!is_running && !*confirm_deletion, i18n("Delete Data Folder")).clicked() {
                                         *confirm_deletion = true;
                                     }
                                 });
@@ -227,6 +227,8 @@ impl Storage {
 
                                 if *confirm_deletion {
                                     ui.add_sized(vec2(260.,4.), Separator::default());
+                                    ui.label(i18n("This action will erase Kaspa database and logs"));
+                                    ui.label("");
                                     ui.colored_label(theme_color().alert_color, i18n("Please Confirm Deletion"));
                                     if let Some(response) = ui.confirm_medium_apply_cancel(Align::Min) {
                                         match response {

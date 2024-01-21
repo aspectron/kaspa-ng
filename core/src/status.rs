@@ -138,20 +138,23 @@ impl<'core> Status<'core> {
                 }
             });
         } else {
-            let response =
+            let mut response =
                 ui.add(Label::new(RichText::new(i18n("CONNECTED"))).sense(Sense::click()));
 
-            let response = response.on_hover_ui(|ui| {
-                if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
-                    ui.horizontal(|ui| {
-                        ui.label(wrpc_url);
-                    });
-                }
-            });
+            let popup_id = PopupPanel::id(ui, "node_connection_selector_popup");
+
+            if !PopupPanel::is_open(ui, popup_id) {
+                response = response.on_hover_ui(|ui| {
+                    if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
+                        ui.horizontal(|ui| {
+                            ui.label(wrpc_url);
+                        });
+                    }
+                });
+            }
 
             PopupPanel::new(
-                ui,
-                "node_connection_selector_popup",
+                popup_id,
                 |_ui| response,
                 |ui, close| {
                     set_menu_style(ui.style_mut());
@@ -210,9 +213,9 @@ impl<'core> Status<'core> {
                 Label::new(RichText::new(self.settings().node.network.to_string()))
                     .sense(Sense::click()),
             );
+            let id = PopupPanel::id(ui, "network_selector_popup");
             PopupPanel::new(
-                ui,
-                "network_selector_popup",
+                id,
                 |_ui| response,
                 |ui, close| {
                     set_menu_style(ui.style_mut());
@@ -311,7 +314,7 @@ impl<'core> Status<'core> {
                                         .as_ref()
                                     {
                                         let elapsed = instant.elapsed();
-                                        if elapsed.as_millis() > 2_500 {
+                                        if elapsed.as_millis() > 3_500 {
                                             if ui
                                                 .add(
                                                     Label::new(RichText::new(i18n(

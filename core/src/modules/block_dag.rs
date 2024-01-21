@@ -13,6 +13,7 @@ pub struct Preset {
     daa_range : f64,
     daa_offset : f64,
     spread : f64,
+    noise : f64,
     block_scale : f64,
 }
 
@@ -22,6 +23,7 @@ const PRESETS: &[Preset] = &[
         daa_range : 36.0,
         daa_offset : 10.0,
         spread : 10.0,
+        noise : 0.0,
         block_scale : 1.0,
     },
     Preset {
@@ -29,6 +31,7 @@ const PRESETS: &[Preset] = &[
         daa_range : 100.0,
         daa_offset : 16.0,
         spread : 36.0,
+        noise : 0.0,
         block_scale : 1.0,
     },
     Preset {
@@ -36,6 +39,7 @@ const PRESETS: &[Preset] = &[
         daa_range : 80.0,
         daa_offset : 16.0,
         spread : 22.0,
+        noise : 0.0,
         block_scale : 1.2,
     },
     Preset {
@@ -43,6 +47,7 @@ const PRESETS: &[Preset] = &[
         daa_range : 180.0,
         daa_offset : 32.0,
         spread : 36.0,
+        noise : 1.0,
         block_scale : 1.4,
     },
 ];
@@ -113,8 +118,9 @@ impl BlockDag {
     pub fn load_preset(&mut self, preset : &Preset) {
         self.daa_range = preset.daa_range;
         self.daa_offset = preset.daa_offset;
-        self.settings.y_dist = preset.spread;
         self.block_scale = preset.block_scale;
+        self.settings.y_dist = preset.spread;
+        self.settings.noise = preset.noise;
     }
 
     fn reset_state(&mut self) {
@@ -152,6 +158,7 @@ impl ModuleT for BlockDag {
         let theme_color = theme_color();
 
         let y_dist = self.settings.y_dist;
+        let noise = self.settings.noise;
         let vspc_center = self.settings.center_vspc;
 
         if core.settings.node.network != self.network {
@@ -164,7 +171,7 @@ impl ModuleT for BlockDag {
             ui.heading(i18n("Block DAG"));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                PopupPanel::new(ui, "block_dag_settings",|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
+                PopupPanel::new(PopupPanel::id(ui,"block_dag_settings"),|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
 
                     CollapsingHeader::new(i18n("Dimensions"))
                         .open(Some(true))
@@ -191,6 +198,12 @@ impl ModuleT for BlockDag {
                                 Slider::new(&mut self.settings.y_dist, 1.0..=100.0)
                                     .clamp_to_range(true)
                                     .text(i18n("Spread"))
+                            );
+                            ui.space();
+                            ui.add(
+                                Slider::new(&mut self.settings.noise, 0.0..=10.0)
+                                    .clamp_to_range(true)
+                                    .text(i18n("Noise"))
                             );
                             ui.space();
                             ui.add(
@@ -257,8 +270,7 @@ impl ModuleT for BlockDag {
                 let response = ui
                         .add(Label::new(RichText::new(format!("{} ⏷", i18n("Presets")))).sense(Sense::click()));
                 PopupPanel::new(
-                    ui,
-                    "network_selector_popup",
+                    PopupPanel::id(ui,"network_selector_popup"),
                     |_ui| response,
                     |ui, close| {
                         set_menu_style(ui.style_mut());
@@ -276,7 +288,7 @@ impl ModuleT for BlockDag {
         });
         ui.separator();
 
-        if y_dist != self.settings.y_dist || vspc_center != self.settings.center_vspc {
+        if y_dist != self.settings.y_dist || noise != self.settings.noise || vspc_center != self.settings.center_vspc {
             runtime().block_dag_monitor_service().update_settings(self.settings.clone());
         }
 

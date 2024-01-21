@@ -28,6 +28,8 @@ impl Welcome {
         ui: &mut egui::Ui,
     ) {
 
+        let mut error = None;
+
         ui.heading(i18n("Welcome to Kaspa NG"));
         ui.add_space(16.0);
         ui.label(i18n("Please configure your Kaspa NG settings"));
@@ -74,7 +76,7 @@ impl Welcome {
                         });
 
                         if self.settings.node.node_kind == KaspadNodeKind::Remote {
-                            crate::modules::settings::Settings::render_remote_settings(core,ui,&mut self.settings.node);
+                            error = crate::modules::settings::Settings::render_remote_settings(core,ui,&mut self.settings.node);
                         }
                     });
 
@@ -140,22 +142,31 @@ impl Welcome {
                     });
 
                 ui.add_space(32.0);
-                ui.horizontal(|ui| {
-                    ui.add_space(
-                        ui.available_width()
-                            - 16.
-                            - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x),
-                    );
-                    if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))).clicked() {
-                        let mut settings = self.settings.clone();
-                        settings.initialized = true;
-                        settings.store_sync().expect("Unable to store settings");
-                        self.runtime.kaspa_service().update_services(&self.settings.node, None);
-                        core.settings = settings.clone();
-                        core.get_mut::<modules::Settings>().load(settings);
-                        core.select::<modules::Changelog>();
-                    }
-                });
+                if let Some(error) = error {
+                    ui.vertical_centered(|ui| {
+                        ui.colored_label(theme_color().alert_color, error);
+                    });
+                    ui.add_space(32.0);
+                } else {
+                    
+                    ui.horizontal(|ui| {
+                        ui.add_space(
+                            ui.available_width()
+                                - 16.
+                                - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x),
+                        );
+                        if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))).clicked() {
+                            let mut settings = self.settings.clone();
+                            settings.initialized = true;
+                            settings.store_sync().expect("Unable to store settings");
+                            self.runtime.kaspa_service().update_services(&self.settings.node, None);
+                            core.settings = settings.clone();
+                            core.get_mut::<modules::Settings>().load(settings);
+                            core.select::<modules::Changelog>();
+                        }
+                    });
+                }
+
                 ui.separator();
         });
         

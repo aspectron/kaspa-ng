@@ -35,6 +35,21 @@ Once you have Rusty Kaspa built, you will be able to build and run this project 
 ```bash
 cargo run --release
 ```
+Once you have Rusty Kaspa built, you will be able to build and run this project as follows:
+
+#### Running as Native App
+```bash
+cargo run --release
+```
+
+#### Running as Web App
+```bash
+cargo install trunk
+trunk serve --release
+```
+Access via [https://localhost:8080](https://localhost:8080)
+
+While the application is a static serve, you can not load it from the local file system due to CORS restrictions. Due to this, a web server is required. This application is designed to be built with [Trunk](https://trunkrs.dev/) and is served from the `dist/` folder.  This is a self-contained client-side application - once the application is loaded, the web server is no longer required.
 
 ## License
 

@@ -204,8 +204,7 @@ impl Notifications {
         let height = (screen_rect.height() / 4.).min(240.);
 
         PopupPanel::new(
-            ui,
-            "notification_popup",
+            PopupPanel::id(ui, "notification_popup"),
             |ui| ui.add(Label::new(icon.size(16.)).sense(Sense::click())),
             |ui, close| {
                 egui::ScrollArea::vertical()

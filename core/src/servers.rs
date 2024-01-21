@@ -7,22 +7,35 @@ pub fn public_server_config() -> &'static ServerCollection {
     SERVERS.get_or_init(|| Arc::new(Mutex::new(parse_default_servers().clone())))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Server {
     pub name: Option<String>,
+    pub ident: Option<String>,
     pub location: Option<String>,
     pub protocol: WrpcEncoding,
-    pub port: Option<u16>,
     pub address: String,
     pub enable: Option<bool>,
     pub link: Option<String>,
     pub network: Network,
+    pub bias: Option<f32>,
+    pub manual: Option<bool>,
+    pub version: Option<String>,
+}
+
+impl Eq for Server {}
+
+impl PartialEq for Server {
+    fn eq(&self, other: &Self) -> bool {
+        self.address == other.address
+    }
 }
 
 impl std::fmt::Display for Server {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut title = self.name.clone().unwrap_or(self.address.to_string());
-        if let Some(location) = self.location.as_ref() {
+        if let Some(ident) = self.ident.as_ref() {
+            title += format!(" ({ident})").as_str();
+        } else if let Some(location) = self.location.as_ref() {
             title += format!(" ({location})").as_str();
         }
 
@@ -32,11 +45,7 @@ impl std::fmt::Display for Server {
 
 impl Server {
     pub fn address(&self) -> String {
-        if let Some(port) = self.port {
-            format!("{}:{port}", self.address)
-        } else {
-            self.address.clone()
-        }
+        self.address.clone()
     }
 
     pub fn wrpc_encoding(&self) -> WrpcEncoding {
@@ -159,10 +168,11 @@ pub fn random_public_server(network: &Network, options: Option<RpcOptions>) -> O
 
     if let Some(servers) = servers.get(network) {
         #[allow(clippy::nonminimal_bool)]
-        let servers = servers
+        let mut servers = servers
             .iter()
             .filter(|server| {
                 server.enable.unwrap_or(true)
+                    && !server.manual.unwrap_or(false)
                     && !server.address.contains("localhost")
                     && !server.address.contains("127.0.0.1")
                     && !(tls()
@@ -170,13 +180,31 @@ pub fn random_public_server(network: &Network, options: Option<RpcOptions>) -> O
                             || server.address.starts_with("wrpcs://")))
                     && !blacklist_servers.contains(&server.address)
             })
+            .cloned()
             .collect::<Vec<_>>();
+
+        let max = servers
+            .iter()
+            .map(|server| server.bias.unwrap_or(1.))
+            .max_by(|a, b| a.total_cmp(b))
+            .unwrap_or(1.);
+        servers.iter_mut().for_each(|server| {
+            server.bias = Some(server.bias.unwrap_or(1.) / max);
+        });
 
         if servers.is_empty() {
             log_error!("Unable to select random public server: no servers available");
             None
         } else {
-            Some(servers[rand::thread_rng().gen::<usize>() % servers.len()].clone())
+            let mut server = None;
+            while server.is_none() {
+                let selected = &servers[rand::thread_rng().gen::<usize>() % servers.len()];
+                let f = rand::thread_rng().gen_range(0.0..1.0);
+                if f < selected.bias.unwrap_or(1.) {
+                    server = Some(selected.clone());
+                }
+            }
+            server
         }
     } else {
         log_error!("Unable to select random public server: no servers available for this network");
@@ -198,7 +226,9 @@ pub fn render_public_server_selector(
     let (text, _secondary) = if let Some(server) = settings.public_servers.get(&settings.network) {
         (server.to_string(), Option::<String>::None)
     } else {
-        node_settings_error = Some(i18n("No public node selected"));
+        node_settings_error = Some(i18n(
+            "No public node selected - please select a public node",
+        ));
         (i18n("Select Public Node").to_string(), None)
     };
 
@@ -209,8 +239,7 @@ pub fn render_public_server_selector(
     );
 
     PopupPanel::new(
-        ui,
-        "server_selector_popup",
+        PopupPanel::id(ui, "server_selector_popup"),
         |_ui| response,
         |ui, close| {
             egui::ScrollArea::vertical()
@@ -241,11 +270,11 @@ pub fn render_public_server_selector(
                             *close = true;
                         }
 
-                        ui.add_space(4.);
                         if let Some(link) = server.link.as_ref() {
+                            ui.add_space(4.);
                             ui.hyperlink_url_to_tab(link);
+                            ui.add_space(4.);
                         }
-                        ui.add_space(4.);
                     }
                 });
         },
