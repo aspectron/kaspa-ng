@@ -71,7 +71,7 @@ impl<'core> Menu<'core> {
                                     .sense(Sense::click()),
                             )
                         },
-                        |ui, close_popup| {
+                        |ui, _close_popup| {
                             Grid::new("display_popup_grid")
                                 .num_columns(2)
                                 .spacing([4.0, 4.0])
@@ -174,7 +174,7 @@ impl<'core> Menu<'core> {
                                             response.on_hover_text(i18n("Capture a screenshot"));
 
                                         if response.clicked() {
-                                            *close_popup = true;
+                                            *_close_popup = true;
                                             ui.ctx().send_viewport_cmd(
                                                 egui::ViewportCommand::Screenshot,
                                             );

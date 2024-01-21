@@ -7,7 +7,7 @@ mkdir ./dist-chrome
 mkdir ./dist-chrome/icons
 
 cp -r ./resources/icons ./dist-chrome/
-cp ./resources/style.css ./dist-chrome/
+cp ./extensions/chrome/style.css ./dist-chrome/
 cp ./extensions/chrome/manifest.json ./dist-chrome/
 cp ./extensions/chrome/popup.html ./dist-chrome/
 cp ./extensions/chrome/popup.js ./dist-chrome/
