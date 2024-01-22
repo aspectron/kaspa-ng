@@ -7,7 +7,6 @@
 <p align="center" style="margin:32px auto 0px auto;text-align:center;font-size:10px;color:#888;">
 <img src="https://aspectron.com/images/projects/kaspa-ng-screen-01.png" style="display:block;max-height:320px;max-width:524px;width:524px;height:auto;object-fit:cover;margin: 0px auto 0px auto;"><br/><sup>RUSTY KASPA P2P NODE &bull; KASPA WALLET &bull; BLOCKDAG VISUALIZER</sup></p>
 
-
 <p align="center" style="margin:4px 0px;text-align:center;font-size:10px;color:#800;">
 &bull; ALPHA RELEASE &bull;
 </p>
