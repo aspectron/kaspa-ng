@@ -104,7 +104,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo dpkg -i "${{ steps.package_debian.outputs.file_path }}"
-          kaspa-ng --help || echo "Failed to execute kaspa-ng --help"
+          kaspa-ng --version || echo "Failed to execute kaspa-ng --version"
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1

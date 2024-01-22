@@ -80,6 +80,7 @@ cfg_if! {
                 let cmd = Command::new("kaspa-ng")
 
                     .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version()))
+                    .arg(arg!(--version "Display software version"))
                     .arg(arg!(--disable "Disable node services when starting"))
                     .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon"))
                     .arg(arg!(--cli "Run as Rusty Kaspa Cli Wallet"))
@@ -109,7 +110,10 @@ cfg_if! {
 
                     let matches = cmd.get_matches();
 
-                    if matches.get_one::<bool>("cli").cloned().unwrap_or(false) {
+                    if matches.get_one::<bool>("version").cloned().unwrap_or(false) {
+                        println!("v{VERSION}-{GIT_DESCRIBE}");
+                        std::process::exit(0);
+                    } else if matches.get_one::<bool>("cli").cloned().unwrap_or(false) {
                         Args::Cli
                     } else if let Some(matches) = matches.subcommand_matches("i18n") {
                         if let Some(_matches) = matches.subcommand_matches("import") {
