@@ -73,9 +73,9 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, shall be licensed as above, without any
 additional terms or conditions.
 
-# Donations
+## Donations
 
-If you are a Kaspa investor, please consider donating to this project. The funds will be used to cover operational costs and further the project's functionality. 
+If you are a Kaspa investor, please consider supporting this project. The funds will be used to cover operational costs and further the project's functionality. 
 
 `kaspa:qq2efzv0j7vt9gz9gfq44e6ggemjvvcuewhzqpm4ekf4fs5smruvs3c8ur9rp`
 
