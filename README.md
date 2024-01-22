@@ -6,17 +6,17 @@
 <img src="https://img.shields.io/badge/platform-wasm32/chrome-informational?style=for-the-badge&color=50a0f0" height="20">
 
 <p align="center" style="margin:32px auto 0px auto;text-align:center;font-size:10px;color:#888;">
-<img src="https://aspectron.com/images/projects/kaspa-ng-screen-01.png" style="display:block;height:320px;width:auto;margin: 0px auto 0px auto;"><br/><sup>RUSTY KASPA P2P NODE &bull; KASPA WALLET &bull; BLOCKDAG VISUALIZER</sup></p>
+<img src="https://aspectron.com/images/projects/kaspa-ng-screen-01.png" style="display:block;height:320px;width:auto;object-fit:cover;margin: 0px auto 0px auto;"><br/><sup>RUSTY KASPA P2P NODE &bull; KASPA WALLET &bull; BLOCKDAG VISUALIZER</sup></p>
 
 
 <p align="center" style="margin:4px 0px;text-align:center;font-size:10px;color:#800;">
 &bull; ALPHA RELEASE &bull;
 </p>
 
-### Features
+## Features
 
 This software incorporates the following functionality:
-- Rusty Kaspa P2P Node
+- Rusty Kaspa p2p Node
 - Kaspa wallet based on the Rusty Kaspa SDK
 - Rusty Kaspa CLI wallet
 - BlockDAG visualizer
@@ -26,11 +26,12 @@ This project is built on top of and incorporates the [Rusty Kaspa](https://githu
 
 This software is ideological in nature with a strong focus on architecture and decentralization. It is a unified codebase tightly coupled with the Rusty Kaspa project. Fully written in Rust, it is available as a high-performance desktop application on all major operating systems (Windows, Linux and MacOS) as well as in major web browsers. It does not rely on any JavaScript or Web frameworks, which greatly strengthens its security profile. The Web Browser extension based on this infrastructure is currently under development.
 
-Since this software is built on top of the Rusty Kaspa Core Wallet framework, it is fully compatible with any applications developed on top of the Kaspa Core Wallet framework including the Rusty Kaspa CLI wallet and applications built on top of the Rusty Kaspa WASM32 framework that is usable in web browsers and NodeJS environments.
+## Releases
 
-With Kaspa NG you can run a full self-contained p2p node and a wallet on your desktop as well as connect to remote nodes. This functionality, as a whole, makes the wallet infrastructure resistant to potential DDoS attacks.
+- You can obtain the latest binary redistributables from the [Releases](https://github.com/aspectron/kaspa-ng/releases) page.
+- You can access the official Web App online at [https://kaspa-ng.org](https://kaspa-ng.org).
 
-### Building
+## Building
 
 To build this project, you need to be able to build Rusty Kaspa. If you have not built Rusty Kaspa before, please follow the Rusty Kaspa [build instructions](https://github.com/kaspanet/rusty-kaspa/blob/master/README.md).
 
@@ -62,11 +63,6 @@ trunk serve --release
 Access via [https://localhost:8080](https://localhost:8080)
 
 While the application is a static serve, you can not load it from the local file system due to CORS restrictions. Due to this, a web server is required. This application is designed to be built with [Trunk](https://trunkrs.dev/) and is served from the `dist/` folder.  This is a self-contained client-side application - once the application is loaded, the web server is no longer required.
-
-## Releases
-
-- You can obtain the latest redistributables from the [Releases](https://github.com/aspectron/kaspa-ng/releases) page.
-<!-- - You can access the Web App online at [https://kaspa-ng.org](https://kaspa-ng.org) -->
 
 ## License
 
