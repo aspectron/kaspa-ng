@@ -8,7 +8,6 @@ kaspa_ng_macros::register_modules!(
         account_create,
         account_manager,
         block_dag,
-        changelog,
         donations,
         export,
         import,
@@ -27,7 +26,7 @@ kaspa_ng_macros::register_modules!(
 );
 
 #[cfg(not(target_arch = "wasm32"))]
-kaspa_ng_macros::register_modules!(register_native_modules, [logs, node,]);
+kaspa_ng_macros::register_modules!(register_native_modules, [changelog, logs, node,]);
 
 pub enum ModuleStyle {
     Mobile,

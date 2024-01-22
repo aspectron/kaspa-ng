@@ -162,7 +162,13 @@ impl Welcome {
                             self.runtime.kaspa_service().update_services(&self.settings.node, None);
                             core.settings = settings.clone();
                             core.get_mut::<modules::Settings>().load(settings);
-                            core.select::<modules::Changelog>();
+                            cfg_if!{
+                                if #[cfg(not(target_arch = "wasm32"))] {
+                                    core.select::<modules::Changelog>();
+                                } else {
+                                    core.select::<modules::Overview>();
+                                }
+                            }
                         }
                     });
                 }

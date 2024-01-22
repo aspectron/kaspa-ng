@@ -25,21 +25,21 @@ name = "kaspa-ng.org"
 location = "US"
 protocol = "borsh"
 network = "mainnet"
-address = "wss://us-west-1.kaspa-ng.org/mainnet"
+address = "wss://us-1.kaspa-ng.org/mainnet"
 
 [[server]]
 name = "kaspa-ng.org"
 location = "US"
 protocol = "borsh"
 network = "testnet-10"
-address = "wss://us-west-1.kaspa-ng.org/testnet-10"
+address = "wss://us-1.kaspa-ng.org/testnet-10"
 
 [[server]]
 name = "kaspa-ng.org"
 location = "US"
 protocol = "borsh"
 network = "testnet-11"
-address = "wss://us-west-1.kaspa-ng.org/testnet-11"
+address = "wss://us-1.kaspa-ng.org/testnet-11"
 
 [[server]]
 name = "kaspa-ng.io"
