@@ -63,6 +63,15 @@ Access via [https://localhost:8080](https://localhost:8080)
 
 While the application is a static serve, you can not load it from the local file system due to CORS restrictions. Due to this, a web server is required. This application is designed to be built with [Trunk](https://trunkrs.dev/) and is served from the `dist/` folder.  This is a self-contained client-side application - once the application is loaded, the web server is no longer required.
 
+#### Running Headless
+
+Kaspa NG application binary can be started in 3 ways:
+- `kaspa-ng` - starts Kaspa NG in the default desktop mode
+- `kaspa-ng --daemon [rusty-kaspa arguments]` - starts Kaspa NG as a Rusty Kaspa p2p node daemon
+- `kaspa-ng --cli` - starts Kaspa NG as a Rusty Kaspa CLI wallet
+
+If you need access to the wallet in a headless environment, you can start Kaspa NG in daemon mode and then use the CLI wallet to access the wallet.
+
 ## License
 
 Licensed under a [PROPRIETARY MIT-style Open Source LICENSE](LICENSE) with the following restrictions: 
