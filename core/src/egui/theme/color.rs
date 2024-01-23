@@ -203,7 +203,7 @@ impl ThemeColor {
             block_dag_block_fill_color: Color32::from_rgb(201, 230, 240),
             block_dag_block_stroke_color: Color32::from_rgb(42, 51, 50),
             block_dag_vspc_connect_color: Color32::from_rgb(11, 77, 70),
-            block_dag_parent_connect_color: Color32::from_rgba_premultiplied(0, 0, 0, 80),
+            block_dag_parent_connect_color: Color32::from_rgba_premultiplied(0, 0, 0, 72),
         }
     }
 }

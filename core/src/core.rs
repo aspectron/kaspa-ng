@@ -449,9 +449,7 @@ impl eframe::App for Core {
 
 impl Core {
     fn render_frame(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
-        let is_fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
-
-        window_frame(self.window_frame && !is_fullscreen, ctx, "Kaspa NG", |ui| {
+        window_frame(self.window_frame, ctx, "Kaspa NG", |ui| {
             if !self.settings.initialized {
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     self.modules

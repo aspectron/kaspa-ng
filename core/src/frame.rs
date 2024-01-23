@@ -6,14 +6,36 @@ pub fn window_frame(
     title: &str,
     add_contents: impl FnOnce(&mut egui::Ui),
 ) {
-    if enable {
+    let (is_fullscreen, is_maximized) = ctx.input(|i| {
+        let viewport = i.viewport();
+        (
+            viewport.fullscreen.unwrap_or(false),
+            viewport.maximized.unwrap_or(false),
+        )
+    });
+
+    cfg_if! {
+        if #[cfg(target_os = "macos")] {
+            let hide = is_fullscreen;
+        } else {
+            let hide = false;
+        }
+    }
+
+    if enable && !hide {
         let mut stroke = ctx.style().visuals.widgets.noninteractive.fg_stroke;
         // stroke.width = 0.5;
         stroke.width = 1.0;
 
+        let rounding = if is_fullscreen || is_maximized {
+            0.0.into()
+        } else {
+            10.0.into()
+        };
+
         let panel_frame = egui::Frame {
             fill: ctx.style().visuals.window_fill(),
-            rounding: 10.0.into(),
+            rounding,
             stroke,
             // stroke: ctx.style().visuals.widgets.noninteractive.fg_stroke,
             outer_margin: 0.5.into(), // so the stroke is within the bounds
@@ -22,7 +44,7 @@ pub fn window_frame(
 
         let outline_frame = egui::Frame {
             // fill: ctx.style().visuals.window_fill(),
-            rounding: 10.0.into(),
+            rounding,
             stroke,
             // stroke: ctx.style().visuals.widgets.noninteractive.fg_stroke,
             outer_margin: 0.5.into(), // so the stroke is within the bounds
