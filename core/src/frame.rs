@@ -24,14 +24,14 @@ pub fn window_frame(
 
     if enable && !hide {
         let mut stroke = ctx.style().visuals.widgets.noninteractive.fg_stroke;
-        // stroke.width = 0.5;
-        stroke.width = 1.0;
-
-        let rounding = if is_fullscreen || is_maximized {
-            0.0.into()
+        
+        let (rounding,stroke_width) = if is_fullscreen || is_maximized {
+            (0.0.into(),0.0)
         } else {
-            10.0.into()
+            (10.0.into(),1.0)
         };
+
+        stroke.width = stroke_width;
 
         let panel_frame = egui::Frame {
             fill: ctx.style().visuals.window_fill(),
