@@ -161,17 +161,57 @@ impl Overview {
                         }
                     }
 
-                CollapsingHeader::new(i18n("Resources"))
+                #[cfg(not(target_arch = "wasm32"))]
+                CollapsingHeader::new(i18n("Kaspa NG"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        // egui::special_emojis
-                        // use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
+                        use egui_phosphor::light::CLOUD;
 
-                        #[cfg(not(target_arch = "wasm32"))]
                         ui.hyperlink_to_tab(
-                            format!("• {}",i18n("Kaspa NG Online")),
+                            format!("• {CLOUD} {}",i18n("Kaspa NG online")),
                             "https://kaspa-ng.org"
                         );
+                    });                    
+
+                CollapsingHeader::new(i18n("Mainnet"))
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        #[allow(unused_imports)]
+                        use egui_phosphor::light::{YOUTUBE_LOGO,DISCORD_LOGO,TELEGRAM_LOGO,REDDIT_LOGO,CHART_SCATTER,NEWSPAPER_CLIPPING,DATABASE};
+
+                        ui.hyperlink_to_tab(
+                            format!("• {DATABASE} {}",i18n("Explorer")),
+                            "https://explorer.kaspa.org/",
+                        );
+                        ui.hyperlink_to_tab(
+                            format!("• {CHART_SCATTER} {}",i18n("Statistics")),
+                            "https://kas.fyi",
+                        );
+                        // ui.hyperlink_to_tab(
+                        //     format!("• {DISCORD_LOGO} {}",i18n("Discord")),
+                        //     "https://discord.com/invite/kS3SK5F36R",
+                        // );
+                    });
+
+                if core.settings.node.network == Network::Testnet11 {
+                    CollapsingHeader::new(i18n("Testnet 11"))
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            use egui_phosphor::light::HAND_COINS;
+
+                            ui.hyperlink_to_tab(
+                                format!("• {HAND_COINS} {}",i18n("Faucet")),
+                                "https://faucet-t11.kaspa.ws",
+                            );
+                        });
+                }
+
+                CollapsingHeader::new(i18n("Developer Resources"))
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        #[allow(unused_imports)]
+                        use egui_phosphor::light::{DISCORD_LOGO,GITHUB_LOGO};
+
                         ui.hyperlink_to_tab(
                             format!("• {}",i18n("Kaspa NG on GitHub")),
                             "https://github.com/aspectron/kaspa-ng"
@@ -179,6 +219,10 @@ impl Overview {
                         ui.hyperlink_to_tab(
                             format!("• {}",i18n("Rusty Kaspa on GitHub")),
                             "https://github.com/kaspanet/rusty-kaspa",
+                        );
+                        ui.hyperlink_to_tab(
+                            format!("• {}",i18n("Kaspa Integration Guide")),
+                            "https://kaspa.aspectron.org",
                         );
                         ui.hyperlink_to_tab(
                             format!("• {}",i18n("NPM Modules for NodeJS")),
@@ -193,7 +237,7 @@ impl Overview {
                             "https://docs.rs/kaspa-wallet-core/",
                         );
                         ui.hyperlink_to_tab(
-                            format!("• {}",i18n("Kaspa Discord")),
+                            format!("• {}",i18n("Discord")),
                             "https://discord.com/invite/kS3SK5F36R",
                         );
                     });

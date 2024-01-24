@@ -1046,7 +1046,7 @@ impl Core {
                 .map(|account_id| {
                     runtime
                         .wallet()
-                        .transactions_data_get_range(account_id, network_id, 0..8192)
+                        .transactions_data_get_range(account_id, network_id, 0..16384)
                 })
                 .collect::<Vec<_>>();
 
