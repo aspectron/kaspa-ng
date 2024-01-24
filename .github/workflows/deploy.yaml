@@ -102,6 +102,7 @@ jobs:
           desc: 'Kaspa NG desktop p2p node and wallet'
 
       - name: Upload release asset
+        if: runner.os == 'Windows'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -112,6 +113,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Upload release asset
+        if: runner.os == 'macOS'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

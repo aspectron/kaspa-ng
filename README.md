@@ -51,6 +51,14 @@ sudo dnf install glib2-devel atk-devel gtk3-devel
 
 Once you have Rusty Kaspa built, you will be able to build and run this project as follows:
 
+### Using Cargo:
+```bash
+cargo install kaspa-ng
+kaspa-ng
+```
+
+### From GitHub repository:
+
 #### Running as Native App
 ```bash
 cargo run --release

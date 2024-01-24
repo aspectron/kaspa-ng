@@ -9,16 +9,16 @@ members = [
 default-members = ["app"]
 
 [workspace.package]
-version = "0.2.2"
+version = "0.2.3"
 authors = ["ASPECTRON Inc."]
 license = "PROPRIETARY"
 edition = "2021"
 
 [workspace.dependencies]
 
-kaspa-ng = { version = "0.2.0", path = "app/" }
-kaspa-ng-core = { version = "0.2.0", path = "core/" }
-kaspa-ng-macros = { version = "0.2.0", path = "macros/" }
+kaspa-ng = { version = "0.2.3", path = "app/" }
+kaspa-ng-core = { version = "0.2.3", path = "core/" }
+kaspa-ng-macros = { version = "0.2.3", path = "macros/" }
 
 # ___________________
 #  ____ ____ _  _ _ 
