@@ -4,7 +4,7 @@ use kaspa_utils::networking::ContextualNetAddress;
 use kaspa_wallet_core::storage::local::storage::Storage;
 use kaspa_wrpc_client::WrpcEncoding;
 
-const SETTINGS_REVISION: &str = "0.0.6";
+const SETTINGS_REVISION: &str = "0.0.0";
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -583,6 +583,7 @@ pub struct Settings {
     pub initialized: bool,
     pub splash_screen: bool,
     pub version: String,
+    pub update: String,
     pub developer: DeveloperSettings,
     pub node: NodeSettings,
     pub user_interface: UserInterfaceSettings,
@@ -599,6 +600,7 @@ impl Default for Settings {
 
             splash_screen: true,
             version: "0.0.0".to_string(),
+            update: crate::app::VERSION.to_string(),
             developer: DeveloperSettings::default(),
             node: NodeSettings::default(),
             user_interface: UserInterfaceSettings::default(),

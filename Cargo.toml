@@ -58,21 +58,37 @@ egui-notify = "=0.11.0"
 #  |  \ |__| ___]  |    |      | \_ |  | ___] |    |  | 
 # _______________________________________________________
 
-kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
-kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
-kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
-kaspa-cli = { path = "../rusty-kaspa/cli" }
-kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
-kaspa-core = { path = "../rusty-kaspa/core" }
-kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
-kaspa-notify = { path = "../rusty-kaspa/notify" }
-kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
-kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
-kaspa-utils = { path = "../rusty-kaspa/utils" }
-kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core", features=["no-unsafe-eval"] }
-kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
-kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
-kaspad = { path = "../rusty-kaspa/kaspad" }
+kaspa-addresses = "0.13.4"
+kaspa-alloc = "0.13.4"
+kaspa-bip32 = "0.13.4"
+kaspa-cli = "0.13.4"
+kaspa-consensus-core = "0.13.4"
+kaspa-core = "0.13.4"
+kaspa-metrics-core = "0.13.4"
+kaspa-notify = "0.13.4"
+kaspa-rpc-core = "0.13.4"
+kaspa-rpc-service = "0.13.4"
+kaspa-utils = "0.13.4"
+kaspa-wallet-core = "0.13.4"
+kaspa-wrpc-client = "0.13.4"
+kaspa-wrpc-server = "0.13.4"
+kaspad = "0.13.4"
+
+# kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
+# kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
+# kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
+# kaspa-cli = { path = "../rusty-kaspa/cli" }
+# kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
+# kaspa-core = { path = "../rusty-kaspa/core" }
+# kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
+# kaspa-notify = { path = "../rusty-kaspa/notify" }
+# kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
+# kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
+# kaspa-utils = { path = "../rusty-kaspa/utils" }
+# kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core", features=["no-unsafe-eval"] }
+# kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
+# kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
+# kaspad = { path = "../rusty-kaspa/kaspad" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
