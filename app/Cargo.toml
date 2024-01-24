@@ -4,6 +4,8 @@ version.workspace = true
 authors.workspace = true
 license.workspace = true
 edition.workspace = true
+repository.workspace = true
+description = "Kaspa NG - Desktop p2p node based on Rusty Kaspa"
 
 [dependencies]
 kaspa-ng-core.workspace = true

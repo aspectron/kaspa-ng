@@ -1,12 +1,14 @@
 [package]
 name = "kaspa-ng-macros"
 version.workspace = true
-edition = "2021"
+edition.workspace = true
+repository.workspace = true
+license = "MIT OR Apache-2.0"
 keywords = ["kaspa-ng"]
 categories = []
 exclude = ["/.*", "/test"]
 description = """
-Macros for the kaspa egui project
+Macros for the Kaspa NG project
 """
 
 [lib]

@@ -1,7 +1,11 @@
 [package]
 name = "kaspa-ng-core"
 version.workspace = true
-edition.workspace = true # = "2021"
+edition.workspace = true
+repository.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Core framework for Kaspa NG"
 build = "build.rs"
 
 [lib]
