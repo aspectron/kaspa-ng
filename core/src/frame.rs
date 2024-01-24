@@ -24,11 +24,11 @@ pub fn window_frame(
 
     if enable && !hide {
         let mut stroke = ctx.style().visuals.widgets.noninteractive.fg_stroke;
-        
-        let (rounding,stroke_width) = if is_fullscreen || is_maximized {
-            (0.0.into(),0.0)
+
+        let (rounding, stroke_width) = if is_fullscreen || is_maximized {
+            (0.0.into(), 0.0)
         } else {
-            (10.0.into(),1.0)
+            (10.0.into(), 1.0)
         };
 
         stroke.width = stroke_width;
