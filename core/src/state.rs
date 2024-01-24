@@ -11,6 +11,7 @@ pub struct State {
     pub url: Option<String>,
     pub network_id: Option<NetworkId>,
     pub current_daa_score: Option<u64>,
+    pub error: Option<String>,
 }
 
 impl State {
@@ -44,5 +45,9 @@ impl State {
 
     pub fn current_daa_score(&self) -> Option<u64> {
         self.current_daa_score
+    }
+
+    pub fn error(&self) -> &Option<String> {
+        &self.error
     }
 }

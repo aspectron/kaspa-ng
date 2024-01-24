@@ -38,8 +38,7 @@ impl<'context> Transfer<'context> {
 
             let transfer_to_account = self.context.transfer_to_account.clone();
 
-
-            PopupPanel::new(ui, "transfer_selector_popup",|ui|{ 
+            PopupPanel::new(PopupPanel::id(ui,"transfer_selector_popup"),|ui|{ 
                 let response = ui.vertical_centered(|ui| {
                     if let Some(account) = transfer_to_account {
                         let response = ui.add(Label::new(format!("Transferring funds to: {} ⏷", account.name_or_id())).sense(Sense::click()));

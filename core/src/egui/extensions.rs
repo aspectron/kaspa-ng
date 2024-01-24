@@ -29,10 +29,12 @@ pub trait UiExtension {
     fn confirm_medium(
         &mut self,
         align: Align,
-        ack: impl Into<WidgetText>,
+        ack: Option<impl Into<WidgetText>>,
         nack: impl Into<WidgetText>,
     ) -> Option<Confirm>;
     fn confirm_medium_apply_cancel(&mut self, align: Align) -> Option<Confirm>;
+    fn confirm_medium_cancel(&mut self, align: Align) -> Option<Confirm>;
+    fn sized_separator(&mut self, size: Vec2) -> Response;
 }
 
 impl UiExtension for Ui {
@@ -53,21 +55,26 @@ impl UiExtension for Ui {
     fn confirm_medium(
         &mut self,
         align: Align,
-        ack: impl Into<WidgetText>,
+        ack: Option<impl Into<WidgetText>>,
         nack: impl Into<WidgetText>,
     ) -> Option<Confirm> {
         let mut resp: Option<Confirm> = None;
         self.horizontal(|ui| {
+            let buttons = if ack.is_some() { 2. } else { 1. };
+
             if matches!(align, Align::Max) {
                 ui.add_space(
                     ui.available_width()
                         - 16.
-                        - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x) * 2.,
+                        - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x)
+                            * buttons,
                 );
             }
 
-            if ui.medium_button(ack).clicked() {
-                resp.replace(Confirm::Ack);
+            if let Some(ack) = ack {
+                if ui.medium_button(ack).clicked() {
+                    resp.replace(Confirm::Ack);
+                }
             }
 
             if ui.medium_button(nack).clicked() {
@@ -83,9 +90,23 @@ impl UiExtension for Ui {
 
         self.confirm_medium(
             align,
-            format!("{} {}", egui_phosphor::light::CHECK, "Apply"),
-            format!("{} {}", egui_phosphor::light::X, "Cancel"),
+            Some(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))),
+            format!("{} {}", egui_phosphor::light::X, i18n("Cancel")),
         )
+    }
+
+    fn confirm_medium_cancel(&mut self, align: Align) -> Option<Confirm> {
+        let _theme = theme();
+
+        self.confirm_medium(
+            align,
+            Option::<&str>::None,
+            format!("{} {}", egui_phosphor::light::X, i18n("Cancel")),
+        )
+    }
+
+    fn sized_separator(&mut self, size: Vec2) -> Response {
+        self.add_sized(size, Separator::default())
     }
 }
 
@@ -347,4 +368,12 @@ impl WidgetSpacerExtension for Ui {
     fn space(&mut self) {
         self.add_space(theme_style().widget_spacing);
     }
+}
+
+pub fn set_menu_style(style: &mut Style) {
+    style.spacing.button_padding = vec2(2.0, 0.0);
+    style.visuals.widgets.active.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.hovered.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.inactive.weak_bg_fill = Color32::TRANSPARENT;
+    style.visuals.widgets.inactive.bg_stroke = Stroke::NONE;
 }

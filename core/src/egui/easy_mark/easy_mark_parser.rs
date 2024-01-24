@@ -71,14 +71,6 @@ pub struct Style {
 /// Parser for the `EasyMark` markup language.
 ///
 /// See the module-level documentation for details.
-///
-/// # Example:
-/// ```
-/// # use egui_demo_lib::easy_mark::parser::Parser;
-/// for item in Parser::new("Hello *world*!") {
-/// }
-///
-/// ```
 pub struct Parser<'a> {
     /// The remainder of the input text
     s: &'a str,

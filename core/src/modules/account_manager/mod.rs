@@ -127,6 +127,7 @@ pub struct ManagerContext {
     focus : FocusManager<Focus>,
     wallet_secret : String,
     payment_secret : String,
+    loading : bool,
 }
 
 impl ManagerContext {
@@ -218,12 +219,11 @@ impl ModuleT for AccountManager {
         true
     }
 
-    // fn reload(&mut self, core : &mut Core) {
-    //     if let AccountManagerState::Overview { account } = self.state.clone() {
-    //         let account_id = account.id();
-    //         core.account_collection().get()
-    //     }
-    // }
+    fn network_change(&mut self, _core: &mut Core, _network : Network) {
+        if let AccountManagerState::Overview { .. } = self.state.clone() {
+            self.context.loading = true;
+        }
+    }
 
     fn render(
         &mut self,
@@ -258,8 +258,21 @@ impl AccountManager {
             }
         } else {
             self.state = AccountManagerState::Select;
+            self.context.loading = false;
         }
 
+    }
+
+    pub fn update(&mut self, account_collection : &AccountCollection) {
+        if let AccountManagerState::Overview { account } = self.state.clone() {
+            if let Some(updated_account) = account_collection.get(&account.id()) {
+                self.state = AccountManagerState::Overview { account : updated_account.clone() };
+            } else {
+                self.state = AccountManagerState::Select;
+            }
+        }
+
+        self.context.loading = false;
     }
 
     pub fn section(&mut self, section : AccountManagerSection) {
@@ -343,6 +356,18 @@ impl AccountManager {
             }
 
             AccountManagerState::Overview { account } => {
+
+                if self.context.loading {
+                    Panel::new(self)
+                    .with_caption(i18n("Updating..."))
+                    .with_body(|_this, ui| {
+                        ui.add_space(64.);
+                        ui.add(egui::Spinner::new().size(92.));
+                    }).render(ui);
+
+                    return Ok(());
+                }
+
                 let rc = RenderContext::new(&account, network_type, current_daa_score)?;
                 if core.device().single_pane() {
                     self.render_singular_layout(core,ui,&rc, self.section);

@@ -55,7 +55,7 @@ impl<'context> Processor<'context> {
                         let request = AccountsEstimateRequest {
                             account_id,
                             destination: payment_output.into(),
-                            priority_fee_sompi: Fees::SenderPaysAll(priority_fees_sompi),
+                            priority_fee_sompi: Fees::SenderPays(priority_fees_sompi),
                             payload: None,
                         };
 
@@ -108,7 +108,7 @@ impl<'context> Processor<'context> {
                                     destination: payment_output.into(),
                                     wallet_secret,
                                     payment_secret,
-                                    priority_fee_sompi: Fees::SenderPaysAll(priority_fees_sompi),
+                                    priority_fee_sompi: Fees::SenderPays(priority_fees_sompi),
                                     payload: None,
                                 };
         
@@ -130,7 +130,7 @@ impl<'context> Processor<'context> {
                                     destination_account_id,
                                     wallet_secret,
                                     payment_secret,
-                                    priority_fee_sompi: Some(Fees::SenderPaysAll(priority_fees_sompi)),
+                                    priority_fee_sompi: Some(Fees::SenderPays(priority_fees_sompi)),
                                     transfer_amount_sompi,
                                 };
         

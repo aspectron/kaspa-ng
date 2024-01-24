@@ -50,7 +50,7 @@ impl Service for UpdateMonitorService {
         let this = self.clone();
         let _application_events_sender = self.application_events.sender.clone();
 
-        let interval = interval(Duration::from_secs(UPDATE_POLLING_INTERVAL_SECONDS));
+        let interval = task::interval(Duration::from_secs(UPDATE_POLLING_INTERVAL_SECONDS));
         pin_mut!(interval);
 
         loop {

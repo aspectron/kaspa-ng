@@ -75,7 +75,7 @@ impl Service for PeerMonitorService {
         let this = self.clone();
         let _application_events_sender = self.application_events.sender.clone();
 
-        let interval = interval(Duration::from_secs(PEER_POLLING_INTERVAL_SECONDS));
+        let interval = task::interval(Duration::from_secs(PEER_POLLING_INTERVAL_SECONDS));
         pin_mut!(interval);
 
         loop {

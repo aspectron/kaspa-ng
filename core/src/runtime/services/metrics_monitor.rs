@@ -72,10 +72,19 @@ impl MetricsService {
             });
         }
 
-        self.application_events
-            .sender
-            .try_send(crate::events::Events::Metrics { snapshot })
-            .unwrap();
+        if snapshot.node_cpu_cores > 0.0 {
+            self.application_events
+                .sender
+                .try_send(crate::events::Events::MempoolSize {
+                    mempool_size: snapshot.get(&Metric::NetworkMempoolSize) as usize,
+                })
+                .unwrap();
+
+            self.application_events
+                .sender
+                .try_send(crate::events::Events::Metrics { snapshot })
+                .unwrap();
+        }
 
         self.samples_since_connection.fetch_add(1, Ordering::SeqCst);
 

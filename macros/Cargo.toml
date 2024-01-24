@@ -1,8 +1,8 @@
 [package]
 name = "kaspa-ng-macros"
-version = "0.1.0"
+version.workspace = true
 edition = "2021"
-keywords = ["kaspa"]
+keywords = ["kaspa-ng"]
 categories = []
 exclude = ["/.*", "/test"]
 description = """

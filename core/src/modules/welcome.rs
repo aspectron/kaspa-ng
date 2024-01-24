@@ -8,26 +8,27 @@ pub struct Welcome {
 
 impl Welcome {
     pub fn new(runtime: Runtime) -> Self {
+
+        #[allow(unused_mut)]
+        let mut settings = Settings::default();
+
+        #[cfg(target_arch = "wasm32")] {
+            settings.node.node_kind = KaspadNodeKind::Remote;
+        }
+
         Self { 
             runtime, 
-            settings : Settings::default(),
+            settings,
         }
     }
-}
 
-impl ModuleT for Welcome {
-
-    fn style(&self) -> ModuleStyle {
-        ModuleStyle::Default
-    }
-
-    fn render(
+    pub fn render_native(
         &mut self,
         core: &mut Core,
-        _ctx: &egui::Context,
-        _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
+
+        let mut error = None;
 
         ui.heading(i18n("Welcome to Kaspa NG"));
         ui.add_space(16.0);
@@ -43,19 +44,17 @@ impl ModuleT for Welcome {
 
                             ui.horizontal_wrapped(|ui| {
                                 Network::iter().for_each(|network| {
-                                    ui.radio_value(&mut self.settings.node.network, *network, network.describe());
+                                    ui.radio_value(&mut self.settings.node.network, *network, format!("{} ({})",network.name(),network.describe()));
 
                                 });
                             });
 
                             match self.settings.node.network {
                                 Network::Mainnet => {
-                                    ui.colored_label(theme_color().warning_color, i18n("Please note that this is an alpha release. Until this message is removed, avoid using this software with mainnet funds."));
-                                },
-                                Network::Testnet11 => {
-                                    ui.colored_label(theme_color().warning_color, i18n("Testnet 11 is not yet enabled for public testing. You can, however, configure the node to connect to the private developer testnet in the Settings panel."));
-                                },
-                                _ => { }
+                                    ui.colored_label(theme_color().warning_color, i18n("Please note that this is an alpha release. Until this message is removed, please avoid using the wallet with mainnet funds."));
+                                }
+                                Network::Testnet10 => { }
+                                Network::Testnet11 => { }
                             }
                         });
                 
@@ -75,6 +74,10 @@ impl ModuleT for Welcome {
                                 ui.radio_value(&mut self.settings.node.node_kind, *node_kind, node_kind.to_string()).on_hover_text_at_pointer(node_kind.describe());
                             });
                         });
+
+                        if self.settings.node.node_kind == KaspadNodeKind::Remote {
+                            error = crate::modules::settings::Settings::render_remote_settings(core,ui,&mut self.settings.node);
+                        }
                     });
 
                 CollapsingHeader::new(i18n("User Interface"))
@@ -139,23 +142,37 @@ impl ModuleT for Welcome {
                     });
 
                 ui.add_space(32.0);
-                ui.horizontal(|ui| {
-                    ui.add_space(
-                        ui.available_width()
-                            - 16.
-                            - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x),
-                    );
-                    if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))).clicked() {
-                        let mut settings = self.settings.clone();
-                        settings.initialized = true;
-                        // settings.version.clear(); // triggers changelog
-                        settings.store_sync().expect("Unable to store settings");
-                        self.runtime.kaspa_service().update_services(&self.settings.node);
-                        core.settings = settings.clone();
-                        core.get_mut::<modules::Settings>().load(settings);
-                        core.select::<modules::Changelog>();
-                    }
-                });
+                if let Some(error) = error {
+                    ui.vertical_centered(|ui| {
+                        ui.colored_label(theme_color().alert_color, error);
+                    });
+                    ui.add_space(32.0);
+                } else {
+                    
+                    ui.horizontal(|ui| {
+                        ui.add_space(
+                            ui.available_width()
+                                - 16.
+                                - (theme_style().medium_button_size.x + ui.spacing().item_spacing.x),
+                        );
+                        if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))).clicked() {
+                            let mut settings = self.settings.clone();
+                            settings.initialized = true;
+                            settings.store_sync().expect("Unable to store settings");
+                            self.runtime.kaspa_service().update_services(&self.settings.node, None);
+                            core.settings = settings.clone();
+                            core.get_mut::<modules::Settings>().load(settings);
+                            cfg_if!{
+                                if #[cfg(not(target_arch = "wasm32"))] {
+                                    core.select::<modules::Changelog>();
+                                } else {
+                                    core.select::<modules::Overview>();
+                                }
+                            }
+                        }
+                    });
+                }
+
                 ui.separator();
         });
         
@@ -171,4 +188,88 @@ impl ModuleT for Welcome {
     
         });
     }
+
+    pub fn render_web(
+        &mut self,
+        core: &mut Core,
+        ui: &mut egui::Ui,
+    ) {
+        let mut proceed = false;
+
+        Panel::new(self)
+            .with_caption(i18n("Welcome to Kaspa NG"))
+            .with_header(|_this, ui| {
+                ui.label(i18n("Please select Kaspa network"));
+            })
+            .with_body(|this, ui| {
+                Network::iter().for_each(|network| {
+                    if ui.add_sized(
+                            theme_style().large_button_size,
+                            CompositeButton::opt_image_and_text(
+                                None,
+                                Some(network.name().into()),
+                                Some(network.describe().into()),
+                            ),
+                        )
+                        .clicked()
+                    {
+                        this.settings.node.network = *network;
+                        proceed = true;
+                    }
+
+                    ui.add_space(8.);
+                });
+
+                ui.add_space(32.0);
+                
+                ui.colored_label(theme_color().alert_color, RichText::new("α").size(64.0));
+                ui.add_space(8.0);
+                ui.colored_label(theme_color().alert_color, "Please note - this is an alpha release - Kaspa NG is still in early development and is not yet ready for production use.");
+            })
+            .render(ui);        
+
+        if proceed {
+            let mut settings = self.settings.clone();
+            settings.initialized = true;
+
+            settings.store_sync().expect("Unable to store settings");
+            core.settings = settings.clone();
+            self.runtime.kaspa_service().update_services(&settings.node, None);
+
+            core.get_mut::<modules::Settings>().load(settings);
+            core.select::<modules::Overview>();
+        }
+
+    }
+
+}
+
+impl ModuleT for Welcome {
+
+    fn style(&self) -> ModuleStyle {
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                ModuleStyle::Mobile
+            } else {
+                ModuleStyle::Default
+            }
+        }
+    }
+
+    fn render(
+        &mut self,
+        core: &mut Core,
+        _ctx: &egui::Context,
+        _frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
+        cfg_if! {
+            if #[cfg(not(target_arch = "wasm32"))] {
+                self.render_native(core, ui)
+            } else {
+                self.render_web(core, ui)
+            }
+        }
+    }
+
 }

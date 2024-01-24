@@ -8,7 +8,6 @@ kaspa_ng_macros::register_modules!(
         account_create,
         account_manager,
         block_dag,
-        changelog,
         donations,
         export,
         import,
@@ -27,7 +26,7 @@ kaspa_ng_macros::register_modules!(
 );
 
 #[cfg(not(target_arch = "wasm32"))]
-kaspa_ng_macros::register_modules!(register_native_modules, [logs, node,]);
+kaspa_ng_macros::register_modules!(register_native_modules, [changelog, logs, node,]);
 
 pub enum ModuleStyle {
     Mobile,
@@ -63,6 +62,11 @@ pub trait ModuleT: Downcast {
     fn activate(&mut self, _core: &mut Core) {}
     fn deactivate(&mut self, _core: &mut Core) {}
     fn reset(&mut self, _core: &mut Core) {}
+    fn connect(&mut self, _core: &mut Core, _network: Network) {}
+    fn disconnect(&mut self, _core: &mut Core) {}
+    fn network_change(&mut self, _core: &mut Core, _network: Network) {}
+    fn hide(&mut self, _core: &mut Core) {}
+    fn show(&mut self, _core: &mut Core) {}
 
     fn init(&mut self, _core: &mut Core) {}
 
@@ -106,6 +110,26 @@ impl Module {
 
     pub fn reset(&self, core: &mut Core) {
         self.inner.module.borrow_mut().reset(core)
+    }
+
+    pub fn connect(&self, core: &mut Core, network: Network) {
+        self.inner.module.borrow_mut().connect(core, network)
+    }
+
+    pub fn disconnect(&self, core: &mut Core) {
+        self.inner.module.borrow_mut().disconnect(core)
+    }
+
+    pub fn network_change(&self, core: &mut Core, network: Network) {
+        self.inner.module.borrow_mut().network_change(core, network)
+    }
+
+    pub fn hide(&self, core: &mut Core) {
+        self.inner.module.borrow_mut().hide(core)
+    }
+
+    pub fn show(&self, core: &mut Core) {
+        self.inner.module.borrow_mut().show(core)
     }
 
     pub fn status_bar(&self, core: &mut Core, ui: &mut Ui) {
@@ -191,6 +215,14 @@ impl Module {
 impl std::fmt::Debug for Module {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.inner.name)
+    }
+}
+
+impl Eq for Module {}
+
+impl PartialEq for Module {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner.type_id == other.inner.type_id
     }
 }
 

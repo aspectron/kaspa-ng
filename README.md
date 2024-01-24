@@ -1,21 +1,53 @@
-# kaspa-ng
+# `Kaspa NG`
 
-_ALPHA RELEASE - This project is work in progress and and has been pre-released for testing purposes only._
-_It is not intended for production use at this time._
+[<img alt="github" src="https://img.shields.io/badge/github-aspectron/kaspa--ng-8da0cb?style=for-the-badge&labelColor=555555&color=8da0cb&logo=github" height="20">](https://github.com/aspectron/kaspa-ng)
+<img src="https://img.shields.io/badge/platform-native-informational?style=for-the-badge&color=50a0f0" height="20">
+<img src="https://img.shields.io/badge/platform-wasm32-informational?style=for-the-badge&color=50a0f0" height="20">
+<img src="https://img.shields.io/github/actions/workflow/status/aspectron/kaspa-ng/ci.yaml?style=for-the-badge" height="20">
 
-### Desktop p2p node and wallet for the Kaspa BlockDAG Network
+<p align="center" style="margin:32px auto 0px auto;text-align:center;font-size:10px;color:#888;">
+<img src="https://aspectron.org/images/projects/kaspa-ng-screen-01.png" style="display:block;max-height:320px;max-width:524px;width:524px;height:auto;object-fit:cover;margin: 0px auto 0px auto;"><br/><sup>RUSTY KASPA P2P NODE &bull; KASPA WALLET &bull; BLOCKDAG VISUALIZER</sup></p>
 
-This project is built on top of an incorporates the [Rusty Kaspa](https://github.com/kaspanet/rusty-kaspa) core framework.
+<p align="center" style="margin:4px 0px;text-align:center;font-size:10px;color:#800;">
+&bull; ALPHA RELEASE &bull;
+</p>
 
-This software is ideological in nature with a strong focus on architecture and decentralization. It is a unified codebase tightly coupled with the Rusty Kaspa project. Fully written in Rust, it runs as a high-performance desktop application on all major operating systems (Windows, Linux and MacOS) as well as in major web browsers through the magic of WebAssembly. It does not rely on any JavaScript or Web frameworks, which greatly strengthens its security profile. It can also run as a mobile application and a browser extension, albeit these components are currently under development.
+## Features
 
-Since this software is built on top of the Rusty Kaspa Core Wallet framework, it is fully compatible with any applications developed on top of the Kaspa Core Wallet framework including the Rusty Kaspa WASM32 framework that is usable in web browsers and NodeJS environments.
+This software incorporates the following functionality:
+- Rusty Kaspa p2p Node
+- Kaspa wallet based on the Rusty Kaspa SDK
+- Rusty Kaspa CLI wallet
+- BlockDAG visualizer
+- Remote node connectivity
 
-With Kaspa-ng you can run a full node and a wallet on your desktop as well as connect to remote/public nodes. This functionality makes the wallet infrastructure immune to any potential DDoS attacks on the public nodes.
+This project is built on top of and incorporates the [Rusty Kaspa](https://github.com/kaspanet/rusty-kaspa) core framework.
 
-### Building
+This software is ideological in nature with a strong focus on architecture and decentralization. It is a unified codebase tightly coupled with the Rusty Kaspa project. Fully written in Rust, it is available as a high-performance desktop application on all major operating systems (Windows, Linux and MacOS) as well as in major web browsers. It does not rely on any JavaScript or Web frameworks, which greatly strengthens its security profile. The Web Browser extension based on this infrastructure is currently under development.
+
+You can find more information about this project at [https://aspectron.org/en/projects/kaspa-ng.html](https://aspectron.org/en/projects/kaspa-ng.html).
+
+## Releases
+
+- You can obtain the latest binary redistributables from the [Releases](https://github.com/aspectron/kaspa-ng/releases) page.
+- You can access the official Web App online at [https://kaspa-ng.org](https://kaspa-ng.org).
+
+## Building
 
 To build this project, you need to be able to build Rusty Kaspa. If you have not built Rusty Kaspa before, please follow the Rusty Kaspa [build instructions](https://github.com/kaspanet/rusty-kaspa/blob/master/README.md).
+
+In addition, on linux, you need to install the following dependencies:
+
+#### Ubuntu/Debian:
+```bash
+sudo apt-get update
+sudo apt-get install libglib2.0-dev libatk1.0-dev libgtk-3-dev librust-atk-dev
+```
+
+#### Fedora:
+```bash
+sudo dnf install glib2-devel atk-devel gtk3-devel
+```
 
 Once you have Rusty Kaspa built, you will be able to build and run this project as follows:
 
@@ -33,25 +65,14 @@ Access via [https://localhost:8080](https://localhost:8080)
 
 While the application is a static serve, you can not load it from the local file system due to CORS restrictions. Due to this, a web server is required. This application is designed to be built with [Trunk](https://trunkrs.dev/) and is served from the `dist/` folder.  This is a self-contained client-side application - once the application is loaded, the web server is no longer required.
 
-#### Running as a Browser Extension
+#### Running Headless
 
-This project currently supports Chrome browser extension target, but this part of the project is under development and is not ready for use.
+Kaspa NG application binary can be started in 3 ways:
+- `kaspa-ng` - starts Kaspa NG in the default desktop mode
+- `kaspa-ng --daemon [rusty-kaspa arguments]` - starts Kaspa NG as a Rusty Kaspa p2p node daemon
+- `kaspa-ng --cli` - starts Kaspa NG as a Rusty Kaspa CLI wallet
 
-```bash
-./build-chrome
-```
-
-### Testing
-
-This is an alpha release, please help us test this software.
-
-One of the best ways to test this application is to build both desktop and web versions and run them side-by-side, connecting the web app to the node running within the desktop app. You can then create a wallet in both instances and transfer funds between them.
-
-### Known Issues
-
-- [ ] The Web App does not currently preserve transaction history. Reloading the page or the wallet will result in the blank transaction list (this does not affect the wallet functionality).  The Web Browser transaction history storage backend is currently under development in the Rusty Kaspa wallet framework.
-- [ ] When the Web App goes off screen or in the background tab, browser will suspend it preventing it from processing updates. There is a workaround for this, but it is not yet implemented.
-
+If you need access to the wallet in a headless environment, you can start Kaspa NG in daemon mode and then use the CLI wallet to access the wallet.
 
 ## License
 
@@ -63,3 +84,9 @@ _You are expressly prohibited from using, adapting, or integrating this software
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, shall be licensed as above, without any
 additional terms or conditions.
+
+## Donations
+
+If you are a Kaspa investor, please consider supporting this project. The funds will be used to cover operational costs and further the project's functionality. 
+
+`kaspa:qq2efzv0j7vt9gz9gfq44e6ggemjvvcuewhzqpm4ekf4fs5smruvs3c8ur9rp`

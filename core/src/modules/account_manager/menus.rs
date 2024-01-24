@@ -19,7 +19,7 @@ impl WalletMenu {
             return;
         };
 
-        PopupPanel::new(ui, "wallet_selector_popup",|ui|{ ui.add(Label::new(format!("{} {} ⏷", i18n("Wallet:"), wallet_name)).sense(Sense::click())) }, |ui, _| {
+        PopupPanel::new(PopupPanel::id(ui,"wallet_selector_popup"),|ui|{ ui.add(Label::new(format!("{} {} ⏷", i18n("Wallet:"), wallet_name)).sense(Sense::click())) }, |ui, _| {
 
             ScrollArea::vertical()
                 .id_source("wallet_selector_popup_scroll")
@@ -99,7 +99,7 @@ impl AccountMenu {
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, account_manager : &mut AccountManager, rc : &RenderContext<'_>, max_height: f32) {
         let RenderContext { account, network_type, .. } = rc;
 
-        PopupPanel::new(ui, "account_selector_popup",|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), account.name_or_id())).sense(Sense::click())) }, |ui, close| {
+        PopupPanel::new(PopupPanel::id(ui,"account_selector_popup"),|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), account.name_or_id())).sense(Sense::click())) }, |ui, close| {
 
             egui::ScrollArea::vertical()
                 .id_source("account_selector_popup_scroll")
@@ -187,7 +187,7 @@ impl ToolsMenu {
     }
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, _account_manager : &mut AccountManager, _rc : &RenderContext<'_>, max_height: f32) {
 
-        PopupPanel::new(ui, "tools_popup",|ui|{ ui.add(Label::new(i18n("Tools ⏷")).sense(Sense::click())) }, |ui, _| {
+        PopupPanel::new(PopupPanel::id(ui,"tools_popup"),|ui|{ ui.add(Label::new(i18n("Tools ⏷")).sense(Sense::click())) }, |ui, _| {
 
             egui::ScrollArea::vertical()
                 .id_source("tools_popup_scroll")

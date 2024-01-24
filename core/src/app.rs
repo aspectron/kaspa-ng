@@ -8,7 +8,8 @@ use std::sync::Arc;
 use workflow_i18n::*;
 use workflow_log::*;
 
-pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
+// pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
+pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-node-dark.svg");
 pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-ng.svg");
 pub const I18N_EMBEDDED: &str = include_str!("../../resources/i18n/i18n.json");
 pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
@@ -28,8 +29,8 @@ cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
         use kaspad_lib::daemon::{
             create_core,
-            DESIRED_DAEMON_SOFT_FD_LIMIT,
-            MINIMUM_DAEMON_SOFT_FD_LIMIT
+            // DESIRED_DAEMON_SOFT_FD_LIMIT,
+            // MINIMUM_DAEMON_SOFT_FD_LIMIT
         };
         use kaspad_lib::args::Args as NodeArgs;
         use kaspa_utils::fd_budget;
@@ -38,6 +39,9 @@ cfg_if! {
         use crate::utils::*;
         use runtime::panic::*;
         use std::fs;
+
+        const DESIRED_DAEMON_SOFT_FD_LIMIT: u64 = 4 * 1024;
+        const MINIMUM_DAEMON_SOFT_FD_LIMIT: u64 = 2 * 1024;
 
         #[derive(Debug)]
         enum I18n {
@@ -76,6 +80,7 @@ cfg_if! {
                 let cmd = Command::new("kaspa-ng")
 
                     .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version()))
+                    .arg(arg!(--version "Display software version"))
                     .arg(arg!(--disable "Disable node services when starting"))
                     .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon"))
                     .arg(arg!(--cli "Run as Rusty Kaspa Cli Wallet"))
@@ -105,7 +110,10 @@ cfg_if! {
 
                     let matches = cmd.get_matches();
 
-                    if matches.get_one::<bool>("cli").cloned().unwrap_or(false) {
+                    if matches.get_one::<bool>("version").cloned().unwrap_or(false) {
+                        println!("v{VERSION}-{GIT_DESCRIBE}");
+                        std::process::exit(0);
+                    } else if matches.get_one::<bool>("cli").cloned().unwrap_or(false) {
                         Args::Cli
                     } else if let Some(matches) = matches.subcommand_matches("i18n") {
                         if let Some(_matches) = matches.subcommand_matches("import") {
@@ -220,14 +228,25 @@ cfg_if! {
 
                     let runtime: Arc<Mutex<Option<runtime::Runtime>>> = Arc::new(Mutex::new(None));
                     let delegate = runtime.clone();
+
+                    let window_frame = true;
+
+                    let mut viewport = egui::ViewportBuilder::default()
+                        .with_resizable(true)
+                        .with_title(i18n("Kaspa NG"))
+                        .with_min_inner_size([400.0,320.0])
+                        .with_inner_size([1000.0,600.0])
+                        .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, FitTo::Size(256,256)));
+
+                    if window_frame {
+                        viewport = viewport
+                            .with_decorations(false)
+                            .with_transparent(true);
+                    }
+
                     let native_options = eframe::NativeOptions {
                         persist_window : true,
-                        viewport: egui::ViewportBuilder::default()
-                            .with_resizable(true)
-                            .with_title(i18n("Kaspa NG"))
-                            .with_min_inner_size([400.0,320.0])
-                            .with_inner_size([1000.0,600.0])
-                            .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, FitTo::Size(256,256))),
+                        viewport,
                         ..Default::default()
                     };
                     eframe::run_native(
@@ -239,7 +258,7 @@ cfg_if! {
                             runtime::signals::Signals::bind(&runtime);
                             runtime.start();
 
-                            Box::new(kaspa_ng_core::Core::new(cc, runtime, settings))
+                            Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, window_frame))
                         }),
                     )?;
 
@@ -257,6 +276,7 @@ cfg_if! {
 
         pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
             use wasm_bindgen::prelude::*;
+            use workflow_dom::utils::document;
 
             // ------------------------------------------------------------
             // ------------------------------------------------------------
@@ -291,6 +311,11 @@ cfg_if! {
             // wasm_bindgen_futures::spawn_local(async {
             use workflow_log::*;
             log_info!("Welcome to Kaspa NG! Have a great day!");
+
+            if let Some(element) = document().get_element_by_id("loading") {
+                element.remove();
+            }
+
             eframe::WebRunner::new()
                 .start(
                     "kaspa-ng",
@@ -307,7 +332,7 @@ cfg_if! {
                             &JsValue::from(adaptor),
                         ).expect("failed to set adaptor");
 
-                        Box::new(kaspa_ng_core::Core::new(cc, runtime, settings))
+                        Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, false))
                     }),
                 )
                 .await

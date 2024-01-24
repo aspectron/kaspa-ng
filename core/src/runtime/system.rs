@@ -63,7 +63,7 @@ cfg_if! {
                             ui.label(format!("{} CPU cores {freq}", cpu_physical_core_count));
                         }
                         ui.label(format!("{} RAM", as_data_size(self.total_memory as f64, false)));
-                        ui.label(format!("File Descriptors: {}", self.fd_limit.separated_string()));
+                        ui.label(format!("Handles: {}", self.fd_limit.separated_string()));
                     });
             }
         }

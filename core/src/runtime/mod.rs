@@ -214,7 +214,49 @@ impl Runtime {
         Ok(())
     }
 
+    /// Update storage size
+    pub fn update_storage(&self, options: StorageUpdateOptions) {
+        self.inner
+            .application_events
+            .sender
+            .try_send(Events::UpdateStorage(options))
+            .ok();
+    }
+
     pub fn notify(&self, user_notification: UserNotification) {
+        self.inner
+            .application_events
+            .sender
+            .try_send(Events::Notify { user_notification })
+            .ok();
+    }
+
+    pub fn error(&self, text: impl Into<String>) {
+        self.inner
+            .application_events
+            .sender
+            .try_send(Events::Notify {
+                user_notification: UserNotification::error(text),
+            })
+            .ok();
+    }
+
+    pub fn toast(&self, user_notification: UserNotification) {
+        self.inner
+            .application_events
+            .sender
+            .try_send(Events::Notify {
+                user_notification: user_notification.as_toast(),
+            })
+            .ok();
+    }
+
+    pub fn notify_clipboard(&self, text: impl Into<String>) {
+        use egui_phosphor::light::CLIPBOARD_TEXT;
+        let user_notification = UserNotification::info(format!("{CLIPBOARD_TEXT} {}", text.into()))
+            .short()
+            .as_toast();
+
         self.inner
             .application_events
             .sender

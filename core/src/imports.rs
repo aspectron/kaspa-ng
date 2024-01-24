@@ -34,18 +34,21 @@ pub use std::sync::OnceLock;
 pub use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 pub use std::time::Duration;
 
+pub use web_sys::VisibilityState;
 pub use workflow_core::abortable::Abortable;
 pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::enums::Describe;
 pub use workflow_core::extensions::is_not_empty::*;
-pub use workflow_core::task::interval;
+pub use workflow_core::task;
 pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
+pub use workflow_dom::utils::*;
 pub use workflow_http as http;
 pub use workflow_i18n::*;
 pub use workflow_log::*;
 
 pub use ahash::{AHashMap, AHashSet};
 pub use pad::{Alignment, PadStr};
+pub use rand::Rng;
 pub use slug::slugify;
 pub use zeroize::*;
 
@@ -62,24 +65,26 @@ pub use crate::device::{Device, Orientation};
 pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};
+pub use crate::extensions::*;
 pub use crate::market::MarketData;
 pub use crate::menu::Menu;
 pub use crate::modules;
 pub use crate::modules::{Module, ModuleCaps, ModuleStyle, ModuleT};
-pub use crate::network::Network;
-pub use crate::notifications::{UserNotification, UserNotifyKind};
+pub use crate::network::{Network, NetworkPressure};
+pub use crate::notifications::{Notifications, UserNotification, UserNotifyKind};
 pub use crate::primitives::{
     Account, AccountCollection, AccountSelectorButtonExtension, BlockDagGraphSettings, DaaBucket,
     DagBlock, Transaction, TransactionCollection,
 };
 pub use crate::result::Result;
 pub use crate::runtime::{runtime, spawn, spawn_with_result, Payload, Runtime, Service};
-pub use crate::servers::{load_servers, Server};
+pub use crate::servers::{load_public_servers, public_servers, Server};
 pub use crate::settings::{
-    KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeSettings, RpcConfig,
-    Settings, UserInterfaceSettings,
+    KaspadNodeKind, NetworkInterfaceConfig, NetworkInterfaceKind, NodeConnectionConfigKind,
+    NodeMemoryScale, NodeSettings, RpcConfig, RpcOptions, Settings, UserInterfaceSettings,
 };
 pub use crate::state::State;
 pub use crate::status::Status;
+pub use crate::storage::{Storage, StorageUpdateOptions};
 pub use crate::utils::spawn;
 pub use crate::utils::*;

@@ -24,7 +24,7 @@ impl<'context> AddressPane<'context> {
             // })
             .clicked() {
                 ui.output_mut(|o| o.copied_text = rc.context.address().to_string());
-                runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short())
+                runtime().notify_clipboard(i18n("Copied to clipboard"));
             }
     }
 }

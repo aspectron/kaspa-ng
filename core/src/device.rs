@@ -7,23 +7,25 @@ pub enum Orientation {
     Portrait,
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Device {
     pub mobile_device: bool,
     pub mobile_forced: bool,
     pub orientation: Orientation,
     pub orientation_forced: Option<Orientation>,
     pub screen_size: Vec2,
+    pub top_offset: f32,
 }
 
 impl Device {
-    pub fn new() -> Self {
+    pub fn new(window_frame: bool) -> Self {
         Self {
             mobile_device: false,
             mobile_forced: false,
             orientation: Orientation::default(),
             orientation_forced: None,
             screen_size: Vec2::ZERO,
+            top_offset: if window_frame { 32.0 } else { 0.0 },
         }
     }
 
@@ -37,6 +39,10 @@ impl Device {
         }
 
         self.screen_size = rect.size();
+    }
+
+    pub fn top_offset(&self) -> f32 {
+        self.top_offset
     }
 
     pub fn orientation(&self) -> Orientation {

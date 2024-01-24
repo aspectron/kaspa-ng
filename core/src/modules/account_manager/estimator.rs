@@ -36,7 +36,7 @@ impl<'context> Estimator<'context> {
             Focus::Amount,
             |ui, text| {
                 ui.add_space(8.);
-                ui.label(RichText::new(format!("Enter {} amount to send", kaspa_suffix(network_type))).size(12.).raised());
+                ui.label(RichText::new(format!("{} {} {}", i18n("Enter"), kaspa_suffix(network_type), i18n("amount to send"))).size(12.).raised());
                 ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
                     .vertical_align(Align::Center))
             },
@@ -55,9 +55,22 @@ impl<'context> Estimator<'context> {
             }
         }
 
+        // TODO - improve the logic
+        if core.network_pressure.is_high() {
+            ui.label(format!("{}: {}% {} {} {:0.3} {} {}",
+                i18n("The network is currently experiencing high load"),
+                core.network_pressure.capacity(), 
+                i18n("of its capacity."),
+                i18n("It is recommended that you add a priority fee of at least"),
+                0.001, 
+                kaspa_suffix(network_type),
+                i18n("to ensure faster transaction acceptance."),
+            ));
+        }
+
         ui.add_space(8.);
         if ui
-            .checkbox(&mut self.context.enable_priority_fees,i18n("Include Priority Fees"))
+            .checkbox(&mut self.context.enable_priority_fees,i18n("Include QoS Priority Fees"))
             // .on_hover_text_at_pointer(i18n("Add priority fees to ensure faster confirmation.\nUseful only if the network is congested."))
             .changed() {
             if self.context.enable_priority_fees {
@@ -109,7 +122,7 @@ impl<'context> Estimator<'context> {
                 false
             }
             EstimatorStatus::None => {
-                ui.label(i18n("Please enter KAS amount to send"));
+                ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(network_type), i18n("amount to send")));
                 false
             }
         };

@@ -1,24 +1,63 @@
-[[server]]
-# if port is not present, port is automatically
-# determined by the protocol+network combination
-# this means the address is capable of serving
-# multiple networks. Supported networks must be
-# specified in the network field.
-name = "local network agnostic server"
-location = "EU"
-protocol = "wrpc:borsh"
-network = ["mainnet","testnet-10"]
-address = "127.0.0.1"
 
 [[server]]
-# if the port is present, this means the address
-# is only capable of serving a single network
-# on a dedicated port. The network field should
-# contains a single network entry.
-name = "local testnet server"
+name = "kaspa-ng.org"
 location = "EU"
-protocol = "wrpc:borsh"
-network = ["testnet-10"]
-address = "127.0.0.1"
-port = 17210
+protocol = "borsh"
+network = "mainnet"
+address = "wss://eu-1.kaspa-ng.org/mainnet"
 
+[[server]]
+name = "kaspa-ng.org"
+location = "EU"
+protocol = "borsh"
+network = "testnet-10"
+address = "wss://eu-1.kaspa-ng.org/testnet-10"
+
+[[server]]
+name = "kaspa-ng.org"
+location = "EU"
+protocol = "borsh"
+network = "testnet-11"
+address = "wss://eu-1.kaspa-ng.org/testnet-11"
+
+[[server]]
+name = "kaspa-ng.org"
+location = "US"
+protocol = "borsh"
+network = "mainnet"
+address = "wss://us-1.kaspa-ng.org/mainnet"
+
+[[server]]
+name = "kaspa-ng.org"
+location = "US"
+protocol = "borsh"
+network = "testnet-10"
+address = "wss://us-1.kaspa-ng.org/testnet-10"
+
+[[server]]
+name = "kaspa-ng.org"
+location = "US"
+protocol = "borsh"
+network = "testnet-11"
+address = "wss://us-1.kaspa-ng.org/testnet-11"
+
+[[server]]
+name = "kaspa-ng.io"
+location = "EU"
+protocol = "borsh"
+network = "mainnet"
+address = "wss://eu-1.kaspa-ng.io:443/mainnet"
+
+[[server]]
+name = "kaspa-ng.io"
+location = "EU"
+protocol = "borsh"
+network = "testnet-10"
+address = "wss://eu-1.kaspa-ng.io:443/testnet-10"
+
+[[server]]
+name = "kaspa-ng.io"
+location = "EU"
+protocol = "borsh"
+network = "testnet-11"
+address = "wss://eu-1.kaspa-ng.io:443/testnet-11"

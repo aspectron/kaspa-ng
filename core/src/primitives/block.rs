@@ -5,8 +5,11 @@ use kaspa_rpc_core::RpcBlock;
 pub struct BlockDagGraphSettings {
     pub y_scale: f64,
     pub y_dist: f64,
+    pub noise: f64,
     pub graph_length_daa: usize,
     pub center_vspc: bool,
+    pub balance_vspc: bool,
+    pub reset_vspc: bool,
     pub show_vspc: bool,
     pub show_daa: bool,
     pub show_grid: bool,
@@ -16,13 +19,24 @@ impl Default for BlockDagGraphSettings {
     fn default() -> Self {
         Self {
             y_scale: 10.0,
-            // y_dist: 70.0,
             y_dist: 7.0,
+            noise: 0.0,
             graph_length_daa: 1024,
             center_vspc: false,
+            balance_vspc: true,
+            reset_vspc: true,
             show_vspc: true,
             show_daa: true,
             show_grid: true,
+        }
+    }
+}
+
+impl BlockDagGraphSettings {
+    pub fn new(spread: f64) -> Self {
+        Self {
+            y_scale: spread,
+            ..Default::default()
         }
     }
 }
@@ -32,6 +46,7 @@ pub struct DagBlock {
     pub data: Arc<RpcBlock>,
     pub src_y: f64,
     pub dst_y: f64,
+    pub offset_y: f64,
     vspc: bool,
     settled: bool,
 }
@@ -43,6 +58,7 @@ impl DagBlock {
             data,
             src_y: y,
             dst_y: y,
+            offset_y: y,
             vspc: false,
             settled: false,
         }
@@ -92,63 +108,77 @@ impl DaaBucket {
 
     pub fn update(&mut self, settings: &BlockDagGraphSettings) {
         self.blocks
-            .sort_by(|a, b| a.src_y.partial_cmp(&b.src_y).unwrap());
-        // .sort_by(|a, b| a.dst_y.partial_cmp(&b.dst_y).unwrap());
+            // .sort_by(|a, b| a.src_y.partial_cmp(&b.src_y).unwrap());
+            .sort_by(|a, b| a.dst_y.partial_cmp(&b.dst_y).unwrap());
         let y_distance = settings.y_dist;
+        let noise = settings.noise;
         let len = self.blocks.len();
-        if let Some(mut vspc_idx) = self.blocks.iter().position(|block| block.vspc) {
-            if settings.center_vspc && len > 2 {
-                let mid = len / 2;
-                if vspc_idx != mid {
-                    self.blocks.swap(vspc_idx, mid);
-                    vspc_idx = mid;
-                    self.blocks.iter_mut().for_each(|block| {
-                        block.settled = false;
+
+        if settings.balance_vspc {
+            #[allow(clippy::collapsible_else_if)]
+            if let Some(mut vspc_idx) = self.blocks.iter().position(|block| block.vspc) {
+                if settings.center_vspc && len > 2 {
+                    let mid = len / 2;
+                    if vspc_idx != mid {
+                        self.blocks.swap(vspc_idx, mid);
+                        vspc_idx = mid;
+                        self.blocks.iter_mut().for_each(|block| {
+                            block.settled = false;
+                        });
+                    }
+                }
+
+                let vspc_y = if settings.center_vspc {
+                    0.0
+                } else {
+                    self.blocks
+                        .get(vspc_idx)
+                        .map(|block| block.dst_y)
+                        .unwrap_or_default()
+                };
+
+                let mut y = vspc_y;
+                (0..vspc_idx).rev().for_each(|idx| {
+                    let block = &mut self.blocks[idx];
+                    y -= y_distance;
+                    block.dst_y = y - block.offset_y * noise;
+                });
+                y = vspc_y;
+                ((vspc_idx + 1)..len).for_each(|idx| {
+                    let block = &mut self.blocks[idx];
+                    y += y_distance;
+                    block.dst_y = y + block.offset_y * noise;
+                });
+            } else {
+                if len > 1 {
+                    let mut y = -(len as f64 * y_distance / 2.0);
+                    (0..len).for_each(|idx| {
+                        let block = &mut self.blocks[idx];
+                        y += y_distance;
+                        block.dst_y = y + block.offset_y * noise;
                     });
                 }
             }
-
-            let vspc_y = if settings.center_vspc {
-                0.0
-            } else {
-                self.blocks
-                    .get(vspc_idx)
-                    .map(|block| block.dst_y)
-                    .unwrap_or_default()
-            };
-
-            let mut y = vspc_y;
-            (0..vspc_idx).rev().for_each(|idx| {
-                let block = &mut self.blocks[idx];
-                y -= y_distance;
-                block.dst_y = y;
-            });
-            y = vspc_y;
-            ((vspc_idx + 1)..len).for_each(|idx| {
-                let block = &mut self.blocks[idx];
-                y += y_distance;
-                block.dst_y = y;
-            });
         } else {
-            let mut y = len as f64 * y_distance / 2.0;
             (0..len).for_each(|idx| {
                 let block = &mut self.blocks[idx];
-                y -= y_distance;
-                block.dst_y = y;
+                block.dst_y =
+                    hash_to_y_coord(&block.data.header.hash, settings.y_scale) * y_distance * 0.3;
             });
         }
     }
 
     pub fn reset(&mut self, settings: &BlockDagGraphSettings) {
-        self.blocks.iter_mut().for_each(|block| {
-            // block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
-            block.settled = false;
-            if block.vspc && settings.center_vspc {
-                block.dst_y = 0.0;
-            } else {
-                block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
-            }
-        });
+        if settings.reset_vspc {
+            self.blocks.iter_mut().for_each(|block| {
+                block.settled = false;
+                if block.vspc && settings.center_vspc {
+                    block.dst_y = 0.0;
+                } else {
+                    block.dst_y = hash_to_y_coord(&block.data.header.hash, settings.y_scale);
+                }
+            });
+        }
 
         self.update(settings);
     }

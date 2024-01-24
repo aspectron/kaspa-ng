@@ -52,14 +52,17 @@ log.workspace = true
 pad.workspace = true
 passwords.workspace = true
 qrcode.workspace = true
+rand.workspace = true
 rfd.workspace = true
 ritehash.workspace = true
 separator.workspace = true
 serde_json.workspace = true
 serde.workspace = true
 slug.workspace = true
+smallvec.workspace = true
 thiserror.workspace = true
 toml.workspace = true
+walkdir.workspace = true
 wasm-bindgen.workspace = true
 xxhash-rust.workspace = true
 zeroize.workspace = true
@@ -70,7 +73,7 @@ egui_plot.workspace = true
 egui_extras.workspace = true
 chrono.workspace = true
 eframe = { workspace = true, default-features = false, features = [
-    # "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
     # "wgpu",          # Use the glow rendering backend. Alternative: "wgpu".
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
@@ -82,7 +85,10 @@ egui-notify.workspace = true
 [dependencies.web-sys]
 workspace = true
 features = [
+    'Document',
+    'VisibilityState',
     'Window',
+    'Element',
 ]
 
 
@@ -99,6 +105,7 @@ kaspa-rpc-service.workspace = true
 kaspa-wrpc-server.workspace = true
 kaspad.workspace = true
 num_cpus.workspace = true
+open.workspace = true
 rlimit.workspace = true
 sysinfo.workspace = true
 tokio.workspace = true

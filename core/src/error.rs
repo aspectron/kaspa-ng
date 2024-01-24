@@ -71,6 +71,9 @@ pub enum Error {
     #[error("Invalid network type")]
     InvalidNetworkType,
 
+    #[error("Invalid network '{0}'")]
+    InvalidNetwork(String),
+
     #[error("Http error: {0}")]
     HttpError(#[from] workflow_http::error::Error),
 

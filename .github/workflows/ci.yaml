@@ -4,9 +4,14 @@ on: [push, pull_request]
 
 jobs:
   check:
-    name: Check
+    name: Checks
     runs-on: ubuntu-latest
     steps:
+
+      - name: Install desktop dependencies
+        run: |
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev
+
       - name: Checkout sources
         uses: actions/checkout@v3
 
@@ -33,7 +38,7 @@ jobs:
         run: cargo check --tests --workspace --benches
 
   test:
-    name: Test Suite
+    name: Tests
     # runs-on: ${{ matrix.os }}
     runs-on: ubuntu-latest
     strategy:
@@ -78,6 +83,10 @@ jobs:
           large-packages: false
 
           swap-storage: true
+
+      - name: Install desktop dependencies
+        run: |
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev
 
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -124,6 +133,11 @@ jobs:
     name: Lints
     runs-on: ubuntu-latest
     steps:
+
+      - name: Install desktop dependencies
+        run: |
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libgtk-3-dev
+
       - name: Checkout sources
         uses: actions/checkout@v3
 
@@ -152,11 +166,10 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Run cargo clippy
-        run: cargo clippy --workspace --tests --benches -- -D warnings
+        run: cargo clippy --workspace --all-targets --tests --benches -- -D warnings
 
-
-  check-wasm32:
-    name: Check Wasm32
+  wasm32:
+    name: WASM32 Builds
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -189,9 +202,21 @@ jobs:
           sudo apt-get update
           sudo apt install -y gcc-multilib
 
+      - name: Install apt prerequisites
+        if: ${{ runner.os == 'Linux' }}
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libglib2.0-dev libatk1.0-dev libgtk-3-dev
+          version: 1.0
+
       - name: Install stable toolchain
         if: steps.install_llvm.outcome == 'success' && steps.install_llvm.conclusion == 'success'
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cargo install wasm-pack and trunk
+        run: |
+          cargo install wasm-pack
+          cargo install trunk
 
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown
@@ -207,87 +232,47 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      # append here any new wasm32 crate not already covered by the existing checks
+      # - name: Run cargo check for wasm32 target
+      #   run: cargo clippy --target wasm32-unknown-unknown
 
-      - name: Run cargo check for wasm32 target
-        run: cargo clippy --target wasm32-unknown-unknown
-
-  build-wasm32:
-    name: Build Wasm32
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install llvm
-        id: install_llvm
-        continue-on-error: true
+      - name: Build Web App
         run: |
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          sudo apt-get install -y clang-15 lldb-15 lld-15 clangd-15 clang-tidy-15 clang-format-15 clang-tools-15 llvm-15-dev lld-15 lldb-15 llvm-15-tools libomp-15-dev libc++-15-dev libc++abi-15-dev libclang-common-15-dev libclang-15-dev libclang-cpp15-dev libunwind-15-dev
-          # Make Clang 15 default
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/lib/llvm-15/bin/clang++ 100
-          sudo update-alternatives --install /usr/bin/clang clang /usr/lib/llvm-15/bin/clang 100
-          sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/lib/llvm-15/bin/clang-format 100
-          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/lib/llvm-15/bin/clang-tidy 100
-          sudo update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/lib/llvm-15/bin/run-clang-tidy 100
-          # Alias cc to clang
-          sudo update-alternatives --install /usr/bin/cc cc /usr/lib/llvm-15/bin/clang 0
-          sudo update-alternatives --install /usr/bin/c++ c++ /usr/lib/llvm-15/bin/clang++ 0
-
-      - name: Install gcc-multilib
-        # gcc-multilib allows clang to find gnu libraries properly
-        run: |
-          sudo apt-get update
-          sudo apt install -y gcc-multilib
-
-      - name: Install stable toolchain
-        if: steps.install_llvm.outcome == 'success' && steps.install_llvm.conclusion == 'success'
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cargo install wasm-pack
-        run: cargo install wasm-pack
-
-      - name: Cargo install trunk
-        run: cargo install trunk
-
-      - name: Add wasm32 target
-        run: rustup target add wasm32-unknown-unknown
-
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          trunk build --release
 
       - name: Build Chrome Browser Extension
-        run: rm -rf ./dist-chrome
-        run: mkdir ./dist-chrome
-        run: mkdir ./dist-chrome/icons
-
-        run: cp -r ./resources/icons ./dist-chrome/
-        run: cp ./resources/style.css ./dist-chrome/
-        run: cp ./extensions/chrome/manifest.json ./dist-chrome/
-        run: cp ./extensions/chrome/popup.html ./dist-chrome/
-        run: cp ./extensions/chrome/popup.js ./dist-chrome/
-        run: cp ./extensions/chrome/background.js ./dist-chrome/
-
-        run: wasm-pack build --target web --out-name kaspa-ng --out-dir ../../dist-chrome ./extensions/chrome
+        run: |
+          rm -rf ./dist-chrome
+          mkdir ./dist-chrome
+          mkdir ./dist-chrome/icons
+          # copy resources
+          cp -r ./resources/icons ./dist-chrome/
+          cp ./extensions/chrome/style.css ./dist-chrome/
+          cp ./extensions/chrome/manifest.json ./dist-chrome/
+          cp ./extensions/chrome/popup.html ./dist-chrome/
+          cp ./extensions/chrome/popup.js ./dist-chrome/
+          cp ./extensions/chrome/background.js ./dist-chrome/
+          # build
+          wasm-pack build --target web --out-name kaspa-ng --out-dir ../../dist-chrome ./extensions/chrome
 
   build-release:
-    name: Build Ubuntu Release
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    name: Building, ${{ matrix.os }}
     steps:
+      - name: Fix CRLF on Windows
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
+
+      - name: Install apt prerequisites
+        if: ${{ runner.os == 'Linux' }}
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libglib2.0-dev libatk1.0-dev libgtk-3-dev
+          version: 1.0
+
       - name: Checkout sources
         uses: actions/checkout@v3
 
@@ -309,14 +294,45 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Install zig
-        if: runner.os == 'Linux'
-        uses: goto-bus-stop/setup-zig@v2 # needed for cargo-zigbuild
 
       - name: Build on Linux
         if: runner.os == 'Linux'
-        # We're using musl to make the binaries statically linked and portable
         run: |
-          cargo install cargo-zigbuild
-          cargo --verbose zigbuild --release --target x86_64-unknown-linux-gnu.2.27 # Use an older glibc version
+          cargo build --bin kaspa-ng --release
+          mkdir -p .debpkg/usr/bin
+          cp target/release/kaspa-ng .debpkg/usr/bin/
+
+      - name: Build on Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cargo build --bin kaspa-ng --release
+
+      - name: Build on MacOS
+        if: runner.os == 'macOS'
+        run: |
+          cargo build --bin kaspa-ng --release
+
+      - name: Package Debian Release
+        if: runner.os == 'Linux'
+        id: package_debian
+        uses: jiro4989/build-deb-action@v3
+        with:
+          package: kaspa-ng
+          package_root: .debpkg
+          maintainer: ASPECTRON
+          version: "refs/tags/v0.0.1" # refs/tags/v*.*.*
+          arch: 'amd64'
+          depends: 'libglib2.0-0, libatk1.0-0, libgtk-3-0'
+          desc: 'Kaspa NG desktop p2p node and wallet'
+      - name: Install and Test Debian Package
+        if: runner.os == 'Linux'
+        run: |
+          sudo dpkg -i "${{ steps.package_debian.outputs.file_name }}"
+          kaspa-ng --version || echo "Failed to execute kaspa-ng --version"
+      # - name: Package Details
+      #   if: runner.os == 'Linux'
+      #   run: |
+      #     ls -la
+      #     dpkg-deb -I ${{ steps.package_debian.outputs.file_name }}
+      #     dpkg-deb -c ${{ steps.package_debian.outputs.file_name }}

@@ -1,8 +1,25 @@
+use crate::app::{GIT_DESCRIBE, VERSION};
 use crate::imports::*;
+use crate::settings::NodeMemoryScale;
 use crate::utils::Arglist;
-
+use kaspa_core::kaspad_env;
 #[cfg(not(target_arch = "wasm32"))]
 pub use kaspad_lib::args::Args;
+
+fn user_agent_comment() -> String {
+    format!("kaspa-ng:{}-{}", VERSION, GIT_DESCRIBE)
+}
+
+#[allow(dead_code)]
+fn user_agent() -> String {
+    format!(
+        "/{}:{}/kaspa-ng:{}-{}/",
+        kaspad_env::name(),
+        kaspad_env::version(),
+        VERSION,
+        GIT_DESCRIBE
+    )
+}
 
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -12,6 +29,7 @@ pub struct Config {
     grpc_network_interface: NetworkInterfaceConfig,
     kaspad_daemon_args_enable: bool,
     kaspad_daemon_args: String,
+    memory_scale: NodeMemoryScale,
 }
 
 impl From<NodeSettings> for Config {
@@ -23,6 +41,7 @@ impl From<NodeSettings> for Config {
             grpc_network_interface: node_settings.grpc_network_interface,
             kaspad_daemon_args_enable: node_settings.kaspad_daemon_args_enable,
             kaspad_daemon_args: node_settings.kaspad_daemon_args,
+            memory_scale: node_settings.memory_scale,
         }
     }
 }
@@ -56,6 +75,10 @@ cfg_if! {
                     args.rpclisten = Some(config.grpc_network_interface.into());
                 }
 
+                args.user_agent_comments = vec![user_agent_comment()];
+
+                // TODO - parse custom args and overlap on top of the defaults
+
                 Ok(args)
             }
         }
@@ -81,6 +104,12 @@ cfg_if! {
                 args.push("--yes");
                 args.push("--utxoindex");
 
+                match config.memory_scale {
+                    NodeMemoryScale::Default => {},
+                    _ => {
+                        args.push(format!("--ram-scale={:1.2}", config.memory_scale.get()));
+                    }
+                }
 
                 if !config.enable_upnp {
                     args.push("--disable-upnp");
@@ -88,9 +117,13 @@ cfg_if! {
 
                 if config.enable_grpc {
                     args.push(format!("--rpclisten={}", config.grpc_network_interface));
+                } else {
+                    args.push("--nogrpc");
                 }
 
                 args.push("--rpclisten-borsh=default");
+
+                args.push(format!("--uacomment={}", user_agent_comment()));
 
                 if config.kaspad_daemon_args_enable {
                     config.kaspad_daemon_args.trim().split(' ').filter(|arg|!arg.trim().is_empty()).for_each(|arg| {

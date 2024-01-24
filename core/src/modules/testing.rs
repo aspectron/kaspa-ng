@@ -21,6 +21,7 @@ pub struct Testing {
     // text : String,
     // graph_data: Vec<PlotPoint>,
 
+    #[allow(dead_code)]
     mnemonic_presenter_context : MnemonicPresenterContext,
 }
 
@@ -74,6 +75,39 @@ impl ModuleT for Testing {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
+
+        if ui.large_button("notify regular").clicked() {
+            runtime().notify(UserNotification::info("This is a regular notification").short());
+        }
+
+        if ui.large_button("notify error").clicked() {
+            runtime().notify(UserNotification::error("This is an error notification").short());
+        }
+
+        if ui.large_button("notify warning").clicked() {
+            runtime().notify(UserNotification::warning("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.").short());
+        }
+
+        if ui.large_button("notify success").clicked() {
+            runtime().notify(UserNotification::success("This is a success notification").short());
+        }
+
+        if ui.large_button("notify info").clicked() {
+            runtime().notify(UserNotification::info("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, ").short());
+        }
+        
+    }
+}
+
+impl Testing {
+
+    fn _render_mnemonic_presenter(
+        &mut self,
+        _core: &mut Core,
+        _ctx: &egui::Context,
+        _frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
         egui::ScrollArea::vertical()
             .id_source("test_mnemonic_size_scroll")
             .auto_shrink([true; 2])
@@ -96,8 +130,6 @@ impl ModuleT for Testing {
         });
         // self.mnemonic_presenter_context.render(ui);
     }
-}
-impl Testing {
     fn _render_v1(
         &mut self,
         _core: &mut Core,

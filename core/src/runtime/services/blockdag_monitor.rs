@@ -8,6 +8,7 @@ pub enum BlockDagMonitorEvents {
     Enable,
     Disable,
     Settings(Arc<BlockDagGraphSettings>),
+    Reset,
     Exit,
 }
 
@@ -19,6 +20,7 @@ pub struct BlockDagMonitorService {
     listener_id: Mutex<Option<ListenerId>>,
     notification_channel: Channel<Notification>,
     is_enabled: Arc<AtomicBool>,
+    is_active: Arc<AtomicBool>,
     is_connected: Arc<AtomicBool>,
     pub chain: Mutex<AHashMap<u64, DaaBucket>>,
     pub separators: Mutex<Vec<u64>>,
@@ -39,6 +41,7 @@ impl BlockDagMonitorService {
             separators: Mutex::new(Vec::new()),
             new_blocks: Arc::new(Mutex::new(AHashSet::new())),
             is_enabled: Arc::new(AtomicBool::new(false)),
+            is_active: Arc::new(AtomicBool::new(false)),
             is_connected: Arc::new(AtomicBool::new(false)),
             settings: Mutex::new(Arc::new(BlockDagGraphSettings::default())),
         }
@@ -80,6 +83,18 @@ impl BlockDagMonitorService {
 
     pub fn rpc_api(&self) -> Option<Arc<dyn RpcApi>> {
         self.rpc_api.lock().unwrap().clone()
+    }
+
+    pub fn activate(&self, state: bool) {
+        self.is_active.store(state, Ordering::Relaxed);
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.is_active.load(Ordering::Relaxed)
+    }
+
+    pub fn is_enabled(&self) -> bool {
+        self.is_enabled.load(Ordering::Relaxed)
     }
 
     pub fn enable(&self, _current_daa_score: Option<u64>) {
@@ -167,6 +182,7 @@ impl Service for BlockDagMonitorService {
         if self.is_enabled.load(Ordering::Relaxed) {
             self.register_notification_listener().await?;
         }
+
         Ok(())
     }
 
@@ -175,6 +191,12 @@ impl Service for BlockDagMonitorService {
         if self.listener_id.lock().unwrap().is_some() {
             self.unregister_notification_listener().await?;
         }
+
+        self.service_events
+            .sender
+            .try_send(BlockDagMonitorEvents::Reset)
+            .unwrap();
+
         Ok(())
     }
 
@@ -282,6 +304,10 @@ impl Service for BlockDagMonitorService {
                                 }
 
                                 break;
+                            }
+                            BlockDagMonitorEvents::Reset => {
+                                self.chain.lock().unwrap().clear();
+                                blocks_by_hash.clear();
                             }
                             BlockDagMonitorEvents::Settings(new_settings) => {
                                 *self.settings.lock().unwrap() = new_settings.clone();

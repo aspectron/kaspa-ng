@@ -14,6 +14,7 @@ pub struct ThemeColor {
     pub error_color: Color32,
     pub alert_color: Color32,
     pub warning_color: Color32,
+    pub info_color: Color32,
     pub icon_syncing_color: Color32,
     pub icon_connected_color: Color32,
     pub icon_color_default: Color32,
@@ -84,6 +85,7 @@ impl ThemeColor {
             error_color: Color32::from_rgb(255, 136, 136),
             alert_color: Color32::from_rgb(255, 136, 136),
             warning_color: egui::Color32::from_rgb(255, 255, 136),
+            info_color: egui::Color32::from_rgb(66, 178, 252),
             icon_syncing_color: egui::Color32::from_rgb(255, 255, 136),
             icon_connected_color: egui::Color32::from_rgb(85, 233, 136),
             icon_color_default: Color32::from_rgb(240, 240, 240),
@@ -95,7 +97,7 @@ impl ThemeColor {
             market_down_color: Color32::from_rgb(255, 136, 136),
 
             raised_text_color: Color32::from_rgb(255, 255, 255),
-            raised_text_shadow: Color32::from_rgb(0, 0, 0),
+            raised_text_shadow: Color32::from_rgba(0, 0, 0, 96),
 
             qr_background: Color32::from_rgba(0, 0, 0, 0),
             qr_foreground: Color32::WHITE,
@@ -152,6 +154,7 @@ impl ThemeColor {
             error_color: Color32::from_rgb(77, 41, 41),
             alert_color: Color32::from_rgb(77, 41, 41),
             warning_color: egui::Color32::from_rgb(77, 77, 41),
+            info_color: egui::Color32::from_rgb(41, 56, 77),
             icon_syncing_color: egui::Color32::from_rgb(117, 117, 4),
             icon_connected_color: egui::Color32::from_rgb(8, 110, 65),
             icon_color_default: Color32::from_rgb(32, 32, 32),
@@ -163,7 +166,7 @@ impl ThemeColor {
             market_down_color: Color32::from_rgb(77, 41, 41),
 
             raised_text_color: Color32::from_rgb(0, 0, 0),
-            raised_text_shadow: Color32::from_rgb(255, 255, 255),
+            raised_text_shadow: Color32::from_rgba(255, 255, 255, 64),
 
             qr_background: Color32::from_rgba(255, 255, 255, 0),
             qr_foreground: Color32::BLACK,
@@ -200,7 +203,7 @@ impl ThemeColor {
             block_dag_block_fill_color: Color32::from_rgb(201, 230, 240),
             block_dag_block_stroke_color: Color32::from_rgb(42, 51, 50),
             block_dag_vspc_connect_color: Color32::from_rgb(11, 77, 70),
-            block_dag_parent_connect_color: Color32::from_rgba_premultiplied(0, 0, 0, 220),
+            block_dag_parent_connect_color: Color32::from_rgba_premultiplied(0, 0, 0, 72),
         }
     }
 }

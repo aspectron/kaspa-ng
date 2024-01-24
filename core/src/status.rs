@@ -14,6 +14,9 @@ enum ConnectionStatus {
         sync_status: Option<SyncStatus>,
         peers: Option<usize>,
     },
+    Error {
+        error: String,
+    },
 }
 
 pub struct Status<'core> {
@@ -59,8 +62,16 @@ impl<'core> Status<'core> {
                     .metrics()
                     .as_ref()
                     .map(|metrics| metrics.network_transactions_per_second);
+
                 ui.horizontal(|ui| {
-                    if self.state().is_synced() {
+                    if let Some(error) = self.state().error() {
+                        self.render_connected_state(
+                            ui,
+                            ConnectionStatus::Error {
+                                error: error.clone(),
+                            },
+                        );
+                    } else if self.state().is_synced() {
                         self.render_connected_state(
                             ui,
                             ConnectionStatus::Connected {
@@ -90,38 +101,154 @@ impl<'core> Status<'core> {
     fn render_peers(&self, ui: &mut egui::Ui, peers: Option<usize>) {
         let status_icon_size = theme_style().status_icon_size;
 
-        let peers = peers.unwrap_or(0);
-        if peers != 0 {
-            ui.label(format!("{} peers", peers));
+        if let Some(peers) = peers {
+            if peers != 0 {
+                let text = if peers > 1 {
+                    i18n("peers")
+                } else {
+                    i18n("peer")
+                };
+                ui.label(format!("{peers} {text}"));
+            } else {
+                ui.label(
+                    RichText::new(egui_phosphor::light::CLOUD_SLASH)
+                        .size(status_icon_size)
+                        .color(theme_color().error_color),
+                );
+                ui.label(RichText::new(i18n("No peers")).color(theme_color().error_color));
+            }
         } else {
-            ui.label(
-                RichText::new(egui_phosphor::light::CLOUD_SLASH)
-                    .size(status_icon_size)
-                    .color(theme_color().error_color),
-            );
-            ui.label(RichText::new("No peers").color(theme_color().error_color));
+            ui.label(RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN).size(status_icon_size));
+            ui.label(RichText::new("..."));
         }
     }
 
-    fn render_network_selector(&self, ui: &mut Ui) {
-        ui.label(self.settings().node.network.to_string());
-        // ui.menu_button(self.settings.node.network.to_string(), |ui| {
-        //     Network::iter().for_each(|network| {
-        //         if ui.button(network.to_string()).clicked() {
-        //             ui.close_menu();
-        //         }
-        //     });
-        // });
+    fn render_connection_selector(&mut self, ui: &mut Ui) {
+        use egui_phosphor::light::CHECK;
+
+        let connection_selector = !self.core.module().modal()
+            && self.core.settings.node.connection_config_kind.is_public();
+
+        if !connection_selector {
+            ui.label(i18n("CONNECTED")).on_hover_ui(|ui| {
+                if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
+                    ui.horizontal(|ui| {
+                        ui.label(wrpc_url);
+                    });
+                }
+            });
+        } else {
+            let mut response =
+                ui.add(Label::new(RichText::new(i18n("CONNECTED"))).sense(Sense::click()));
+
+            let popup_id = PopupPanel::id(ui, "node_connection_selector_popup");
+
+            if !PopupPanel::is_open(ui, popup_id) {
+                response = response.on_hover_ui(|ui| {
+                    if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
+                        ui.horizontal(|ui| {
+                            ui.label(wrpc_url);
+                        });
+                    }
+                });
+            }
+
+            PopupPanel::new(
+                popup_id,
+                |_ui| response,
+                |ui, close| {
+                    set_menu_style(ui.style_mut());
+
+                    let wrpc_url = runtime().kaspa_service().rpc_url();
+                    let public_servers = public_servers(&self.settings().node.network);
+                    for server in public_servers.into_iter() {
+                        let name = if Some(server.address()) == wrpc_url {
+                            format!("{server} {CHECK}")
+                        } else {
+                            server.to_string()
+                        };
+
+                        if ui.button(name).clicked() {
+                            *close = true;
+
+                            match self.core.settings.node.connection_config_kind {
+                                NodeConnectionConfigKind::PublicServerCustom => {
+                                    self.core
+                                        .settings
+                                        .node
+                                        .public_servers
+                                        .insert(self.core.settings.node.network, server.clone());
+                                    self.core.settings.store_sync().ok();
+                                    runtime()
+                                        .kaspa_service()
+                                        .update_services(&self.core.settings.node, None);
+                                }
+                                NodeConnectionConfigKind::PublicServerRandom => {
+                                    let options = RpcOptions::new().force(server);
+                                    runtime()
+                                        .kaspa_service()
+                                        .update_services(&self.core.settings.node, Some(options));
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                },
+            )
+            .with_min_width(140.0)
+            .with_above_or_below(AboveOrBelow::Above)
+            .build(ui);
+        }
+    }
+
+    fn render_network_selector(&mut self, ui: &mut Ui) {
+        use egui_phosphor::light::CHECK;
+
+        let network_selector = !self.core.module().modal();
+
+        if !network_selector {
+            ui.label(self.settings().node.network.to_string());
+        } else {
+            let response = ui.add(
+                Label::new(RichText::new(self.settings().node.network.to_string()))
+                    .sense(Sense::click()),
+            );
+            let id = PopupPanel::id(ui, "network_selector_popup");
+            PopupPanel::new(
+                id,
+                |_ui| response,
+                |ui, close| {
+                    set_menu_style(ui.style_mut());
+
+                    Network::iter().for_each(|network| {
+                        let name = if *network == self.settings().node.network {
+                            format!("{network} {CHECK}")
+                        } else {
+                            network.to_string()
+                        };
+
+                        if ui.button(name).clicked() {
+                            *close = true;
+                            self.core.change_current_network(*network);
+                        }
+                    });
+                },
+            )
+            .with_min_width(100.0)
+            .with_above_or_below(AboveOrBelow::Above)
+            .build(ui);
+        }
     }
 
     fn render_connected_state(&mut self, ui: &mut egui::Ui, state: ConnectionStatus) {
         let status_area_width = ui.available_width() - 24.;
         let status_icon_size = theme_style().status_icon_size;
         let module = self.module().clone();
+        let left_padding = 8.0;
 
         match state {
             ConnectionStatus::Disconnected => {
-                ui.add_space(4.);
+                ui.add_space(left_padding);
 
                 match self.settings().node.node_kind {
                     KaspadNodeKind::Disable => {
@@ -140,30 +267,91 @@ impl<'core> Status<'core> {
                                 .color(theme_color().error_color),
                         );
                         ui.separator();
-                        // ui.label("Connecting...");
 
                         let settings = self.settings();
                         match settings.node.node_kind {
-                            KaspadNodeKind::Remote => {
-                                match KaspaRpcClient::parse_url(
-                                    settings.node.wrpc_url.clone(),
-                                    settings.node.wrpc_encoding,
-                                    settings.node.network.into(),
-                                ) {
-                                    Ok(url) => {
-                                        ui.label(format!("Connecting to {} ...", url));
-                                    }
-                                    Err(err) => {
-                                        ui.label(
-                                            RichText::new(format!(
-                                                "Error connecting to {}: {err}",
-                                                settings.node.wrpc_url
-                                            ))
-                                            .color(theme_color().warning_color),
-                                        );
+                            KaspadNodeKind::Remote => match settings.node.connection_config_kind {
+                                NodeConnectionConfigKind::Custom => {
+                                    match KaspaRpcClient::parse_url(
+                                        settings.node.wrpc_url.clone(),
+                                        settings.node.wrpc_encoding,
+                                        settings.node.network.into(),
+                                    ) {
+                                        Ok(url) => {
+                                            ui.label(format!(
+                                                "{} {} ...",
+                                                i18n("Connecting to"),
+                                                url
+                                            ));
+                                        }
+                                        Err(err) => {
+                                            ui.label(
+                                                RichText::new(format!(
+                                                    "{} {}: {err}",
+                                                    i18n("Error connecting to"),
+                                                    settings.node.wrpc_url
+                                                ))
+                                                .color(theme_color().warning_color),
+                                            );
+                                        }
                                     }
                                 }
-                            }
+                                NodeConnectionConfigKind::PublicServerCustom => {
+                                    if let Some(rpc_url) = runtime().kaspa_service().rpc_url() {
+                                        ui.label(format!(
+                                            "{} {} ...",
+                                            i18n("Connecting to"),
+                                            rpc_url
+                                        ));
+                                    }
+                                }
+                                NodeConnectionConfigKind::PublicServerRandom => {
+                                    if let Some(instant) = runtime()
+                                        .kaspa_service()
+                                        .services_start_instant
+                                        .lock()
+                                        .unwrap()
+                                        .as_ref()
+                                    {
+                                        let elapsed = instant.elapsed();
+                                        if elapsed.as_millis() > 3_500 {
+                                            if ui
+                                                .add(
+                                                    Label::new(RichText::new(i18n(
+                                                        "Click to try an another server...",
+                                                    )))
+                                                    .sense(Sense::click()),
+                                                )
+                                                .clicked()
+                                            {
+                                                let options = runtime()
+                                                    .kaspa_service()
+                                                    .rpc_url()
+                                                    .map(|rpc_url| {
+                                                        RpcOptions::new().blacklist(rpc_url)
+                                                    });
+
+                                                runtime().kaspa_service().update_services(
+                                                    &self.core.settings.node,
+                                                    options,
+                                                );
+                                            }
+
+                                            ui.separator();
+                                        }
+                                    }
+
+                                    if let Some(rpc_url) = runtime().kaspa_service().rpc_url() {
+                                        ui.label(format!(
+                                            "{} {} ...",
+                                            i18n("Connecting to"),
+                                            rpc_url
+                                        ));
+
+                                        ui.ctx().request_repaint_after(Duration::from_millis(250));
+                                    }
+                                }
+                            },
                             _ => {
                                 ui.label(i18n("Connecting..."));
                             }
@@ -195,28 +383,33 @@ impl<'core> Status<'core> {
                 peers,
                 tps: _,
             } => {
-                ui.add_space(4.);
-                ui.label(
-                    RichText::new(egui_phosphor::light::CPU)
-                        .size(status_icon_size)
-                        .color(theme_color().icon_connected_color),
-                );
+                ui.add_space(left_padding);
+
+                if peers.is_some() {
+                    cfg_if! {
+                        if #[cfg(target_arch = "wasm32")] {
+                            let icon = egui_phosphor::light::CPU;
+                        } else {
+                            let icon = if self.core.settings.node.node_kind.is_local() {
+                                egui_phosphor::light::CPU
+                            } else {
+                                egui_phosphor::light::CLOUD
+                            };
+                        }
+                    }
+
+                    ui.label(
+                        RichText::new(icon)
+                            .size(status_icon_size)
+                            .color(theme_color().icon_connected_color),
+                    );
+                } else {
+                    ui.add(egui::Spinner::new());
+                }
                 ui.separator();
-                ui.label(i18n("CONNECTED")).on_hover_ui(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.label(self.settings().node.wrpc_url.clone());
-                    });
-                });
-                // }
+                self.render_connection_selector(ui);
                 ui.separator();
                 self.render_network_selector(ui);
-                // ui.menu_button(self.settings.node.network.to_string(), |ui| {
-                //     Network::iter().for_each(|network| {
-                //         if ui.button(network.to_string()).clicked() {
-                //             ui.close_menu();
-                //         }
-                //     });
-                // });
 
                 if !self.device().mobile() {
                     ui.separator();
@@ -234,14 +427,20 @@ impl<'core> Status<'core> {
             ConnectionStatus::Syncing { sync_status, peers } => {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
-                        ui.add_space(4.);
-                        ui.label(
-                            RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN)
-                                .size(status_icon_size)
-                                .color(theme_color().icon_syncing_color),
-                        );
+                        ui.add_space(left_padding);
+
+                        if peers.is_some() {
+                            ui.label(
+                                RichText::new(egui_phosphor::light::CLOUD_ARROW_DOWN)
+                                    .size(status_icon_size)
+                                    .color(theme_color().icon_syncing_color),
+                            );
+                        } else {
+                            ui.add(egui::Spinner::new());
+                        }
+
                         ui.separator();
-                        ui.label(i18n("CONNECTED"));
+                        self.render_connection_selector(ui);
                         ui.separator();
                         self.render_network_selector(ui);
 
@@ -267,6 +466,18 @@ impl<'core> Status<'core> {
                         }
                     }
                 });
+            }
+
+            ConnectionStatus::Error { error } => {
+                ui.add_space(left_padding);
+
+                ui.label(
+                    RichText::new(egui_phosphor::light::SEAL_WARNING)
+                        .size(status_icon_size)
+                        .color(theme_color().error_color),
+                );
+                ui.separator();
+                ui.label(i18n(error.as_str()));
             }
         }
     }

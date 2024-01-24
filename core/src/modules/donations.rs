@@ -48,7 +48,7 @@ impl Donations {
 
         if response.clicked() {
             ui.output_mut(|o| o.copied_text = Self::ADDRESS_KASPA_NG_FUND.to_owned());
-            runtime().notify(UserNotification::info(format!("{CLIPBOARD_TEXT} {}", i18n("Copied to clipboard"))).short());
+            runtime().notify_clipboard(i18n("Copied to clipboard"));
         }
 
         ui.label(" ");
@@ -83,11 +83,11 @@ impl ModuleT for Donations {
                 
                 ui.add_space(8.);                                    
 
-                ui.label(i18n("The Kaspa NG software represents an ongoing effort focused on building a state-of-the-art software platform dedicated to the Kaspa BlockDAG cryptocurrency network. Ideological at its core, this software prioritizes security, privacy, performance, and decentralization."));
+                ui.label(i18n("The Kaspa NG software represents an ongoing effort focused on building a state-of-the-art software platform dedicated to the Kaspa BlockDAG cryptocurrency network. Ideological at its core, this software has a strong focus on security, privacy, performance, and decentralization."));
                 ui.label(" ");
                 ui.label(i18n("Because of its focus on security and performance, this software is entirely developed in Rust, demanding significantly more time and effort compared to other traditional modern web-driven software."));
                 ui.label(" ");
-                ui.label(i18n("Contributions directed toward this project directly fuel the Kaspa NG software and its ecosystem."));
+                ui.label(i18n("We greatly appreciate your help in backing our efforts."));
                 ui.label(" ");
 
                 let kaspa_ng_fund = this.qr_kaspa_ng_fund();

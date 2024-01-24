@@ -12,7 +12,9 @@ pub mod device;
 pub mod egui;
 pub mod error;
 pub mod events;
+pub mod extensions;
 pub mod fonts;
+pub mod frame;
 pub mod imports;
 pub mod market;
 pub mod menu;
@@ -27,5 +29,9 @@ pub mod servers;
 pub mod settings;
 pub mod state;
 pub mod status;
+pub mod storage;
 pub mod sync;
 pub mod utils;
+
+#[cfg(test)]
+mod tests;
