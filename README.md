@@ -25,6 +25,8 @@ This project is built on top of and incorporates the [Rusty Kaspa](https://githu
 
 This software is ideological in nature with a strong focus on architecture and decentralization. It is a unified codebase tightly coupled with the Rusty Kaspa project. Fully written in Rust, it is available as a high-performance desktop application on all major operating systems (Windows, Linux and MacOS) as well as in major web browsers. It does not rely on any JavaScript or Web frameworks, which greatly strengthens its security profile. The Web Browser extension based on this infrastructure is currently under development.
 
+You can find more information about this project at [https://aspectron.org/en/projects/kaspa-ng.html](https://aspectron.org/en/projects/kaspa-ng.html).
+
 ## Releases
 
 - You can obtain the latest binary redistributables from the [Releases](https://github.com/aspectron/kaspa-ng/releases) page.
