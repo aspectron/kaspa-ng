@@ -2,6 +2,12 @@
 
 This release is not intended for use with mainnet funds at this time.
 
+# 0.2.3 - 2024-01-24
+- Fix maximize and full-screen button handling
+
+# 0.2.2 - 2024-01-24
+- Miscellaneous updates to release processes and CI workflows
+
 # 0.2.1 - 2024-01-22
 - User Interface scale in Display settings (in addition to `Ctrl`+`+` and `Ctrl`+`-` shortcuts, `⌘` on MacOS)
 - Offer alternate public node in case of random node connection failure

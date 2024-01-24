@@ -60,7 +60,7 @@ pub fn window_frame(
                 rect.max.y = rect.min.y + title_bar_height;
                 rect
             };
-            title_bar_ui(ui, title_bar_rect, title);
+            title_bar_ui(ui, title_bar_rect, title, is_fullscreen, is_maximized);
 
             // Add the contents:
             let content_rect = {
@@ -92,7 +92,13 @@ pub fn window_frame(
     }
 }
 
-fn title_bar_ui(ui: &mut egui::Ui, title_bar_rect: eframe::epaint::Rect, title: &str) {
+fn title_bar_ui(
+    ui: &mut egui::Ui,
+    title_bar_rect: eframe::epaint::Rect,
+    title: &str,
+    is_fullscreen: bool,
+    is_maximized: bool,
+) {
     use egui::*;
 
     let painter = ui.painter();
@@ -131,13 +137,13 @@ fn title_bar_ui(ui: &mut egui::Ui, title_bar_rect: eframe::epaint::Rect, title: 
             ui.spacing_mut().item_spacing.x = 0.0;
             ui.visuals_mut().button_frame = false;
             ui.add_space(8.0);
-            close_maximize_minimize(ui);
+            close_maximize_minimize(ui, is_fullscreen, is_maximized);
         });
     });
 }
 
 /// Show some close/maximize/minimize buttons for the native window.
-fn close_maximize_minimize(ui: &mut egui::Ui) {
+fn close_maximize_minimize(ui: &mut egui::Ui, is_fullscreen: bool, is_maximized: bool) {
     use egui_phosphor::light::*;
 
     let spacing = 8.0;
@@ -163,7 +169,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui) {
         }
     }
 
-    if support_fullscreen {
+    if support_fullscreen && !is_maximized {
         ui.add_space(spacing);
 
         let is_fullscreen = ui.input(|i| i.viewport().fullscreen.unwrap_or(false));
@@ -193,7 +199,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui) {
         }
     }
 
-    if support_maximize {
+    if support_maximize && !is_fullscreen {
         ui.add_space(spacing);
 
         let is_maximized = ui.input(|i| i.viewport().maximized.unwrap_or(false));
