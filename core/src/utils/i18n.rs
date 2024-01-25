@@ -43,10 +43,10 @@ pub fn i18n_storage_folder() -> Result<PathBuf> {
             } else {
                 // fallback to the default storage folder, which is the
                 // same as kaspa-ng settings storage folder: `~/.kaspa-ng/`
-                let storage_folder =
-                    Path::new(kaspa_wallet_core::storage::local::default_storage_folder());
+                let default_storage_folder = kaspa_wallet_core::storage::local::default_storage_folder();
+                let storage_folder = workflow_store::fs::resolve_path(default_storage_folder)?;
                 if !storage_folder.exists() {
-                    std::fs::create_dir_all(storage_folder)?;
+                    std::fs::create_dir_all(&storage_folder)?;
                 }
                 Ok(storage_folder.to_path_buf())
             }
@@ -81,10 +81,10 @@ pub fn i18n_storage_file() -> Result<PathBuf> {
             } else {
                 // fallback to the default storage folder, which is the
                 // same as kaspa-ng settings storage folder: `~/.kaspa-ng/`
-                let storage_folder =
-                    Path::new(kaspa_wallet_core::storage::local::default_storage_folder());
+                let default_storage_folder = kaspa_wallet_core::storage::local::default_storage_folder();
+                let storage_folder = workflow_store::fs::resolve_path(default_storage_folder)?;
                 if !storage_folder.exists() {
-                    std::fs::create_dir_all(storage_folder)?;
+                    std::fs::create_dir_all(&storage_folder)?;
                 }
                 Ok(storage_folder.join("kaspa-ng.i18n.json"))
             }
