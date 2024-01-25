@@ -64,13 +64,17 @@ impl Storage {
             }
         }
 
+        let rusty_kaspa_app_dir = kaspad_lib::daemon::get_app_dir();
+        if !rusty_kaspa_app_dir.exists() {
+            return;
+        }
+
         let this = self.clone();
         spawn(async move {
             if let Some(delay) = options.delay {
                 task::sleep(delay).await;
             }
 
-            let rusty_kaspa_app_dir = kaspad_lib::daemon::get_app_dir();
             let paths = std::fs::read_dir(rusty_kaspa_app_dir).unwrap();
             for path in paths {
                 let path = path?.path();
