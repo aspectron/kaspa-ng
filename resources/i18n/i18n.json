@@ -1,6 +1,8 @@
 {
   "enabled": [
-    "en"
+    "en",
+    "de",
+    "ro"
   ],
   "aliases": {
     "en-US": "en",
