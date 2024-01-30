@@ -130,8 +130,8 @@ impl Network {
     pub fn name(&self) -> &str {
         match self {
             Network::Mainnet => i18n("Mainnet"),
-            Network::Testnet10 => i18n("Testnet-10"),
-            Network::Testnet11 => i18n("Testnet-11"),
+            Network::Testnet10 => i18n("Testnet 10"),
+            Network::Testnet11 => i18n("Testnet 11"),
         }
     }
 
