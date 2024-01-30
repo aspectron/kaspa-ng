@@ -7,8 +7,8 @@
   "aliases": {
     "en-GB": "en",
     "en-US": "en",
-    "zh-CN": "zh_HANS",
-    "zh-TW": "zh_HANT"
+    "zh-CN": "zh",
+    "zh-TW": "zh"
   },
   "languages": {
     "af": "Afrikaans",
@@ -55,8 +55,7 @@
     "uk": "Ukrainian",
     "ur": "Urdu",
     "vi": "Vietnamese",
-    "zh_HANS": "中文",
-    "zh_HANT": "繁體中文"
+    "zh": "中文"
   },
   "translations": {
     "af": {},
@@ -1247,7 +1246,6 @@
     "uk": {},
     "ur": {},
     "vi": {},
-    "zh_HANS": {},
-    "zh_HANT": {}
+    "zh": {}
   }
 }
