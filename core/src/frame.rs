@@ -154,7 +154,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui, is_fullscreen: bool, is_maximized:
             RichText::new(X.to_string()).size(button_height),
         ))
         // .add(Button::new(RichText::new("❌").size(button_height)))
-        .on_hover_text("Close the window");
+        .on_hover_text(i18n("Close the window"));
     if close_response.clicked() {
         ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
     }
