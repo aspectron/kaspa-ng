@@ -162,7 +162,7 @@ impl Settings {
                     .show(ui, |ui| {
                         ui.horizontal_wrapped(|ui|{
                             Network::iter().for_each(|network| {
-                                ui.radio_value(&mut self.settings.node.network, *network, network.to_string());
+                                ui.radio_value(&mut self.settings.node.network, *network, network.name());
                             });
                         });
                     });
