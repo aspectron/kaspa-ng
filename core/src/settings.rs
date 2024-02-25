@@ -373,7 +373,7 @@ pub struct NodeSettings {
     #[serde(default)]
     pub kaspad_daemon_storage_folder_enable: bool,
     #[serde(default)]
-    pub kaspad_daemon_storage_folder : String,
+    pub kaspad_daemon_storage_folder: String,
 }
 
 impl Default for NodeSettings {
@@ -656,11 +656,10 @@ impl Settings {
                     }
                 }
                 Err(error) => {
-                    if matches!(error,workflow_store::error::Error::SerdeJson(..)) {
+                    if matches!(error, workflow_store::error::Error::SerdeJson(..)) {
                         // TODO - recovery process
                         log_warning!("Settings::load() error: {}", error);
                         Ok(Self::default())
-
                     } else {
                         log_warning!("Settings::load() error: {}", error);
                         Ok(Self::default())

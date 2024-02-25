@@ -29,7 +29,7 @@ pub struct Config {
     grpc_network_interface: NetworkInterfaceConfig,
     kaspad_daemon_args_enable: bool,
     kaspad_daemon_args: String,
-    kaspad_daemon_storage_folder_enable : bool,
+    kaspad_daemon_storage_folder_enable: bool,
     kaspad_daemon_storage_folder: String,
     memory_scale: NodeMemoryScale,
 }
