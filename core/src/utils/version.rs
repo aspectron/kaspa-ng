@@ -125,3 +125,19 @@ pub fn release_link_name(name: impl Into<String>) -> impl Into<WidgetText> {
         RichText::new(format!("• {name}"))
     }
 }
+
+pub fn is_version_greater(current: &str, update: &str) -> Result<bool> {
+    let current = current
+        .split('.')
+        .map(|part| part.parse().map_err(Into::into))
+        .collect::<Result<Vec<u64>>>()?;
+    let update = update
+        .split('.')
+        .map(|part| part.parse().map_err(Into::into))
+        .collect::<Result<Vec<u64>>>()?;
+
+    let current = current.iter().fold(0, |acc, &x| acc * 1000 + x);
+    let update = update.iter().fold(0, |acc, &x| acc * 1000 + x);
+
+    Ok(current < update)
+}

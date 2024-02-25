@@ -413,8 +413,12 @@ impl Settings {
                                 core.settings = self.settings.clone();
                                 core.settings.store_sync().unwrap();
 
-                                let storage_root = core.settings.node.kaspad_daemon_storage_folder_enable.then_some(core.settings.node.kaspad_daemon_storage_folder.as_str());
-                                core.storage.track_storage_root(storage_root);
+                                cfg_if! {
+                                    if #[cfg(not(target_arch = "wasm32"))] {
+                                        let storage_root = core.settings.node.kaspad_daemon_storage_folder_enable.then_some(core.settings.node.kaspad_daemon_storage_folder.as_str());
+                                        core.storage.track_storage_root(storage_root);
+                                    }
+                                }
 
                                 if restart {
                                     self.runtime.kaspa_service().update_services(&self.settings.node, None);

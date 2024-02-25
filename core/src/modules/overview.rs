@@ -243,7 +243,8 @@ impl Overview {
                     });
 
                 if let Some(release) = core.release.as_ref() {
-                    if is_wasm() || release.version == crate::app::VERSION {
+                    let is_greater = is_version_greater(crate::app::VERSION.as_str(), release.version.as_str()).ok().unwrap_or(false);
+                    if is_wasm() || !is_greater {
                         CollapsingHeader::new(i18n("Redistributables"))
                             .id_source("redistributables")
                             .default_open(true)
