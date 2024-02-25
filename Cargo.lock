@@ -2922,6 +2922,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2990,7 +2999,7 @@ checksum = "b69037d8ea77c0b5ce9cfb7652ad2d26581ab3f369e5ba327aff2f61760a5c70"
 dependencies = [
  "borsh",
  "igd-next",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-consensus-core",
  "kaspa-core",
  "kaspa-database",
@@ -3095,7 +3104,7 @@ checksum = "1e405977dbe9e8377061848571988ac25e9d55df8035cec62d688f2bcce7ab2a"
 dependencies = [
  "duration-string",
  "futures-util",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-addressmanager",
  "kaspa-core",
  "kaspa-p2p-lib",
@@ -3119,7 +3128,7 @@ dependencies = [
  "faster-hex 0.6.1",
  "futures-util",
  "indexmap 2.2.3",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-consensus-core",
  "kaspa-consensus-notify",
  "kaspa-consensusmanager",
@@ -3158,7 +3167,7 @@ dependencies = [
  "faster-hex 0.6.1",
  "futures-util",
  "getrandom",
- "itertools",
+ "itertools 0.11.0",
  "js-sys",
  "kaspa-addresses",
  "kaspa-core",
@@ -3235,7 +3244,7 @@ dependencies = [
  "duration-string",
  "futures",
  "futures-util",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-consensus-core",
  "kaspa-consensus-notify",
  "kaspa-core",
@@ -3300,7 +3309,7 @@ dependencies = [
  "enum-primitive-derive",
  "faster-hex 0.6.1",
  "indexmap 2.2.3",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-hashes",
  "kaspa-utils",
  "num-traits",
@@ -3388,7 +3397,7 @@ dependencies = [
  "faster-hex 0.6.1",
  "futures",
  "h2",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-consensus-core",
  "kaspa-core",
  "kaspa-grpc-core",
@@ -3535,7 +3544,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "043281e3b850e83636fad3b1b2e6b09ad6d3f5ac673fb32c4d756b5fd1624a75"
 dependencies = [
  "futures-util",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-addresses",
  "kaspa-consensus-core",
  "kaspa-consensusmanager",
@@ -3578,7 +3587,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "cfg-if 1.0.0",
  "kaspa-alloc",
@@ -3590,7 +3599,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-chrome"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "async-trait",
  "chrome-sys",
@@ -3610,7 +3619,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-core"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "ahash 0.8.9",
  "async-trait",
@@ -3687,7 +3696,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-macros"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "convert_case 0.6.0",
  "parse-variants",
@@ -3711,7 +3720,7 @@ dependencies = [
  "derive_more",
  "futures",
  "futures-util",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-addresses",
  "kaspa-consensus-core",
  "kaspa-core",
@@ -3739,7 +3748,7 @@ dependencies = [
  "chrono",
  "futures",
  "indexmap 2.2.3",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-addressmanager",
  "kaspa-connectionmanager",
  "kaspa-consensus-core",
@@ -3772,7 +3781,7 @@ dependencies = [
  "ctrlc",
  "futures",
  "h2",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-consensus-core",
  "kaspa-core",
  "kaspa-hashes",
@@ -3912,7 +3921,7 @@ dependencies = [
  "blake2b_simd",
  "borsh",
  "indexmap 2.2.3",
- "itertools",
+ "itertools 0.11.0",
  "kaspa-addresses",
  "kaspa-consensus-core",
  "kaspa-hashes",
@@ -3950,7 +3959,7 @@ dependencies = [
  "event-listener 2.5.3",
  "faster-hex 0.6.1",
  "ipnet",
- "itertools",
+ "itertools 0.11.0",
  "log",
  "parking_lot",
  "rlimit",
@@ -4026,7 +4035,7 @@ dependencies = [
  "hmac",
  "home",
  "indexed_db_futures",
- "itertools",
+ "itertools 0.11.0",
  "js-sys",
  "kaspa-addresses",
  "kaspa-bip32",
@@ -4493,7 +4502,7 @@ version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6538136c5daf04126d6be4899f7fe4879b7f8de896dd1b4210fe6de5b94f2555"
 dependencies = [
- "itertools",
+ "itertools 0.11.0",
  "ryu",
 ]
 
@@ -4504,7 +4513,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f0b05577b7a3f09433106460b10304f97fc572f0baabf6640e6cb1e23f5fc52"
 dependencies = [
  "embed-doc-image",
- "itertools",
+ "itertools 0.11.0",
  "malachite-base",
 ]
 
@@ -5472,7 +5481,7 @@ checksum = "c55e02e35260070b6f716a2423c2ff1c3bb1642ddca6f99e1f26d06268a0e2d2"
 dependencies = [
  "bytes",
  "heck",
- "itertools",
+ "itertools 0.11.0",
  "log",
  "multimap",
  "once_cell",
@@ -5493,7 +5502,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "efb6c9a1dd1def8e2124d17e83a20af56f1570d6c2d2bd9e266ccb768df3840e"
 dependencies = [
  "anyhow",
- "itertools",
+ "itertools 0.11.0",
  "proc-macro2",
  "quote",
  "syn 2.0.48",
@@ -6073,7 +6082,6 @@ version = "1.0.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c5f09b1bd632ef549eaa9f60a1f8de742bdbc698e6cee2095fc84dde5f549ae0"
 dependencies = [
- "indexmap 2.2.3",
  "itoa",
  "ryu",
  "serde",
@@ -7797,12 +7805,13 @@ dependencies = [
 
 [[package]]
 name = "workflow-i18n"
-version = "0.10.3"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e57690d59e2053d3cccba0bcafd07ee175ee20edb6afe9cdc835e1f8544a25fc"
+checksum = "808d361f34dd34bba0eeb7952398993cfea5eb6670c250cb2d5f6fbd13511347"
 dependencies = [
  "arc-swap",
  "cfg-if 1.0.0",
+ "itertools 0.12.1",
  "ritehash",
  "serde",
  "serde_json",
