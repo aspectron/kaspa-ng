@@ -211,7 +211,7 @@ impl ModuleT for Request {
 
             })
             .with_footer(|_ctx, ui| {
-                if ui.large_button("Close").clicked() {
+                if ui.large_button(i18n("Close")).clicked() {
                     *close.borrow_mut() = true;
                 }
             })

@@ -166,7 +166,7 @@ impl<'panel> PopupPanel<'panel> {
 
                     ui.add_space(8.);
                     ui.vertical_centered(|ui| {
-                        if ui.medium_button("Close").clicked() {
+                        if ui.medium_button(i18n("Close")).clicked() {
                             close_popup = true;
                         }
                     });

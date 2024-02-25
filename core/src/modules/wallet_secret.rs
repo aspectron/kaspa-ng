@@ -108,7 +108,7 @@ impl ModuleT for WalletSecret {
                             ui.label(i18n("This feature requires an open wallet"));
                         })
                         .with_footer(|_,ui| {
-                            if ui.large_button("Close").clicked() {
+                            if ui.large_button(i18n("Close")).clicked() {
                                 *back.borrow_mut() = true;
                             }
                         })

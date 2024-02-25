@@ -152,12 +152,12 @@ impl Settings {
 
         let mut node_settings_error = None;
 
-        CollapsingHeader::new("Kaspa p2p Network & Node Connection")
+        CollapsingHeader::new(i18n("Kaspa p2p Network & Node Connection"))
             .default_open(true)
             .show(ui, |ui| {
 
 
-                CollapsingHeader::new("Kaspa Network")
+                CollapsingHeader::new(i18n("Kaspa Network"))
                     .default_open(true)
                     .show(ui, |ui| {
                         ui.horizontal_wrapped(|ui|{
@@ -168,7 +168,7 @@ impl Settings {
                     });
 
 
-                CollapsingHeader::new("Kaspa Node")
+                CollapsingHeader::new(i18n("Kaspa Node"))
                     .default_open(true)
                     .show(ui, |ui| {
                         ui.horizontal_wrapped(|ui|{
@@ -218,7 +218,7 @@ impl Settings {
                         #[cfg(not(target_arch = "wasm32"))]
                         if self.settings.node.node_kind.is_config_capable() {
 
-                            CollapsingHeader::new("Cache Memory Size")
+                            CollapsingHeader::new(i18n("Cache Memory Size"))
                                 .default_open(true)
                                 .show(ui, |ui| {
                                     ui.horizontal_wrapped(|ui|{

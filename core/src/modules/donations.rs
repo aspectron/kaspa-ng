@@ -83,7 +83,7 @@ impl ModuleT for Donations {
                 
                 ui.add_space(8.);                                    
 
-                ui.label(i18n("The Kaspa NG software represents an ongoing effort focused on building a state-of-the-art software platform dedicated to the Kaspa BlockDAG cryptocurrency network. Ideological at its core, this software has a strong focus on security, privacy, performance, and decentralization."));
+                ui.label(i18n("The Kaspa NG software represents an ongoing effort focused on building a state-of-the-art software platform dedicated to the Kaspa BlockDAG cryptocurrency network. Ideological at its core, this software prioritizes security, privacy, performance, and decentralization."));
                 ui.label(" ");
                 ui.label(i18n("Because of its focus on security and performance, this software is entirely developed in Rust, demanding significantly more time and effort compared to other traditional modern web-driven software."));
                 ui.label(" ");
