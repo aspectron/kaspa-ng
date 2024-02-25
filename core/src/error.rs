@@ -91,6 +91,9 @@ pub enum Error {
 
     #[error("{0}")]
     JsError(workflow_wasm::jserror::JsErrorData),
+
+    #[error("ParseInt")]
+    ParseInt(#[from] std::num::ParseIntError),
 }
 
 impl Error {
