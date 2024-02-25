@@ -231,6 +231,33 @@ impl Settings {
                         }
 
                         #[cfg(not(target_arch = "wasm32"))]
+                        if self.settings.node.node_kind.is_config_capable() {
+                            CollapsingHeader::new("Data Storage")
+                                .default_open(true)
+                                .show(ui, |ui| {
+                                    ui.checkbox(&mut self.settings.node.kaspad_daemon_storage_folder_enable, i18n("Custom data storage folder"));
+                                    if self.settings.node.kaspad_daemon_args.contains("--appdir") && self.settings.node.kaspad_daemon_storage_folder_enable {
+                                        ui.colored_label(theme_color().warning_color, i18n("Your daemon arguments contain '--appdir' directive, which overrides the data storage folder setting."));
+                                        ui.colored_label(theme_color().warning_color, i18n("Please remove the --appdir directive to continue."));
+                                    } else if self.settings.node.kaspad_daemon_storage_folder_enable {
+                                        ui.horizontal(|ui|{
+                                            ui.label(i18n("Data Storage Folder:"));
+                                            ui.add(TextEdit::singleline(&mut self.settings.node.kaspad_daemon_storage_folder));
+                                        });
+
+                                        let appdir = self.settings.node.kaspad_daemon_storage_folder.trim();
+                                        if appdir.is_empty() {
+                                            ui.colored_label(theme_color().error_color, i18n("Data storage folder must not be empty"));
+                                        } else if !Path::new(appdir).exists() {
+                                            ui.colored_label(theme_color().error_color, i18n("Data storage folder not found at"));
+                                            ui.label(format!("\"{}\"",self.settings.node.kaspad_daemon_storage_folder.trim()));
+                                            node_settings_error = Some(i18n("Data storage folder not found"));
+                                        }
+                                    }
+                                });
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
                         if core.settings.developer.custom_daemon_args_enabled() && self.settings.node.node_kind.is_config_capable() {
                             use kaspad_lib::args::Args;
                             use clap::error::ErrorKind as ClapErrorKind;
