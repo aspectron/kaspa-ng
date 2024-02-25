@@ -656,6 +656,7 @@ impl Settings {
                     }
                 }
                 Err(error) => {
+                    #[allow(clippy::if_same_then_else)]
                     if matches!(error, workflow_store::error::Error::SerdeJson(..)) {
                         // TODO - recovery process
                         log_warning!("Settings::load() error: {}", error);

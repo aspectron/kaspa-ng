@@ -49,10 +49,25 @@ impl StorageUpdateOptions {
 #[derive(Default, Clone)]
 pub struct Storage {
     pub folders: Arc<Mutex<Vec<StorageFolder>>>,
+    pub storage_root: Arc<Mutex<Option<PathBuf>>>,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 impl Storage {
+    pub fn track_storage_root(&self, storage_root: Option<&str>) {
+        *self.storage_root.lock().unwrap() = storage_root.map(PathBuf::from);
+        self.update(None);
+    }
+
+    pub fn storage_root(&self) -> PathBuf {
+        self.storage_root
+            .lock()
+            .unwrap()
+            .clone()
+            .or_else(|| Some(kaspad_lib::daemon::get_app_dir()))
+            .unwrap()
+    }
+
     pub fn update(&self, options: Option<StorageUpdateOptions>) {
         let options = options.unwrap_or_default();
 
@@ -64,7 +79,7 @@ impl Storage {
             }
         }
 
-        let rusty_kaspa_app_dir = kaspad_lib::daemon::get_app_dir();
+        let rusty_kaspa_app_dir = self.storage_root();
         if !rusty_kaspa_app_dir.exists() {
             return;
         }

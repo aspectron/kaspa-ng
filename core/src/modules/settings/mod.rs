@@ -251,6 +251,15 @@ impl Settings {
                                         } else if !Path::new(appdir).exists() {
                                             ui.colored_label(theme_color().error_color, i18n("Data storage folder not found at"));
                                             ui.label(format!("\"{}\"",self.settings.node.kaspad_daemon_storage_folder.trim()));
+
+                                            ui.add_space(4.);
+                                            if ui.medium_button(i18n("Create Data Folder")).clicked() {
+                                                if let Err(err) = std::fs::create_dir_all(appdir) {
+                                                    runtime().error(format!("Unable to create data storage folder `{appdir}`: {err}"));
+                                                }
+                                            }
+                                            ui.add_space(4.);
+
                                             node_settings_error = Some(i18n("Data storage folder not found"));
                                         }
                                     }
@@ -403,6 +412,10 @@ impl Settings {
 
                                 core.settings = self.settings.clone();
                                 core.settings.store_sync().unwrap();
+
+                                let storage_root = core.settings.node.kaspad_daemon_storage_folder_enable.then_some(core.settings.node.kaspad_daemon_storage_folder.as_str());
+                                core.storage.track_storage_root(storage_root);
+
                                 if restart {
                                     self.runtime.kaspa_service().update_services(&self.settings.node, None);
                                 }

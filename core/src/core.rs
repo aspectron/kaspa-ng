@@ -156,6 +156,12 @@ impl Core {
         let application_events_channel = runtime.application_events().clone();
         let wallet = runtime.wallet().clone();
 
+        let storage = Storage::default();
+        #[cfg(not(target_arch = "wasm32"))]
+        if settings.node.kaspad_daemon_storage_folder_enable {
+            storage.track_storage_root(Some(settings.node.kaspad_daemon_storage_folder.as_str()));
+        }
+
         let mut this = Self {
             runtime,
             is_shutdown_pending: false,
@@ -193,7 +199,8 @@ impl Core {
             callback_map: CallbackMap::default(),
             network_pressure: NetworkPressure::default(),
             notifications: Notifications::default(),
-            storage: Storage::default(),
+            storage,
+            // daemon_storage_root: Mutex::new(daemon_storage_root),
         };
 
         modules.values().for_each(|module| {
