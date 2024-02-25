@@ -1,4 +1,10 @@
 {
+  "aliases": {
+    "en-GB": "en",
+    "en-US": "en",
+    "zh-CN": "zh",
+    "zh-TW": "zh"
+  },
   "enabled": [
     "en",
     "de",
@@ -10,12 +16,6 @@
     "ru",
     "uk"
   ],
-  "aliases": {
-    "en-GB": "en",
-    "en-US": "en",
-    "zh-CN": "zh_HANS",
-    "zh-TW": "zh_HANT"
-  },
   "languages": {
     "af": "Afrikaans",
     "ar": "Arabic",
@@ -530,6 +530,7 @@
       "Custom": "Custom",
       "Custom Public Node": "Custom Public Node",
       "Custom arguments:": "Custom arguments:",
+      "Custom data storage folder": "Custom data storage folder",
       "DAA": "DAA",
       "DAA Offset": "DAA Offset",
       "DAA Range": "DAA Range",
@@ -4345,8 +4346,6 @@
       "wRPC JSON Tx": "wRPC JSON 发送",
       "wRPC JSON Tx/s": "wRPC JSON 发送/每秒",
       "wRPC URL:": "wRPC URL："
-    },
-    "zh_HANS": {},
-    "zh_HANT": {}
+    }
   }
 }
