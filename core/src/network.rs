@@ -20,7 +20,7 @@ pub enum Network {
 impl std::fmt::Display for Network {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Network::Mainnet => write!(f, "mainnet"),
+            Network::Mainnet => write!(f, "mainnet" ),
             Network::Testnet10 => write!(f, "testnet-10"),
             Network::Testnet11 => write!(f, "testnet-11"),
         }
@@ -130,8 +130,8 @@ impl Network {
     pub fn name(&self) -> &str {
         match self {
             Network::Mainnet => i18n("Mainnet"),
-            Network::Testnet10 => i18n("Testnet-10"),
-            Network::Testnet11 => i18n("Testnet-11"),
+            Network::Testnet10 => i18n("Testnet 10"),
+            Network::Testnet11 => i18n("Testnet 11"),
         }
     }
 

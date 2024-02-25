@@ -155,7 +155,7 @@ impl ModuleT for Scanner {
                             ui.label(i18n("The node is currently syncing with the Kaspa p2p network. Please wait for the node to sync."));
                             ui.add_space(16.);
 
-                            if ui.large_button("Close").clicked() {
+                            if ui.large_button(i18n("Close")).clicked() {
                                 *back.borrow_mut() = true;
                             }
 

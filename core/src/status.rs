@@ -314,11 +314,11 @@ impl<'core> Status<'core> {
                                         .as_ref()
                                     {
                                         let elapsed = instant.elapsed();
-                                        if elapsed.as_millis() > 3_500 {
+                                        if elapsed.as_millis() > 6_500 {
                                             if ui
                                                 .add(
                                                     Label::new(RichText::new(i18n(
-                                                        "Click to try an another server...",
+                                                        "Click to try another server...",
                                                     )))
                                                     .sense(Sense::click()),
                                                 )

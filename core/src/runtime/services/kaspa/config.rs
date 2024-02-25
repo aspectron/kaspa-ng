@@ -29,6 +29,8 @@ pub struct Config {
     grpc_network_interface: NetworkInterfaceConfig,
     kaspad_daemon_args_enable: bool,
     kaspad_daemon_args: String,
+    kaspad_daemon_storage_folder_enable: bool,
+    kaspad_daemon_storage_folder: String,
     memory_scale: NodeMemoryScale,
 }
 
@@ -41,6 +43,8 @@ impl From<NodeSettings> for Config {
             grpc_network_interface: node_settings.grpc_network_interface,
             kaspad_daemon_args_enable: node_settings.kaspad_daemon_args_enable,
             kaspad_daemon_args: node_settings.kaspad_daemon_args,
+            kaspad_daemon_storage_folder_enable: node_settings.kaspad_daemon_storage_folder_enable,
+            kaspad_daemon_storage_folder: node_settings.kaspad_daemon_storage_folder,
             memory_scale: node_settings.memory_scale,
         }
     }
@@ -124,6 +128,10 @@ cfg_if! {
                 args.push("--rpclisten-borsh=default");
 
                 args.push(format!("--uacomment={}", user_agent_comment()));
+
+                if config.kaspad_daemon_storage_folder_enable && !config.kaspad_daemon_storage_folder.is_empty() && !(config.kaspad_daemon_args_enable && config.kaspad_daemon_args.contains("--appdir")) {
+                    args.push(format!("--appdir={}", config.kaspad_daemon_storage_folder));
+                }
 
                 if config.kaspad_daemon_args_enable {
                     config.kaspad_daemon_args.trim().split(' ').filter(|arg|!arg.trim().is_empty()).for_each(|arg| {

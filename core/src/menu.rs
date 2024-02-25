@@ -197,7 +197,7 @@ impl<'core> Menu<'core> {
     }
 
     pub fn render_menu(&mut self, ui: &mut Ui) {
-        if ui.button("Overview").clicked() {
+        if ui.button(i18n("Overview")).clicked() {
             self.select::<modules::Overview>();
             ui.close_menu();
         }
@@ -205,17 +205,17 @@ impl<'core> Menu<'core> {
 
         #[allow(clippy::collapsible_else_if)]
         if self.core.state().is_open() {
-            if ui.button("Wallet").clicked() {
+            if ui.button(i18n("Wallet")).clicked() {
                 self.select::<modules::AccountManager>();
                 ui.close_menu();
             }
         } else {
-            if ui.button("Wallet").clicked() {
+            if ui.button(i18n("Wallet")).clicked() {
                 self.select::<modules::WalletOpen>();
                 ui.close_menu();
             }
         }
-        // if ui.button("Wallet").clicked() {
+        // if ui.button(i18n("Wallet")).clicked() {
         //     if self.core.state().is_open() {
         //         self.select::<modules::AccountManager>();
         //     } else {
@@ -225,13 +225,13 @@ impl<'core> Menu<'core> {
         // }
 
         ui.separator();
-        if ui.button("Metrics").clicked() {
+        if ui.button(i18n("Metrics")).clicked() {
             self.select::<modules::Metrics>();
             ui.close_menu();
         }
 
         ui.separator();
-        if ui.button("Block DAG").clicked() {
+        if ui.button(i18n("Block DAG")).clicked() {
             self.select::<modules::BlockDag>();
             ui.close_menu();
         }
@@ -240,7 +240,7 @@ impl<'core> Menu<'core> {
         {
             if self.core.settings.node.node_kind.is_local() {
                 ui.separator();
-                if ui.button("Node").clicked() {
+                if ui.button(i18n("Node")).clicked() {
                     self.select::<modules::Node>();
                     ui.close_menu();
                 }
@@ -249,7 +249,7 @@ impl<'core> Menu<'core> {
 
         ui.separator();
 
-        if ui.button("Settings").clicked() {
+        if ui.button(i18n("Settings")).clicked() {
             self.select::<modules::Settings>();
             ui.close_menu();
         }
@@ -258,7 +258,7 @@ impl<'core> Menu<'core> {
         {
             if self.core.settings.node.node_kind.is_local() {
                 ui.separator();
-                if ui.button("Logs").clicked() {
+                if ui.button(i18n("Logs")).clicked() {
                     self.select::<modules::Logs>();
                     ui.close_menu();
                 }
@@ -269,7 +269,7 @@ impl<'core> Menu<'core> {
     pub fn render_debug(&mut self, ui: &mut Ui) {
         ui.menu_button("Debug", |ui| {
             #[cfg(not(target_arch = "wasm32"))]
-            if ui.button("Quit").clicked() {
+            if ui.button(i18n("Quit")).clicked() {
                 ui.ctx().send_viewport_cmd(ViewportCommand::Close)
             }
             ui.separator();

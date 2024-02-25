@@ -152,23 +152,23 @@ impl Settings {
 
         let mut node_settings_error = None;
 
-        CollapsingHeader::new("Kaspa p2p Network & Node Connection")
+        CollapsingHeader::new(i18n("Kaspa p2p Network & Node Connection"))
             .default_open(true)
             .show(ui, |ui| {
 
 
-                CollapsingHeader::new("Kaspa Network")
+                CollapsingHeader::new(i18n("Kaspa Network"))
                     .default_open(true)
                     .show(ui, |ui| {
                         ui.horizontal_wrapped(|ui|{
                             Network::iter().for_each(|network| {
-                                ui.radio_value(&mut self.settings.node.network, *network, network.to_string());
+                                ui.radio_value(&mut self.settings.node.network, *network, network.name());
                             });
                         });
                     });
 
 
-                CollapsingHeader::new("Kaspa Node")
+                CollapsingHeader::new(i18n("Kaspa Node"))
                     .default_open(true)
                     .show(ui, |ui| {
                         ui.horizontal_wrapped(|ui|{
@@ -218,7 +218,7 @@ impl Settings {
                         #[cfg(not(target_arch = "wasm32"))]
                         if self.settings.node.node_kind.is_config_capable() {
 
-                            CollapsingHeader::new("Cache Memory Size")
+                            CollapsingHeader::new(i18n("Cache Memory Size"))
                                 .default_open(true)
                                 .show(ui, |ui| {
                                     ui.horizontal_wrapped(|ui|{
@@ -227,6 +227,42 @@ impl Settings {
                                         });
                                     });
                                     ui.label(self.settings.node.memory_scale.describe());
+                                });
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        if self.settings.node.node_kind.is_config_capable() {
+                            CollapsingHeader::new("Data Storage")
+                                .default_open(true)
+                                .show(ui, |ui| {
+                                    ui.checkbox(&mut self.settings.node.kaspad_daemon_storage_folder_enable, i18n("Custom data storage folder"));
+                                    if self.settings.node.kaspad_daemon_args.contains("--appdir") && self.settings.node.kaspad_daemon_storage_folder_enable {
+                                        ui.colored_label(theme_color().warning_color, i18n("Your daemon arguments contain '--appdir' directive, which overrides the data storage folder setting."));
+                                        ui.colored_label(theme_color().warning_color, i18n("Please remove the --appdir directive to continue."));
+                                    } else if self.settings.node.kaspad_daemon_storage_folder_enable {
+                                        ui.horizontal(|ui|{
+                                            ui.label(i18n("Data Storage Folder:"));
+                                            ui.add(TextEdit::singleline(&mut self.settings.node.kaspad_daemon_storage_folder));
+                                        });
+
+                                        let appdir = self.settings.node.kaspad_daemon_storage_folder.trim();
+                                        if appdir.is_empty() {
+                                            ui.colored_label(theme_color().error_color, i18n("Data storage folder must not be empty"));
+                                        } else if !Path::new(appdir).exists() {
+                                            ui.colored_label(theme_color().error_color, i18n("Data storage folder not found at"));
+                                            ui.label(format!("\"{}\"",self.settings.node.kaspad_daemon_storage_folder.trim()));
+
+                                            ui.add_space(4.);
+                                            if ui.medium_button(i18n("Create Data Folder")).clicked() {
+                                                if let Err(err) = std::fs::create_dir_all(appdir) {
+                                                    runtime().error(format!("Unable to create data storage folder `{appdir}`: {err}"));
+                                                }
+                                            }
+                                            ui.add_space(4.);
+
+                                            node_settings_error = Some(i18n("Data storage folder not found"));
+                                        }
+                                    }
                                 });
                         }
 
@@ -376,6 +412,10 @@ impl Settings {
 
                                 core.settings = self.settings.clone();
                                 core.settings.store_sync().unwrap();
+
+                                let storage_root = core.settings.node.kaspad_daemon_storage_folder_enable.then_some(core.settings.node.kaspad_daemon_storage_folder.as_str());
+                                core.storage.track_storage_root(storage_root);
+
                                 if restart {
                                     self.runtime.kaspa_service().update_services(&self.settings.node, None);
                                 }

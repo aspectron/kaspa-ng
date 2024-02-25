@@ -370,6 +370,10 @@ pub struct NodeSettings {
     pub kaspad_daemon_binary: String,
     pub kaspad_daemon_args: String,
     pub kaspad_daemon_args_enable: bool,
+    #[serde(default)]
+    pub kaspad_daemon_storage_folder_enable: bool,
+    #[serde(default)]
+    pub kaspad_daemon_storage_folder: String,
 }
 
 impl Default for NodeSettings {
@@ -391,6 +395,8 @@ impl Default for NodeSettings {
             kaspad_daemon_binary: String::default(),
             kaspad_daemon_args: String::default(),
             kaspad_daemon_args_enable: false,
+            kaspad_daemon_storage_folder_enable: false,
+            kaspad_daemon_storage_folder: String::default(),
         }
     }
 }
@@ -408,6 +414,10 @@ impl NodeSettings {
                     Some(true)
                 } else if self.connection_config_kind != other.connection_config_kind
                     || (other.connection_config_kind == NodeConnectionConfigKind::PublicServerCustom && !self.public_servers.compare(&other.public_servers))
+                {
+                    Some(true)
+                } else if self.kaspad_daemon_storage_folder_enable != other.kaspad_daemon_storage_folder_enable
+                    || other.kaspad_daemon_storage_folder_enable && (self.kaspad_daemon_storage_folder != other.kaspad_daemon_storage_folder)
                 {
                     Some(true)
                 } else if self.enable_grpc != other.enable_grpc
@@ -645,9 +655,16 @@ impl Settings {
                         Ok(settings)
                     }
                 }
-                Err(err) => {
-                    log_warning!("Settings::load() error: {}", err);
-                    Ok(Self::default())
+                Err(error) => {
+                    #[allow(clippy::if_same_then_else)]
+                    if matches!(error, workflow_store::error::Error::SerdeJson(..)) {
+                        // TODO - recovery process
+                        log_warning!("Settings::load() error: {}", error);
+                        Ok(Self::default())
+                    } else {
+                        log_warning!("Settings::load() error: {}", error);
+                        Ok(Self::default())
+                    }
                 }
             }
         } else {
