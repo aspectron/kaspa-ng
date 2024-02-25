@@ -318,7 +318,7 @@ impl<'core> Status<'core> {
                                             if ui
                                                 .add(
                                                     Label::new(RichText::new(i18n(
-                                                        "Click to try an another server...",
+                                                        "Click to try another server...",
                                                     )))
                                                     .sense(Sense::click()),
                                                 )

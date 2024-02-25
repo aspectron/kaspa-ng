@@ -131,7 +131,7 @@ impl ModuleT for Metrics {
                 })
                 .with_min_width(240.)
                 .with_max_height(screen_rect_height * 0.8)
-                .with_caption("Settings")
+                .with_caption(i18n("Settings"))
                 .with_close_button(true)
                 .build(ui);
 
