@@ -2,7 +2,6 @@
 /resources/fonts/*
 /target
 /macros/target
-/Cargo.lock
 /dist
 /dist-chrome
 /dist-firefox
