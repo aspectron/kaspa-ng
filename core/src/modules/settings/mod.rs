@@ -232,7 +232,7 @@ impl Settings {
 
                         #[cfg(not(target_arch = "wasm32"))]
                         if self.settings.node.node_kind.is_config_capable() {
-                            CollapsingHeader::new("Data Storage")
+                            CollapsingHeader::new(i18n("Data Storage"))
                                 .default_open(true)
                                 .show(ui, |ui| {
                                     ui.checkbox(&mut self.settings.node.kaspad_daemon_storage_folder_enable, i18n("Custom data storage folder"));
