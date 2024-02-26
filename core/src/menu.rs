@@ -56,6 +56,8 @@ impl<'core> Menu<'core> {
                                     dictionary
                                         .activate_language_code(code)
                                         .expect("Unable to activate language");
+                                    self.core.settings.language_code = code.to_string();
+                                    self.core.store_settings();
                                     ui.close_menu();
                                 }
                             });

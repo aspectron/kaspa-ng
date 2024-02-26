@@ -5,7 +5,7 @@ use crate::imports::*;
 pub fn try_cwd_repo_root() -> Result<Option<PathBuf>> {
     let cwd = std::env::current_dir()?;
     let cargo_toml = cwd.join("Cargo.toml");
-    let resources = cwd.join("resources").join("i18n");
+    let resources = cwd.join("core").join("resources").join("i18n");
     Ok((cargo_toml.exists() && resources.exists()).then_some(cwd))
 }
 
@@ -19,11 +19,12 @@ pub fn i18n_storage_folder() -> Result<PathBuf> {
         if path.ends_with("target") {
             path.pop();
         }
+        path.push("core");
         path.push("resources");
         path.push("i18n");
         path.push("i18n.json");
         if !path.exists() {
-            panic!("Expecting i18n.json in the repository at '/resources/i18n/i18n.json'")
+            panic!("Expecting i18n.json in the repository at '/core/resources/i18n/i18n.json'")
         } else {
             path.pop();
         }
@@ -65,6 +66,7 @@ pub fn i18n_storage_file() -> Result<PathBuf> {
         if path.ends_with("target") {
             path.pop();
         }
+        path.push("core");
         path.push("resources");
         path.push("i18n");
         path.push("i18n.json");

@@ -1,5 +1,5 @@
-/resources/i18n/*
-/resources/fonts/*
+/core/resources/i18n/*
+/core/resources/fonts/*
 /target
 /macros/target
 /dist

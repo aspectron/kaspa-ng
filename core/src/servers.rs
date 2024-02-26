@@ -90,7 +90,7 @@ fn parse_servers(toml: &str) -> Arc<HashMap<Network, Vec<Server>>> {
 
 pub fn parse_default_servers() -> &'static Arc<HashMap<Network, Vec<Server>>> {
     static EMBEDDED_SERVERS: OnceLock<Arc<HashMap<Network, Vec<Server>>>> = OnceLock::new();
-    EMBEDDED_SERVERS.get_or_init(|| parse_servers(include_str!("../../Servers.toml")))
+    EMBEDDED_SERVERS.get_or_init(|| parse_servers(include_str!("../resources/Servers.toml")))
 }
 
 pub fn update_public_servers() {
