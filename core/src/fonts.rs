@@ -101,6 +101,15 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
         ),
     );
 
+    fonts.add_static(
+        FontFamily::Proportional,
+        "hi",
+        include_bytes!(
+            // "../resources/fonts/NotoSansJP/NotoSansJP-Light.ttf"
+            "../resources/fonts/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf"
+        ),
+    );
+
     cfg_if! {
         if #[cfg(not(target_arch = "wasm32"))] {
 
@@ -109,7 +118,7 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
                 "../resources/fonts/NotoSansSC/NotoSansSC-Regular.ttf"
             ));
 
-            fonts.add_static(FontFamily::Proportional, "kr", include_bytes!(
+            fonts.add_static(FontFamily::Proportional, "ko", include_bytes!(
                 // "../resources/fonts/NotoSansKR/NotoSansKR-Light.ttf"
                 "../resources/fonts/NotoSansKR/NotoSansKR-Regular.ttf"
             ));
