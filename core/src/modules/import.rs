@@ -176,7 +176,7 @@ impl ModuleT for Import {
                             );
 
                             if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
-                                let wallet_secret = kaspa_wallet_core::secret::Secret::new(
+                                let wallet_secret = Secret::new(
                                     self.wallet_secret.as_bytes().to_vec()
                                 );
                                 self.wallet_secret.zeroize();

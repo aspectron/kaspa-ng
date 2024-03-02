@@ -59,37 +59,38 @@ egui-notify = "=0.11.0"
 #  |  \ |__| ___]  |    |      | \_ |  | ___] |    |  | 
 # _______________________________________________________
 
-kaspa-addresses = "0.13.4"
-kaspa-alloc = "0.13.4"
-kaspa-bip32 = "0.13.4"
-kaspa-cli = "0.13.4"
-kaspa-consensus-core = "0.13.4"
-kaspa-core = "0.13.4"
-kaspa-metrics-core = "0.13.4"
-kaspa-notify = "0.13.4"
-kaspa-rpc-core = "0.13.4"
-kaspa-rpc-service = "0.13.4"
-kaspa-utils = "0.13.4"
-kaspa-wallet-core = "0.13.4"
-kaspa-wrpc-client = "0.13.4"
-kaspa-wrpc-server = "0.13.4"
-kaspad = "0.13.4"
+# kaspa-addresses = "0.13.4"
+# kaspa-alloc = "0.13.4"
+# kaspa-bip32 = "0.13.4"
+# kaspa-cli = "0.13.4"
+# kaspa-consensus-core = "0.13.4"
+# kaspa-core = "0.13.4"
+# kaspa-metrics-core = "0.13.4"
+# kaspa-notify = "0.13.4"
+# kaspa-rpc-core = "0.13.4"
+# kaspa-rpc-service = "0.13.4"
+# kaspa-utils = "0.13.4"
+# kaspa-wallet-core = "0.13.4"
+# kaspa-wrpc-client = "0.13.4"
+# kaspa-wrpc-server = "0.13.4"
+# kaspad = "0.13.4"
 
-# kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
-# kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
-# kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
-# kaspa-cli = { path = "../rusty-kaspa/cli" }
-# kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
-# kaspa-core = { path = "../rusty-kaspa/core" }
-# kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
-# kaspa-notify = { path = "../rusty-kaspa/notify" }
-# kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
-# kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
-# kaspa-utils = { path = "../rusty-kaspa/utils" }
-# kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core", features=["no-unsafe-eval"] }
-# kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
-# kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
-# kaspad = { path = "../rusty-kaspa/kaspad" }
+kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
+kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
+kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
+kaspa-cli = { path = "../rusty-kaspa/cli" }
+kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
+kaspa-core = { path = "../rusty-kaspa/core" }
+kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
+kaspa-notify = { path = "../rusty-kaspa/notify" }
+kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
+kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
+kaspa-utils = { path = "../rusty-kaspa/utils" }
+kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
+kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
+kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
+kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
+kaspad = { path = "../rusty-kaspa/kaspad" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
@@ -129,26 +130,26 @@ kaspad = "0.13.4"
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-workflow-core = { version = "0.10.3", features = ["no-unsafe-eval"] }
-workflow-i18n = { version = "0.11.0" }
-workflow-chrome = "0.10.3"
-workflow-dom = "0.10.3"
-workflow-http = "0.10.3"
-workflow-log = "0.10.3"
-workflow-store = "0.10.3"
-workflow-wasm = "0.10.3"
+# workflow-core = { version = "0.10.3", features = ["no-unsafe-eval"] }
+# workflow-i18n = { version = "0.11.0" }
+# workflow-chrome = "0.10.3"
+# workflow-dom = "0.10.3"
+# workflow-http = "0.10.3"
+# workflow-log = "0.10.3"
+# workflow-store = "0.10.3"
+# workflow-wasm = "0.10.3"
 
-# workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
-# workflow-i18n = { path = "../workflow-rs/i18n", features = ["preserve-order"] }
-# workflow-chrome = { path = "../workflow-rs/chrome" }
-# workflow-dom = { path = "../workflow-rs/dom" }
-# workflow-http = { path = "../workflow-rs/http" }
-# workflow-log = { path = "../workflow-rs/log" }
-# workflow-store = { path = "../workflow-rs/store" }
-# workflow-wasm = { path = "../workflow-rs/wasm" }
+workflow-core = { path = "../workflow-rs/core" }
+workflow-i18n = { path = "../workflow-rs/i18n" }
+workflow-chrome = { path = "../workflow-rs/chrome" }
+workflow-dom = { path = "../workflow-rs/dom" }
+workflow-http = { path = "../workflow-rs/http" }
+workflow-log = { path = "../workflow-rs/log" }
+workflow-store = { path = "../workflow-rs/store" }
+workflow-wasm = { path = "../workflow-rs/wasm" }
 
 # workflow-core = {  git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["no-unsafe-eval"] }
-# workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["preserve-order"] }
+# workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-chrome = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-dom = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-http = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }

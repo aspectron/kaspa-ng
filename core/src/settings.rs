@@ -659,10 +659,10 @@ impl Settings {
                     #[allow(clippy::if_same_then_else)]
                     if matches!(error, workflow_store::error::Error::SerdeJson(..)) {
                         // TODO - recovery process
-                        log_warning!("Settings::load() error: {}", error);
+                        log_warn!("Settings::load() error: {}", error);
                         Ok(Self::default())
                     } else {
-                        log_warning!("Settings::load() error: {}", error);
+                        log_warn!("Settings::load() error: {}", error);
                         Ok(Self::default())
                     }
                 }

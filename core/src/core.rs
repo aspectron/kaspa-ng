@@ -890,7 +890,7 @@ impl Core {
                         self.purge_secure_stack();
                     }
                     CoreWallet::AccountSelection { id: _ } => {}
-                    CoreWallet::DAAScoreChange { current_daa_score } => {
+                    CoreWallet::DaaScoreChange { current_daa_score } => {
                         self.state.current_daa_score.replace(current_daa_score);
                     }
                     // Ignore scan notifications

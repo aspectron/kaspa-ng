@@ -112,7 +112,7 @@ impl KaspaService {
                 }
             }
         } else {
-            // log_warning!("Node settings are not initialized");
+            // log_warn!("Node settings are not initialized");
         }
 
         Self {
@@ -137,7 +137,7 @@ impl KaspaService {
     pub fn create_rpc_client(config: &RpcConfig, network: Network) -> Result<Rpc> {
         match config {
             RpcConfig::Wrpc { url, encoding } => {
-                // log_warning!("create_rpc_client - RPC URL: {:?}", url);
+                // log_warn!("create_rpc_client - RPC URL: {:?}", url);
                 let url = url.clone().unwrap_or_else(|| "127.0.0.1".to_string());
                 let url =
                     KaspaRpcClient::parse_url(url, *encoding, NetworkId::from(network).into())?;
@@ -145,7 +145,10 @@ impl KaspaService {
                 let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
                     *encoding,
                     NotificationMode::MultiListeners,
-                    url.as_str(),
+                    Some(url.as_str()),
+                    // TODO ex1
+                    None,
+                    None,
                 )?);
                 let rpc_ctl = wrpc_client.ctl().clone();
                 let rpc_api: Arc<DynRpcApi> = wrpc_client;
@@ -171,7 +174,7 @@ impl KaspaService {
                 connect_timeout: None,
                 retry_interval: Some(Duration::from_millis(3000)),
             };
-            wrpc_client.connect(options).await?;
+            wrpc_client.connect(Some(options)).await?;
         } else {
             #[cfg(not(target_arch = "wasm32"))]
             {
@@ -229,7 +232,7 @@ impl KaspaService {
             .clone()
             .downcast_arc::<KaspaRpcClient>()
         {
-            Some(wrpc_client.url().to_string())
+            wrpc_client.url()
         } else {
             None
         }
@@ -277,7 +280,7 @@ impl KaspaService {
             let instant = Instant::now();
             service.clone().detach_rpc().await?;
             if instant.elapsed().as_millis() > 1_000 {
-                log_warning!(
+                log_warn!(
                     "WARNING: detach_rpc() for '{}' took {} msec",
                     service.name(),
                     instant.elapsed().as_millis()
@@ -316,7 +319,7 @@ impl KaspaService {
         let rpc_api = rpc.rpc_api().clone();
 
         self.wallet()
-            .set_network_id(network.into())
+            .set_network_id(&network.into())
             .expect("Can not change network id while the wallet is connected");
 
         self.wallet().bind_rpc(Some(rpc)).await.unwrap();
@@ -408,7 +411,7 @@ impl Service for KaspaService {
                         use kaspa_wallet_core::events::Events as CoreWallet;
 
                         match *event {
-                            CoreWallet::DAAScoreChange{ .. } => {
+                            CoreWallet::DaaScoreChange{ .. } => {
                             }
                             CoreWallet::Connect { .. } => {
                                 self.connect_all_services().await?;
@@ -529,7 +532,7 @@ impl Service for KaspaService {
                                 // to be opened offline in disconnected
                                 // mode by changing network id in settings
                                 self.wallet()
-                                    .set_network_id(network.into()).ok();
+                                    .set_network_id(&network.into()).ok();
                             }
 
                             KaspadServiceEvents::Exit => {

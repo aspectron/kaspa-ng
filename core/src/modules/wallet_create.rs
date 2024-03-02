@@ -852,7 +852,7 @@ impl ModuleT for WalletCreate {
 
                         let wallet_secret = Secret::from(args.wallet_secret.as_str());
                         let payment_secret = args.import_with_bip39_passphrase.then_some(Secret::from(args.payment_secret.as_str()));
-                        let mnemonic = sanitize_mnemonic(args.import_private_key_mnemonic.as_str());
+                        let mnemonic = Secret::from(sanitize_mnemonic(args.import_private_key_mnemonic.as_str()));
 
 
                         let request = AccountsDiscoveryRequest {
@@ -973,7 +973,7 @@ impl ModuleT for WalletCreate {
                         let prv_key_data_args = PrvKeyDataCreateArgs::new(
                             None,
                             payment_secret.clone(),
-                            mnemonic_phrase_string.clone(),
+                            Secret::from(mnemonic_phrase_string.clone()),
                         );
 
                         let prv_key_data_id = wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?;

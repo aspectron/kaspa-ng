@@ -155,7 +155,7 @@ impl Server {
     fn _post_notify(&self, op: u64, data: Vec<u8>) -> Result<()> {
         spawn_local(async move {
             if let Err(err) = send_message(&notify_to_jsv(op, &data)).await {
-                log_warning!("Unable to post notification: {:?}", err);
+                log_warn!("Unable to post notification: {:?}", err);
             }
         });
 

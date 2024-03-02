@@ -154,7 +154,7 @@ impl ModuleT for WalletOpen {
                     .render(ui);
 
                     if *unlock.borrow() {
-                        let wallet_secret = kaspa_wallet_core::secret::Secret::new(
+                        let wallet_secret = Secret::new(
                             self.wallet_secret.as_bytes().to_vec(),
                         );
                         self.wallet_secret.zeroize();
