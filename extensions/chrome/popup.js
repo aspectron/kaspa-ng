@@ -8,24 +8,26 @@
 // import init from '/kaspa-egui-57c7a8dd13e092be.js';
 // init('/kaspa-egui-57c7a8dd13e092be_bg.wasm');
 
-document.querySelector("#btn").addEventListener("click", ()=>{
-    chrome.runtime.sendMessage({
-        target: "offscreen",
-        data: "message from popup"
-    }, (msg)=>{
-        if (msg){
-            alert("msg:"+msg);
-        }
-    })
-})
+// -----------
 
-chrome.runtime.onMessage.addListener((message, sender, reply)=>{
-    console.log("popup:", message)
-    let {data} = message;
-    if (data?.counter){
-        document.querySelector("#counter").textContent = `counter: ${data.counter}`;
-    }
-})
+// document.querySelector("#btn").addEventListener("click", ()=>{
+//     chrome.runtime.sendMessage({
+//         target: "offscreen",
+//         data: "message from popup"
+//     }, (msg)=>{
+//         if (msg){
+//             alert("msg:"+msg);
+//         }
+//     })
+// })
+
+// chrome.runtime.onMessage.addListener((message, sender, reply)=>{
+//     console.log("popup:", message)
+//     let {data} = message;
+//     if (data?.counter){
+//         document.querySelector("#counter").textContent = `counter: ${data.counter}`;
+//     }
+// })
 
 // import init from '/kaspa-ng.js';
 // let kaspa_ng = init('/kaspa-egui_bg.wasm');

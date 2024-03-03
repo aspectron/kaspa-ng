@@ -9,17 +9,21 @@ pub use kaspa::KaspaService;
 pub mod peer_monitor;
 pub use peer_monitor::PeerMonitorService;
 
-pub mod metrics_monitor;
-pub use metrics_monitor::MetricsService;
-
-pub mod blockdag_monitor;
-pub use blockdag_monitor::BlockDagMonitorService;
-
 pub mod market_monitor;
 pub use market_monitor::MarketMonitorService;
 
 pub mod update_monitor;
 pub use update_monitor::UpdateMonitorService;
+
+pub mod metrics_monitor;
+pub use metrics_monitor::MetricsService;
+cfg_if! {
+    if #[cfg(not(feature = "lean"))] {
+
+        pub mod blockdag_monitor;
+        pub use blockdag_monitor::BlockDagMonitorService;
+    }
+}
 
 /// Service is a core component of the Kaspa NG application responsible for
 /// running application services and communication between these services.

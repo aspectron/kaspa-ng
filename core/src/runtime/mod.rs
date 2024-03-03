@@ -29,10 +29,13 @@ pub struct Inner {
 
     kaspa: Arc<KaspaService>,
     peer_monitor_service: Arc<PeerMonitorService>,
-    metrics_service: Arc<MetricsService>,
-    block_dag_monitor_service: Arc<BlockDagMonitorService>,
-    market_monitor_service: Arc<MarketMonitorService>,
     update_monitor_service: Arc<UpdateMonitorService>,
+    market_monitor_service: Arc<MarketMonitorService>,
+
+    // #[cfg(not(feature = "lean"))]
+    metrics_service: Arc<MetricsService>,
+    #[cfg(not(feature = "lean"))]
+    block_dag_monitor_service: Arc<BlockDagMonitorService>,
 }
 
 /// Runtime is a core component of the Kaspa NG application responsible for
@@ -54,11 +57,6 @@ impl Runtime {
             application_events.clone(),
             settings,
         ));
-        let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
-        let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(
-            application_events.clone(),
-            settings,
-        ));
         let market_monitor_service = Arc::new(MarketMonitorService::new(
             application_events.clone(),
             settings,
@@ -69,14 +67,31 @@ impl Runtime {
             settings,
         ));
 
+        let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
+        cfg_if! {
+            if #[cfg(not(feature = "lean"))] {
+                let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(
+                    application_events.clone(),
+                    settings,
+                ));
+            }
+        }
+        // let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
+        // let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(
+        //     application_events.clone(),
+        //     settings,
+        // ));
+
         let services: Mutex<Vec<Arc<dyn Service>>> = Mutex::new(vec![
             repaint_service.clone(),
             kaspa.clone(),
             peer_monitor_service.clone(),
-            metrics_service.clone(),
-            block_dag_monitor_service.clone(),
             market_monitor_service.clone(),
             update_monitor_service.clone(),
+            // #[cfg(not(feature = "lean"))]
+            metrics_service.clone(),
+            #[cfg(not(feature = "lean"))]
+            block_dag_monitor_service.clone(),
         ]);
 
         let runtime = Self {
@@ -88,12 +103,14 @@ impl Runtime {
                 peer_monitor_service,
                 market_monitor_service,
                 update_monitor_service,
-                metrics_service,
-                block_dag_monitor_service,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
                 start_time: Instant::now(),
                 system: Some(system),
+                // #[cfg(not(feature = "lean"))]
+                metrics_service,
+                #[cfg(not(feature = "lean"))]
+                block_dag_monitor_service,
             }),
         };
 
@@ -185,8 +202,13 @@ impl Runtime {
         &self.inner.metrics_service
     }
 
-    pub fn block_dag_monitor_service(&self) -> &Arc<BlockDagMonitorService> {
-        &self.inner.block_dag_monitor_service
+    cfg_if! {
+        if #[cfg(not(feature = "lean"))] {
+
+            pub fn block_dag_monitor_service(&self) -> &Arc<BlockDagMonitorService> {
+                &self.inner.block_dag_monitor_service
+            }
+        }
     }
 
     pub fn market_monitor_service(&self) -> &Arc<MarketMonitorService> {

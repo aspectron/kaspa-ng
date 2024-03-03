@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 use workflow_core::runtime::is_wasm;
 use egui::load::Bytes;
+
+#[cfg(not(feature = "lean"))]
 use kaspa_metrics_core::{Metric,MetricGroup};
+#[cfg(not(feature = "lean"))]
 use egui_plot::{
     Legend,
     Line,
@@ -41,28 +44,35 @@ impl ModuleT for Overview {
         if core.device().single_pane() {
             self.render_details(core, ui);
         } else {
-            let width = ui.available_width();
             
-            SidePanel::left("overview_left")
-                .exact_width(width*0.5)
-                .resizable(false)
-                .show_separator_line(true)
-                .show_inside(ui, |ui| {
-                    egui::ScrollArea::vertical()
-                    .id_source("overview_metrics")
-                    .auto_shrink([false; 2])
-                    .show(ui, |ui| {
-                        self.render_stats(core,ui);
-                    });
-                });
+            cfg_if! {
+                if #[cfg(not(feature = "lean"))] {
 
-            SidePanel::right("overview_right")
-                .exact_width(width*0.5)
-                .resizable(false)
-                .show_separator_line(false)
-                .show_inside(ui, |ui| {
-                    self.render_details(core, ui);
-                });
+                    let width = ui.available_width();
+
+                    SidePanel::left("overview_left")
+                    .exact_width(width*0.5)
+                    .resizable(false)
+                    .show_separator_line(true)
+                    .show_inside(ui, |ui| {
+                        egui::ScrollArea::vertical()
+                        .id_source("overview_metrics")
+                        .auto_shrink([false; 2])
+                        .show(ui, |ui| {
+                            self.render_stats(core,ui);
+                        });
+                    });
+                    
+                    SidePanel::right("overview_right")
+                        .exact_width(width*0.5)
+                        .resizable(false)
+                        .show_separator_line(false)
+                        .show_inside(ui, |ui| {
+                            self.render_details(core, ui);
+                        });
+                }
+        
+            }
         }
 
 
@@ -71,6 +81,7 @@ impl ModuleT for Overview {
 
 impl Overview {
 
+    #[cfg(not(feature = "lean"))]
     fn render_stats(&mut self, core: &mut Core, ui : &mut Ui) {
 
         CollapsingHeader::new(i18n("Kaspa p2p Node"))
@@ -354,6 +365,7 @@ impl Overview {
             });
     }
 
+    #[cfg(not(feature = "lean"))]
     fn render_graphs(&mut self, core: &mut Core, ui : &mut Ui) {
 
         let mut metric_iter = METRICS.iter();
@@ -382,6 +394,7 @@ impl Overview {
 
     }
 
+    #[cfg(not(feature = "lean"))]
     fn render_graph(&mut self, ui : &mut Ui, metric : Metric, value : f64) {
 
         let group = MetricGroup::from(metric);
@@ -467,6 +480,7 @@ impl Overview {
     }
 }
 
+#[cfg(not(feature = "lean"))]
 const METRICS : &[Metric] = &[
     Metric::NodeCpuUsage,
     Metric::NodeResidentSetSizeBytes,

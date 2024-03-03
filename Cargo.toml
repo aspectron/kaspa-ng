@@ -169,6 +169,7 @@ chrome-sys = "0.1.0"
 chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["derive", "string", "cargo"] }
 convert_case = "0.6.0"
+crypto_box = { version = "0.9.1", features = ["chacha20"] }
 ctrlc = { version = "3.2", features = ["termination"] }
 derivative = "2.2.0"
 downcast = "0.11.0"

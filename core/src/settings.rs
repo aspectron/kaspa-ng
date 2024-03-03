@@ -3,6 +3,7 @@ use kaspa_metrics_core::Metric;
 use kaspa_utils::networking::ContextualNetAddress;
 use kaspa_wallet_core::storage::local::storage::Storage;
 use kaspa_wrpc_client::WrpcEncoding;
+use workflow_core::{runtime, task::spawn};
 
 const SETTINGS_REVISION: &str = "0.0.0";
 
@@ -637,8 +638,17 @@ impl Settings {
 
     pub fn store_sync(&self) -> Result<&Self> {
         let storage = storage()?;
-        storage.ensure_dir_sync()?;
-        workflow_store::fs::write_json_sync(storage.filename(), self)?;
+        if runtime::is_chrome_extension() {
+            let this = self.clone();
+            spawn(async move {
+                if let Err(err) = workflow_store::fs::write_json(storage.filename(), &this).await {
+                    log_error!("Settings::store_sync() error: {}", err);
+                }
+            });
+        } else {
+            storage.ensure_dir_sync()?;
+            workflow_store::fs::write_json_sync(storage.filename(), self)?;
+        }
         Ok(self)
     }
 

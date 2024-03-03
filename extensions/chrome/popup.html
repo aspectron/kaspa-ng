@@ -34,6 +34,13 @@
 </head>
 <body>
     <canvas id="kaspa-ng"></canvas>
+    <div class="centered" id="loading">
+        <p style="font-size:16px">
+            <img src="kaspa-ng.svg" alt="Kaspa NG" width="50%">
+        </p>
+        <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+    </div>
+
     <!--Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality). -->
     <!-- Force refresh (Ctrl + F5) to load the latest files instead of cached files  -->
     <!-- <script>
@@ -46,7 +53,7 @@
     </script> -->
     <!-- <script src="kaspa-ng.js"></script> -->
     <script type="module" src="./popup.js"></script>
-    <div id="counter"></div>
-    <button id="btn">Test</button>
+    <!-- <div id="counter"></div>
+    <button id="btn">Test</button> -->
 </body>
 </html><!-- Powered by egui: https://github.com/emilk/egui/ -->

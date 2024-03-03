@@ -12,9 +12,12 @@ build = "build.rs"
 crate-type = ["cdylib", "lib"]
 
 [features]
-browser-extension = []
+browser-extension = ["lean"]
+mobile = ["lean"]
+lean = []
 cli = []
-default = []
+# default = []
+default = ["browser-extension"]
 
 [build-dependencies]
 vergen = { version = "8.2.6", features = ["build", "git", "gitcl", "rustc", "cargo"] }

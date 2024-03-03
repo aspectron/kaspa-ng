@@ -126,12 +126,19 @@ impl Core {
 
         let modules: HashMap<TypeId, Module> = {
             cfg_if! {
-                if #[cfg(not(target_arch = "wasm32"))] {
+                if #[cfg(feature = "lean")] {
+                    crate::modules::register_generic_modules(&runtime).into_iter().collect()
+
+                } else if #[cfg(target_arch = "wasm32")] {
                     crate::modules::register_generic_modules(&runtime).into_iter().chain(
-                        crate::modules::register_native_modules(&runtime)
+                        crate::modules::register_advanced_modules(&runtime)
                     ).collect()
                 } else {
-                    crate::modules::register_generic_modules(&runtime)
+                    crate::modules::register_generic_modules(&runtime).into_iter().chain(
+                        crate::modules::register_advanced_modules(&runtime)
+                    ).chain(
+                        crate::modules::register_native_modules(&runtime)
+                    ).collect()
                 }
             }
         };
@@ -1185,11 +1192,14 @@ impl Core {
     pub fn register_visibility_handler(&self) {
         use workflow_wasm::callback::*;
 
+        #[cfg(not(feature = "lean"))]
         let block_dag_background_state = self.get::<modules::BlockDag>().background_state();
 
         let sender = self.sender();
         let callback = callback!(move || {
             let visibility_state = document().visibility_state();
+
+            #[cfg(not(feature = "lean"))]
             match visibility_state {
                 VisibilityState::Visible => {
                     let block_dag_monitor_service =

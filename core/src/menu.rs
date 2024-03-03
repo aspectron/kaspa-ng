@@ -1,4 +1,5 @@
 use egui_phosphor::thin::TRANSLATE;
+use workflow_core::runtime;
 
 use crate::imports::*;
 
@@ -145,8 +146,7 @@ impl<'core> Menu<'core> {
                                     });
                                     ui.end_row();
 
-                                    #[cfg(not(target_arch = "wasm32"))]
-                                    {
+                                    if runtime::is_native() || runtime::is_chrome_extension() {
                                         ui.label(i18n("Zoom"));
                                         ui.horizontal(|ui| {
                                             let zoom_factor = ui.ctx().zoom_factor();
@@ -239,16 +239,19 @@ impl<'core> Menu<'core> {
         //     ui.close_menu();
         // }
 
-        ui.separator();
-        if ui.button(i18n("Metrics")).clicked() {
-            self.select::<modules::Metrics>();
-            ui.close_menu();
-        }
+        #[cfg(not(feature = "lean"))]
+        {
+            ui.separator();
+            if ui.button(i18n("Metrics")).clicked() {
+                self.select::<modules::Metrics>();
+                ui.close_menu();
+            }
 
-        ui.separator();
-        if ui.button(i18n("Block DAG")).clicked() {
-            self.select::<modules::BlockDag>();
-            ui.close_menu();
+            ui.separator();
+            if ui.button(i18n("Block DAG")).clicked() {
+                self.select::<modules::BlockDag>();
+                ui.close_menu();
+            }
         }
 
         #[cfg(not(target_arch = "wasm32"))]
