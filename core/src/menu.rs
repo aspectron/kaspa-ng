@@ -146,7 +146,7 @@ impl<'core> Menu<'core> {
                                     });
                                     ui.end_row();
 
-                                    if runtime::is_native() || runtime::is_chrome_extension() {
+                                    if runtime::is_native() {
                                         ui.label(i18n("Zoom"));
                                         ui.horizontal(|ui| {
                                             let zoom_factor = ui.ctx().zoom_factor();
