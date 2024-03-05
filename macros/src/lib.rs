@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-mod mask;
+mod crnd;
 mod register;
 
 #[proc_macro]
@@ -8,6 +8,6 @@ pub fn register_modules(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn mask(input: TokenStream) -> TokenStream {
-    mask::mask(input)
+pub fn crnd(input: TokenStream) -> TokenStream {
+    crnd::crnd(input)
 }

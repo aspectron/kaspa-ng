@@ -9,7 +9,7 @@ impl UtxoManager {
         Self { }
     }
 
-    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, rc : &RenderContext<'_>) {
+    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, rc : &RenderContext) {
         let RenderContext { account: _, .. } = rc;
 
         egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {

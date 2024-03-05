@@ -1,3 +1,4 @@
+use crate::imports::ApplicationEventsChannel;
 use crate::result::Result;
 use crate::servers::parse_default_servers;
 use cfg_if::cfg_if;
@@ -10,6 +11,8 @@ use workflow_log::*;
 
 // pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
 pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../resources/images/kaspa-node-dark.svg");
+pub const KASPA_NG_ICON_TRANSPARENT_SVG: &[u8] =
+    include_bytes!("../resources/images/kaspa-node-transparent.svg");
 pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../resources/images/kaspa-ng.svg");
 pub const I18N_EMBEDDED: &str = include_str!("../resources/i18n/i18n.json");
 pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
@@ -136,7 +139,7 @@ cfg_if! {
             }
         }
 
-        pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
+        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>) -> Result<()> {
             use std::sync::Mutex;
 
             match try_set_fd_limit(DESIRED_DAEMON_SOFT_FD_LIMIT) {
@@ -249,11 +252,14 @@ cfg_if! {
                         viewport,
                         ..Default::default()
                     };
+
+                    // let application_events = ApplicationEventsChannel::unbounded();
+
                     eframe::run_native(
                         "Kaspa NG",
                         native_options,
                         Box::new(move |cc| {
-                            let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings);
+                            let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings, wallet_api, application_events);
                             delegate.lock().unwrap().replace(runtime.clone());
                             runtime::signals::Signals::bind(&runtime);
                             runtime.start();
@@ -274,7 +280,7 @@ cfg_if! {
 
         // use crate::result::Result;
 
-        pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
+        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>) -> Result<()> {
             use wasm_bindgen::prelude::*;
             use workflow_dom::utils::document;
 
@@ -321,7 +327,10 @@ cfg_if! {
                     "kaspa-ng",
                     web_options,
                     Box::new(move |cc| {
-                        let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings);
+
+                        // wallet_api.ping()
+
+                        let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings, wallet_api, application_events);
                         runtime.start();
 
                         let adaptor = kaspa_ng_core::adaptor::Adaptor::new(runtime.clone());

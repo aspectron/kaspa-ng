@@ -10,7 +10,7 @@ impl<'context> Estimator<'context> {
         Self { context }
     }
 
-    pub fn render(&mut self, core : &mut Core, ui: &mut Ui, rc : &RenderContext<'_>) -> bool {
+    pub fn render(&mut self, core : &mut Core, ui: &mut Ui, rc : &RenderContext) -> bool {
 
 
         use egui_phosphor::light::{CHECK, X};

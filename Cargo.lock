@@ -3655,6 +3655,7 @@ name = "kaspa-ng-chrome"
 version = "0.2.4"
 dependencies = [
  "async-trait",
+ "borsh",
  "chrome-sys",
  "js-sys",
  "kaspa-ng-core",
@@ -3668,6 +3669,7 @@ dependencies = [
  "workflow-core",
  "workflow-log",
  "workflow-store",
+ "workflow-wasm",
 ]
 
 [[package]]

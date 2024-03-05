@@ -10,7 +10,7 @@ impl<'context> Destination<'context> {
         Self { context }
     }
 
-    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, rc : &RenderContext<'_>) {
+    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, rc : &RenderContext) {
         let RenderContext { network_type, .. } = rc;
 
         TextEditor::new(

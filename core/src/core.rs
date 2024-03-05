@@ -143,22 +143,32 @@ impl Core {
             }
         };
 
+        let device = Device::new(window_frame);
+
         #[allow(unused_mut)]
-        let mut module = modules
-            .get(&TypeId::of::<modules::Overview>())
-            .unwrap()
-            .clone();
+        let mut module_typeid = if workflow_core::runtime::is_chrome_extension() {
+            TypeId::of::<modules::WalletOpen>()
+        } else {
+            TypeId::of::<modules::Overview>()
+        };
 
         #[cfg(not(target_arch = "wasm32"))]
         if settings.version != env!("CARGO_PKG_VERSION") {
             settings.version = env!("CARGO_PKG_VERSION").to_string();
             settings.store_sync().unwrap();
 
-            module = modules
-                .get(&TypeId::of::<modules::Changelog>())
-                .unwrap()
-                .clone();
+            module_typeid = TypeId::of::<modules::Changelog>();
+            // module = modules
+            //     .get(&TypeId::of::<modules::Changelog>())
+            //     .unwrap()
+            //     .clone();
         }
+
+        let module = modules.get(&module_typeid).unwrap().clone();
+        // let mut module = modules
+        //     .get(&TypeId::of::<modules::Overview>())
+        //     .unwrap()
+        //     .clone();
 
         let application_events_channel = runtime.application_events().clone();
         let wallet = runtime.wallet().clone();
@@ -199,7 +209,7 @@ impl Core {
 
             release: None,
 
-            device: Device::new(window_frame),
+            device,
             market: None,
             debug: false,
             window_frame,
@@ -746,6 +756,10 @@ impl Core {
             Events::Wallet { event } => {
                 // println!("event: {:?}", event);
                 match *event {
+                    CoreWallet::WalletPing => {
+                        // log_info!("KASPA NG RECEIVED WALLET START EVENT");
+                        crate::runtime::runtime().notify(UserNotification::info("Wallet ping"));
+                    }
                     CoreWallet::Error { message } => {
                         // runtime().notify(UserNotification::error(message.as_str()));
                         println!("{message}");

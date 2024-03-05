@@ -66,10 +66,26 @@ impl Device {
     }
 
     pub fn single_pane(&self) -> bool {
-        self.mobile_forced || self.mobile_device || self.orientation() == Orientation::Portrait
+        workflow_core::runtime::is_chrome_extension()
+            || self.mobile_forced
+            || self.mobile_device
+            || self.orientation() == Orientation::Portrait
+    }
+
+    #[inline]
+    pub fn desktop(&self) -> bool {
+        !self.single_pane()
     }
 
     pub fn force_orientation(&mut self, orientation: Option<Orientation>) {
         self.orientation_forced = orientation;
+    }
+
+    pub fn top_icon_size(&self) -> f32 {
+        if self.single_pane() {
+            26.
+        } else {
+            20.
+        }
     }
 }

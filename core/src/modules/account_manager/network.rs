@@ -10,7 +10,7 @@ impl<'context> NetworkState<'context> {
         Self { context }
     }
 
-    pub fn render(&mut self, core: &mut Core, ui: &mut Ui, rc: &RenderContext<'_>) {
+    pub fn render(&mut self, core: &mut Core, ui: &mut Ui, rc: &RenderContext) {
 
         use egui_phosphor::light::{CLOUD_SLASH,CLOUD_ARROW_DOWN};
 
@@ -49,7 +49,7 @@ impl<'context> NetworkState<'context> {
             }
             ui.label("");
             if ui.large_button(i18n("Payment Request")).clicked() {
-                core.get_mut::<modules::Request>().select(rc.account);
+                core.get_mut::<modules::Request>().select(&rc.account);
                 core.select::<modules::Request>();
             }
         });

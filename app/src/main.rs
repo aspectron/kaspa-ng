@@ -13,7 +13,7 @@ cfg_if! {
             kaspa_alloc::init_allocator_with_default_settings();
 
             let body = async {
-                if let Err(err) = kaspa_ng_main(None).await {
+                if let Err(err) = kaspa_ng_main(None,None).await {
                     log_error!("Error: {err}");
                 }
             };

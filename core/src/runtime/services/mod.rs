@@ -6,6 +6,9 @@ pub use repaint_service::RepaintService;
 pub mod kaspa;
 pub use kaspa::KaspaService;
 
+// pub mod remote;
+// pub use remote::RemoteService;
+
 pub mod peer_monitor;
 pub use peer_monitor::PeerMonitorService;
 

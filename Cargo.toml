@@ -163,6 +163,7 @@ workflow-wasm = { path = "../workflow-rs/wasm" }
 
 ahash = "0.8.6"
 async-trait = "0.1.73"
+borsh = { version = "0.9.1", features = ["rc"] } # please keep this fixed
 cfg-if = "1.0.0"
 chrome-sys = "0.1.0"
 # chrome-sys = {path = "../chrome-sys"}

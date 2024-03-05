@@ -14,7 +14,7 @@ impl<'manager> Overview<'manager> {
         Vec2::new(ui.available_width() * 0.75, 32.)
     }
 
-    pub fn render(&mut self, core: &mut Core, ui : &mut Ui, rc : &RenderContext<'_>) {
+    pub fn render(&mut self, core: &mut Core, ui : &mut Ui, rc : &RenderContext) {
         use egui_phosphor::light::{ARROW_CIRCLE_UP,ARROWS_DOWN_UP,QR_CODE};
 
         core.apply_mobile_style(ui);
@@ -84,7 +84,7 @@ impl<'manager> Overview<'manager> {
                                         });
                                     }
                                     layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme_style().medium_button_size()), |(_,core)| {
-                                        core.get_mut::<modules::Request>().select(rc.account);
+                                        core.get_mut::<modules::Request>().select(&rc.account);
                                         core.select::<modules::Request>();
                         
                                     });

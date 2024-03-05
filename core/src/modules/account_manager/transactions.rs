@@ -8,7 +8,7 @@ impl Transactions {
         Self { }
     }
 
-    pub fn render(&mut self, ui: &mut Ui, _core : &mut Core, rc : &RenderContext<'_>) {
+    pub fn render(&mut self, ui: &mut Ui, _core : &mut Core, rc : &RenderContext) {
         let RenderContext { account, network_type, current_daa_score, .. } = rc;
 
         egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {

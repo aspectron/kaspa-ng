@@ -11,7 +11,7 @@ mod balance;
 mod destination;
 mod details;
 mod estimator;
-mod menus;
+pub mod menus;
 mod network;
 mod overview;
 mod processor;
@@ -163,15 +163,37 @@ impl Zeroize for ManagerContext {
     }
 }
 
-pub struct RenderContext<'render> {
-    pub account : &'render Account,
+// pub struct RenderContext<'render> {
+//     pub account : &'render Account,
+pub struct RenderContext {
+    pub account : Account,
     pub context : Arc<account::AccountContext>,
     pub network_type : NetworkType,
     pub current_daa_score : Option<u64>,
 }
 
-impl<'render> RenderContext<'render> {
-    pub fn new(account : &'render Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
+// impl<'render> RenderContext<'render> {
+impl RenderContext {
+    // pub fn new(account : &'render Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
+    // pub fn new(account : Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
+    // pub fn new(account : Account, core: &Core) -> Result<Self> {
+    pub fn new(account : Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
+
+
+        // if let AccountManagerState::Overview { account } = &account_manager.state {
+        // let network_type = if let Some(network_id) = core.state().network_id() {
+        //     network_id.network_type()
+        // } else {
+        //     core.settings.node.network.into()
+        // };
+
+        // let current_daa_score = core.state().current_daa_score();
+
+        // Ok(RenderContext::new(account, network_type, current_daa_score)?)
+        // } else {
+        //     Err(Error::custom("Account is missing context"))
+        // }
+
 
         let context = if let Some(context) = account.context() {
             context
@@ -368,8 +390,17 @@ impl AccountManager {
                     return Ok(());
                 }
 
-                let rc = RenderContext::new(&account, network_type, current_daa_score)?;
-                if core.device().single_pane() {
+                // let rc = self.make_render_context(core)?;
+                // let rc = RenderContext::new(&account, network_type, current_daa_score)?;
+                let rc = RenderContext::new(account.clone(),core.network().into(), core.state().current_daa_score())?;
+
+                if core.device().mobile() {
+
+                    self.render_singular_layout(core,ui,&rc, self.section);
+                } else if core.device().single_pane() {
+
+                    self.render_menu(core,ui,&rc);
+
                     self.render_singular_layout(core,ui,&rc, self.section);
                 } else {
                     if self.section == AccountManagerSection::Overview {
@@ -383,13 +414,36 @@ impl AccountManager {
         Ok(())
     }
 
+    pub fn account(&self) -> Option<Account> {
+        if let AccountManagerState::Overview { account } = &self.state {
+            Some(account.clone())
+        } else {
+            None
+        }
+    }
 
-    fn render_menu(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext<'_>) {
+    // pub fn make_render_context(&mut self, core: &Core) -> Result<RenderContext> {
+    //     if let AccountManagerState::Overview { account } = &self.state {
+    //         let network_type = if let Some(network_id) = core.state().network_id() {
+    //             network_id.network_type()
+    //         } else {
+    //             core.settings.node.network.into()
+    //         };
+
+    //         let current_daa_score = core.state().current_daa_score();
+
+    //         Ok(RenderContext::new(account.clone(), network_type, current_daa_score)?)
+    //     } else {
+    //         Err(Error::custom("Account is missing context"))
+    //     }
+    // }
+
+    fn render_menu(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext) {
         ui.horizontal(|ui| {
             let screen_rect_height = ui.ctx().screen_rect().height();
-            WalletMenu::new().render(core,ui,screen_rect_height * 0.8);
+            WalletMenu::default().render(core,ui,screen_rect_height * 0.8);
             ui.separator();
-            AccountMenu::new().render(core,ui,self,rc, screen_rect_height * 0.8);
+            AccountMenu::default().render(core,ui,screen_rect_height * 0.8,self,rc);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 
                 if ui.add(Label::new(RichText::new(egui_phosphor::light::LOCK).size(18.)).sense(Sense::click())).clicked() {
@@ -401,14 +455,15 @@ impl AccountManager {
                 }
 
                 ui.separator();
-
                 ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
 
-                ui.separator();
-
-                if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
-                    self.section = AccountManagerSection::UtxoManager;
+                if core.device().desktop() {
+                    ui.separator();
+                    if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                        self.section = AccountManagerSection::UtxoManager;
+                    }
                 }
+
                 ui.separator();
                 if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
                     self.section = AccountManagerSection::Details;
@@ -422,7 +477,11 @@ impl AccountManager {
         });
     }
 
-    fn render_landscape(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext<'_>, section : AccountManagerSection) {
+    pub fn change_section(&mut self, section : AccountManagerSection) {
+        self.section = section;
+    }
+
+    fn render_landscape(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext, section : AccountManagerSection) {
 
         let panel_width = ui.available_width() * 0.5;
 
@@ -466,7 +525,7 @@ impl AccountManager {
 
     }
 
-    fn render_singular_layout(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext<'_>, section : AccountManagerSection) {
+    fn render_singular_layout(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext, section : AccountManagerSection) {
 
         match section {
             AccountManagerSection::Overview => {

@@ -47,10 +47,16 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
+    pub fn new(
+        egui_ctx: &egui::Context,
+        settings: &Settings,
+        wallet_api: Option<Arc<dyn WalletApi>>,
+        application_events: Option<ApplicationEventsChannel>,
+    ) -> Self {
         let system = System::new();
 
-        let application_events = ApplicationEventsChannel::unbounded();
+        let application_events =
+            application_events.unwrap_or_else(ApplicationEventsChannel::unbounded);
         let repaint_service = Arc::new(RepaintService::new(application_events.clone(), settings));
         let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
         let peer_monitor_service = Arc::new(PeerMonitorService::new(

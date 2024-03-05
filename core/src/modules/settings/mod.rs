@@ -435,6 +435,103 @@ impl Settings {
             }
     }
 
+
+
+
+    fn render_ui_settings(
+        &mut self,
+        core: &mut Core,
+        ui: &mut egui::Ui,
+    ) {
+
+
+        CollapsingHeader::new(i18n("User Interface"))
+            .default_open(true)
+            .show(ui, |ui| {
+
+                ui.label(i18n("Theme Color"));
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        let current_theme_color_name = theme_color().name();
+                        ui.menu_button(
+                            format!("{} ⏷", current_theme_color_name),
+                            |ui| {
+                                theme_colors().keys().for_each(|name| {
+                                    if name.as_str() != current_theme_color_name
+                                        && ui.button(name).clicked()
+                                    {
+                                        apply_theme_color_by_name(
+                                            ui.ctx(),
+                                            name,
+                                        );
+                                        core
+                                            .settings
+                                            .user_interface
+                                            .theme_color = name.to_string();
+                                        // core.store_settings();
+                                        ui.close_menu();
+                                    }
+                                });
+                            },
+                        );
+                    });
+                    ui.add_space(1.);
+                });
+
+                ui.label(i18n("Theme Style"));
+                ui.horizontal(|ui| {
+                    let current_theme_style_name = theme_style().name();
+                    ui.menu_button(
+                        format!("{} ⏷", current_theme_style_name),
+                        |ui| {
+                            theme_styles().keys().for_each(|name| {
+                                if name.as_str() != current_theme_style_name
+                                    && ui.button(name).clicked()
+                                {
+                                    apply_theme_style_by_name(ui.ctx(), name);
+                                    core
+                                        .settings
+                                        .user_interface
+                                        .theme_style = name.to_string();
+                                    // core.store_settings();
+                                    ui.close_menu();
+                                }
+                            });
+                        },
+                    );
+                });
+
+                if workflow_core::runtime::is_native() {
+                    ui.label(i18n("Zoom"));
+                    ui.horizontal(|ui| {
+                        let zoom_factor = ui.ctx().zoom_factor();
+                        if ui
+                            .add_sized(
+                                Vec2::splat(24.),
+                                Button::new(RichText::new("-").size(18.)),
+                            )
+                            .clicked()
+                        {
+                            ui.ctx().set_zoom_factor(zoom_factor - 0.1);
+                        }
+                        ui.label(format!("{:.0}%", zoom_factor * 100.0));
+                        if ui
+                            .add_sized(
+                                Vec2::splat(24.),
+                                Button::new(RichText::new("+").size(18.)),
+                            )
+                            .clicked()
+                        {
+                            ui.ctx().set_zoom_factor(zoom_factor + 0.1);
+                        }
+                    });
+                }
+
+            });
+
+
+    }
+
     fn render_settings(
         &mut self,
         core: &mut Core,
@@ -442,6 +539,8 @@ impl Settings {
     ) {
 
         self.render_node_settings(core,ui);
+
+        self.render_ui_settings(core,ui);
 
         CollapsingHeader::new(i18n("Services"))
             .default_open(true)

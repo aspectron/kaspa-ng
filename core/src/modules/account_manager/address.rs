@@ -11,7 +11,7 @@ impl<'context> AddressPane<'context> {
         Self { context }
     }
 
-    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, rc : &RenderContext<'_>) {
+    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, rc : &RenderContext) {
         use egui_phosphor::light::CLIPBOARD_TEXT;
         let address = format_address(rc.context.address(), Some(8));
         if ui.add(Label::new(format!("Address: {address} {CLIPBOARD_TEXT}")).sense(Sense::click()))

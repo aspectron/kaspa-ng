@@ -1,29 +1,16 @@
-use crate::ipc::*;
-use js_sys::Function;
-use kaspa_ng_core::events::ApplicationEventsChannel;
-// use kaspa_ng_core::runtime::kaspa::KaspaService;
-// use kaspa_ng_core::runtime::Runtime;
-use kaspa_ng_core::settings::Settings;
-use kaspa_wallet_core::api::transport::WalletServer;
-use kaspa_wallet_core::error::Error;
-use kaspa_wallet_core::prelude::Wallet as CoreWallet;
-use kaspa_wallet_core::result::Result;
-// use kaspa_wallet_core::runtime;
-//use kaspa_wallet_core::runtime::api::transport::*;
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::spawn_local;
-use workflow_log::*;
+use kaspa_ng_core::imports::KaspaRpcClient;
+// use kaspa_wallet_core::rpc::{Rpc, WrpcEncoding};
+use kaspa_wallet_core::rpc::{
+    ConnectOptions, ConnectStrategy, DynRpcApi, NotificationMode, Rpc, RpcCtl, WrpcEncoding,
+};
 
-type ListenerClosure = Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>;
+use crate::imports::*;
 
 pub struct Server {
     #[allow(dead_code)]
     wallet: Arc<CoreWallet>,
     wallet_server: Arc<WalletServer>,
     closure: Mutex<Option<Rc<ListenerClosure>>>,
-    // runtime: Runtime,
     chrome_extension_id: String,
 }
 
@@ -57,17 +44,22 @@ impl Server {
         log_info!("wallet_list: {:?}", list);
         log_info!("storage storage: {:?}", storage.descriptor());
 
+        let rpc = Self::create_rpc_client().expect("Unable to create RPC client");
+
         let wallet = Arc::new(
-            CoreWallet::try_with_rpc(None, storage, None).unwrap_or_else(|e| {
+            CoreWallet::try_with_rpc(Some(rpc), storage, None).unwrap_or_else(|e| {
                 panic!("Failed to create wallet instance: {}", e);
             }),
         );
 
-        let wallet_server = Arc::new(WalletServer::new(wallet.clone()));
+        let event_handler = Arc::new(ServerEventHandler::default());
+
+        let wallet_server = Arc::new(WalletServer::new(wallet.clone(), event_handler));
 
         let _application_events = ApplicationEventsChannel::unbounded();
         // let kaspa = Arc::new(KaspaService::new(application_events.clone(), &settings));
         // let runtime = Runtime::new(&[kaspa.clone()]);
+        log_info!("Server init complete");
 
         Self {
             chrome_extension_id: runtime_id().unwrap(),
@@ -78,9 +70,30 @@ impl Server {
         }
     }
 
-    pub fn start(self: &Arc<Self>) {
+    pub fn create_rpc_client() -> Result<Rpc> {
+        let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
+            WrpcEncoding::Borsh,
+            NotificationMode::MultiListeners,
+            None,
+            None,
+            None,
+        )?);
+        let rpc_ctl = wrpc_client.ctl().clone();
+        let rpc_api: Arc<DynRpcApi> = wrpc_client;
+        Ok(Rpc::new(rpc_api, rpc_ctl))
+    }
+
+    pub async fn start(self: &Arc<Self>) {
+        log_info!("Server starting...");
         // self.runtime.start();
         self.register_listener();
+        self.wallet_server.start();
+
+        log_info!("Starting wallet...");
+        self.wallet
+            .start()
+            .await
+            .expect("Unable to start wallet service");
     }
 
     fn register_listener(self: &Arc<Self>) {
@@ -95,7 +108,7 @@ impl Server {
                     Err(err) => {
                         log_error!("message handling error: {:?}", err);
 
-                        let resp = resp_to_jsv(Err(err));
+                        let resp = resp_to_jsv(Target::Wallet, Err(err));
                         if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
                             log_error!("onMessage callback error in error handler: {:?}", err);
                         }
@@ -137,7 +150,10 @@ impl Server {
         match target {
             Target::Wallet => {
                 spawn_local(async move {
-                    let resp = resp_to_jsv(self.wallet_server.call_with_borsh(op, &data).await);
+                    let resp = resp_to_jsv(
+                        Target::Wallet,
+                        self.wallet_server.call_with_borsh(op, &data).await,
+                    );
                     if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
                         log_error!("onMessage callback error: {:?}", err);
                     }
@@ -152,13 +168,41 @@ impl Server {
     }
 
     // TODO - implement
-    fn _post_notify(&self, op: u64, data: Vec<u8>) -> Result<()> {
+    // fn _post_notify(&self, op: u64, data: Vec<u8>) -> Result<()> {
+    //     spawn_local(async move {
+    //         if let Err(err) = send_message(&notify_to_jsv(op, &data)).await {
+    //             log_warn!("Unable to post notification: {:?}", err);
+    //         }
+    //     });
+
+    //     Ok(())
+    // }
+
+    // fn start(self: &Arc<Self>) {
+
+    // }
+}
+
+#[derive(Default)]
+struct ServerEventHandler {}
+
+#[async_trait]
+impl EventHandler for ServerEventHandler {
+    async fn handle_event(&self, event: &Box<Events>) {
+        log_info!("EVENT HANDLER - POSTING NOTIFICATION!");
+
+        let data = event.try_to_vec().unwrap();
         spawn_local(async move {
-            if let Err(err) = send_message(&notify_to_jsv(op, &data)).await {
+            let data = notify_to_jsv(Target::Wallet, &data);
+            log_info!("EVENT HANDLER - SENDING MESSAGE!");
+            if let Err(err) = send_message(&data).await {
                 log_warn!("Unable to post notification: {:?}", err);
             }
         });
-
-        Ok(())
     }
+
+    // async fn handle_event(&self, event: JsValue) -> Result<()> {
+    //     log_info!("event: {:?}", event);
+    //     Ok(())
+    // }
 }

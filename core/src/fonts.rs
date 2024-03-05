@@ -125,7 +125,6 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
         );
     }
 
-
     // ---
 
     // ---
