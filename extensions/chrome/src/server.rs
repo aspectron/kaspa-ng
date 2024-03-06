@@ -188,7 +188,7 @@ struct ServerEventHandler {}
 
 #[async_trait]
 impl EventHandler for ServerEventHandler {
-    async fn handle_event(&self, event: &Box<Events>) {
+    async fn handle_event(&self, event: &Events) {
         log_info!("EVENT HANDLER - POSTING NOTIFICATION!");
 
         let data = event.try_to_vec().unwrap();

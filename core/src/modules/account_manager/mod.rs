@@ -313,7 +313,7 @@ impl AccountManager {
             core.settings.node.network.into()
         };
 
-        let current_daa_score = core.state().current_daa_score();
+        // let current_daa_score = core.state().current_daa_score();
 
         match self.state.clone() {
             AccountManagerState::Select => {
