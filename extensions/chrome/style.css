@@ -65,6 +65,7 @@ canvas {
 
 /* ---------------------------------------------- */
 /* Loading animation from https://loading.io/css/ */
+#loading>p{font-size:16px}
 .lds-dual-ring {
     display: inline-block;
     width: 24px;

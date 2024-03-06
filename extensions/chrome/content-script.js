@@ -1,55 +1,48 @@
 
-function log(...args){
-    console.log("%c📘[KNG-api-handler]:", "color:green", ...args);
+  function log(...args){
+    console.log("%c📘[kng-content-script]:", "color:green", ...args);
   }
   
-  const eventKey = (Math.random()*10000000000).toString().substring(0, 10);
-  const eventName = "kaspa-wallet-message-"+eventKey;
-  const eventReplyName = "kaspa-wallet-message-reply-"+eventKey;
+  const EVENT_KEY = (Math.random()*1000000000000).toString().substring(0, 10);
+  const EVENT_NAME = "kaspa-wallet-message-"+EVENT_KEY;
+  const EVENT_REPLY = "kaspa-wallet-message-reply-"+EVENT_KEY;
   
-  log("eventKey", eventKey);
+  log("EVENT_KEY", EVENT_KEY);
+  const ICON = chrome.runtime.getURL("icons/icon-128.png");
+  chrome.runtime.sendMessage({op: "inject-page-script", args: [chrome.runtime.id, ICON, EVENT_KEY]})
   
-  chrome.runtime.sendMessage({op: "inject-page-script", args: [eventKey]})
-  
-  
-  function postToPage(detail){
-    window.dispatchEvent(new CustomEvent(eventReplyName, {
+  function replyToPage(detail){
+    window.dispatchEvent(new CustomEvent(EVENT_REPLY, {
       detail
     }));
   }
   
+  window.addEventListener(EVENT_NAME, async (event) => {
+    log("message event", event.source === window, event.source, event);
   
-  window.addEventListener(eventName, async (event) => {
-    log("message event", event.source === window, event);
-  
-    // We only accept messages from ourselves
     if (event.target !== window) {
       return;
     }
   
-    log("event.data ", event.detail);
+    log("event.detail", event.detail);
   
     //forward msg to extension
-    chrome.runtime.sendMessage(event.detail, (response)=>{
-      log("sendMessage:event.detail", response)
-      //window.open(chrome.runtime.getURL("popup.html"), self, "width=400,left=100,height=800,frame=0")
-      
-      if (!response)
-        return
-      //reply to page
-  
-      
-      postToPage(response)
-    });
+    let response = await chrome.runtime.sendMessage(event.detail);
+    log("sendMessage: response", response)
+    //window.open(chrome.runtime.getURL("popup.html"), self, "width=400,left=100,height=800,frame=0")
+    if (!response)
+      return true
+    //reply to page
+    replyToPage(response)
   }, false);
   
   //listen extension and forward message to page
   chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
-    //log("extension message", msg, sender)
+    log("extension message", msg, sender)
     if (sender.id !== chrome.runtime.id)
       return;
   
-      postToPage(msg)
+      replyToPage(msg)
   });
   
   

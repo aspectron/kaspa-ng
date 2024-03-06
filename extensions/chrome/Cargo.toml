@@ -16,9 +16,9 @@ default = ["browser-extension"]
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-# kaspa-ng-core = { workspace = true, features = ["browser-extension"] }
-# kaspa-ng-core = { workspace = true }
-# kaspa-wallet-core.workspace = true
+kaspa-ng-core = { workspace = true, features = ["browser-extension"] }
+#kaspa-ng-core = { workspace = true }
+kaspa-wallet-core.workspace = true
 workflow-chrome.workspace = true
 workflow-core.workspace = true
 workflow-log.workspace = true
@@ -30,7 +30,7 @@ borsh.workspace = true
 chrome-sys.workspace = true
 js-sys.workspace = true
 # kaspa-ng-macros.workspace = true
-# kaspa-utils.workspace = true
+kaspa-utils.workspace = true
 rand.workspace = true
 wasm-bindgen-futures.workspace = true
 wasm-bindgen.workspace = true
