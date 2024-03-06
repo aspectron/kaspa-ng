@@ -232,6 +232,7 @@ impl AccountMenu {
 }
 
 
+#[derive(Default)]
 pub struct ToolsMenu { }
 
 impl ToolsMenu {
