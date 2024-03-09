@@ -84,5 +84,11 @@ cfg_if! {
 
             }
         }
+
+        impl Default for System {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
     }
 }

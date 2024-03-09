@@ -3063,6 +3063,7 @@ dependencies = [
  "smallvec",
  "thiserror",
  "wasm-bindgen",
+ "workflow-log",
  "workflow-wasm",
 ]
 

@@ -5,47 +5,6 @@ pub mod server;
 
 use crate::imports::*;
 
-// #[wasm_bindgen]
-// extern "C" {
-
-//     #[wasm_bindgen(js_namespace = console)]
-//     fn log(s: &str);
-
-//     fn alert(s: &str);
-
-//     #[wasm_bindgen(js_name = "init_kaspa_object_xyz")]
-//     fn init_kaspa_object_imported(key:u32);
-// }
-
-// #[wasm_bindgen]
-// pub fn init_kaspa_object(key:u32){
-//     // alert(&format!("init_kaspa_object"));
-//     // workflow_log::log_info!("xxx init_kaspa_object");
-//     //log("init_kaspa_object");
-// }
-
-// #[wasm_bindgen]
-// pub async fn init_kaspa_object_api(key:u32, tab_id:u32, func: &JsValue){
-//     let target = InjectionTarget::new();
-//     target.set_tab_id(tab_id);
-
-//     let script = ScriptInjection::new();
-//     script.set_args(vec![JsValue::from(key)]);
-//     script.set_target(target);
-//     script.set_world("MAIN".to_string());
-
-//     //let closure = Closure::new(init_kaspa_object_imported);
-//     // @aspect init_kaspa_object function should go into this set_func_with_arg_u32
-//     script.set_func_with_arg_u32(func);
-
-//     // unsafe{
-//     //     CLOSURE_KASPA_OBJECT = Some(func.clone())
-//     // }
-
-
-//     chrome_runtime_scripting::execute_script(script).await;
-// }
-
 static mut SERVER: Option<Arc<Server>> = None;
 // background script
 #[wasm_bindgen]
@@ -58,7 +17,7 @@ pub async fn kaspa_ng_background() {
         SERVER = Some(server.clone());
     }
 
-    server.start().await;
+    chrome_runtime_scripting::unregister_content_scripts(None).await;
 
     let script = RegisteredContentScript::new();
     script.set_id("kaspa-wallet-ext-content-script".to_string());
@@ -68,10 +27,10 @@ pub async fn kaspa_ng_background() {
     script.set_run_at("document_end".to_string());
     script.set_all_frames(false);
     script.set_world("ISOLATED".to_string());
-    
 
     chrome_runtime_scripting::register_content_scripts(vec![script]).await;
 
+    server.start().await;
 }
 
 // extension popup

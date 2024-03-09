@@ -116,9 +116,9 @@ async fn fetch_public_servers() -> Result<Arc<HashMap<Network, Vec<Server>>>> {
             } else {
                 href
             };
-            let url = format!("{}/Servers.toml", location.trim_end_matches("/"));
+            let url = format!("{}/Servers.toml", location.trim_end_matches('/'));
             let servers_toml = http::get(url).await?;
-            Ok(try_parse_servers(&servers_toml)?)
+            try_parse_servers(&servers_toml)
         } else {
             // TODO - parse local Servers.toml file
             Ok(parse_default_servers().clone())

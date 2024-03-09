@@ -62,7 +62,7 @@ impl ClientTransport {
         ));
 
         log_info!("CLIENT REGISTERING LISTENER...");
-        add_listener(closure.clone().as_ref());
+        chrome_runtime_on_message::add_listener(closure.clone().as_ref());
         *self.closure.lock().unwrap() = Some(closure);
     }
 

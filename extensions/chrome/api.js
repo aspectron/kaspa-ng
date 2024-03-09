@@ -1,4 +1,4 @@
-async function apiBuilder(uuid, icon, eventKey){
+async function apiBuilder(uuid, eventKey){
 
     const EVENT_NAME = "kaspa-wallet-message-"+eventKey;
     const EVENT_REPLY = "kaspa-wallet-message-reply-"+eventKey;
@@ -13,32 +13,30 @@ async function apiBuilder(uuid, icon, eventKey){
     log("event key", eventKey);
     let events = new Map();
 
-    function postMessage(msg){
-        let {id} = msg;
+    function postMessage(action, data, rid){
+        rid = rid===false?undefined:rid||action;
         let result;
-        if (id){
+        if (rid){
             result = new Promise((resolve, reject)=>{
-                events.set(id, {resolve, reject});
+                events.set(rid, {resolve, reject});
             });
         }else{
             result = Promise.resolved();
         }
   
         window.dispatchEvent(new CustomEvent(EVENT_NAME, {
-            detail: msg
+            detail: {action, data, rid}
         }));
         return result;
     }
   
     window.addEventListener(EVENT_REPLY, (msg)=>{
-        let detail = msg.detail;
+        let {data, rid} = msg.detail;
 
-        log("reply:", detail);
-        let {id} = detail;
-        delete detail.id;
-        if (id && events.has(id)){
-            events.get(id).resolve(detail)
-            events.delete(id); 
+        log("reply:", msg.detail);
+        if (rid && events.has(rid)){
+            events.get(rid).resolve(data)
+            events.delete(rid); 
         }
     })
 
@@ -46,12 +44,12 @@ async function apiBuilder(uuid, icon, eventKey){
       
         connect() {
           // Communicate a message back to the extension
-          return postMessage({ op:"connect", id:"connect"});
+          return postMessage("connect");
         }
     
         signTransaction(data) {
           // Communicate a message back to the extension
-          return postMessage({ op:"sign-transaction", id:"sign-transaction", data});
+          return postMessage("sign-transaction", data);
         }
     }
   
