@@ -88,12 +88,12 @@ async function apiBuilder(uuid, eventKey){
         }
     }
   
-    //temporary, just for testing via console
-    window.kaspa = kaspa;
-    // // testing ...
-    kaspa.signTransaction({tx_info:"xyz"}).then(result=>{
-        console.log("kaspa.signTransaction", result)
-    })
+    // //temporary, just for testing via console
+    // window.kaspa = kaspa;
+    // // // testing ...
+    // kaspa.signTransaction({tx_info:"xyz"}).then(result=>{
+    //     console.log("kaspa.signTransaction", result)
+    // })
 }
 
 export {apiBuilder};

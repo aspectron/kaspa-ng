@@ -23,15 +23,6 @@
     }
   
     log("event.detail", event.detail);
-  
-    // //forward msg to extension
-    // let response = await chrome.runtime.sendMessage(event.detail);
-    // log("sendMessage: response", response)
-    // //window.open(chrome.runtime.getURL("popup.html"), self, "width=400,left=100,height=800,frame=0")
-    // if (!response)
-    //   return true
-    // //reply to page
-    // replyToPage(response)
     port.postMessage({type: "WEBAPI", data:event.detail})
   }, false);
 
@@ -42,15 +33,4 @@
   })
 
   port.postMessage({type: "WEBAPI", data:{action:"inject-page-script", data:[chrome.runtime.id, EVENT_KEY]}});
-
-  
-  // //listen extension and forward message to page
-  // chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
-  //   log("extension message", msg, sender)
-  //   if (sender.id !== chrome.runtime.id)
-  //     return;
-  
-  //     replyToPage(msg)
-  // });
-  
   
