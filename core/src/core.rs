@@ -654,6 +654,9 @@ impl Core {
     ) -> Result<()> {
         // println!("event: {:?}", event);
         match event {
+            Events::WebMessage(msg)=>{
+                log_info!("Events::WebMessage msg: {msg}");
+            }
             Events::NetworkChange(network) => {
                 self.modules.clone().values().for_each(|module| {
                     module.network_change(self, network);
@@ -757,8 +760,8 @@ impl Core {
                 // println!("event: {:?}", event);
                 match *event {
                     CoreWallet::WalletPing => {
-                        // log_info!("KASPA NG RECEIVED WALLET START EVENT");
-                        crate::runtime::runtime().notify(UserNotification::info("Wallet ping"));
+                        log_info!("KASPA NG RECEIVED WALLET START EVENT");
+                        // crate::runtime::runtime().notify(UserNotification::info("Wallet ping"));
                     }
                     CoreWallet::Error { message } => {
                         // runtime().notify(UserNotification::error(message.as_str()));
@@ -910,7 +913,22 @@ impl Core {
 
                         self.purge_secure_stack();
                     }
-                    CoreWallet::AccountSelection { id: _ } => {}
+                    CoreWallet::AccountSelection { id } => {
+                        if let Some(id) = id{
+                            log_info!("AccountSelection id: {id}");
+                            self.account_collection
+                            .as_ref()
+                            .and_then(|account_collection| {
+                                account_collection.get(&id).map(|account| {
+                                    let balance = account.balance();
+                                    let address = account.receive_address();
+                                    log_info!("AccountSelection address: {address}");
+                                    let res = self.sender().try_send(Events::WebMessage(format!("address: {}, balance: {balance:?}", address)));
+                                    log_info!("AccountSelection res: {res:?}");
+                                })
+                            });
+                        }
+                    }
                     CoreWallet::DaaScoreChange { current_daa_score } => {
                         self.state.current_daa_score.replace(current_daa_score);
                     }

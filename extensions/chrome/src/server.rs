@@ -9,6 +9,7 @@ pub type PortListenerClosure = Closure<dyn FnMut(chrome_runtime_port::Port) -> J
 pub type PortEventClosure = Closure<dyn FnMut(JsValue) -> JsValue>;
 use std::collections::HashMap;
 use workflow_wasm::extensions::ObjectExtension;
+use workflow_core::enums::Describe;
 use rand::Rng;
 
 #[wasm_bindgen]
@@ -33,30 +34,71 @@ pub struct Server {
 unsafe impl Send for Server {}
 unsafe impl Sync for Server {}
 
+#[derive(Debug, Describe)]
+enum WebActions{
+    InjectPageScript,
+    Connect,
+}
+
+
 #[derive(Debug)]
-struct WEBMessage{
-    action: String,
+struct WebMessage{
+    action: WebActions,
     rid: Option<String>,
     data: JsValue
 }
 
-fn port_msg_to_req(msg: js_sys::Object)->Result<WEBMessage> {
+#[derive(Debug)]
+struct InternalMessage{
+    target: Target,
+    op: u64,
+    data: Vec<u8>
+}
+
+#[derive(Debug)]
+enum Message{
+    Web(WebMessage),
+    Internal(InternalMessage)
+}
+
+impl From<WebMessage> for Message{
+    fn from(value: WebMessage) -> Self {
+        Self::Web(value)
+    }
+}
+impl From<InternalMessage> for Message{
+    fn from(value: InternalMessage) -> Self {
+        Self::Internal(value)
+    }
+}
+
+fn msg_to_req(msg: js_sys::Object)->Result<Message> {
     let msg_type = msg.get_string("type")?;
 
-    if msg_type == "WEBAPI" {
+    if msg_type == "WebAPI" {
         let info = msg.get_object("data")?;
-        let action = info.get_string("action")?;
+        let action = WebActions::from_str(&info.get_string("action")?).expect("`action` is required for WEBAPI message.");
         let data = info.get_value("data")?;
         let rid = info.try_get_string("rid")?;
 
-        return Ok(WEBMessage{
+        return Ok(WebMessage{
             action,
             data,
             rid
-        });
+        }.into());
     }
 
-    Err("TODO: port_msg_to_req: {msg_type}".to_string().into())
+    if msg_type == "Internal"{
+        let info = msg.get_value("data")?;
+        let (target, op, data) = jsv_to_req(info)?;
+        return Ok(InternalMessage{
+            target,
+            op,
+            data
+        }.into());
+    }
+
+    Err("Invalid msg: {msg_type}".to_string().into())
     
 
     // let src = Vec::<u8>::from_hex(
@@ -135,13 +177,13 @@ impl Server {
     }
 
     pub async fn start(self: &Arc<Self>) {
-        log_info!("Server starting...");
+        log_info!("chrome/src/Server starting...");
         // self.runtime.start();
         self.register_listener();
         self.register_port_listener();
         self.wallet_server.start();
 
-        log_info!("Starting wallet...");
+        log_info!("chrome/src/Starting wallet...");
         self.wallet
             .start()
             .await
@@ -193,25 +235,29 @@ impl Server {
         *self.port_closure.lock().unwrap() = Some(closure);
     }
 
-    async fn handle_port_event(self: &Arc<Self>, msg: js_sys::Object, port:Rc<chrome_runtime_port::Port>)->JsValue{
+    async fn handle_port_event(self: &Arc<Self>, msg_jsv: js_sys::Object, port:Rc<chrome_runtime_port::Port>)->JsValue{
         
-        let req = port_msg_to_req(msg.clone()).unwrap();
-        workflow_log::log_info!("handle_port_event: req {:?}", req);
-        
-        match req.action.as_str(){
-            "inject-page-script" => {
-                let tab_id = port.sender().tab().id();
-                init_page_script(tab_id, req.data);
+        let msg = msg_to_req(msg_jsv.clone()).unwrap();
+        workflow_log::log_info!("handle_port_event: msg {:?}", msg);
+        match msg {
+            Message::Web(msg)=>{
+                match msg.action{
+                    WebActions::InjectPageScript => {
+                        let tab_id = port.sender().tab().id();
+                        init_page_script(tab_id, msg.data);
+                    },
+                    WebActions::Connect => {
+                        open_popup_window()
+                    }
+                }
             },
-            "connect" =>{
-                open_popup_window()
-            }
-            _ =>{
-                
+            Message::Internal(_)=>{
+                //
             }
         }
+        
 
-        format!("handle_port_event: got msg: {msg:?}").into()
+        format!("handle_port_event: got msg: {msg_jsv:?}").into()
     }
 
     fn register_listener(self: &Arc<Self>) {
@@ -242,7 +288,7 @@ impl Server {
 
     fn handle_message(
         self: Arc<Self>,
-        msg: JsValue,
+        msg_jsv: JsValue,
         sender: Sender,
         callback: Function,
     ) -> Result<()> {
@@ -258,27 +304,33 @@ impl Server {
 
         log_info!(
             "[WASM] msg: {:?}, sender id:{:?}, {:?}",
-            msg,
+            msg_jsv,
             sender.id(),
             callback
         );
 
-        let (target, op, data) = jsv_to_req(msg)?;
-
-        match target {
-            Target::Wallet => {
-                spawn_local(async move {
-                    let resp = resp_to_jsv(
-                        Target::Wallet,
-                        self.wallet_server.call_with_borsh(op, &data).await,
-                    );
-                    if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
-                        log_error!("onMessage callback error: {:?}", err);
+        let msg = msg_to_req(js_sys::Object::from(msg_jsv)).unwrap();
+        match msg{
+            Message::Internal(msg)=>{
+                match msg.target {
+                    Target::Wallet => {
+                        spawn_local(async move {
+                            let resp = resp_to_jsv(
+                                Target::Wallet,
+                                self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
+                            );
+                            if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
+                                log_error!("onMessage callback error: {:?}", err);
+                            }
+                        });
                     }
-                });
-            }
-            Target::Runtime => {
-                todo!()
+                    Target::Runtime => {
+                        todo!()
+                    }
+                }
+            },
+            Message::Web(_msg)=>{
+
             }
         }
 
@@ -307,7 +359,7 @@ struct ServerEventHandler {}
 #[async_trait]
 impl EventHandler for ServerEventHandler {
     async fn handle_event(&self, event: &Events) {
-        log_info!("EVENT HANDLER - POSTING NOTIFICATION!");
+        log_info!("EVENT HANDLER - POSTING NOTIFICATION! {event:?}");
 
         let data = event.try_to_vec().unwrap();
         spawn_local(async move {

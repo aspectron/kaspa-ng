@@ -1,3 +1,5 @@
+use workflow_wasm::extensions::ObjectExtension;
+
 use crate::imports::*;
 
 // const SUCCESS: u8 = 0;
@@ -113,7 +115,12 @@ pub fn req_to_jsv(target: Target, op: u64, src: &[u8]) -> JsValue {
     // );
     // mask(&mut data[10..], src, &mut index, mask_data);
     // let data =
-    JsValue::from(data.to_hex())
+
+    let obj = js_sys::Object::new();
+    obj.set("type", &"Internal".into()).unwrap();
+    obj.set("data", &data.to_hex().into()).unwrap();
+
+    obj.into()
 }
 
 pub fn jsv_to_req(src: JsValue) -> Result<(Target, u64, Vec<u8>)> {

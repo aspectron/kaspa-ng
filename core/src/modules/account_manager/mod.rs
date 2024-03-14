@@ -333,7 +333,10 @@ impl AccountManager {
                                 }
                             }).render(ui);
                     } else if account_collection.len() == 1 {
-                        self.select(Some(account_collection.first().unwrap().clone()), core.device().clone());
+                        let account = account_collection.first().unwrap();
+                        self.select(Some(account.clone()), core.device().clone());
+                        let id =  account.id();
+                        let _ = core.sender().try_send(Events::Wallet { event: Box::new(kaspa_wallet_core::events::Events::AccountSelection{id: Some(id)}) });
                     } else {
                         Panel::new(self)
                             .with_caption(i18n("Select Account"))
@@ -362,6 +365,8 @@ impl AccountManager {
                                 account_collection.iter().for_each(|account_select| {
                                     if ui.account_selector_button(account_select, &network_type, false, core.balance_padding()).clicked() {
                                         this.select(Some(account_select.clone()), core.device().clone());
+                                        let id =  account_select.id();
+                                        let _ = core.sender().try_send(Events::Wallet { event: Box::new(kaspa_wallet_core::events::Events::AccountSelection{id: Some(id)}) });
                                         if core.device().single_pane() {
                                             this.section = AccountManagerSection::Overview;
                                         } else {

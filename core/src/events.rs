@@ -9,6 +9,7 @@ pub type ApplicationEventsChannel = crate::runtime::channel::Channel<Events>;
 
 #[derive(Clone, Debug)]
 pub enum Events {
+    WebMessage(String),
     NetworkChange(Network),
     UpdateStorage(StorageUpdateOptions),
     VisibilityChange(VisibilityState),
