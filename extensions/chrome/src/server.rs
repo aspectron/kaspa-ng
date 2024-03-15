@@ -1,23 +1,26 @@
 use kaspa_ng_core::imports::KaspaRpcClient;
 use kaspa_wallet_core::rpc::{
     // ConnectOptions, ConnectStrategy, RpcCtl,
-    DynRpcApi, NotificationMode, Rpc, WrpcEncoding,
+    DynRpcApi,
+    NotificationMode,
+    Rpc,
+    WrpcEncoding,
 };
 
 use crate::imports::*;
 pub type PortListenerClosure = Closure<dyn FnMut(chrome_runtime_port::Port) -> JsValue>;
 pub type PortEventClosure = Closure<dyn FnMut(JsValue) -> JsValue>;
-use std::collections::HashMap;
-use workflow_wasm::extensions::ObjectExtension;
-use workflow_core::enums::Describe;
 use rand::Rng;
+use std::collections::HashMap;
+use workflow_core::enums::Describe;
+use workflow_wasm::extensions::ObjectExtension;
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(js_name="initPageScript")]
-    fn init_page_script(tab_id: u32, args:JsValue);
+    #[wasm_bindgen(js_name = "initPageScript")]
+    fn init_page_script(tab_id: u32, args: JsValue);
 
-    #[wasm_bindgen(js_name="openPopup")]
+    #[wasm_bindgen(js_name = "openPopup")]
     fn open_popup_window();
 }
 
@@ -35,71 +38,62 @@ unsafe impl Send for Server {}
 unsafe impl Sync for Server {}
 
 #[derive(Debug, Describe)]
-enum WebActions{
+enum WebActions {
     InjectPageScript,
     Connect,
 }
 
-
 #[derive(Debug)]
-struct WebMessage{
+struct WebMessage {
     action: WebActions,
     rid: Option<String>,
-    data: JsValue
+    data: JsValue,
 }
 
 #[derive(Debug)]
-struct InternalMessage{
+struct InternalMessage {
     target: Target,
     op: u64,
-    data: Vec<u8>
+    data: Vec<u8>,
 }
 
 #[derive(Debug)]
-enum Message{
+enum Message {
     Web(WebMessage),
-    Internal(InternalMessage)
+    Internal(InternalMessage),
 }
 
-impl From<WebMessage> for Message{
+impl From<WebMessage> for Message {
     fn from(value: WebMessage) -> Self {
         Self::Web(value)
     }
 }
-impl From<InternalMessage> for Message{
+impl From<InternalMessage> for Message {
     fn from(value: InternalMessage) -> Self {
         Self::Internal(value)
     }
 }
 
-fn msg_to_req(msg: js_sys::Object)->Result<Message> {
+fn msg_to_req(msg: js_sys::Object) -> Result<Message> {
     let msg_type = msg.get_string("type")?;
 
     if msg_type == "WebAPI" {
         let info = msg.get_object("data")?;
-        let action = WebActions::from_str(&info.get_string("action")?).expect("`action` is required for WEBAPI message.");
+        let action = WebActions::from_str(&info.get_string("action")?)
+            .expect("`action` is required for WEBAPI message.");
         let data = info.get_value("data")?;
         let rid = info.try_get_string("rid")?;
 
-        return Ok(WebMessage{
-            action,
-            data,
-            rid
-        }.into());
+        return Ok(WebMessage { action, data, rid }.into());
     }
 
-    if msg_type == "Internal"{
+    if msg_type == "Internal" {
         let info = msg.get_value("data")?;
         let (target, op, data) = jsv_to_req(info)?;
-        return Ok(InternalMessage{
-            target,
-            op,
-            data
-        }.into());
+        return Ok(InternalMessage { target, op, data }.into());
     }
 
     Err("Invalid msg: {msg_type}".to_string().into())
-    
 
     // let src = Vec::<u8>::from_hex(
     //     src.as_string()
@@ -206,7 +200,9 @@ impl Server {
                     let this_clone = this_clone.clone();
                     let port_clone = port_clone.clone();
                     spawn_local(async move {
-                        let result = this_clone.handle_port_event(js_sys::Object::from(msg), port_clone.clone()).await;
+                        let result = this_clone
+                            .handle_port_event(js_sys::Object::from(msg), port_clone.clone())
+                            .await;
                         port_clone.post_message(result);
                     });
 
@@ -217,7 +213,11 @@ impl Server {
                 let this_clone = this.clone();
                 let disconnect_closure = Rc::new(Closure::new(move |_| -> JsValue {
                     workflow_log::log_info!("port disconnect: {index}");
-                    this_clone.port_events_closures.lock().unwrap().remove(&index);
+                    this_clone
+                        .port_events_closures
+                        .lock()
+                        .unwrap()
+                        .remove(&index);
                     JsValue::from(true)
                 }));
                 port.on_disconnect().add_listener(&disconnect_closure);
@@ -235,27 +235,25 @@ impl Server {
         *self.port_closure.lock().unwrap() = Some(closure);
     }
 
-    async fn handle_port_event(self: &Arc<Self>, msg_jsv: js_sys::Object, port:Rc<chrome_runtime_port::Port>)->JsValue{
-        
+    async fn handle_port_event(
+        self: &Arc<Self>,
+        msg_jsv: js_sys::Object,
+        port: Rc<chrome_runtime_port::Port>,
+    ) -> JsValue {
         let msg = msg_to_req(msg_jsv.clone()).unwrap();
         workflow_log::log_info!("handle_port_event: msg {:?}", msg);
         match msg {
-            Message::Web(msg)=>{
-                match msg.action{
-                    WebActions::InjectPageScript => {
-                        let tab_id = port.sender().tab().id();
-                        init_page_script(tab_id, msg.data);
-                    },
-                    WebActions::Connect => {
-                        open_popup_window()
-                    }
+            Message::Web(msg) => match msg.action {
+                WebActions::InjectPageScript => {
+                    let tab_id = port.sender().tab().id();
+                    init_page_script(tab_id, msg.data);
                 }
+                WebActions::Connect => open_popup_window(),
             },
-            Message::Internal(_)=>{
+            Message::Internal(_) => {
                 //
             }
         }
-        
 
         format!("handle_port_event: got msg: {msg_jsv:?}").into()
     }
@@ -310,28 +308,24 @@ impl Server {
         );
 
         let msg = msg_to_req(js_sys::Object::from(msg_jsv)).unwrap();
-        match msg{
-            Message::Internal(msg)=>{
-                match msg.target {
-                    Target::Wallet => {
-                        spawn_local(async move {
-                            let resp = resp_to_jsv(
-                                Target::Wallet,
-                                self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
-                            );
-                            if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
-                                log_error!("onMessage callback error: {:?}", err);
-                            }
-                        });
-                    }
-                    Target::Runtime => {
-                        todo!()
-                    }
+        match msg {
+            Message::Internal(msg) => match msg.target {
+                Target::Wallet => {
+                    spawn_local(async move {
+                        let resp = resp_to_jsv(
+                            Target::Wallet,
+                            self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
+                        );
+                        if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
+                            log_error!("onMessage callback error: {:?}", err);
+                        }
+                    });
+                }
+                Target::Runtime => {
+                    todo!()
                 }
             },
-            Message::Web(_msg)=>{
-
-            }
+            Message::Web(_msg) => {}
         }
 
         Ok(())

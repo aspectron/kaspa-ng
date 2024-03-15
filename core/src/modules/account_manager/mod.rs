@@ -363,8 +363,9 @@ impl AccountManager {
                                 account_collection.iter().for_each(|account_select| {
                                     if ui.account_selector_button(account_select, &network_type, false, core.balance_padding()).clicked() {
                                         this.select(Some(account_select.clone()), core.device().clone());
-                                        // let id =  account_select.id();
+                                        let id =  account_select.id();
                                         // let _ = core.sender().try_send(Events::Wallet { event: Box::new(kaspa_wallet_core::events::Events::AccountSelection{id: Some(id)}) });
+                                        runtime().post_to_server(crate::adaptor::WebEvent::AccountSelection(id));
                                         if core.device().single_pane() {
                                             this.section = AccountManagerSection::Overview;
                                         } else {
