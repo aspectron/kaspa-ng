@@ -101,7 +101,7 @@ impl<'core> Menu<'core> {
             if ui
                 .add(
                     Label::new(
-                        RichText::new(format!("{}", egui_phosphor::light::WALLET))
+                        RichText::new(egui_phosphor::light::WALLET.to_string())
                             .size(device.top_icon_size()),
                     )
                     .sense(Sense::click()),

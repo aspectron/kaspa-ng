@@ -654,6 +654,9 @@ impl Core {
     ) -> Result<()> {
         // println!("event: {:?}", event);
         match event {
+            // Events::WebMessage(msg)=>{
+            //     log_info!("Events::WebMessage msg: {msg}");
+            // }
             Events::NetworkChange(network) => {
                 self.modules.clone().values().for_each(|module| {
                     module.network_change(self, network);
@@ -757,8 +760,8 @@ impl Core {
                 // println!("event: {:?}", event);
                 match *event {
                     CoreWallet::WalletPing => {
-                        // log_info!("KASPA NG RECEIVED WALLET START EVENT");
-                        crate::runtime::runtime().notify(UserNotification::info("Wallet ping"));
+                        log_info!("KASPA NG RECEIVED WALLET START EVENT");
+                        // crate::runtime::runtime().notify(UserNotification::info("Wallet ping"));
                     }
                     CoreWallet::Error { message } => {
                         // runtime().notify(UserNotification::error(message.as_str()));

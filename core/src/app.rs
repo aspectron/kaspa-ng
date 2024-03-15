@@ -259,7 +259,7 @@ cfg_if! {
                         "Kaspa NG",
                         native_options,
                         Box::new(move |cc| {
-                            let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings, wallet_api, application_events);
+                            let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings, wallet_api, application_events, None);
                             delegate.lock().unwrap().replace(runtime.clone());
                             runtime::signals::Signals::bind(&runtime);
                             runtime.start();
@@ -279,9 +279,9 @@ cfg_if! {
     } else {
 
         // use crate::result::Result;
+        use crate::adaptor::AdaptorApi;
 
-        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>) -> Result<()> {
-            use wasm_bindgen::prelude::*;
+        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, adaptor: Option<Arc<dyn AdaptorApi>>) -> Result<()> {
             use workflow_dom::utils::document;
 
             // ------------------------------------------------------------
@@ -330,16 +330,18 @@ cfg_if! {
 
                         // wallet_api.ping()
 
-                        let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings, wallet_api, application_events);
+                        // let adaptor = kaspa_ng_core::adaptor::Adaptor::new(runtime.clone());
+                        // let window = web_sys::window().expect("no global `window` exists");
+                        // js_sys::Reflect::set(
+                        //     &window,
+                        //     &JsValue::from_str("adaptor"),
+                        //     &JsValue::from(adaptor),
+                        // ).expect("failed to set adaptor");
+
+                        let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings, wallet_api, application_events, adaptor);
                         runtime.start();
 
-                        let adaptor = kaspa_ng_core::adaptor::Adaptor::new(runtime.clone());
-                        let window = web_sys::window().expect("no global `window` exists");
-                        js_sys::Reflect::set(
-                            &window,
-                            &JsValue::from_str("adaptor"),
-                            &JsValue::from(adaptor),
-                        ).expect("failed to set adaptor");
+
 
                         Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, false))
                     }),

@@ -3,6 +3,9 @@ pub mod imports;
 pub mod ipc;
 pub mod server;
 
+use kaspa_ng_core::adaptor::AdaptorApi;
+use workflow_wasm::extensions::ObjectExtension;
+
 use crate::imports::*;
 
 static mut SERVER: Option<Arc<Server>> = None;
@@ -16,10 +19,42 @@ pub async fn kaspa_ng_background() {
     unsafe {
         SERVER = Some(server.clone());
     }
+
+    chrome_runtime_scripting::unregister_content_scripts(None).await;
+
+    let script = RegisteredContentScript::new();
+    script.set_id("kaspa-wallet-ext-content-script".to_string());
+    script.set_js(vec!["content-script.js"]);
+    script.set_persist_across_sessions(false);
+    script.set_matches(vec!["https://*/*", "http://*/*"]);
+    script.set_run_at("document_end".to_string());
+    script.set_all_frames(false);
+    script.set_world("ISOLATED".to_string());
+
+    chrome_runtime_scripting::register_content_scripts(vec![script]).await;
+
     server.start().await;
 }
 
+struct Adaptor {}
+
+impl Adaptor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl AdaptorApi for Adaptor {
+    fn post_to_server(&self, _event: kaspa_ng_core::adaptor::WebEvent) {
+        let obj = js_sys::Object::new();
+        let _ = obj.set("type", &"WebApi".into());
+        let _ = obj.set("data", &"Web".into());
+        // chrome_sys::bindings::send_message();
+    }
+}
+
 // extension popup
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 pub async fn kaspa_ng_main() {
     log_info!("kaspa_ng_main called successfully in the popup!");
@@ -40,8 +75,10 @@ pub async fn kaspa_ng_main() {
         .await
         .expect("ping failed");
     log_info!("Client received response: {response:?}");
-
-    if let Err(err) = app::kaspa_ng_main(Some(wallet_client), Some(application_events)).await {
+    let adaptor = Arc::new(Adaptor::new());
+    if let Err(err) =
+        app::kaspa_ng_main(Some(wallet_client), Some(application_events), Some(adaptor)).await
+    {
         log_error!("Error: {err}");
     }
 }
