@@ -23,7 +23,7 @@
     }
   
     log("event.detail", event.detail);
-    port.postMessage({type: "WEBAPI", data:event.detail})
+    port.postMessage({type: "WebAPI", data:event.detail})
   }, false);
 
   let port = chrome.runtime.connect({name:"CONTENT"});
@@ -32,5 +32,5 @@
     replyToPage(msg)
   })
 
-  port.postMessage({type: "WEBAPI", data:{action:"inject-page-script", data:[chrome.runtime.id, EVENT_KEY]}});
+  port.postMessage({type: "WebAPI", data:{action:"InjectPageScript", data:[chrome.runtime.id, EVENT_KEY]}});
   

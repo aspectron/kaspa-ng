@@ -44,12 +44,12 @@ async function apiBuilder(uuid, eventKey){
       
         connect() {
           // Communicate a message back to the extension
-          return postMessage("connect");
+          return postMessage("Connect");
         }
     
         signTransaction(data) {
           // Communicate a message back to the extension
-          return postMessage("sign-transaction", data);
+          return postMessage("SignTransaction", data);
         }
     }
   

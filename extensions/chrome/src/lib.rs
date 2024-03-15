@@ -42,16 +42,6 @@ pub async fn kaspa_ng_main() {
     let application_events = ApplicationEventsChannel::unbounded();
 
     let client_transport = Arc::new(client::ClientTransport::new(application_events.clone()));
-    for event in application_events.iter(){
-        match event{
-            kaspa_ng_core::events::Events::WebMessage(msg)=>{
-                log_info!("kaspa_ng_core::events::Events::WebMessage msg: {msg:?}");
-            }
-            _=>{
-
-            }
-        }
-    }
     let borsh_transport = Codec::Borsh(client_transport.clone());
     let wallet_client: Arc<dyn WalletApi> = Arc::new(WalletClient::new(borsh_transport));
 

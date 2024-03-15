@@ -62,12 +62,6 @@ impl<'manager> Overview<'manager> {
                         Action::None => {
 
                             Qr::render(ui, rc);
-                            // let address = rc.account.receive_address();
-                            // let balance = rc.account.balance();
-                            // log_info!("#### address: {address:?}");
-                            // log_info!("#### balance: {balance:?}");
-
-
 
                             ui.vertical_centered(|ui|{
                             
