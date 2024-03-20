@@ -1,7 +1,7 @@
 use std::net::AddrParseError;
 use thiserror::Error;
 use wasm_bindgen::JsValue;
-use workflow_core::channel::{ChannelError, SendError, TrySendError};
+use workflow_core::channel::{ChannelError, RecvError, SendError, TryRecvError, TrySendError};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -20,8 +20,14 @@ pub enum Error {
     #[error("Channel send() error")]
     SendError,
 
+    #[error("Channel recv() error")]
+    RecvError,
+
     #[error("Channel try_send() error")]
     TrySendError,
+
+    #[error("Channel try_recv() error")]
+    TryRecvError,
 
     #[error(transparent)]
     WrpcClientError(#[from] kaspa_wrpc_client::error::Error),
@@ -129,6 +135,18 @@ impl<T> From<SendError<T>> for Error {
 impl<T> From<TrySendError<T>> for Error {
     fn from(_: TrySendError<T>) -> Self {
         Error::TrySendError
+    }
+}
+
+impl From<RecvError> for Error {
+    fn from(_: RecvError) -> Self {
+        Error::RecvError
+    }
+}
+
+impl From<TryRecvError> for Error {
+    fn from(_: TryRecvError) -> Self {
+        Error::TryRecvError
     }
 }
 

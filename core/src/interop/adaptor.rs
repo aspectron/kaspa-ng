@@ -4,9 +4,19 @@ use crate::imports::*;
 use crate::interop::message::*;
 use crate::interop::transport;
 
+#[repr(u64)]
+#[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
+pub enum Action {
+    Test { request: TestRequest },
+    Connect { request: ConnectRequest },
+    SignMessage { request: SignMessageRequest },
+}
+
 pub struct Adaptor {
     sender: Arc<dyn transport::Sender>,
     application_events: ApplicationEventsChannel,
+    action: Mutex<Option<Action>>,
+    response: Channel<Vec<u8>>,
 }
 
 impl Adaptor {
@@ -17,66 +27,64 @@ impl Adaptor {
         Self {
             sender,
             application_events,
+            action: Mutex::new(None),
+            response: Channel::unbounded(),
         }
     }
 
     pub async fn init(self: Arc<Self>) -> Result<()> {
+        // @surinder
+        // TODO use `self.sender` to send a message to the runtime and get pending requests
+
         Ok(())
     }
 
-    pub async fn test(self: Arc<Self>, _request: TestRequest) -> Result<TestResponse> {
-        Ok(TestResponse {})
+    // clear the current action (must be called after the response is sent)
+    fn clear(&self) {
+        *self.action.lock().unwrap() = None;
     }
 
-    pub async fn connect(self: Arc<Self>, _request: ConnectRequest) -> Result<ConnectResponse> {
-        Ok(ConnectResponse {})
-    }
-
-    pub async fn sign_message(
-        self: Arc<Self>,
-        _request: SignMessageRequest,
-    ) -> Result<SignMessageResponse> {
-        Ok(SignMessageResponse {})
-    }
-
-    pub fn render(&self, _core: &mut Core, _ui: &mut Ui) -> bool {
-        false
-    }
-
-    pub async fn handle_message(self: Arc<Self>, action: Action, data: Vec<u8>) -> Result<Vec<u8>> {
+    pub fn render(&self, _core: &mut Core, ui: &mut Ui) -> bool {
+        let action = self.action.lock().unwrap().clone();
         match action {
-            Action::Test => {
-                let request = TestRequest::try_from_slice(&data)?;
-                let response = self.test(request).await?;
-                Ok(response.try_to_vec()?)
+            Some(Action::Test { request }) => {
+                let mut ctx = ();
+                Panel::new(&mut ctx)
+                    .with_caption("Adaptor Test")
+                    .with_body(|_ctx, ui| {
+                        ui.label("Test Request:");
+                        ui.label(format!("{:?}", request));
+                        ui.separator();
+
+                        if ui.button("Complete Test Response").clicked() {
+                            // TODO - place something in response
+                            let response = TestResponse {};
+                            self.response
+                                .try_send(response.try_to_vec().unwrap())
+                                .unwrap();
+
+                            // clear the action
+                            self.clear();
+                        }
+                    })
+                    .render(ui);
+
+                // consume rendering - do not render main UI
+                true
             }
-            Action::Connect => {
-                let request = ConnectRequest::try_from_slice(&data)?;
-                let response = self.connect(request).await?;
-                Ok(response.try_to_vec()?)
-            }
-            Action::SignMessage => {
-                let request = SignMessageRequest::try_from_slice(&data)?;
-                let response = self.sign_message(request).await?;
-                Ok(response.try_to_vec()?)
+            // TODO - handle connect and sign message etc.
+            _ => {
+                // continue rendering to standard KNG UI
+                false
             }
         }
     }
-}
 
-// ???
-#[repr(u64)]
-#[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
-pub enum Action {
-    Test,
-    Connect,
-    SignMessage,
-}
+    // pub async fn handle_message(self: Arc<Self>, data: Vec<u8>) -> Result<Vec<u8>> {
+    pub async fn handle_message(self: Arc<Self>, action: Action) -> Result<Vec<u8>> {
+        self.action.lock().unwrap().replace(action);
 
-#[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
-pub struct AdaptorEvent {
-    action: Action,
-    request: Vec<u8>,
+        let response = self.response.receiver.recv().await?;
+        Ok(response)
+    }
 }
-
-pub type AdaptorEventsChannel = workflow_core::channel::Channel<AdaptorEvent>;

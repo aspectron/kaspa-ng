@@ -339,7 +339,14 @@ impl Server {
             Target::Runtime => {
                 todo!()
             }
-            Target::Adaptor => {}
+            Target::Adaptor => {
+                // @surinder - respond with `pending_request` which should be
+                // Adaptor::Action type
+
+                let pending_data = self.pending_request.lock().unwrap().take();
+
+                // TODO figure out where pending data gets converted to `Adaptor::Action`
+            }
         }
 
         // let msg = msg_to_req(js_sys::Object::from(msg_jsv)).unwrap();

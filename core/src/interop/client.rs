@@ -52,18 +52,12 @@ impl Client {
             }
             Target::Runtime => Ok(None),
             Target::Adaptor => {
-                // let action = op as Action;
-                // let response = self.adaptor.handle_message(action, data).await?;
-                // Some(response)
-                Ok(None)
-                // match action {
-                //     Action::Connect => {
-                //         self.adaptor.connect().await?;
-                //     }
-                //     Action::TestRequestResponse => {
-                //         self.adaptor.test_request_response().await?;
-                //     }
-                // }
+                let action = Action::try_from_slice(&data)?;
+
+                let response = self.adaptor.clone().handle_message(action).await?;
+                // @surinder TODO - make sure that chrome extension client handles
+                // the response properly here and returns it to the originator
+                Ok(Some(response))
             }
         }
     }
