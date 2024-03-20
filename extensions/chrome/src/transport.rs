@@ -1,27 +1,52 @@
-use workflow_wasm::extensions::ObjectExtension;
+// use workflow_wasm::extensions::ObjectExtension;
 
 use crate::imports::*;
+use kaspa_ng_core::interop;
+use kaspa_ng_core::interop::transport::Target;
 
-// const SUCCESS: u8 = 0;
-// const ERROR: u8 = 1;
 pub type ListenerClosure = Closure<dyn FnMut(JsValue, Sender, JsValue) -> JsValue>;
 
-#[repr(u8)]
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
-pub enum Target {
-    Wallet = 0,
-    Runtime = 1,
+#[derive(Default, Clone)]
+pub struct ClientSender {}
+
+unsafe impl Send for ClientSender {}
+unsafe impl Sync for ClientSender {}
+
+impl ClientSender {
+    async fn send_message(&self, target: Target, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
+        // let msg = req_to_jsv(Target::Wallet, 0, &vec![]);
+        // send_message(&msg).await
+
+        let (tx, rx) = oneshot::<Result<Vec<u8>>>();
+        spawn_local(async move {
+            // match send_message(&req_to_jsv(Target::Wallet, op, &data)).await {
+            match send_message(&req_to_jsv(target, op, &data)).await {
+                Ok(jsv) => {
+                    let resp = jsv_to_resp(&jsv);
+                    tx.send(resp).await.unwrap();
+                }
+                Err(err) => {
+                    log_error!("error sending message: {err:?}");
+                    tx.send(Err(err.into())).await.unwrap();
+                }
+            };
+        });
+        rx.recv()
+            .await
+            .map_err(|_| Error::custom("Client transport receive channel error"))?
+    }
+}
+#[async_trait]
+impl interop::Sender for ClientSender {
+    async fn send_message(&self, target: Target, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
+        Ok(self.send_message(target, op, data).await?)
+    }
 }
 
-impl TryFrom<u8> for Target {
-    type Error = Error;
-
-    fn try_from(value: u8) -> Result<Self> {
-        match value {
-            0 => Ok(Target::Wallet),
-            1 => Ok(Target::Runtime),
-            _ => Err(Error::custom("invalid message target")),
-        }
+#[async_trait]
+impl BorshCodec for ClientSender {
+    async fn call(&self, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
+        Ok(self.send_message(Target::Wallet, op, data).await?)
     }
 }
 
@@ -100,27 +125,7 @@ pub fn req_to_jsv(target: Target, op: u64, src: &[u8]) -> JsValue {
 
     let data = request.try_to_vec().unwrap();
 
-    // let mask_data = mask_data();
-    // let mut index = rand::thread_rng().gen::<usize>() % mask_data.len();
-    // let mut data = vec![0; src.len() + 2 + 8];
-    // data[0] = index as u8;
-    // data[1] = target as u8 ^ mask_data[index];
-    // index += 1;
-    // // mask(&mut data[1..1], &[target as u8], &mut index, mask_data);
-    // mask(
-    //     &mut data[2..10],
-    //     op.to_le_bytes().as_ref(),
-    //     &mut index,
-    //     mask_data,
-    // );
-    // mask(&mut data[10..], src, &mut index, mask_data);
-    // let data =
-
-    let obj = js_sys::Object::new();
-    obj.set("type", &"Internal".into()).unwrap();
-    obj.set("data", &data.to_hex().into()).unwrap();
-
-    obj.into()
+    JsValue::from(data.to_hex())
 }
 
 pub fn jsv_to_req(src: JsValue) -> Result<(Target, u64, Vec<u8>)> {
@@ -135,54 +140,29 @@ pub fn jsv_to_req(src: JsValue) -> Result<(Target, u64, Vec<u8>)> {
 
     let request = ClientMessage::try_from_slice(&src).unwrap();
     Ok((request.target, request.op, request.data))
-
-    // let mask_data = mask_data();
-    // let mut index = src[0] as usize;
-    // let mut data = vec![0; src.len() - 1];
-    // mask(&mut data, &src[1..], &mut index, mask_data);
-    // let target = Target::try_from(data[0])?;
-    // let op = u64::from_le_bytes(data[1..9].try_into().unwrap());
-    // Ok((target, op, data[9..].to_vec()))
 }
 
 pub fn resp_to_jsv(target: Target, response: Result<Vec<u8>>) -> JsValue {
-    // let mask_data = mask_data();
-    // let mut index = rand::thread_rng().gen::<usize>() % (mask_data.len() - 1);
-
     match response {
         Ok(src) => {
             let response = ServerMessage {
-                target, // : Target::Runtime,
+                target,
                 kind: ServerMessageKind::Success,
-                // op : None,
                 data: src,
             };
 
             let data = response.try_to_vec().unwrap();
 
-            // let mut data = vec![0; src.len() + 2];
-            // data[0] = index as u8;
-            // data[1] = ServerMessageKind::Success as u8 ^ mask_data[index];
-            // index += 1;
-            // mask(&mut data[2..], &src, &mut index, mask_data);
             JsValue::from(data.to_hex())
         }
         Err(error) => {
             let response = ServerMessage {
-                target: Target::Runtime,
+                target,
                 kind: ServerMessageKind::Error,
-                // op : None,
                 data: error.to_string().as_bytes().to_vec(),
             };
 
             let data = response.try_to_vec().unwrap();
-            // let error = error.to_string();
-            // let src = error.as_bytes();
-            // let mut data = vec![0; src.len() + 2];
-            // data[0] = index as u8;
-            // data[1] = ServerMessageKind::Error as u8 ^ mask_data[index];
-            // index += 1;
-            // mask(&mut data[2..], src, &mut index, mask_data);
             JsValue::from(data.to_hex())
         }
     }
@@ -200,12 +180,6 @@ pub fn jsv_to_resp(jsv: &JsValue) -> Result<Vec<u8>> {
 
     let response = ServerMessage::try_from_slice(&src).unwrap();
 
-    // let mask_data = mask_data();
-    // let mut index = src[0] as usize;
-    // let mut data = vec![0; src.len() - 1];
-    // mask(&mut data, &src[1..], &mut index, mask_data);
-
-    // let kind = ServerMessageKind::try_from(data[0])?;
     match response.kind {
         ServerMessageKind::Success => Ok(response.data),
         ServerMessageKind::Error => {
@@ -218,44 +192,23 @@ pub fn jsv_to_resp(jsv: &JsValue) -> Result<Vec<u8>> {
 
 // ----
 
-// pub fn notify_to_jsv(op: u64, src: &[u8]) -> JsValue {
 pub fn notify_to_jsv(target: Target, src: &[u8]) -> JsValue {
-    // let notify =
-
     let notify = ServerMessage {
-        target, //: Target::Runtime,
+        target,
         kind: ServerMessageKind::Notification,
-        // op : Some(op),
         data: src.to_vec(),
     };
 
     let data = notify.try_to_vec().unwrap();
-    // }
-
-    // let mask_data = mask_data();
-    // let mut index = rand::thread_rng().gen::<usize>() % mask_data.len();
-    // let mut data = vec![0; src.len() + 5];
-    // data[0] = index as u8;
-    // mask(
-    //     &mut data[1..9],
-    //     op.to_le_bytes().as_ref(),
-    //     &mut index,
-    //     mask_data,
-    // );
-    // mask(&mut data[9..], src, &mut index, mask_data);
     JsValue::from(data.to_hex())
 }
 
-// pub fn jsv_to_notify(src: JsValue) -> Result<(u64, Vec<u8>)> {
-pub fn jsv_to_notify(src: JsValue) -> Result<(Target, Vec<u8>)> {
+pub fn jsv_to_notify(src: JsValue) -> Result<(interop::Target, Vec<u8>)> {
     let src = Vec::<u8>::from_hex(
         src.as_string()
             .ok_or(Error::custom("expecting string"))?
             .as_str(),
     )?;
-    // if src.len() < 9 {
-    //     return Err(Error::custom("invalid message length"));
-    // }
 
     let notify = ServerMessage::try_from_slice(&src).unwrap();
     log_info!("### NOTIFICATION MESSAGE: {:?}", notify);
@@ -265,13 +218,5 @@ pub fn jsv_to_notify(src: JsValue) -> Result<(Target, Vec<u8>)> {
         _ => Err(Error::custom(
             "Error: jsv_to_notify trying to parse a non-notification message",
         )),
-        // _ => Err(Error::custom("invalid notification code")),
     }
-
-    // let mask_data = mask_data();
-    // let mut index = src[0] as usize;
-    // let mut data = vec![0; src.len() - 1];
-    // mask(&mut data, &src[1..], &mut index, mask_data);
-    // let op = u64::from_le_bytes(data[0..8].try_into().unwrap());
-    // Ok((op, data[8..].to_vec()))
 }

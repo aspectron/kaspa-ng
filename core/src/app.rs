@@ -1,4 +1,5 @@
-use crate::imports::ApplicationEventsChannel;
+use crate::events::ApplicationEventsChannel;
+use crate::interop::Adaptor;
 use crate::result::Result;
 use crate::servers::parse_default_servers;
 use cfg_if::cfg_if;
@@ -27,6 +28,27 @@ pub const RUSTC_SEMVER: &str = env!("VERGEN_RUSTC_SEMVER");
 pub const CARGO_TARGET_TRIPLE: &str = env!("VERGEN_CARGO_TARGET_TRIPLE");
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const CODENAME: &str = "DNA";
+
+#[derive(Default, Clone)]
+pub struct ApplicationContext {
+    pub wallet_api: Option<Arc<dyn WalletApi>>,
+    pub application_events: Option<ApplicationEventsChannel>,
+    pub adaptor: Option<Arc<Adaptor>>,
+}
+
+impl ApplicationContext {
+    pub fn new(
+        wallet_api: Option<Arc<dyn WalletApi>>,
+        application_events: Option<ApplicationEventsChannel>,
+        adaptor: Option<Arc<Adaptor>>,
+    ) -> Self {
+        Self {
+            wallet_api,
+            application_events,
+            adaptor,
+        }
+    }
+}
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -139,8 +161,11 @@ cfg_if! {
             }
         }
 
-        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>) -> Result<()> {
+        // pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, _adaptor: Option<Arc<Adaptor>>) -> Result<()> {
+        pub async fn kaspa_ng_main(application_context : ApplicationContext) -> Result<()> {
             use std::sync::Mutex;
+
+            let ApplicationContext { wallet_api, application_events, adaptor: _ } = application_context;
 
             match try_set_fd_limit(DESIRED_DAEMON_SOFT_FD_LIMIT) {
                 Ok(limit) => {
@@ -279,10 +304,13 @@ cfg_if! {
     } else {
 
         // use crate::result::Result;
-        use crate::adaptor::AdaptorApi;
+        // use crate::adaptor::Adaptor;
 
-        pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, adaptor: Option<Arc<dyn AdaptorApi>>) -> Result<()> {
+        // pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, adaptor: Option<Arc<Adaptor>>) -> Result<()> {
+        pub async fn kaspa_ng_main(application_context : ApplicationContext) -> Result<()> {
             use workflow_dom::utils::document;
+
+            let ApplicationContext { wallet_api, application_events, adaptor } = application_context;
 
             // ------------------------------------------------------------
             // ------------------------------------------------------------

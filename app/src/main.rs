@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use cfg_if::cfg_if;
-use kaspa_ng_core::app::kaspa_ng_main;
+use kaspa_ng_core::app::{kaspa_ng_main, ApplicationContext};
 use workflow_log::*;
 
 cfg_if! {
@@ -13,7 +13,7 @@ cfg_if! {
             kaspa_alloc::init_allocator_with_default_settings();
 
             let body = async {
-                if let Err(err) = kaspa_ng_main(None,None).await {
+                if let Err(err) = kaspa_ng_main(ApplicationContext::default()).await {
                     log_error!("Error: {err}");
                 }
             };
@@ -33,7 +33,7 @@ cfg_if! {
         fn main() {
 
             wasm_bindgen_futures::spawn_local(async {
-                if let Err(err) = kaspa_ng_main(None).await {
+                if let Err(err) = kaspa_ng_main(ApplicationContext::default()).await {
                     log_error!("Error: {err}");
                 }
             });

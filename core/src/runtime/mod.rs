@@ -13,7 +13,9 @@ pub mod channel;
 pub mod payload;
 pub mod services;
 pub mod system;
-use crate::adaptor::{AdaptorApi, WebEvent};
+// use crate::adaptor::{Adaptor, WebEvent};
+// use crate::adaptor::{Adaptor, WebEvent};
+use crate::interop::Adaptor;
 pub use payload::Payload;
 pub use services::Service;
 use services::*;
@@ -28,7 +30,8 @@ pub struct Inner {
     start_time: Instant,
     system: Option<System>,
 
-    adaptor: Option<Arc<dyn AdaptorApi>>,
+    // adaptor: Option<Arc<dyn Adaptor>>,
+    adaptor: Option<Arc<Adaptor>>,
 
     kaspa: Arc<KaspaService>,
     peer_monitor_service: Arc<PeerMonitorService>,
@@ -55,7 +58,8 @@ impl Runtime {
         settings: &Settings,
         wallet_api: Option<Arc<dyn WalletApi>>,
         application_events: Option<ApplicationEventsChannel>,
-        adaptor: Option<Arc<dyn AdaptorApi>>,
+        // adaptor: Option<Arc<dyn Adaptor>>,
+        adaptor: Option<Arc<Adaptor>>,
     ) -> Self {
         let system = System::new();
 
@@ -134,10 +138,14 @@ impl Runtime {
     //     self.inner.adaptor.lock().unwrap().adaptor = Some(adapter);
     // }
 
-    pub fn post_to_server(&self, event: WebEvent) {
-        if let Some(adaptor) = self.inner.adaptor.as_ref() {
-            adaptor.post_to_server(event);
-        }
+    // pub fn post_to_server(&self, event: WebEvent) {
+    //     if let Some(adaptor) = self.inner.adaptor.as_ref() {
+    //         adaptor.post_to_server(event);
+    //     }
+    // }
+
+    pub fn adaptor(&self) -> &Option<Arc<Adaptor>> {
+        &self.inner.adaptor
     }
 
     pub fn uptime(&self) -> Duration {

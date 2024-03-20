@@ -44,9 +44,11 @@ workflow-http.workspace = true
 workflow-log.workspace = true
 workflow-store.workspace = true
 workflow-wasm.workspace = true
+chrome-sys.workspace = true
 
 ahash.workspace = true
 async-trait.workspace = true
+borsh.workspace = true
 cfg-if.workspace = true
 convert_case.workspace = true
 derivative.workspace = true
@@ -72,6 +74,7 @@ thiserror.workspace = true
 toml.workspace = true
 walkdir.workspace = true
 wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
 xxhash-rust.workspace = true
 zeroize.workspace = true
 

@@ -5,7 +5,6 @@ extern crate self as kaspa_ng_core;
 mod core;
 pub use core::Core;
 
-pub mod adaptor;
 pub mod app;
 pub mod collection;
 pub mod device;
@@ -16,6 +15,7 @@ pub mod extensions;
 pub mod fonts;
 pub mod frame;
 pub mod imports;
+pub mod interop;
 pub mod market;
 pub mod menu;
 pub mod mobile;

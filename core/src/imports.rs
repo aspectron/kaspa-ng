@@ -16,6 +16,7 @@ pub use kaspa_wallet_core::prelude::{
 pub use kaspa_wallet_core::utils::*;
 
 pub use async_trait::async_trait;
+pub use borsh::{BorshDeserialize, BorshSerialize};
 pub use futures::{pin_mut, select, FutureExt, StreamExt};
 pub use futures_util::future::{join_all, try_join_all};
 pub use separator::*;
@@ -66,6 +67,7 @@ pub use crate::egui::*;
 pub use crate::error::Error;
 pub use crate::events::{ApplicationEventsChannel, Events};
 pub use crate::extensions::*;
+pub use crate::interop;
 pub use crate::market::MarketData;
 pub use crate::menu::Menu;
 pub use crate::modules;

@@ -10,6 +10,7 @@ use kaspa_wallet_core::rpc::{
 use crate::imports::*;
 pub type PortListenerClosure = Closure<dyn FnMut(chrome_runtime_port::Port) -> JsValue>;
 pub type PortEventClosure = Closure<dyn FnMut(JsValue) -> JsValue>;
+use kaspa_ng_core::interop::Target;
 use rand::Rng;
 use std::collections::HashMap;
 use workflow_core::enums::Describe;
@@ -32,20 +33,23 @@ pub struct Server {
     port_closure: Mutex<Option<Rc<PortListenerClosure>>>,
     port_events_closures: Mutex<HashMap<u64, Vec<Rc<PortEventClosure>>>>,
     chrome_extension_id: String,
+    // event pending delivery after the popup is open
+    pending_request: Mutex<Option<JsValue>>,
 }
 
 unsafe impl Send for Server {}
 unsafe impl Sync for Server {}
 
 #[derive(Debug, Describe)]
-enum WebActions {
+enum ExtensionActions {
     InjectPageScript,
     Connect,
+    TestRequestResponse,
 }
 
 #[derive(Debug)]
-struct WebMessage {
-    action: WebActions,
+struct ExtensionMessage {
+    action: ExtensionActions,
     rid: Option<String>,
     data: JsValue,
 }
@@ -59,12 +63,12 @@ struct InternalMessage {
 
 #[derive(Debug)]
 enum Message {
-    Web(WebMessage),
+    Web(ExtensionMessage),
     Internal(InternalMessage),
 }
 
-impl From<WebMessage> for Message {
-    fn from(value: WebMessage) -> Self {
+impl From<ExtensionMessage> for Message {
+    fn from(value: ExtensionMessage) -> Self {
         Self::Web(value)
     }
 }
@@ -79,12 +83,12 @@ fn msg_to_req(msg: js_sys::Object) -> Result<Message> {
 
     if msg_type == "WebAPI" {
         let info = msg.get_object("data")?;
-        let action = WebActions::from_str(&info.get_string("action")?)
+        let action = ExtensionActions::from_str(&info.get_string("action")?)
             .expect("`action` is required for WEBAPI message.");
         let data = info.get_value("data")?;
         let rid = info.try_get_string("rid")?;
 
-        return Ok(WebMessage { action, data, rid }.into());
+        return Ok(ExtensionMessage { action, data, rid }.into());
     }
 
     if msg_type == "Internal" {
@@ -153,6 +157,7 @@ impl Server {
             port_events_closures: Mutex::new(HashMap::new()),
             wallet,
             wallet_server,
+            pending_request: Default::default(),
             // runtime,
         }
     }
@@ -244,11 +249,18 @@ impl Server {
         workflow_log::log_info!("handle_port_event: msg {:?}", msg);
         match msg {
             Message::Web(msg) => match msg.action {
-                WebActions::InjectPageScript => {
+                ExtensionActions::InjectPageScript => {
                     let tab_id = port.sender().tab().id();
                     init_page_script(tab_id, msg.data);
                 }
-                WebActions::Connect => open_popup_window(),
+                ExtensionActions::Connect => open_popup_window(),
+                ExtensionActions::TestRequestResponse => {
+                    // TODO - ENQUEUE PENDING REQUEST DATA
+                    self.pending_request.lock().unwrap().replace(msg.data);
+
+                    // OPENED POPUP MUST CONSUME PENDING REQUEST
+                    open_popup_window();
+                }
             },
             Message::Internal(_) => {
                 //
@@ -258,12 +270,15 @@ impl Server {
         format!("handle_port_event: got msg: {msg_jsv:?}").into()
     }
 
+    // Handle message from kaspa-ng-core (client)
     fn register_listener(self: &Arc<Self>) {
         let this = self.clone();
 
         let closure = Rc::new(Closure::new(
             move |msg, sender: Sender, callback: JsValue| -> JsValue {
                 let callback = js_sys::Function::from(callback);
+
+                // let (target, op, data) = jsv_to_req(msg)?;
 
                 match this.clone().handle_message(msg, sender, callback.clone()) {
                     Ok(_) => JsValue::from(true),
@@ -286,7 +301,7 @@ impl Server {
 
     fn handle_message(
         self: Arc<Self>,
-        msg_jsv: JsValue,
+        msg: JsValue,
         sender: Sender,
         callback: Function,
     ) -> Result<()> {
@@ -302,31 +317,54 @@ impl Server {
 
         log_info!(
             "[WASM] msg: {:?}, sender id:{:?}, {:?}",
-            msg_jsv,
+            msg,
             sender.id(),
             callback
         );
 
-        let msg = msg_to_req(js_sys::Object::from(msg_jsv)).unwrap();
-        match msg {
-            Message::Internal(msg) => match msg.target {
-                Target::Wallet => {
-                    spawn_local(async move {
-                        let resp = resp_to_jsv(
-                            Target::Wallet,
-                            self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
-                        );
-                        if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
-                            log_error!("onMessage callback error: {:?}", err);
-                        }
-                    });
-                }
-                Target::Runtime => {
-                    todo!()
-                }
-            },
-            Message::Web(_msg) => {}
+        let (target, op, data) = jsv_to_req(msg)?;
+
+        match target {
+            Target::Wallet => {
+                spawn_local(async move {
+                    let resp = resp_to_jsv(
+                        Target::Wallet,
+                        self.wallet_server.call_with_borsh(op, &data).await,
+                    );
+                    if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
+                        log_error!("onMessage callback error: {:?}", err);
+                    }
+                });
+            }
+            Target::Runtime => {
+                todo!()
+            }
+            Target::Adaptor => {}
         }
+
+        // let msg = msg_to_req(js_sys::Object::from(msg_jsv)).unwrap();
+        // match msg {
+        //     Message::Internal(msg) => match msg.target {
+        //         Target::Wallet => {
+        //             spawn_local(async move {
+        //                 let resp = resp_to_jsv(
+        //                     Target::Wallet,
+        //                     self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
+        //                 );
+        //                 if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
+        //                     log_error!("onMessage callback error: {:?}", err);
+        //                 }
+        //             });
+        //         }
+        //         Target::Runtime => {
+        //             todo!()
+        //         }
+        //         Target::Adaptor => {
+        //             panic!("Server receiving Target::Adaptor")
+        //         }
+        //     },
+        //     Message::Web(_msg) => {}
+        // }
 
         Ok(())
     }

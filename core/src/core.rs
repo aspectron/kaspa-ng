@@ -486,6 +486,14 @@ impl Core {
                 return;
             }
 
+            // delegate rendering to the adaptor, if any
+            // return if adaptor consumes the rendering phase
+            if let Some(adaptor) = runtime().adaptor() {
+                if adaptor.render(self, ui) {
+                    return;
+                }
+            }
+
             if !self.module.modal() && !self.device.mobile() {
                 egui::TopBottomPanel::top("top_panel").show_inside(ui, |ui| {
                     Menu::new(self).render(ui);
@@ -654,6 +662,11 @@ impl Core {
     ) -> Result<()> {
         // println!("event: {:?}", event);
         match event {
+            // Events::Adaptor { event } => {
+            //     if let Some(adaptor) = runtime().adaptor() {
+            //         adaptor.handle_event(self, event);
+            //     }
+            // }
             // Events::WebMessage(msg)=>{
             //     log_info!("Events::WebMessage msg: {msg}");
             // }
