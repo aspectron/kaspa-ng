@@ -6,7 +6,7 @@ use crate::interop::{message::*, Target};
 
 #[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
 pub struct PendingRequest {
-    id: Option<String>,
+    pub id: Option<String>,
     request: Request,
 }
 
@@ -21,6 +21,7 @@ impl PendingRequest {
 pub enum ServerAction {
     PendingRequests,
     Response(Option<String>, Vec<u8>),
+    CloseWindow,
 }
 
 pub struct Adaptor {
@@ -62,7 +63,7 @@ impl Adaptor {
                 match self.handle_message(request).await {
                     Ok(data) => {
                         log_info!("Adaptor:init handle_message: data:{data:?}");
-                        let _res = this
+                        let res = this
                             .sender
                             .send_message(
                                 Target::Adaptor,
@@ -70,7 +71,13 @@ impl Adaptor {
                                 ServerAction::Response(id, data).try_to_vec()?,
                             )
                             .await;
-                        log_info!("Adaptor: ServerAction::Response: {_res:?}");
+                        if res.is_ok() {
+                            //TODO: should we check which request require autoclose
+                            //log_info!("Adaptor:init sending window close msg");
+                            //let _ = this.sender.send_message(Target::Adaptor, 0, ServerAction::CloseWindow.try_to_vec()?).await;
+                            #[cfg(target_arch = "wasm32")]
+                            let _ = workflow_dom::utils::window().close();
+                        }
                         Ok(())
                     }
                     Err(err) => Err(err),

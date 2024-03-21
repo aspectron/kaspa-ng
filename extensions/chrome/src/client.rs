@@ -1,6 +1,9 @@
 use crate::imports::*;
 // use kaspa_ng_core::interop; //::transport;
-use kaspa_ng_core::interop::Client;
+use kaspa_ng_core::{
+    imports::window,
+    interop::{Client, Request},
+};
 
 pub struct ClientReceiver {
     _sender: Arc<dyn interop::Sender>,
@@ -30,6 +33,7 @@ impl ClientReceiver {
 
     pub fn start(self: &Arc<Self>) {
         self.register_listener();
+        chrome_runtime_connect(chrome_runtime::ConnectInfo::new("POPUP"));
     }
 
     fn register_listener(self: &Arc<Self>) {
@@ -84,6 +88,23 @@ impl ClientReceiver {
                     .sender
                     .try_send(kaspa_ng_core::events::Events::Wallet { event })
                     .unwrap();
+            }
+            Target::Runtime => {
+                let req = Request::try_from_slice(&data)?;
+                match req {
+                    Request::CloseWindow => {
+                        //let _ = window().alert_with_message("Closing window");
+                        let _ = window().close();
+                    }
+                    _ => {
+                        let self_ = self.clone();
+                        spawn_local(async move {
+                            if let Err(err) = self_.client.handle_message(target, 0, data).await {
+                                log_error!("error handling message: {:?}", err);
+                            }
+                        });
+                    }
+                }
             }
             _ => {
                 let self_ = self.clone();

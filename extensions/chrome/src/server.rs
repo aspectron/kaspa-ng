@@ -39,6 +39,8 @@ pub struct Server {
     chrome_extension_id: String,
     // event pending delivery after the popup is open
     pending_request: Mutex<Option<PendingRequest>>,
+    // id of request waiting for response
+    waiting_response: Mutex<Option<String>>,
 }
 
 unsafe impl Send for Server {}
@@ -162,6 +164,7 @@ impl Server {
             wallet,
             wallet_server,
             pending_request: Default::default(),
+            waiting_response: Default::default(),
             // runtime,
         }
     }
@@ -220,6 +223,7 @@ impl Server {
                 port.on_message().add_listener(&message_closure);
 
                 let this_clone = this.clone();
+                let port_clone = port.clone();
                 let disconnect_closure = Rc::new(Closure::new(move |_| -> JsValue {
                     workflow_log::log_info!("port disconnect: {index}");
                     this_clone
@@ -227,6 +231,9 @@ impl Server {
                         .lock()
                         .unwrap()
                         .remove(&index);
+                    if port_clone.name() == Some("POPUP".to_string()) {
+                        let _ = this_clone.on_popup_disconnect();
+                    }
                     JsValue::from(true)
                 }));
                 port.on_disconnect().add_listener(&disconnect_closure);
@@ -242,6 +249,40 @@ impl Server {
 
         chrome_runtime_on_connect::add_on_connect_listener(&closure);
         *self.port_closure.lock().unwrap() = Some(closure);
+    }
+
+    fn on_popup_disconnect(self: &Arc<Self>) -> Result<()> {
+        let rid = self.waiting_response.lock().unwrap().take();
+        if rid.is_some() {
+            let response = interop::Response::Canceled {
+                error: "User canceled the request.".into(),
+            };
+            self.send_message_to_ports(rid, response)?;
+        }
+        Ok(())
+    }
+
+    fn send_message_to_ports(
+        self: &Arc<Self>,
+        rid: Option<String>,
+        response: interop::Response,
+    ) -> Result<()> {
+        let ports: Vec<Rc<chrome_runtime_port::Port>> = {
+            self.port_events_closures
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|(_, p)| p.0.clone())
+                .collect()
+        };
+
+        let object = serde_wasm_bindgen::to_value(&response).unwrap();
+        js_sys::Reflect::set(&object, &"rid".into(), &rid.into()).unwrap();
+        for port in ports {
+            port.post_message(object.clone());
+        }
+
+        Ok(())
     }
 
     async fn handle_port_event(
@@ -363,14 +404,19 @@ impl Server {
                 log_info!("[Server] Adaptor: action: {action:?}");
                 match action {
                     ServerAction::PendingRequests => {
-                        let pending_request = self
-                            .pending_request
-                            .lock()
-                            .unwrap()
-                            .take()
-                            .map_or(vec![], |a| a.try_to_vec().unwrap());
+                        let pending_request =
+                            self.pending_request
+                                .lock()
+                                .unwrap()
+                                .take()
+                                .map_or(vec![], |a| {
+                                    *self.waiting_response.lock().unwrap() = a.id.clone();
+                                    a.try_to_vec().unwrap()
+                                });
+
                         let res = resp_to_jsv(Target::Adaptor, Ok(pending_request));
                         log_info!("[Server] Adaptor: res: {res:?}");
+
                         spawn_local(async move {
                             if let Err(err) = callback.call1(&JsValue::UNDEFINED, &res) {
                                 log_error!("PendingRequests: callback error: {:?}", err);
@@ -378,21 +424,35 @@ impl Server {
                         });
                     }
                     ServerAction::Response(rid, data) => {
-                        let ports: Vec<Rc<chrome_runtime_port::Port>> = {
-                            self.port_events_closures
-                                .lock()
-                                .unwrap()
-                                .iter()
-                                .map(|(_, p)| p.0.clone())
-                                .collect()
-                        };
-
                         let response = interop::Response::try_from_slice(&data).unwrap();
-                        let object = serde_wasm_bindgen::to_value(&response).unwrap();
-                        js_sys::Reflect::set(&object, &"rid".into(), &rid.into()).unwrap();
-                        for port in ports {
-                            port.post_message(object.clone());
-                        }
+                        self.send_message_to_ports(rid, response)?;
+                        // clear waiting id
+                        self.waiting_response.lock().unwrap().take();
+                        let res = resp_to_jsv(Target::Adaptor, Ok(vec![]));
+
+                        spawn_local(async move {
+                            if let Err(err) = callback.call1(&JsValue::UNDEFINED, &res) {
+                                log_error!("PendingRequests: callback error: {:?}", err);
+                            }
+                        });
+                    }
+                    ServerAction::CloseWindow => {
+                        let req = Request::CloseWindow.try_to_vec().unwrap();
+                        spawn_local(async move {
+                            log_info!("[SERVER] sending CloseWindow notification");
+                            if let Err(err) =
+                                send_message(&notify_to_jsv(Target::Runtime, &req)).await
+                            {
+                                log_warn!("Unable to post Request::CloseWindow: {:?}", err);
+                            }
+                        });
+
+                        // let res = resp_to_jsv(Target::Adaptor, Ok(vec![]));
+                        // spawn_local(async move {
+                        //     if let Err(err) = callback.call1(&JsValue::UNDEFINED, &res) {
+                        //         log_error!("CloseWindow: callback error: {:?}", err);
+                        //     }
+                        // });
                     }
                 }
             }
@@ -428,7 +488,7 @@ impl EventHandler for ServerEventHandler {
         let data = event.try_to_vec().unwrap();
         spawn_local(async move {
             let data = notify_to_jsv(Target::Wallet, &data);
-            log_info!("EVENT HANDLER - SENDING MESSAGE!");
+            // log_info!("EVENT HANDLER - SENDING MESSAGE!");
             if let Err(err) = send_message(&data).await {
                 log_warn!("Unable to post notification: {:?}", err);
             }
