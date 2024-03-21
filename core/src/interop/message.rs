@@ -1,13 +1,45 @@
 use crate::imports::*;
 
+#[repr(u64)]
+#[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
+pub enum Response {
+    Test(TestResponse),
+    Connect(ConnectResponse),
+    SignMessage(SignMessageResponse),
+}
+impl Response{
+    pub fn data(&self)->String{
+        match self {
+            Response::Test(r)=>serde_json::to_string(r).unwrap(),
+            Response::Connect(r)=>serde_json::to_string(r).unwrap(),
+            Response::SignMessage(r)=>serde_json::to_string(r).unwrap(),
+        }
+    }
+}
+impl From<TestResponse> for Response {
+    fn from(value: TestResponse) -> Self {
+        Self::Test(value)
+    }
+}
+impl From<ConnectResponse> for Response {
+    fn from(value: ConnectResponse) -> Self {
+        Self::Connect(value)
+    }
+}
+impl From<SignMessageResponse> for Response {
+    fn from(value: SignMessageResponse) -> Self {
+        Self::SignMessage(value)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
 pub struct TestRequest {
-    // pub request: String,
+    pub data: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
 pub struct TestResponse {
-    // pub response: String,
+    pub response: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
@@ -17,7 +49,7 @@ pub struct ConnectRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
 pub struct ConnectResponse {
-    // pub request: String,
+    pub address: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]

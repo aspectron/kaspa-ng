@@ -3665,6 +3665,7 @@ dependencies = [
  "kaspa-utils",
  "kaspa-wallet-core",
  "rand",
+ "serde_json",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "workflow-chrome",

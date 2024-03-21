@@ -1,4 +1,7 @@
-use kaspa_ng_core::imports::KaspaRpcClient;
+use kaspa_ng_core::{
+    imports::KaspaRpcClient,
+    interop::{Action, ConnectRequest, PendingRequest, ServerAction, TestRequest},
+};
 use kaspa_wallet_core::rpc::{
     // ConnectOptions, ConnectStrategy, RpcCtl,
     DynRpcApi,
@@ -31,10 +34,11 @@ pub struct Server {
     wallet_server: Arc<WalletServer>,
     closure: Mutex<Option<Rc<ListenerClosure>>>,
     port_closure: Mutex<Option<Rc<PortListenerClosure>>>,
-    port_events_closures: Mutex<HashMap<u64, Vec<Rc<PortEventClosure>>>>,
+    port_events_closures:
+        Mutex<HashMap<u64, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>,
     chrome_extension_id: String,
     // event pending delivery after the popup is open
-    pending_request: Mutex<Option<JsValue>>,
+    pending_request: Mutex<Option<PendingRequest>>,
 }
 
 unsafe impl Send for Server {}
@@ -230,7 +234,7 @@ impl Server {
                 this.port_events_closures
                     .lock()
                     .unwrap()
-                    .insert(index, vec![message_closure, disconnect_closure]);
+                    .insert(index, (port, vec![message_closure, disconnect_closure]));
 
                 JsValue::from(false)
             },
@@ -253,10 +257,31 @@ impl Server {
                     let tab_id = port.sender().tab().id();
                     init_page_script(tab_id, msg.data);
                 }
-                ExtensionActions::Connect => open_popup_window(),
+                ExtensionActions::Connect => {
+                    self.pending_request
+                        .lock()
+                        .unwrap()
+                        .replace(PendingRequest::new(
+                            msg.rid,
+                            Action::Connect {
+                                request: ConnectRequest {},
+                            },
+                        ));
+                    open_popup_window();
+                }
                 ExtensionActions::TestRequestResponse => {
                     // TODO - ENQUEUE PENDING REQUEST DATA
-                    self.pending_request.lock().unwrap().replace(msg.data);
+                    self.pending_request
+                        .lock()
+                        .unwrap()
+                        .replace(PendingRequest::new(
+                            msg.rid,
+                            Action::Test {
+                                request: TestRequest {
+                                    data: msg.data.as_string().unwrap(),
+                                },
+                            },
+                        ));
 
                     // OPENED POPUP MUST CONSUME PENDING REQUEST
                     open_popup_window();
@@ -323,6 +348,7 @@ impl Server {
         );
 
         let (target, op, data) = jsv_to_req(msg)?;
+        log_info!("[WASM] target: {target:?}, op:{op}, data:{data:?}");
 
         match target {
             Target::Wallet => {
@@ -340,12 +366,46 @@ impl Server {
                 todo!()
             }
             Target::Adaptor => {
-                // @surinder - respond with `pending_request` which should be
-                // Adaptor::Action type
-
-                let pending_data = self.pending_request.lock().unwrap().take();
-
-                // TODO figure out where pending data gets converted to `Adaptor::Action`
+                let action = ServerAction::try_from_slice(&data)?;
+                log_info!("[Server] Adaptor: action: {action:?}");
+                match action {
+                    ServerAction::PendingRequests => {
+                        let pending_request = self
+                            .pending_request
+                            .lock()
+                            .unwrap()
+                            .take()
+                            .map_or(vec![], |a| a.try_to_vec().unwrap());
+                        let res = resp_to_jsv(Target::Adaptor, Ok(pending_request));
+                        log_info!("[Server] Adaptor: res: {res:?}");
+                        spawn_local(async move {
+                            if let Err(err) = callback.call1(&JsValue::UNDEFINED, &res) {
+                                log_error!("PendingRequests: callback error: {:?}", err);
+                            }
+                        });
+                    }
+                    ServerAction::Response(rid, data) => {
+                        let ports: Vec<Rc<chrome_runtime_port::Port>> = {
+                            self.port_events_closures
+                                .lock()
+                                .unwrap()
+                                .iter()
+                                .map(|(_, p)| p.0.clone())
+                                .collect()
+                        };
+                
+                        let obj = js_sys::Object::new();
+                        if let Some(ref rid) = rid {
+                            let _ = obj.set("rid", &rid.into());
+                        }
+                        let res = interop::Response::try_from_slice(&data).unwrap();
+                        let _ = obj.set("data", &res.data().into());
+                        let res: JsValue = obj.into();
+                        for port in ports {
+                            port.post_message(res.clone());
+                        }
+                    }
+                }
             }
         }
 
