@@ -4,33 +4,15 @@ use crate::imports::*;
 use crate::interop::transport;
 use crate::interop::{message::*, Target};
 
-#[repr(u64)]
-#[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
-pub enum Action {
-    Test { request: TestRequest },
-    Connect { request: ConnectRequest },
-    SignMessage { request: SignMessageRequest },
-}
-cfg_if! {
-    if #[cfg(target_arch = "wasm32")] {
-        impl From<Action> for wasm_bindgen::JsValue{
-            fn from(action:Action)->Self{
-                action.try_to_vec().unwrap().to_hex().into()
-                //action.try_to_vec().unwrap().into_iter().map(wasm_bindgen::JsValue::from).collect::<js_sys::Array>().into()
-            }
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
 pub struct PendingRequest {
     id: Option<String>,
-    action: Action,
+    request: Request,
 }
 
 impl PendingRequest {
-    pub fn new(id: Option<String>, action: Action) -> Self {
-        Self { id, action }
+    pub fn new(id: Option<String>, request: Request) -> Self {
+        Self { id, request }
     }
 }
 
@@ -44,7 +26,7 @@ pub enum ServerAction {
 pub struct Adaptor {
     sender: Arc<dyn transport::Sender>,
     application_events: ApplicationEventsChannel,
-    action: Mutex<Option<Action>>,
+    request: Mutex<Option<Request>>,
     response: Channel<Vec<u8>>,
 }
 
@@ -56,7 +38,7 @@ impl Adaptor {
         Self {
             sender,
             application_events,
-            action: Mutex::new(None),
+            request: Mutex::new(None),
             response: Channel::unbounded(),
         }
     }
@@ -74,10 +56,10 @@ impl Adaptor {
         log_info!("Adaptor:init res: {res:?}");
         if !res.is_empty() {
             let this = self.clone();
-            let PendingRequest { id, action } = PendingRequest::try_from_slice(&res)?;
-            log_info!("Adaptor:init req-id:{id:?}, action: {action:?}");
+            let PendingRequest { id, request } = PendingRequest::try_from_slice(&res)?;
+            log_info!("Adaptor:init req-id:{id:?}, action: {request:?}");
             workflow_core::task::spawn(async move {
-                match self.handle_message(action).await {
+                match self.handle_message(request).await {
                     Ok(data) => {
                         log_info!("Adaptor:init handle_message: data:{data:?}");
                         let _res = this
@@ -100,31 +82,30 @@ impl Adaptor {
 
     // clear the current action (must be called after the response is sent)
     fn clear(&self) {
-        *self.action.lock().unwrap() = None;
+        *self.request.lock().unwrap() = None;
     }
 
     pub fn render(&self, core: &mut Core, ui: &mut Ui) -> bool {
-        let action = self.action.lock().unwrap().clone();
-        let action = match action {
-            Some(action) => action,
+        let request = match self.request.lock().unwrap().clone() {
+            Some(request) => request,
             None => return false,
         };
-        match action {
-            Action::Test { request } => {
+
+        match request {
+            Request::Test { data } => {
                 let mut ctx = ();
                 Panel::new(&mut ctx)
                     .with_caption("Adaptor Test")
                     .with_body(|_ctx, ui| {
                         ui.label("Test Request:");
-                        ui.label(format!("{:?}", request));
+                        ui.label(format!("{:?}", data));
                         ui.separator();
 
                         if ui.button("Complete Test Response").clicked() {
                             // TODO - place something in response
-                            let response: interop::Response = TestResponse {
+                            let response = interop::Response::Test {
                                 response: "xyz".into(),
-                            }
-                            .into();
+                            };
                             self.response
                                 .try_send(response.try_to_vec().unwrap())
                                 .unwrap();
@@ -139,7 +120,7 @@ impl Adaptor {
                 true
             }
 
-            Action::Connect { request } => {
+            Request::Connect {} => {
                 log_info!("Adaptor render -> Action::Connect: {:?}", request);
                 let account_manager = core
                     .modules()
@@ -148,10 +129,9 @@ impl Adaptor {
                     .clone();
                 let account_manager = account_manager.get::<modules::AccountManager>();
                 if let Some(account) = account_manager.account() {
-                    let response: interop::Response = ConnectResponse {
+                    let response = interop::Response::Connect {
                         address: account.receive_address().to_string(),
-                    }
-                    .into();
+                    };
                     self.response
                         .try_send(response.try_to_vec().unwrap())
                         .unwrap();
@@ -168,8 +148,8 @@ impl Adaptor {
         }
     }
 
-    pub async fn handle_message(self: Arc<Self>, action: Action) -> Result<Vec<u8>> {
-        self.action.lock().unwrap().replace(action);
+    pub async fn handle_message(self: Arc<Self>, request: Request) -> Result<Vec<u8>> {
+        self.request.lock().unwrap().replace(request);
 
         let response = self.response.receiver.recv().await?;
         Ok(response)

@@ -2,7 +2,7 @@
 use crate::imports::*;
 use crate::interop::transport;
 use crate::interop::transport::Target;
-use crate::interop::{Action, Adaptor};
+use crate::interop::{Adaptor, Request};
 pub use kaspa_wallet_core::api::transport::BorshCodec;
 pub use kaspa_wallet_core::api::transport::{EventHandler, WalletServer};
 
@@ -52,7 +52,7 @@ impl Client {
             }
             Target::Runtime => Ok(None),
             Target::Adaptor => {
-                let action = Action::try_from_slice(&data)?;
+                let action = Request::try_from_slice(&data)?;
 
                 let response = self.adaptor.clone().handle_message(action).await?;
                 // @surinder TODO - make sure that chrome extension client handles

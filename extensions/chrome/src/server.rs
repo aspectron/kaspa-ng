@@ -1,6 +1,6 @@
 use kaspa_ng_core::{
     imports::KaspaRpcClient,
-    interop::{Action, ConnectRequest, PendingRequest, ServerAction, TestRequest},
+    interop::{PendingRequest, Request, ServerAction},
 };
 use kaspa_wallet_core::rpc::{
     // ConnectOptions, ConnectStrategy, RpcCtl,
@@ -261,12 +261,7 @@ impl Server {
                     self.pending_request
                         .lock()
                         .unwrap()
-                        .replace(PendingRequest::new(
-                            msg.rid,
-                            Action::Connect {
-                                request: ConnectRequest {},
-                            },
-                        ));
+                        .replace(PendingRequest::new(msg.rid, Request::Connect {}));
                     open_popup_window();
                 }
                 ExtensionActions::TestRequestResponse => {
@@ -276,10 +271,8 @@ impl Server {
                         .unwrap()
                         .replace(PendingRequest::new(
                             msg.rid,
-                            Action::Test {
-                                request: TestRequest {
-                                    data: msg.data.as_string().unwrap(),
-                                },
+                            Request::Test {
+                                data: msg.data.as_string().unwrap(),
                             },
                         ));
 
@@ -393,45 +386,17 @@ impl Server {
                                 .map(|(_, p)| p.0.clone())
                                 .collect()
                         };
-                
-                        let obj = js_sys::Object::new();
-                        if let Some(ref rid) = rid {
-                            let _ = obj.set("rid", &rid.into());
-                        }
-                        let res = interop::Response::try_from_slice(&data).unwrap();
-                        let _ = obj.set("data", &res.data().into());
-                        let res: JsValue = obj.into();
+
+                        let response = interop::Response::try_from_slice(&data).unwrap();
+                        let object = serde_wasm_bindgen::to_value(&response).unwrap();
+                        js_sys::Reflect::set(&object, &"rid".into(), &rid.into()).unwrap();
                         for port in ports {
-                            port.post_message(res.clone());
+                            port.post_message(object.clone());
                         }
                     }
                 }
             }
         }
-
-        // let msg = msg_to_req(js_sys::Object::from(msg_jsv)).unwrap();
-        // match msg {
-        //     Message::Internal(msg) => match msg.target {
-        //         Target::Wallet => {
-        //             spawn_local(async move {
-        //                 let resp = resp_to_jsv(
-        //                     Target::Wallet,
-        //                     self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
-        //                 );
-        //                 if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
-        //                     log_error!("onMessage callback error: {:?}", err);
-        //                 }
-        //             });
-        //         }
-        //         Target::Runtime => {
-        //             todo!()
-        //         }
-        //         Target::Adaptor => {
-        //             panic!("Server receiving Target::Adaptor")
-        //         }
-        //     },
-        //     Message::Web(_msg) => {}
-        // }
 
         Ok(())
     }
