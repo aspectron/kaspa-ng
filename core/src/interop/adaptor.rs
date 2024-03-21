@@ -4,28 +4,9 @@ use crate::imports::*;
 use crate::interop::transport;
 use crate::interop::{message::*, Target};
 
-// #[repr(u64)]
-// #[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
-// pub enum Action {
-//     Test { request: TestRequest },
-//     Connect { request: ConnectRequest },
-//     SignMessage { request: SignMessageRequest },
-// }
-cfg_if! {
-    if #[cfg(target_arch = "wasm32")] {
-        impl From<Action> for wasm_bindgen::JsValue{
-            fn from(action:Action)->Self{
-                action.try_to_vec().unwrap().to_hex().into()
-                //action.try_to_vec().unwrap().into_iter().map(wasm_bindgen::JsValue::from).collect::<js_sys::Array>().into()
-            }
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
 pub struct PendingRequest {
     id: Option<String>,
-    // action: Action,
     request: Request,
 }
 
@@ -33,9 +14,6 @@ impl PendingRequest {
     pub fn new(id: Option<String>, request: Request) -> Self {
         Self { id, request }
     }
-    // pub fn new(id: Option<String>, action: Action) -> Self {
-    //     Self { id, action }
-    // }
 }
 
 #[repr(u64)]
@@ -108,11 +86,6 @@ impl Adaptor {
     }
 
     pub fn render(&self, core: &mut Core, ui: &mut Ui) -> bool {
-        // let request = self.request.lock().unwrap().clone();
-        // if request.is_none() {
-        //     return false;
-        // }
-
         let request = match self.request.lock().unwrap().clone() {
             Some(request) => request,
             None => return false,
@@ -133,7 +106,6 @@ impl Adaptor {
                             let response = interop::Response::Test {
                                 response: "xyz".into(),
                             };
-                            // .into();
                             self.response
                                 .try_send(response.try_to_vec().unwrap())
                                 .unwrap();

@@ -387,18 +387,6 @@ impl Server {
                                 .collect()
                         };
 
-                        // let obj = js_sys::Object::new();
-                        // if let Some(ref rid) = rid {
-                        //     let _ = obj.set("rid", &rid.into());
-                        // }
-                        // let res = interop::Response::try_from_slice(&data).unwrap();
-
-                        // let _ = obj.set("data", &res.data().into());
-                        // let res: JsValue = obj.into();
-                        // for port in ports {
-                        //     port.post_message(res.clone());
-                        // }
-
                         let response = interop::Response::try_from_slice(&data).unwrap();
                         let object = serde_wasm_bindgen::to_value(&response).unwrap();
                         js_sys::Reflect::set(&object, &"rid".into(), &rid.into()).unwrap();
@@ -409,30 +397,6 @@ impl Server {
                 }
             }
         }
-
-        // let msg = msg_to_req(js_sys::Object::from(msg_jsv)).unwrap();
-        // match msg {
-        //     Message::Internal(msg) => match msg.target {
-        //         Target::Wallet => {
-        //             spawn_local(async move {
-        //                 let resp = resp_to_jsv(
-        //                     Target::Wallet,
-        //                     self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
-        //                 );
-        //                 if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
-        //                     log_error!("onMessage callback error: {:?}", err);
-        //                 }
-        //             });
-        //         }
-        //         Target::Runtime => {
-        //             todo!()
-        //         }
-        //         Target::Adaptor => {
-        //             panic!("Server receiving Target::Adaptor")
-        //         }
-        //     },
-        //     Message::Web(_msg) => {}
-        // }
 
         Ok(())
     }
