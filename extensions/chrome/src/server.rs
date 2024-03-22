@@ -19,6 +19,9 @@ use std::collections::HashMap;
 use workflow_core::enums::Describe;
 use workflow_wasm::extensions::ObjectExtension;
 
+type PortId = u64;
+type ReqId = String;
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_name = "initPageScript")]
@@ -35,10 +38,12 @@ pub struct Server {
     closure: Mutex<Option<Rc<ListenerClosure>>>,
     port_closure: Mutex<Option<Rc<PortListenerClosure>>>,
     port_events_closures:
-        Mutex<HashMap<u64, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>,
+        Mutex<HashMap<PortId, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>,
     chrome_extension_id: String,
     // event pending delivery after the popup is open
     pending_request: Mutex<Option<PendingRequest>>,
+    // id of request waiting for response
+    waiting_response: Mutex<Option<(PortId, ReqId)>>,
 }
 
 unsafe impl Send for Server {}
@@ -61,7 +66,6 @@ struct ExtensionMessage {
 #[derive(Debug)]
 struct InternalMessage {
     target: Target,
-    op: u64,
     data: Vec<u8>,
 }
 
@@ -97,23 +101,11 @@ fn msg_to_req(msg: js_sys::Object) -> Result<Message> {
 
     if msg_type == "Internal" {
         let info = msg.get_value("data")?;
-        let (target, op, data) = jsv_to_req(info)?;
-        return Ok(InternalMessage { target, op, data }.into());
+        let (target, data) = jsv_to_req(info)?;
+        return Ok(InternalMessage { target, data }.into());
     }
 
     Err("Invalid msg: {msg_type}".to_string().into())
-
-    // let src = Vec::<u8>::from_hex(
-    //     src.as_string()
-    //         .ok_or(Error::custom("expecting string"))?
-    //         .as_str(),
-    // )?;
-    // if src.len() < 10 {
-    //     return Err(Error::custom("invalid message length"));
-    // }
-
-    // let request = ClientMessage::try_from_slice(&src).unwrap();
-    // Ok((request.target, request.op, request.data))
 }
 
 impl Server {
@@ -162,6 +154,7 @@ impl Server {
             wallet,
             wallet_server,
             pending_request: Default::default(),
+            waiting_response: Default::default(),
             // runtime,
         }
     }
@@ -202,7 +195,7 @@ impl Server {
                 let port = Rc::new(port);
                 let port_clone = port.clone();
                 let mut rng = rand::thread_rng();
-                let index = rng.gen::<u64>();
+                let port_id = rng.gen::<u64>();
 
                 let this_clone = this.clone();
                 let message_closure = Rc::new(Closure::new(move |msg: JsValue| -> JsValue {
@@ -210,7 +203,11 @@ impl Server {
                     let port_clone = port_clone.clone();
                     spawn_local(async move {
                         let result = this_clone
-                            .handle_port_event(js_sys::Object::from(msg), port_clone.clone())
+                            .handle_port_event(
+                                js_sys::Object::from(msg),
+                                port_clone.clone(),
+                                port_id,
+                            )
                             .await;
                         port_clone.post_message(result);
                     });
@@ -220,13 +217,17 @@ impl Server {
                 port.on_message().add_listener(&message_closure);
 
                 let this_clone = this.clone();
+                let port_clone = port.clone();
                 let disconnect_closure = Rc::new(Closure::new(move |_| -> JsValue {
-                    workflow_log::log_info!("port disconnect: {index}");
+                    workflow_log::log_info!("port disconnect: {port_id}");
                     this_clone
                         .port_events_closures
                         .lock()
                         .unwrap()
-                        .remove(&index);
+                        .remove(&port_id);
+                    if port_clone.name() == Some("POPUP".to_string()) {
+                        let _ = this_clone.on_popup_disconnect();
+                    }
                     JsValue::from(true)
                 }));
                 port.on_disconnect().add_listener(&disconnect_closure);
@@ -234,7 +235,7 @@ impl Server {
                 this.port_events_closures
                     .lock()
                     .unwrap()
-                    .insert(index, (port, vec![message_closure, disconnect_closure]));
+                    .insert(port_id, (port, vec![message_closure, disconnect_closure]));
 
                 JsValue::from(false)
             },
@@ -244,10 +245,55 @@ impl Server {
         *self.port_closure.lock().unwrap() = Some(closure);
     }
 
+    fn on_popup_disconnect(self: &Arc<Self>) -> Result<()> {
+        let rid = self.waiting_response.lock().unwrap().take();
+        if rid.is_some() {
+            let response = interop::Response::Canceled {
+                error: "User canceled the request.".into(),
+            };
+            self.send_message_to_port(rid, response)?;
+        }
+        Ok(())
+    }
+
+    fn send_message_to_port(
+        self: &Arc<Self>,
+        req: Option<(PortId, ReqId)>,
+        response: interop::Response,
+    ) -> Result<()> {
+        let ports: Vec<Rc<chrome_runtime_port::Port>> = {
+            self.port_events_closures
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|(id, _)| {
+                    if let Some((port_id, _)) = req.as_ref() {
+                        *id == port_id
+                    } else {
+                        true
+                    }
+                })
+                .map(|(_, p)| p.0.clone())
+                .collect()
+        };
+
+        let object = serde_wasm_bindgen::to_value(&response).unwrap();
+        if let Some((_, rid)) = req.as_ref() {
+            js_sys::Reflect::set(&object, &"rid".into(), &rid.into()).unwrap();
+        }
+
+        for port in ports {
+            port.post_message(object.clone());
+        }
+
+        Ok(())
+    }
+
     async fn handle_port_event(
         self: &Arc<Self>,
         msg_jsv: js_sys::Object,
         port: Rc<chrome_runtime_port::Port>,
+        port_id: PortId,
     ) -> JsValue {
         let msg = msg_to_req(msg_jsv.clone()).unwrap();
         workflow_log::log_info!("handle_port_event: msg {:?}", msg);
@@ -261,7 +307,7 @@ impl Server {
                     self.pending_request
                         .lock()
                         .unwrap()
-                        .replace(PendingRequest::new(msg.rid, Request::Connect {}));
+                        .replace(PendingRequest::new(port_id, msg.rid, Request::Connect {}));
                     open_popup_window();
                 }
                 ExtensionActions::TestRequestResponse => {
@@ -270,6 +316,7 @@ impl Server {
                         .lock()
                         .unwrap()
                         .replace(PendingRequest::new(
+                            port_id,
                             msg.rid,
                             Request::Test {
                                 data: msg.data.as_string().unwrap(),
@@ -295,8 +342,6 @@ impl Server {
         let closure = Rc::new(Closure::new(
             move |msg, sender: Sender, callback: JsValue| -> JsValue {
                 let callback = js_sys::Function::from(callback);
-
-                // let (target, op, data) = jsv_to_req(msg)?;
 
                 match this.clone().handle_message(msg, sender, callback.clone()) {
                     Ok(_) => JsValue::from(true),
@@ -340,15 +385,16 @@ impl Server {
             callback
         );
 
-        let (target, op, data) = jsv_to_req(msg)?;
-        log_info!("[WASM] target: {target:?}, op:{op}, data:{data:?}");
+        let (target, data) = jsv_to_req(msg)?;
+        log_info!("[WASM] target: {target:?}, data:{data:?}");
 
         match target {
             Target::Wallet => {
+                let msg = WalletMessage::try_from_slice(&data)?;
                 spawn_local(async move {
                     let resp = resp_to_jsv(
                         Target::Wallet,
-                        self.wallet_server.call_with_borsh(op, &data).await,
+                        self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
                     );
                     if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
                         log_error!("onMessage callback error: {:?}", err);
@@ -363,36 +409,61 @@ impl Server {
                 log_info!("[Server] Adaptor: action: {action:?}");
                 match action {
                     ServerAction::PendingRequests => {
-                        let pending_request = self
-                            .pending_request
-                            .lock()
-                            .unwrap()
-                            .take()
-                            .map_or(vec![], |a| a.try_to_vec().unwrap());
+                        let pending_request =
+                            self.pending_request
+                                .lock()
+                                .unwrap()
+                                .take()
+                                .map_or(vec![], |a| {
+                                    if let Some(id) = a.id.clone() {
+                                        *self.waiting_response.lock().unwrap() =
+                                            Some((a.sender_id, id));
+                                    }
+                                    a.try_to_vec().unwrap()
+                                });
+
                         let res = resp_to_jsv(Target::Adaptor, Ok(pending_request));
                         log_info!("[Server] Adaptor: res: {res:?}");
+
                         spawn_local(async move {
                             if let Err(err) = callback.call1(&JsValue::UNDEFINED, &res) {
                                 log_error!("PendingRequests: callback error: {:?}", err);
                             }
                         });
                     }
-                    ServerAction::Response(rid, data) => {
-                        let ports: Vec<Rc<chrome_runtime_port::Port>> = {
-                            self.port_events_closures
-                                .lock()
-                                .unwrap()
-                                .iter()
-                                .map(|(_, p)| p.0.clone())
-                                .collect()
-                        };
-
+                    ServerAction::Response(port_id, rid, data) => {
                         let response = interop::Response::try_from_slice(&data).unwrap();
-                        let object = serde_wasm_bindgen::to_value(&response).unwrap();
-                        js_sys::Reflect::set(&object, &"rid".into(), &rid.into()).unwrap();
-                        for port in ports {
-                            port.post_message(object.clone());
+                        if let Some((pid, id)) = self.waiting_response.lock().unwrap().take() {
+                            if pid == port_id && Some(id.clone()) == rid {
+                                self.send_message_to_port(Some((port_id, id)), response)?;
+                            }
                         }
+
+                        let res = resp_to_jsv(Target::Adaptor, Ok(vec![]));
+
+                        spawn_local(async move {
+                            if let Err(err) = callback.call1(&JsValue::UNDEFINED, &res) {
+                                log_error!("PendingRequests: callback error: {:?}", err);
+                            }
+                        });
+                    }
+                    ServerAction::CloseWindow => {
+                        let req = Request::CloseWindow.try_to_vec().unwrap();
+                        spawn_local(async move {
+                            log_info!("[SERVER] sending CloseWindow notification");
+                            if let Err(err) =
+                                send_message(&notify_to_jsv(Target::Runtime, &req)).await
+                            {
+                                log_warn!("Unable to post Request::CloseWindow: {:?}", err);
+                            }
+                        });
+
+                        // let res = resp_to_jsv(Target::Adaptor, Ok(vec![]));
+                        // spawn_local(async move {
+                        //     if let Err(err) = callback.call1(&JsValue::UNDEFINED, &res) {
+                        //         log_error!("CloseWindow: callback error: {:?}", err);
+                        //     }
+                        // });
                     }
                 }
             }
@@ -428,7 +499,7 @@ impl EventHandler for ServerEventHandler {
         let data = event.try_to_vec().unwrap();
         spawn_local(async move {
             let data = notify_to_jsv(Target::Wallet, &data);
-            log_info!("EVENT HANDLER - SENDING MESSAGE!");
+            // log_info!("EVENT HANDLER - SENDING MESSAGE!");
             if let Err(err) = send_message(&data).await {
                 log_warn!("Unable to post notification: {:?}", err);
             }

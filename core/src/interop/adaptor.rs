@@ -6,13 +6,18 @@ use crate::interop::{message::*, Target};
 
 #[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
 pub struct PendingRequest {
-    id: Option<String>,
+    pub sender_id: u64,
+    pub id: Option<String>,
     request: Request,
 }
 
 impl PendingRequest {
-    pub fn new(id: Option<String>, request: Request) -> Self {
-        Self { id, request }
+    pub fn new(sender_id: u64, id: Option<String>, request: Request) -> Self {
+        Self {
+            sender_id,
+            id,
+            request,
+        }
     }
 }
 
@@ -20,7 +25,8 @@ impl PendingRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
 pub enum ServerAction {
     PendingRequests,
-    Response(Option<String>, Vec<u8>),
+    Response(u64, Option<String>, Vec<u8>),
+    CloseWindow,
 }
 
 pub struct Adaptor {
@@ -47,30 +53,35 @@ impl Adaptor {
         log_info!("Adaptor:init");
         let res = self
             .sender
-            .send_message(
-                Target::Adaptor,
-                0,
-                ServerAction::PendingRequests.try_to_vec()?,
-            )
+            .send_message(Target::Adaptor, ServerAction::PendingRequests.try_to_vec()?)
             .await?;
         log_info!("Adaptor:init res: {res:?}");
         if !res.is_empty() {
             let this = self.clone();
-            let PendingRequest { id, request } = PendingRequest::try_from_slice(&res)?;
+            let PendingRequest {
+                sender_id,
+                id,
+                request,
+            } = PendingRequest::try_from_slice(&res)?;
             log_info!("Adaptor:init req-id:{id:?}, action: {request:?}");
             workflow_core::task::spawn(async move {
                 match self.handle_message(request).await {
                     Ok(data) => {
                         log_info!("Adaptor:init handle_message: data:{data:?}");
-                        let _res = this
+                        let res = this
                             .sender
                             .send_message(
                                 Target::Adaptor,
-                                0,
-                                ServerAction::Response(id, data).try_to_vec()?,
+                                ServerAction::Response(sender_id, id, data).try_to_vec()?,
                             )
                             .await;
-                        log_info!("Adaptor: ServerAction::Response: {_res:?}");
+                        if res.is_ok() {
+                            //TODO: should we check which request require autoclose?
+                            //log_info!("Adaptor:init sending window close msg");
+                            //let _ = this.sender.send_message(Target::Adaptor, ServerAction::CloseWindow.try_to_vec()?).await;
+                            #[cfg(target_arch = "wasm32")]
+                            let _ = workflow_dom::utils::window().close();
+                        }
                         Ok(())
                     }
                     Err(err) => Err(err),

@@ -35,7 +35,12 @@ async function apiBuilder(uuid, eventKey) {
 
         log("reply:", msg.detail);
         if (rid && events.has(rid)) {
-            events.get(rid).resolve(data)
+            if (data.error){
+                events.get(rid).reject(data)
+            }else{
+                events.get(rid).resolve(data)
+            }
+            
             events.delete(rid);
         }
     })

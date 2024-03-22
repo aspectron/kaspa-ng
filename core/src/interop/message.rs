@@ -5,6 +5,7 @@ pub enum Request {
     Test { data: String },
     Connect {},
     SignMessage { message: String },
+    CloseWindow,
 }
 
 // #[repr(u64)]
@@ -14,6 +15,7 @@ pub enum Response {
     Test { response: String },
     Connect { address: String },
     SignMessage { signature: String },
+    Canceled { error: String },
 }
 // pub enum Response {
 //     Test(TestResponse),

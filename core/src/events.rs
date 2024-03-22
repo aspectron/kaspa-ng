@@ -4,16 +4,11 @@ use crate::storage::StorageUpdateOptions;
 use crate::utils::Release;
 use kaspa_metrics_core::MetricsSnapshot;
 use kaspa_wallet_core::{events as kaspa, storage::PrvKeyDataInfo};
-// use crate::adaptor::AdaptorEvent;
 
 pub type ApplicationEventsChannel = crate::runtime::channel::Channel<Events>;
 
 #[derive(Clone, Debug)]
 pub enum Events {
-    // Adaptor {
-    //     event: AdaptorEvent,
-    // },
-    // WebMessage(String),
     NetworkChange(Network),
     UpdateStorage(StorageUpdateOptions),
     VisibilityChange(VisibilityState),

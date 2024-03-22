@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # trunk build --config extensions/chrome/Chrome.toml
+cargo fmt --all
 
 rm -rf ./dist-chrome
 mkdir ./dist-chrome

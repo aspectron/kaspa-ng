@@ -45,11 +45,12 @@ pub async fn kaspa_ng_main() {
     let sender = Arc::new(ClientSender::default());
     let client = Arc::new(Client::new(sender.clone(), application_events.clone()));
 
-    let _receiver = Arc::new(ClientReceiver::new(
+    let receiver = Arc::new(ClientReceiver::new(
         sender.clone(),
         client.clone(),
         application_events.clone(),
     ));
+    receiver.start();
     if let Err(err) = client.clone().init().await {
         log_error!("Error: {err}");
     }
