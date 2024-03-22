@@ -19,6 +19,9 @@ use std::collections::HashMap;
 use workflow_core::enums::Describe;
 use workflow_wasm::extensions::ObjectExtension;
 
+type PortId = u64;
+type ReqId = String;
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_name = "initPageScript")]
@@ -35,12 +38,12 @@ pub struct Server {
     closure: Mutex<Option<Rc<ListenerClosure>>>,
     port_closure: Mutex<Option<Rc<PortListenerClosure>>>,
     port_events_closures:
-        Mutex<HashMap<u64, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>,
+        Mutex<HashMap<PortId, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>,
     chrome_extension_id: String,
     // event pending delivery after the popup is open
     pending_request: Mutex<Option<PendingRequest>>,
     // id of request waiting for response
-    waiting_response: Mutex<Option<String>>,
+    waiting_response: Mutex<Option<(PortId, ReqId)>>,
 }
 
 unsafe impl Send for Server {}
@@ -192,7 +195,7 @@ impl Server {
                 let port = Rc::new(port);
                 let port_clone = port.clone();
                 let mut rng = rand::thread_rng();
-                let index = rng.gen::<u64>();
+                let port_id = rng.gen::<u64>();
 
                 let this_clone = this.clone();
                 let message_closure = Rc::new(Closure::new(move |msg: JsValue| -> JsValue {
@@ -200,7 +203,11 @@ impl Server {
                     let port_clone = port_clone.clone();
                     spawn_local(async move {
                         let result = this_clone
-                            .handle_port_event(js_sys::Object::from(msg), port_clone.clone())
+                            .handle_port_event(
+                                js_sys::Object::from(msg),
+                                port_clone.clone(),
+                                port_id,
+                            )
                             .await;
                         port_clone.post_message(result);
                     });
@@ -212,12 +219,12 @@ impl Server {
                 let this_clone = this.clone();
                 let port_clone = port.clone();
                 let disconnect_closure = Rc::new(Closure::new(move |_| -> JsValue {
-                    workflow_log::log_info!("port disconnect: {index}");
+                    workflow_log::log_info!("port disconnect: {port_id}");
                     this_clone
                         .port_events_closures
                         .lock()
                         .unwrap()
-                        .remove(&index);
+                        .remove(&port_id);
                     if port_clone.name() == Some("POPUP".to_string()) {
                         let _ = this_clone.on_popup_disconnect();
                     }
@@ -228,7 +235,7 @@ impl Server {
                 this.port_events_closures
                     .lock()
                     .unwrap()
-                    .insert(index, (port, vec![message_closure, disconnect_closure]));
+                    .insert(port_id, (port, vec![message_closure, disconnect_closure]));
 
                 JsValue::from(false)
             },
@@ -244,14 +251,14 @@ impl Server {
             let response = interop::Response::Canceled {
                 error: "User canceled the request.".into(),
             };
-            self.send_message_to_ports(rid, response)?;
+            self.send_message_to_port(rid, response)?;
         }
         Ok(())
     }
 
-    fn send_message_to_ports(
+    fn send_message_to_port(
         self: &Arc<Self>,
-        rid: Option<String>,
+        req: Option<(PortId, ReqId)>,
         response: interop::Response,
     ) -> Result<()> {
         let ports: Vec<Rc<chrome_runtime_port::Port>> = {
@@ -259,12 +266,22 @@ impl Server {
                 .lock()
                 .unwrap()
                 .iter()
+                .filter(|(id, _)| {
+                    if let Some((port_id, _)) = req.as_ref() {
+                        *id == port_id
+                    } else {
+                        true
+                    }
+                })
                 .map(|(_, p)| p.0.clone())
                 .collect()
         };
 
         let object = serde_wasm_bindgen::to_value(&response).unwrap();
-        js_sys::Reflect::set(&object, &"rid".into(), &rid.into()).unwrap();
+        if let Some((_, rid)) = req.as_ref() {
+            js_sys::Reflect::set(&object, &"rid".into(), &rid.into()).unwrap();
+        }
+
         for port in ports {
             port.post_message(object.clone());
         }
@@ -276,6 +293,7 @@ impl Server {
         self: &Arc<Self>,
         msg_jsv: js_sys::Object,
         port: Rc<chrome_runtime_port::Port>,
+        port_id: PortId,
     ) -> JsValue {
         let msg = msg_to_req(msg_jsv.clone()).unwrap();
         workflow_log::log_info!("handle_port_event: msg {:?}", msg);
@@ -289,7 +307,7 @@ impl Server {
                     self.pending_request
                         .lock()
                         .unwrap()
-                        .replace(PendingRequest::new(msg.rid, Request::Connect {}));
+                        .replace(PendingRequest::new(port_id, msg.rid, Request::Connect {}));
                     open_popup_window();
                 }
                 ExtensionActions::TestRequestResponse => {
@@ -298,6 +316,7 @@ impl Server {
                         .lock()
                         .unwrap()
                         .replace(PendingRequest::new(
+                            port_id,
                             msg.rid,
                             Request::Test {
                                 data: msg.data.as_string().unwrap(),
@@ -396,7 +415,10 @@ impl Server {
                                 .unwrap()
                                 .take()
                                 .map_or(vec![], |a| {
-                                    *self.waiting_response.lock().unwrap() = a.id.clone();
+                                    if let Some(id) = a.id.clone() {
+                                        *self.waiting_response.lock().unwrap() =
+                                            Some((a.sender_id, id));
+                                    }
                                     a.try_to_vec().unwrap()
                                 });
 
@@ -409,11 +431,14 @@ impl Server {
                             }
                         });
                     }
-                    ServerAction::Response(rid, data) => {
+                    ServerAction::Response(port_id, rid, data) => {
                         let response = interop::Response::try_from_slice(&data).unwrap();
-                        self.send_message_to_ports(rid, response)?;
-                        // clear waiting id
-                        self.waiting_response.lock().unwrap().take();
+                        if let Some((pid, id)) = self.waiting_response.lock().unwrap().take() {
+                            if pid == port_id && Some(id.clone()) == rid {
+                                self.send_message_to_port(Some((port_id, id)), response)?;
+                            }
+                        }
+
                         let res = resp_to_jsv(Target::Adaptor, Ok(vec![]));
 
                         spawn_local(async move {
