@@ -13,14 +13,10 @@ unsafe impl Send for ClientSender {}
 unsafe impl Sync for ClientSender {}
 
 impl ClientSender {
-    async fn send_message(&self, target: Target, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
-        // let msg = req_to_jsv(Target::Wallet, 0, &vec![]);
-        // send_message(&msg).await
-
+    async fn send_message(&self, target: Target, data: Vec<u8>) -> Result<Vec<u8>> {
         let (tx, rx) = oneshot::<Result<Vec<u8>>>();
         spawn_local(async move {
-            // match send_message(&req_to_jsv(Target::Wallet, op, &data)).await {
-            match send_message(&req_to_jsv(target, op, &data)).await {
+            match send_message(&req_to_jsv(target, &data)).await {
                 Ok(jsv) => {
                     let resp = jsv_to_resp(&jsv);
                     tx.send(resp).await.unwrap();
@@ -38,15 +34,20 @@ impl ClientSender {
 }
 #[async_trait]
 impl interop::Sender for ClientSender {
-    async fn send_message(&self, target: Target, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
-        Ok(self.send_message(target, op, data).await?)
+    async fn send_message(&self, target: Target, data: Vec<u8>) -> Result<Vec<u8>> {
+        Ok(self.send_message(target, data).await?)
     }
 }
 
 #[async_trait]
 impl BorshCodec for ClientSender {
     async fn call(&self, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
-        Ok(self.send_message(Target::Wallet, op, data).await?)
+        Ok(self
+            .send_message(
+                Target::Wallet,
+                WalletMessage::new(op, data).try_to_vec().unwrap(),
+            )
+            .await?)
     }
 }
 
@@ -104,22 +105,30 @@ impl TryFrom<u8> for ServerMessageKind {
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct ClientMessage {
     target: Target,
-    op: u64,
     data: Vec<u8>,
+}
+
+#[derive(BorshSerialize, BorshDeserialize)]
+pub struct WalletMessage {
+    pub op: u64,
+    pub data: Vec<u8>,
+}
+impl WalletMessage {
+    pub fn new(op: u64, data: Vec<u8>) -> Self {
+        Self { op, data }
+    }
 }
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct ServerMessage {
     target: Target,
     kind: ServerMessageKind,
-    // op : Option<u64>,
     data: Vec<u8>,
 }
 
-pub fn req_to_jsv(target: Target, op: u64, src: &[u8]) -> JsValue {
+pub fn req_to_jsv(target: Target, src: &[u8]) -> JsValue {
     let request = ClientMessage {
         target,
-        op,
         data: src.to_vec(),
     };
 
@@ -128,18 +137,21 @@ pub fn req_to_jsv(target: Target, op: u64, src: &[u8]) -> JsValue {
     JsValue::from(data.to_hex())
 }
 
-pub fn jsv_to_req(src: JsValue) -> Result<(Target, u64, Vec<u8>)> {
+pub fn jsv_to_req(src: JsValue) -> Result<(Target, Vec<u8>)> {
     let src = Vec::<u8>::from_hex(
         src.as_string()
             .ok_or(Error::custom("expecting string"))?
             .as_str(),
     )?;
-    if src.len() < 10 {
-        return Err(Error::custom("invalid message length"));
+    if src.len() < 6 {
+        return Err(Error::custom(format!(
+            "invalid message length: {}",
+            src.len()
+        )));
     }
 
     let request = ClientMessage::try_from_slice(&src).unwrap();
-    Ok((request.target, request.op, request.data))
+    Ok((request.target, request.data))
 }
 
 pub fn resp_to_jsv(target: Target, response: Result<Vec<u8>>) -> JsValue {
@@ -175,7 +187,10 @@ pub fn jsv_to_resp(jsv: &JsValue) -> Result<Vec<u8>> {
             .as_str(),
     )?;
     if src.len() < 2 {
-        return Err(Error::custom("invalid message length"));
+        return Err(Error::custom(format!(
+            "invalid message length: {}",
+            src.len()
+        )));
     }
 
     let response = ServerMessage::try_from_slice(&src).unwrap();

@@ -25,15 +25,5 @@ impl TryFrom<u8> for Target {
 
 #[async_trait]
 pub trait Sender: Send + Sync {
-    async fn send_message(&self, target: Target, op: u64, data: Vec<u8>) -> Result<Vec<u8>>;
+    async fn send_message(&self, target: Target, data: Vec<u8>) -> Result<Vec<u8>>;
 }
-
-// #[async_trait]
-// pub trait Receiver {
-//     async fn handle_message(
-//         &self,
-//         target: Target,
-//         op: u64,
-//         data: Vec<u8>,
-//     ) -> Result<Option<Vec<u8>>>;
-// }

@@ -63,7 +63,6 @@ struct ExtensionMessage {
 #[derive(Debug)]
 struct InternalMessage {
     target: Target,
-    op: u64,
     data: Vec<u8>,
 }
 
@@ -99,23 +98,11 @@ fn msg_to_req(msg: js_sys::Object) -> Result<Message> {
 
     if msg_type == "Internal" {
         let info = msg.get_value("data")?;
-        let (target, op, data) = jsv_to_req(info)?;
-        return Ok(InternalMessage { target, op, data }.into());
+        let (target, data) = jsv_to_req(info)?;
+        return Ok(InternalMessage { target, data }.into());
     }
 
     Err("Invalid msg: {msg_type}".to_string().into())
-
-    // let src = Vec::<u8>::from_hex(
-    //     src.as_string()
-    //         .ok_or(Error::custom("expecting string"))?
-    //         .as_str(),
-    // )?;
-    // if src.len() < 10 {
-    //     return Err(Error::custom("invalid message length"));
-    // }
-
-    // let request = ClientMessage::try_from_slice(&src).unwrap();
-    // Ok((request.target, request.op, request.data))
 }
 
 impl Server {
@@ -337,8 +324,6 @@ impl Server {
             move |msg, sender: Sender, callback: JsValue| -> JsValue {
                 let callback = js_sys::Function::from(callback);
 
-                // let (target, op, data) = jsv_to_req(msg)?;
-
                 match this.clone().handle_message(msg, sender, callback.clone()) {
                     Ok(_) => JsValue::from(true),
                     Err(err) => {
@@ -381,15 +366,16 @@ impl Server {
             callback
         );
 
-        let (target, op, data) = jsv_to_req(msg)?;
-        log_info!("[WASM] target: {target:?}, op:{op}, data:{data:?}");
+        let (target, data) = jsv_to_req(msg)?;
+        log_info!("[WASM] target: {target:?}, data:{data:?}");
 
         match target {
             Target::Wallet => {
+                let msg = WalletMessage::try_from_slice(&data)?;
                 spawn_local(async move {
                     let resp = resp_to_jsv(
                         Target::Wallet,
-                        self.wallet_server.call_with_borsh(op, &data).await,
+                        self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
                     );
                     if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
                         log_error!("onMessage callback error: {:?}", err);

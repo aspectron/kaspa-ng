@@ -48,11 +48,7 @@ impl Adaptor {
         log_info!("Adaptor:init");
         let res = self
             .sender
-            .send_message(
-                Target::Adaptor,
-                0,
-                ServerAction::PendingRequests.try_to_vec()?,
-            )
+            .send_message(Target::Adaptor, ServerAction::PendingRequests.try_to_vec()?)
             .await?;
         log_info!("Adaptor:init res: {res:?}");
         if !res.is_empty() {
@@ -67,14 +63,13 @@ impl Adaptor {
                             .sender
                             .send_message(
                                 Target::Adaptor,
-                                0,
                                 ServerAction::Response(id, data).try_to_vec()?,
                             )
                             .await;
                         if res.is_ok() {
-                            //TODO: should we check which request require autoclose
+                            //TODO: should we check which request require autoclose?
                             //log_info!("Adaptor:init sending window close msg");
-                            //let _ = this.sender.send_message(Target::Adaptor, 0, ServerAction::CloseWindow.try_to_vec()?).await;
+                            //let _ = this.sender.send_message(Target::Adaptor, ServerAction::CloseWindow.try_to_vec()?).await;
                             #[cfg(target_arch = "wasm32")]
                             let _ = workflow_dom::utils::window().close();
                         }

@@ -33,12 +33,7 @@ impl Client {
         &self.adaptor
     }
 
-    pub async fn handle_message(
-        &self,
-        target: Target,
-        _op: u64,
-        data: Vec<u8>,
-    ) -> Result<Option<Vec<u8>>> {
+    pub async fn handle_message(&self, target: Target, data: Vec<u8>) -> Result<Option<Vec<u8>>> {
         match target {
             Target::Wallet => {
                 let event = Box::new(kaspa_wallet_core::events::Events::try_from_slice(&data)?);

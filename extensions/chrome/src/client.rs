@@ -99,7 +99,7 @@ impl ClientReceiver {
                     _ => {
                         let self_ = self.clone();
                         spawn_local(async move {
-                            if let Err(err) = self_.client.handle_message(target, 0, data).await {
+                            if let Err(err) = self_.client.handle_message(target, data).await {
                                 log_error!("error handling message: {:?}", err);
                             }
                         });
@@ -109,7 +109,7 @@ impl ClientReceiver {
             _ => {
                 let self_ = self.clone();
                 spawn_local(async move {
-                    if let Err(err) = self_.client.handle_message(target, 0, data).await {
+                    if let Err(err) = self_.client.handle_message(target, data).await {
                         log_error!("error handling message: {:?}", err);
                     }
                 });
