@@ -5,7 +5,6 @@ use kaspa_ng_core::{
 use kaspa_wallet_core::rpc::{
     // ConnectOptions, ConnectStrategy, RpcCtl,
     DynRpcApi,
-    NotificationMode,
     Rpc,
     WrpcEncoding,
 };
@@ -162,7 +161,6 @@ impl Server {
     pub fn create_rpc_client() -> Result<Rpc> {
         let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
             WrpcEncoding::Borsh,
-            NotificationMode::MultiListeners,
             None,
             None,
             None,
