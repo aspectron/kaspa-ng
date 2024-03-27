@@ -1145,6 +1145,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "chrome-sys"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "011ddd3011a285f208817fc8fc6db655cda2e17f89de31d34b90559b5f2a8870"
+dependencies = [
+ "js-sys",
+ "thiserror",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1154,6 +1166,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-targets 0.48.5",
 ]
@@ -1550,6 +1563,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling"
+version = "0.20.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54e36fcd13ed84ffdfda6f5be89b31287cbb80c439841fe69e04841435464391"
+dependencies = [
+ "darling_core",
+ "darling_macro",
+]
+
+[[package]]
+name = "darling_core"
+version = "0.20.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c2cf1c23a687a1feeb728783b993c4e1ad83d99f351801977dd809b48d0a70f"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim 0.10.0",
+ "syn 2.0.52",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.20.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a668eda54683121533a393014d8692171709ff57a7d61f187b6e782719f8933f"
+dependencies = [
+ "darling_core",
+ "quote",
+ "syn 2.0.52",
+]
+
+[[package]]
 name = "dashmap"
 version = "5.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1593,6 +1641,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
 dependencies = [
  "powerfmt",
+ "serde",
 ]
 
 [[package]]
@@ -2799,6 +2848,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ident_case"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
+
+[[package]]
 name = "idna"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2886,6 +2941,7 @@ checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
  "hashbrown 0.12.3",
+ "serde",
 ]
 
 [[package]]
@@ -2896,6 +2952,7 @@ checksum = "233cf39063f058ea2caae4091bf4a3ef70a653afbc026f5c4a4135d114e3c177"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.3",
+ "serde",
 ]
 
 [[package]]
@@ -3659,7 +3716,7 @@ version = "0.2.4"
 dependencies = [
  "async-trait",
  "borsh",
- "chrome-sys",
+ "chrome-sys 0.1.0",
  "js-sys",
  "kaspa-ng-core",
  "kaspa-utils",
@@ -3684,7 +3741,7 @@ dependencies = [
  "async-trait",
  "borsh",
  "cfg-if 1.0.0",
- "chrome-sys",
+ "chrome-sys 0.1.0",
  "chrono",
  "clap 4.4.16",
  "convert_case 0.6.0",
@@ -3739,7 +3796,7 @@ dependencies = [
  "sysinfo",
  "thiserror",
  "tokio",
- "toml 0.8.8",
+ "toml 0.8.12",
  "vergen",
  "walkdir",
  "wasm-bindgen",
@@ -4204,7 +4261,7 @@ dependencies = [
  "serde-wasm-bindgen",
  "serde_json",
  "thiserror",
- "toml 0.8.8",
+ "toml 0.8.12",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "workflow-core",
@@ -4247,6 +4304,7 @@ name = "kaspa-wrpc-wasm"
 version = "0.13.5"
 dependencies = [
  "ahash 0.8.9",
+ "async-std",
  "cfg-if 1.0.0",
  "futures",
  "js-sys",
@@ -4304,9 +4362,12 @@ dependencies = [
  "num_cpus",
  "rand",
  "rayon",
+ "serde",
+ "serde_with",
  "tempfile",
  "thiserror",
  "tokio",
+ "toml 0.8.12",
  "workflow-log",
 ]
 
@@ -6283,6 +6344,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_with"
+version = "3.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee80b0e361bbf88fd2f6e242ccd19cfda072cb0faa6ae694ecee08199938569a"
+dependencies = [
+ "base64 0.21.7",
+ "chrono",
+ "hex",
+ "indexmap 1.9.3",
+ "indexmap 2.2.3",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serde_with_macros",
+ "time",
+]
+
+[[package]]
+name = "serde_with_macros"
+version = "3.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6561dc161a9224638a31d876ccdfefbc1df91d3f3a8342eddb35f055d48c7655"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.52",
+]
+
+[[package]]
 name = "serde_yaml"
 version = "0.8.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6617,7 +6708,7 @@ dependencies = [
  "cfg-expr",
  "heck",
  "pkg-config",
- "toml 0.8.8",
+ "toml 0.8.12",
  "version-compare",
 ]
 
@@ -6879,14 +6970,14 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.8.8"
+version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1a195ec8c9da26928f773888e0742ca3ca1040c6cd859c919c9f59c1954ab35"
+checksum = "e9dd1545e8208b4a5af1aa9bbd0b4cf7e9ea08fabc5d0a5c67fcaafa17433aa3"
 dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit 0.21.0",
+ "toml_edit 0.22.9",
 ]
 
 [[package]]
@@ -6906,20 +6997,20 @@ checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
 dependencies = [
  "indexmap 2.2.3",
  "toml_datetime",
- "winnow",
+ "winnow 0.5.34",
 ]
 
 [[package]]
 name = "toml_edit"
-version = "0.21.0"
+version = "0.22.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d34d383cd00a163b4a5b85053df514d45bc330f6de7737edfe0a93311d1eaa03"
+checksum = "8e40bb779c5187258fd7aad0eb68cb8706a0a81fa712fbea808ab43c4b8374c4"
 dependencies = [
  "indexmap 2.2.3",
  "serde",
  "serde_spanned",
  "toml_datetime",
- "winnow",
+ "winnow 0.6.5",
 ]
 
 [[package]]
@@ -7848,6 +7939,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "winnow"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dffa400e67ed5a4dd237983829e66475f0a4a26938c4b04c21baede6262215b8"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "winreg"
 version = "0.50.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7862,7 +7962,7 @@ name = "workflow-chrome"
 version = "0.11.0"
 dependencies = [
  "cfg-if 1.0.0",
- "chrome-sys",
+ "chrome-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "js-sys",
  "thiserror",
  "wasm-bindgen",
@@ -8092,7 +8192,7 @@ dependencies = [
  "async-std",
  "base64 0.21.7",
  "cfg-if 1.0.0",
- "chrome-sys",
+ "chrome-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "faster-hex 0.9.0",
  "filetime",
  "home",

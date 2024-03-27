@@ -360,26 +360,35 @@ impl Runtime {
     }
 }
 
-static mut RUNTIME: Option<Runtime> = None;
+static RUNTIME: Mutex<Option<Runtime>> = Mutex::new(None);
 
-pub fn runtime() -> &'static Runtime {
+pub fn runtime() -> Runtime {
     unsafe {
-        if let Some(runtime) = &RUNTIME {
-            runtime
+        if let Some(runtime) = RUNTIME.lock().unwrap().as_ref() {
+            runtime.clone()
         } else {
             panic!("runtime not initialized")
         }
     }
 }
 
-pub fn try_runtime() -> Option<&'static Runtime> {
-    unsafe { RUNTIME.as_ref() }
+pub fn try_runtime() -> Option<Runtime> {
+    unsafe { RUNTIME.lock().unwrap().clone() }
 }
 
 fn register_global(runtime: Option<Runtime>) {
-    unsafe {
-        RUNTIME = runtime;
-    }
+    match runtime {
+        Some(runtime) => {
+            let mut global = RUNTIME.lock().unwrap();
+            if global.is_some() {
+                panic!("runtime already initialized");
+            }
+            global.replace(runtime);
+        }
+        None => {
+            RUNTIME.lock().unwrap().take();
+        }
+    };
 }
 
 /// Spawn an async task that will result in
