@@ -1,34 +1,130 @@
+use cfg_if::cfg_if;
 // use crate::imports::*;
+// use convert_case::{Case, Casing};
+// use egui::FontFamily;
+use egui::{FontData, FontDefinitions, FontFamily};
+
+trait RegisterStaticFont {
+    fn add_static(&mut self, family: FontFamily, name: &str, bytes: &'static [u8]);
+}
+
+impl RegisterStaticFont for FontDefinitions {
+    fn add_static(&mut self, family: FontFamily, name: &str, bytes: &'static [u8]) {
+        self.font_data
+            .insert(name.to_owned(), FontData::from_static(bytes));
+
+        self.families
+            // .entry(egui::FontFamily::Name(name.into()))
+            .entry(family)
+            .or_default()
+            .push(name.to_owned());
+    }
+}
 
 pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
-    let mut fonts = egui::FontDefinitions::default();
+    let mut fonts = FontDefinitions::default();
     egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Bold);
     egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
     egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
 
     // ---
+
     fonts.font_data.insert(
         "ubuntu_mono".to_owned(),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
         egui::FontData::from_static(include_bytes!(
-            "../../resources/fonts/UbuntuMono/UbuntuMono-Regular.ttf"
+            "../resources/fonts/UbuntuMono/UbuntuMono-Regular.ttf"
         )),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSansMono-Regular.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSansMono-Light.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/SourceCodePro-Regular.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/SourceCodePro-Light.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/RobotoMono-Regular.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/RobotoMono-Light.ttf")),
     );
 
     fonts
         .families
-        .entry(egui::FontFamily::Monospace)
+        .entry(FontFamily::Monospace)
         .or_default()
         .insert(0, "ubuntu_mono".to_owned());
 
     // ---
+
+    fonts.font_data.insert(
+        "noto_sans_mono_light".to_owned(),
+        FontData::from_static(include_bytes!(
+            "../resources/fonts/NotoSans/NotoSansMono-Light.ttf"
+        )),
+    );
+
+    fonts
+        .families
+        .entry(egui::FontFamily::Name("noto_sans_mono_light".into()))
+        .or_default()
+        .insert(0, "noto_sans_mono_light".to_owned());
+
+    // ---
+
+    #[cfg(target_os = "linux")]
+    if let Ok(font) = std::fs::read("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc") {
+        fonts
+            .font_data
+            .insert("noto-sans-cjk".to_owned(), egui::FontData::from_owned(font));
+
+        fonts
+            .families
+            .entry(egui::FontFamily::Proportional)
+            .or_default()
+            .push("noto-sans-cjk".to_owned());
+    }
+
+    // ---
+
+    fonts.add_static(
+        FontFamily::Proportional,
+        "ar",
+        include_bytes!(
+            // "../resources/fonts/NotoSansArabic/NotoSansArabic-Light.ttf"
+            "../resources/fonts/NotoSansArabic/NotoSansArabic-Regular.ttf"
+        ),
+    );
+
+    fonts.add_static(
+        FontFamily::Proportional,
+        "he",
+        include_bytes!(
+            // "../resources/fonts/NotoSansHebrew/NotoSansHebrew-Light.ttf"
+            "../resources/fonts/NotoSansHebrew/NotoSansHebrew-Regular.ttf"
+        ),
+    );
+
+    fonts.add_static(
+        FontFamily::Proportional,
+        "ja",
+        include_bytes!(
+            // "../resources/fonts/NotoSansJP/NotoSansJP-Light.ttf"
+            "../resources/fonts/NotoSansJP/NotoSansJP-Regular.ttf"
+        ),
+    );
+
+    fonts.add_static(
+        FontFamily::Proportional,
+        "hi",
+        include_bytes!(
+            // "../resources/fonts/NotoSansJP/NotoSansJP-Light.ttf"
+            "../resources/fonts/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf"
+        ),
+    );
+
+    cfg_if! {
+        if #[cfg(not(target_arch = "wasm32"))] {
+
+            fonts.add_static(FontFamily::Proportional, "zh", include_bytes!(
+                // "../resources/fonts/NotoSansSC/NotoSansSC-Light.ttf"
+                "../resources/fonts/NotoSansSC/NotoSansSC-Regular.ttf"
+            ));
+
+            fonts.add_static(FontFamily::Proportional, "ko", include_bytes!(
+                // "../resources/fonts/NotoSansKR/NotoSansKR-Light.ttf"
+                "../resources/fonts/NotoSansKR/NotoSansKR-Regular.ttf"
+            ));
+        }
+    }
+
     // fonts.font_data.insert(
     //     "noto_sans_extra_light".to_owned(),
     //     // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
@@ -79,27 +175,6 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
     // // ---
 
     // ---
-    fonts.font_data.insert(
-        "noto_sans_mono_light".to_owned(),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSans-Regular.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
-        egui::FontData::from_static(include_bytes!(
-            "../../resources/fonts/NotoSans/NotoSansMono-Light.ttf"
-        )),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSansMono-Regular.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/NotoSansMono-Light.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/SourceCodePro-Regular.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/SourceCodePro-Light.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/RobotoMono-Regular.ttf")),
-        // egui::FontData::from_static(include_bytes!("../../resources/fonts/RobotoMono-Light.ttf")),
-    );
-
-    fonts
-        .families
-        // .entry(egui::FontFamily::Proportional)
-        .entry(egui::FontFamily::Name("noto_sans_mono_light".into()))
-        .or_default()
-        .insert(0, "noto_sans_mono_light".to_owned());
 
     // ---
 
@@ -149,22 +224,6 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
     //         // .insert(0, "hiragino".to_owned());
     //         .push("hiragino-sans-gb".to_owned());
     // }
-
-    #[cfg(target_os = "linux")]
-    if let Ok(font) = std::fs::read("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc") {
-        fonts.font_data.insert(
-            "noto-sans-cjk".to_owned(),
-            // egui::FontData::from_static(include_bytes!("../../resources/fonts/Open Sans.ttf")),
-            egui::FontData::from_owned(font),
-        );
-
-        fonts
-            .families
-            .entry(egui::FontFamily::Proportional)
-            .or_default()
-            // .insert(0, "hiragino".to_owned());
-            .push("noto-sans-cjk".to_owned());
-    }
 
     cc.egui_ctx.set_fonts(fonts);
 }

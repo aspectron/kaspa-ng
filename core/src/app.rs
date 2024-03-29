@@ -9,9 +9,9 @@ use workflow_i18n::*;
 use workflow_log::*;
 
 // pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
-pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-node-dark.svg");
-pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../../resources/images/kaspa-ng.svg");
-pub const I18N_EMBEDDED: &str = include_str!("../../resources/i18n/i18n.json");
+pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../resources/images/kaspa-node-dark.svg");
+pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../resources/images/kaspa-ng.svg");
+pub const I18N_EMBEDDED: &str = include_str!("../resources/i18n/i18n.json");
 pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 pub const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 pub const GIT_SHA: &str = env!("VERGEN_GIT_SHA");

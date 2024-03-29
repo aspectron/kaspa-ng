@@ -11,7 +11,7 @@ impl Changelog {
 
         Self { 
             runtime,
-            changelog : include_str!("../../../CHANGELOG.md")
+            changelog : include_str!("../../CHANGELOG.md")
         }
     }
 }

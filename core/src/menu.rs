@@ -46,16 +46,31 @@ impl<'core> Menu<'core> {
                     };
                     #[allow(clippy::useless_format)]
                     ui.menu_button(lang_menu, |ui| {
-                        // ui.menu_button(RichText::new(format!("{TRANSLATE} ⏷")).size(18.), |ui| {
                         dictionary
                             .enabled_languages()
                             .into_iter()
                             .for_each(|(code, lang)| {
-                                if ui.button(lang).clicked() {
+                                let line_height = match code {
+                                    "ar" | "fa" => Some(26.),
+                                    "zh" | "ko" | "ja" => Some(20.),
+                                    "hi" | "he" => Some(10.),
+                                    _ => None,
+                                };
+
+                                let size = vec2(100., 24.);
+                                if ui
+                                    .add_sized(
+                                        size,
+                                        Button::new(RichText::new(lang).line_height(line_height)),
+                                    )
+                                    .clicked()
+                                {
                                     self.core.settings.language_code = code.to_string();
                                     dictionary
                                         .activate_language_code(code)
                                         .expect("Unable to activate language");
+                                    self.core.settings.language_code = code.to_string();
+                                    self.core.store_settings();
                                     ui.close_menu();
                                 }
                             });
