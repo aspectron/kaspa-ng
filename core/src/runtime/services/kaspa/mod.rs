@@ -144,7 +144,6 @@ impl KaspaService {
 
                 let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
                     *encoding,
-                    NotificationMode::MultiListeners,
                     Some(url.as_str()),
                     // TODO ex1
                     None,
