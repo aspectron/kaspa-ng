@@ -245,7 +245,7 @@ jobs:
           mkdir ./dist-chrome
           mkdir ./dist-chrome/icons
           # copy resources
-          cp -r ./resources/icons ./dist-chrome/
+          cp -r ./core/resources/icons ./dist-chrome/
           cp ./extensions/chrome/style.css ./dist-chrome/
           cp ./extensions/chrome/manifest.json ./dist-chrome/
           cp ./extensions/chrome/popup.html ./dist-chrome/

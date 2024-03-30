@@ -9,7 +9,8 @@ members = [
 default-members = ["app"]
 
 [workspace.package]
-version = "0.2.4"
+rust-version = "1.77.1"
+version = "0.2.5"
 authors = ["ASPECTRON Inc.","Kaspa Developers"]
 license = "PROPRIETARY"
 edition = "2021"
@@ -59,21 +60,21 @@ egui-notify = "=0.11.0"
 #  |  \ |__| ___]  |    |      | \_ |  | ___] |    |  | 
 # _______________________________________________________
 
-kaspa-addresses = "0.13.4"
-kaspa-alloc = "0.13.4"
-kaspa-bip32 = "0.13.4"
-kaspa-cli = "0.13.4"
-kaspa-consensus-core = "0.13.4"
-kaspa-core = "0.13.4"
-kaspa-metrics-core = "0.13.4"
-kaspa-notify = "0.13.4"
-kaspa-rpc-core = "0.13.4"
-kaspa-rpc-service = "0.13.4"
-kaspa-utils = "0.13.4"
-kaspa-wallet-core = "0.13.4"
-kaspa-wrpc-client = "0.13.4"
-kaspa-wrpc-server = "0.13.4"
-kaspad = "0.13.4"
+# kaspa-addresses = "0.13.4"
+# kaspa-alloc = "0.13.4"
+# kaspa-bip32 = "0.13.4"
+# kaspa-cli = "0.13.4"
+# kaspa-consensus-core = "0.13.4"
+# kaspa-core = "0.13.4"
+# kaspa-metrics-core = "0.13.4"
+# kaspa-notify = "0.13.4"
+# kaspa-rpc-core = "0.13.4"
+# kaspa-rpc-service = "0.13.4"
+# kaspa-utils = "0.13.4"
+# kaspa-wallet-core = "0.13.4"
+# kaspa-wrpc-client = "0.13.4"
+# kaspa-wrpc-server = "0.13.4"
+# kaspad = "0.13.4"
 
 # kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
 # kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
@@ -91,21 +92,21 @@ kaspad = "0.13.4"
 # kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
 # kaspad = { path = "../rusty-kaspa/kaspad" }
 
-# kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-cli = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-metrics-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-notify = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-rpc-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-rpc-service = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-utils = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master", features=["no-unsafe-eval"] }
-# kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master", features=["no-unsafe-eval"] }
-# kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-# kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-cli = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-metrics-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-notify = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-rpc-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-rpc-service = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-utils = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master", features=["no-unsafe-eval"] }
+kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master", features=["no-unsafe-eval"] }
+kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 
 # kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
 # kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
@@ -196,7 +197,7 @@ smallvec = { version = "1.11.1", features = ["serde"] }
 sysinfo = "0.29.10"
 thiserror = "1.0.50"
 tokio = { version = "1", features = ["sync", "rt-multi-thread", "process"] }
-toml = "0.8.8"
+toml = "0.8.12"
 walkdir = "2.4.0"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4"
