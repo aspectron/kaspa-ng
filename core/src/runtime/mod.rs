@@ -363,17 +363,15 @@ impl Runtime {
 static RUNTIME: Mutex<Option<Runtime>> = Mutex::new(None);
 
 pub fn runtime() -> Runtime {
-    unsafe {
-        if let Some(runtime) = RUNTIME.lock().unwrap().as_ref() {
-            runtime.clone()
-        } else {
-            panic!("runtime not initialized")
-        }
+    if let Some(runtime) = RUNTIME.lock().unwrap().as_ref() {
+        runtime.clone()
+    } else {
+        panic!("runtime not initialized")
     }
 }
 
 pub fn try_runtime() -> Option<Runtime> {
-    unsafe { RUNTIME.lock().unwrap().clone() }
+    RUNTIME.lock().unwrap().clone()
 }
 
 fn register_global(runtime: Option<Runtime>) {
