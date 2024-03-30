@@ -486,14 +486,14 @@ impl ModuleT for BlockDag {
     }
 
     fn activate(&mut self, core: &mut Core) {
-        let block_dag_monitor_service = crate::runtime::runtime().block_dag_monitor_service();
+        let block_dag_monitor_service = crate::runtime::runtime().block_dag_monitor_service().clone();
         block_dag_monitor_service.enable(core.state().current_daa_score().map(|score|score - 2));
         block_dag_monitor_service.activate(true);
     }
 
     fn deactivate(&mut self, core: &mut Core) {
         if !self.background() {
-            let block_dag_monitor_service = crate::runtime::runtime().block_dag_monitor_service();
+            let block_dag_monitor_service = crate::runtime::runtime().block_dag_monitor_service().clone();
             self.running = false;
             block_dag_monitor_service.disable(core.state().current_daa_score());
             block_dag_monitor_service.activate(false);
