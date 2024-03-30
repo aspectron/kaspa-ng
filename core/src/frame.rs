@@ -179,7 +179,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui, is_fullscreen: bool, is_maximized:
                 .add(Button::new(
                     RichText::new(ARROWS_IN.to_string()).size(button_height),
                 ))
-                .on_hover_text("Exit Full Screen");
+                .on_hover_text(i18n("Exit Full Screen"));
             if fullscreen_response.clicked() {
                 ui.ctx()
                     .send_viewport_cmd(ViewportCommand::Fullscreen(false));
@@ -191,7 +191,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui, is_fullscreen: bool, is_maximized:
                     RichText::new(ARROWS_OUT.to_string()).size(button_height),
                 ))
                 // .add(Button::new(RichText::new(ARROWS_OUT.to_string()).size(button_height)))
-                .on_hover_text("Full Screen");
+                .on_hover_text(i18n("Full Screen"));
             if fullscreen_response.clicked() {
                 ui.ctx()
                     .send_viewport_cmd(ViewportCommand::Fullscreen(true));
@@ -209,7 +209,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui, is_fullscreen: bool, is_maximized:
                 .add(Button::new(
                     RichText::new(RECTANGLE.to_string()).size(button_height),
                 ))
-                .on_hover_text("Restore window");
+                .on_hover_text(i18n("Restore window"));
             if maximized_response.clicked() {
                 ui.ctx()
                     .send_viewport_cmd(ViewportCommand::Maximized(false));
@@ -221,7 +221,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui, is_fullscreen: bool, is_maximized:
                     RichText::new(SQUARE.to_string()).size(button_height),
                 ))
                 // .add(Button::new(RichText::new(ARROWS_OUT.to_string()).size(button_height)))
-                .on_hover_text("Maximize window");
+                .on_hover_text(i18n("Maximize window"));
             if maximized_response.clicked() {
                 ui.ctx().send_viewport_cmd(ViewportCommand::Maximized(true));
             }
@@ -234,7 +234,7 @@ fn close_maximize_minimize(ui: &mut egui::Ui, is_fullscreen: bool, is_maximized:
         .add(Button::new(RichText::new("🗕").size(button_height)))
         // .add(Button::new(RichText::new(ARROW_SQUARE_DOWN.to_string()).size(button_height)))
         // .add(Button::new(RichText::new(ARROW_LINE_DOWN.to_string()).size(button_height)))
-        .on_hover_text("Minimize the window");
+        .on_hover_text(i18n("Minimize the window"));
     if minimized_response.clicked() {
         ui.ctx().send_viewport_cmd(ViewportCommand::Minimized(true));
     }
