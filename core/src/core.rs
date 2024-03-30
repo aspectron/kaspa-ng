@@ -1232,15 +1232,17 @@ impl Core {
             #[cfg(not(feature = "lean"))]
             match visibility_state {
                 VisibilityState::Visible => {
-                    let block_dag_monitor_service =
-                        crate::runtime::runtime().block_dag_monitor_service();
+                    let block_dag_monitor_service = crate::runtime::runtime()
+                        .block_dag_monitor_service()
+                        .clone();
                     if block_dag_monitor_service.is_active() {
                         block_dag_monitor_service.enable(None);
                     }
                 }
                 VisibilityState::Hidden => {
-                    let block_dag_monitor_service =
-                        crate::runtime::runtime().block_dag_monitor_service();
+                    let block_dag_monitor_service = crate::runtime::runtime()
+                        .block_dag_monitor_service()
+                        .clone();
                     if !block_dag_background_state.load(Ordering::SeqCst)
                         && block_dag_monitor_service.is_active()
                     {

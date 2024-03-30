@@ -9,7 +9,8 @@ members = [
 default-members = ["app"]
 
 [workspace.package]
-version = "0.2.4"
+rust-version = "1.77.1"
+version = "0.2.5"
 authors = ["ASPECTRON Inc.","Kaspa Developers"]
 license = "PROPRIETARY"
 edition = "2021"
@@ -181,7 +182,7 @@ futures-util = { version = "0.3.29", default-features = false, features = ["allo
 image = { version = "0.24.7", default-features = false, features = ["png"] }
 js-sys = "0.3.64"
 log = "0.4.20"
-nix = "0.27.1"
+nix = "0.28.0"
 num_cpus = "1.15.0"
 open = "5.0.1"
 pad = "0.1.6"
@@ -200,7 +201,7 @@ smallvec = { version = "1.11.1", features = ["serde"] }
 sysinfo = "0.29.10"
 thiserror = "1.0.50"
 tokio = { version = "1", features = ["sync", "rt-multi-thread", "process"] }
-toml = "0.8.8"
+toml = "0.8.12"
 walkdir = "2.4.0"
 wasm-bindgen = "0.2.92"
 wasm-bindgen-futures = "0.4"
