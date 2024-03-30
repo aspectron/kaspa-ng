@@ -130,7 +130,7 @@ impl ModuleT for WalletCreate {
                 let mut back = false;
 
                 Panel::new(self)
-                    .with_caption("Create Wallet")
+                    .with_caption(i18n("Create Wallet"))
                     .with_back_enabled(core.has_stack(), |_|{
                         back = true;
                     })
@@ -409,14 +409,13 @@ impl ModuleT for WalletCreate {
                     .with_header(|_ctx,ui| {
                         ui.heading(i18n("Optional"));
                         ui.label(" ");
-                        // TODO i18n
-                        ui.label("\
+                        ui.label(i18n("\
                             \"Phishing hint\" is a secret word or a phrase that is displayed \
                             when you open your wallet. If you do not see the hint when opening \
                             your wallet, you may be accessing a fake wallet designed to steal \
                             your funds. If this occurs, stop using the wallet immediately, \
                             check the browser URL domain name and seek help on social networks \
-                            (Kaspa Discord or Telegram).");
+                            (Kaspa Discord or Telegram)."));
                         ui.label(" ");
                     })
                     .with_body(|this,ui| {
@@ -584,11 +583,10 @@ impl ModuleT for WalletCreate {
                         } else {
                             ui.heading(i18n("Optional"));
                             ui.label(" ");
-                            // TODO i18n
-                            ui.label("The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to \
+                            ui.label(i18n("The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to \
                             send payments. This passphrase will also be required when recovering your wallet in addition to your mnemonic.\
                             If you loose or forget this passphrase, you will not \
-                            be able to use mnemonic to recover your wallet!");
+                            be able to use mnemonic to recover your wallet!"));
                         }
                     })
                     .with_body(|this,ui| {
@@ -1012,7 +1010,7 @@ impl ModuleT for WalletCreate {
             State::WalletError(err) => {
 
                 Panel::new(self)
-                .with_caption("Error")
+                .with_caption(i18n("Error"))
                 .with_header(move |this,ui| {
                     ui.label(" ");
                     ui.label(" ");
@@ -1048,7 +1046,7 @@ impl ModuleT for WalletCreate {
                         ui.label("");
                 })
                 .with_footer(|_this,ui| {
-                    if ui.large_button_enabled(true, "Continue").clicked() {
+                    if ui.large_button_enabled(true, i18n("Continue")).clicked() {
                         finish = true;
                     }
                 })
@@ -1075,7 +1073,7 @@ impl ModuleT for WalletCreate {
                         // TODO
                     })
                     .with_footer(move |this,ui| {
-                        if ui.add_sized(editor_size, egui::Button::new("Continue")).clicked() {
+                        if ui.add_sized(editor_size, egui::Button::new(i18n("Continue"))).clicked() {
                             this.state = State::Finish;
                         }
                     })
