@@ -1,10 +1,11 @@
 use kaspa_ng_core::{
-    imports::KaspaRpcClient,
+    imports::{KaspaRpcClient, MetricsUpdateKind, NetworkId},
     interop::{PendingRequest, Request, ServerAction},
 };
 use kaspa_wallet_core::rpc::{
     // ConnectOptions, ConnectStrategy, RpcCtl,
     DynRpcApi,
+    Resolver,
     Rpc,
     WrpcEncoding,
 };
@@ -109,26 +110,28 @@ fn msg_to_req(msg: js_sys::Object) -> Result<Message> {
 
 impl Server {
     pub async fn new() -> Self {
-        // TODO @surinder
-        let settings = Settings::load().await.unwrap_or_else(|err| {
-            log_error!("Unable to load settings: {err}");
-            Settings::default()
-        });
+        let settings = match Settings::load().await {
+            Ok(settings) => settings,
+            Err(err) => {
+                log_error!("Unable to load settings: {err}");
+                let settings = Settings::default();
+                settings.store().await.unwrap();
+                settings
+            }
+        };
 
-        // let _r =
-        settings.store().await.unwrap();
-        workflow_chrome::storage::__chrome_storage_unit_test().await;
+        // ! workflow_chrome::storage::__chrome_storage_unit_test().await;
 
         let storage = CoreWallet::local_store().unwrap_or_else(|e| {
             panic!("Failed to open local store: {}", e);
         });
 
-        let list = storage.wallet_list().await.unwrap();
+        // let list = storage.wallet_list().await.unwrap();
+        // log_info!("wallet_list: {:?}", list);
+        // log_info!("storage storage: {:?}", storage.descriptor());
 
-        log_info!("wallet_list: {:?}", list);
-        log_info!("storage storage: {:?}", storage.descriptor());
-
-        let rpc = Self::create_rpc_client().expect("Unable to create RPC client");
+        let rpc = Self::create_rpc_client(settings.node.network.into())
+            .expect("Unable to create RPC client");
 
         let wallet = Arc::new(
             CoreWallet::try_with_rpc(Some(rpc), storage, None).unwrap_or_else(|e| {
@@ -136,14 +139,17 @@ impl Server {
             }),
         );
 
+        wallet.enable_metrics_kinds(&[MetricsUpdateKind::WalletMetrics]);
+        wallet
+            .start_metrics()
+            .await
+            .expect("Unable to start metrics task");
+
         let event_handler = Arc::new(ServerEventHandler::default());
 
         let wallet_server = Arc::new(WalletServer::new(wallet.clone(), event_handler));
 
         let _application_events = ApplicationEventsChannel::unbounded();
-        // let kaspa = Arc::new(KaspaService::new(application_events.clone(), &settings));
-        // let runtime = Runtime::new(&[kaspa.clone()]);
-        log_info!("Server init complete");
 
         Self {
             chrome_extension_id: runtime_id().unwrap(),
@@ -158,12 +164,13 @@ impl Server {
         }
     }
 
-    pub fn create_rpc_client() -> Result<Rpc> {
+    pub fn create_rpc_client(network_id: NetworkId) -> Result<Rpc> {
+        let resolver = Resolver::default();
         let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
             WrpcEncoding::Borsh,
             None,
-            None,
-            None,
+            Some(resolver),
+            Some(network_id),
         )?);
         let rpc_ctl = wrpc_client.ctl().clone();
         let rpc_api: Arc<DynRpcApi> = wrpc_client;
@@ -171,13 +178,13 @@ impl Server {
     }
 
     pub async fn start(self: &Arc<Self>) {
-        log_info!("chrome/src/Server starting...");
+        // log_info!("chrome: starting server...");
         // self.runtime.start();
         self.register_listener();
         self.register_port_listener();
         self.wallet_server.start();
 
-        log_info!("chrome/src/Starting wallet...");
+        // log_info!("chrome: starting wallet...");
         self.wallet
             .start()
             .await
@@ -189,7 +196,7 @@ impl Server {
 
         let closure = Rc::new(Closure::new(
             move |port: chrome_runtime_port::Port| -> JsValue {
-                workflow_log::log_info!("port connected: {port:?}");
+                // log_info!("port connected: {port:?}");
                 let port = Rc::new(port);
                 let port_clone = port.clone();
                 let mut rng = rand::thread_rng();
@@ -376,15 +383,15 @@ impl Server {
             return Err(Error::custom("Sender is missing id"));
         }
 
-        log_info!(
-            "[WASM] msg: {:?}, sender id:{:?}, {:?}",
-            msg,
-            sender.id(),
-            callback
-        );
+        // log_info!(
+        //     "[WASM] msg: {:?}, sender id:{:?}, {:?}",
+        //     msg,
+        //     sender.id(),
+        //     callback
+        // );
 
         let (target, data) = jsv_to_req(msg)?;
-        log_info!("[WASM] target: {target:?}, data:{data:?}");
+        // log_info!("[WASM] target: {target:?}, data:{data:?}");
 
         match target {
             Target::Wallet => {
@@ -404,7 +411,7 @@ impl Server {
             }
             Target::Adaptor => {
                 let action = ServerAction::try_from_slice(&data)?;
-                log_info!("[Server] Adaptor: action: {action:?}");
+                // log_info!("[Server] Adaptor: action: {action:?}");
                 match action {
                     ServerAction::PendingRequests => {
                         let pending_request =
@@ -421,7 +428,7 @@ impl Server {
                                 });
 
                         let res = resp_to_jsv(Target::Adaptor, Ok(pending_request));
-                        log_info!("[Server] Adaptor: res: {res:?}");
+                        // log_info!("[Server] Adaptor: res: {res:?}");
 
                         spawn_local(async move {
                             if let Err(err) = callback.call1(&JsValue::UNDEFINED, &res) {
@@ -448,7 +455,7 @@ impl Server {
                     ServerAction::CloseWindow => {
                         let req = Request::CloseWindow.try_to_vec().unwrap();
                         spawn_local(async move {
-                            log_info!("[SERVER] sending CloseWindow notification");
+                            // log_info!("[SERVER] sending CloseWindow notification");
                             if let Err(err) =
                                 send_message(&notify_to_jsv(Target::Runtime, &req)).await
                             {
@@ -492,7 +499,7 @@ struct ServerEventHandler {}
 #[async_trait]
 impl EventHandler for ServerEventHandler {
     async fn handle_event(&self, event: &Events) {
-        log_info!("EVENT HANDLER - POSTING NOTIFICATION! {event:?}");
+        // log_info!("EVENT HANDLER - POSTING NOTIFICATION! {event:?}");
 
         let data = event.try_to_vec().unwrap();
         spawn_local(async move {

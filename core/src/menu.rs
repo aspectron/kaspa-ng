@@ -329,7 +329,7 @@ impl<'core> Menu<'core> {
             )
             .clicked()
         {
-            let wallet = self.core.wallet().clone();
+            let wallet = self.core.wallet();
             spawn(async move {
                 wallet.wallet_close().await?;
                 Ok(())

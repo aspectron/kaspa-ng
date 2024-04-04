@@ -41,7 +41,6 @@ impl ClientReceiver {
 
         let closure = Rc::new(Closure::new(
             move |msg, sender: Sender, _callback: JsValue| -> JsValue {
-                log_info!("CLIENT RECEIVED MESSAGE: {:?}", msg);
                 if let Err(err) = this.handle_notification(msg, sender) {
                     log_error!("notification handling error: {:?}", err);
                 }
@@ -49,7 +48,6 @@ impl ClientReceiver {
             },
         ));
 
-        log_info!("CLIENT REGISTERING LISTENER...");
         chrome_runtime_on_message::add_listener(closure.clone().as_ref());
         *self.closure.lock().unwrap() = Some(closure);
     }
@@ -60,7 +58,6 @@ impl ClientReceiver {
         sender: Sender,
         // callback: Function,
     ) -> Result<()> {
-        log_info!("CLIENT HANDLING NOTIFICATION...");
         if let Some(id) = sender.id() {
             if id != self.chrome_extension_id {
                 return Err(Error::custom(
@@ -71,12 +68,12 @@ impl ClientReceiver {
             return Err(Error::custom("Sender is missing id"));
         }
 
-        log_info!(
-            "[WASM] notification: {:?}, sender id:{:?}",
-            msg,
-            sender.id(),
-            // callback
-        );
+        // log_info!(
+        //     "[WASM] notification: {:?}, sender id:{:?}",
+        //     msg,
+        //     sender.id(),
+        //     // callback
+        // );
 
         let (target, data) = jsv_to_notify(msg)?;
 

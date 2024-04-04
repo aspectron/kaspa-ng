@@ -7,19 +7,19 @@ pub use kaspa_wallet_core::api::transport::BorshCodec;
 pub use kaspa_wallet_core::api::transport::{EventHandler, WalletServer};
 
 pub struct Client {
-    sender: Arc<dyn transport::Sender>,
+    _sender: Arc<dyn transport::Sender>,
     application_events: ApplicationEventsChannel,
     adaptor: Arc<Adaptor>,
 }
 
 impl Client {
     pub fn new(
-        sender: Arc<dyn transport::Sender>,
+        _sender: Arc<dyn transport::Sender>,
         application_events: ApplicationEventsChannel,
     ) -> Self {
-        let adaptor = Arc::new(Adaptor::new(sender.clone(), application_events.clone()));
+        let adaptor = Arc::new(Adaptor::new(_sender.clone(), application_events.clone()));
         Self {
-            sender,
+            _sender,
             application_events,
             adaptor,
         }
@@ -48,10 +48,7 @@ impl Client {
             Target::Runtime => Ok(None),
             Target::Adaptor => {
                 let action = Request::try_from_slice(&data)?;
-
                 let response = self.adaptor.clone().handle_message(action).await?;
-                // @surinder TODO - make sure that chrome extension client handles
-                // the response properly here and returns it to the originator
                 Ok(Some(response))
             }
         }

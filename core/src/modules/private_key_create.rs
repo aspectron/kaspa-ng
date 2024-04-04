@@ -449,7 +449,8 @@ impl ModuleT for PrivateKeyCreate {
 
                                 core.select::<modules::AccountManager>();
                                 let device = core.device().clone();
-                                core.get_mut::<modules::AccountManager>().select(Some(account), device);
+                                let wallet = core.wallet();
+                                core.get_mut::<modules::AccountManager>().select(wallet, Some(account), device, true);
                             }
                         })
                         .render(ui);

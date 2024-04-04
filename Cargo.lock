@@ -1176,18 +1176,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "chrome-sys"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "011ddd3011a285f208817fc8fc6db655cda2e17f89de31d34b90559b5f2a8870"
-dependencies = [
- "js-sys",
- "thiserror",
- "wasm-bindgen",
- "wasm-bindgen-futures",
-]
-
-[[package]]
 name = "chrono"
 version = "0.4.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3758,7 +3746,7 @@ version = "0.2.5"
 dependencies = [
  "async-trait",
  "borsh",
- "chrome-sys 0.1.0",
+ "chrome-sys",
  "js-sys",
  "kaspa-ng-core",
  "kaspa-utils",
@@ -3783,7 +3771,7 @@ dependencies = [
  "async-trait",
  "borsh",
  "cfg-if 1.0.0",
- "chrome-sys 0.1.0",
+ "chrome-sys",
  "chrono",
  "clap 4.5.4",
  "convert_case 0.6.0",
@@ -4187,6 +4175,7 @@ dependencies = [
  "kaspa-consensus-wasm",
  "kaspa-core",
  "kaspa-hashes",
+ "kaspa-metrics-core",
  "kaspa-notify",
  "kaspa-rpc-core",
  "kaspa-txscript",
@@ -8023,7 +8012,7 @@ name = "workflow-chrome"
 version = "0.11.0"
 dependencies = [
  "cfg-if 1.0.0",
- "chrome-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrome-sys",
  "js-sys",
  "thiserror",
  "wasm-bindgen",
@@ -8253,7 +8242,7 @@ dependencies = [
  "async-std",
  "base64 0.21.7",
  "cfg-if 1.0.0",
- "chrome-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrome-sys",
  "faster-hex 0.9.0",
  "filetime",
  "home",

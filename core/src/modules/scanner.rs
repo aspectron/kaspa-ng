@@ -264,7 +264,7 @@ impl ModuleT for Scanner {
             }
             State::Spawn { account } => {
 
-                if let Ok(wallet) = core.wallet().clone().downcast_arc::<Wallet>() {
+                if let Ok(wallet) = core.wallet().downcast_arc::<Wallet>() {
                     let status = self.context.status.clone();
                     let abortable = self.context.abortable.clone();
                     let wallet_secret = Secret::from(self.context.wallet_secret.as_str());

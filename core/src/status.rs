@@ -1,6 +1,6 @@
 use crate::imports::*;
 use crate::sync::SyncStatus;
-use kaspa_metrics_core::MetricsSnapshot;
+// use kaspa_metrics_core::MetricsSnapshot;
 
 enum ConnectionStatus {
     Connected {
@@ -44,24 +44,17 @@ impl<'core> Status<'core> {
         self.core.device()
     }
 
-    fn metrics(&self) -> &Option<Box<MetricsSnapshot>> {
-        self.core.metrics()
-    }
+    // fn metrics(&self) -> &Option<Box<MetricsSnapshot>> {
+    //     self.core.metrics()
+    // }
 
     pub fn render(&mut self, ui: &mut egui::Ui) {
         menu::bar(ui, |ui| {
             if !self.state().is_connected() {
                 self.render_connected_state(ui, ConnectionStatus::Disconnected);
             } else {
-                let peers = self
-                    .metrics()
-                    .as_ref()
-                    .map(|metrics| metrics.data.node_active_peers as usize);
-
-                let tps = self
-                    .metrics()
-                    .as_ref()
-                    .map(|metrics| metrics.network_transactions_per_second);
+                let peers = self.state().peers();
+                let tps = self.state().tps();
 
                 ui.horizontal(|ui| {
                     if let Some(error) = self.state().error() {

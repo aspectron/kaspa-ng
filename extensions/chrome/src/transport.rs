@@ -1,5 +1,3 @@
-// use workflow_wasm::extensions::ObjectExtension;
-
 use crate::imports::*;
 use kaspa_ng_core::interop;
 use kaspa_ng_core::interop::transport::Target;
@@ -226,9 +224,7 @@ pub fn jsv_to_notify(src: JsValue) -> Result<(interop::Target, Vec<u8>)> {
     )?;
 
     let notify = ServerMessage::try_from_slice(&src).unwrap();
-    log_info!("### NOTIFICATION MESSAGE: {:?}", notify);
     match notify.kind {
-        // ServerMessageKind::Notification => Ok((notify.op.unwrap(), notify.data)),
         ServerMessageKind::Notification => Ok((notify.target, notify.data)),
         _ => Err(Error::custom(
             "Error: jsv_to_notify trying to parse a non-notification message",

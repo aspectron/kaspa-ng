@@ -1,4 +1,5 @@
 use kaspa_consensus_core::network::NetworkId;
+use kaspa_metrics_core::MetricsSnapshot;
 use kaspa_wallet_core::events::SyncState;
 
 #[derive(Default)]
@@ -11,6 +12,11 @@ pub struct State {
     pub url: Option<String>,
     pub network_id: Option<NetworkId>,
     pub current_daa_score: Option<u64>,
+    pub node_metrics: Option<Box<MetricsSnapshot>>,
+    pub node_peers: Option<usize>,
+    pub node_mempool_size: Option<usize>,
+    pub network_tps: Option<f64>,
+
     pub error: Option<String>,
 }
 
@@ -49,5 +55,23 @@ impl State {
 
     pub fn error(&self) -> &Option<String> {
         &self.error
+    }
+
+    pub fn metrics(&self) -> Option<&MetricsSnapshot> {
+        self.node_metrics.as_deref()
+    }
+
+    pub fn peers(&self) -> Option<usize> {
+        self.node_peers
+            .or_else(|| self.metrics().map(|m| m.data.node_active_peers as usize))
+    }
+
+    pub fn tps(&self) -> Option<f64> {
+        self.network_tps
+            .or_else(|| self.metrics().map(|m| m.network_transactions_per_second))
+    }
+
+    pub fn mempool_size(&self) -> Option<usize> {
+        self.node_mempool_size
     }
 }

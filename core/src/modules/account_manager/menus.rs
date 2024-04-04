@@ -179,9 +179,10 @@ impl AccountMenu {
 
                                             if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id(), core.balance_padding()).clicked() {
                                                 account_manager.request_estimate();
-                                                account_manager.state = AccountManagerState::Overview {
-                                                    account: selectable_account.clone(),
-                                                };
+                                                let wallet = core.wallet();
+                                                let device = core.device().clone();
+
+                                                account_manager.select(wallet,Some(selectable_account.clone()),device,true);
                                             }
 
                                             false

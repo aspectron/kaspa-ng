@@ -11,7 +11,6 @@ static mut SERVER: Option<Arc<Server>> = None;
 // background script
 #[wasm_bindgen]
 pub async fn kaspa_ng_background() {
-    log_info!("kaspa_ng_background called successfully in the background!");
     workflow_wasm::panic::init_console_panic_hook();
 
     let server = Arc::new(Server::new().await);
@@ -33,11 +32,13 @@ pub async fn kaspa_ng_background() {
     chrome_runtime_scripting::register_content_scripts(vec![script]).await;
 
     server.start().await;
+
+    log_info!("Kaspa NG {} (background)", kaspa_ng_core::app::VERSION);
 }
 
 #[wasm_bindgen]
 pub async fn kaspa_ng_main() {
-    log_info!("kaspa_ng_main called successfully in the popup!");
+    // log_info!("kaspa_ng_main called successfully in the popup!");
     workflow_wasm::panic::init_console_panic_hook();
 
     let application_events = ApplicationEventsChannel::unbounded();
@@ -57,15 +58,6 @@ pub async fn kaspa_ng_main() {
 
     let borsh_transport = Codec::Borsh(sender.clone());
     let wallet_client: Arc<dyn WalletApi> = Arc::new(WalletClient::new(borsh_transport));
-
-    log_info!("STARTING CLIENT TRANSPORT");
-
-    let response = wallet_client
-        .clone()
-        .ping(Some("hello world!".to_string()))
-        .await
-        .expect("ping failed");
-    log_info!("Client received response: {response:?}");
 
     let application_context = app::ApplicationContext::new(
         Some(wallet_client),

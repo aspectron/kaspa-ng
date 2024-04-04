@@ -37,8 +37,5 @@ import init from '/kaspa-ng.js';
     // console.log("init", init);
     // console.log("kaspa_ng", kaspa_ng);
 
-
-    console.log("*** STARTING BACKGROUND SCRIPT...");
-
     await kaspa_ng.kaspa_ng_background();
 })();

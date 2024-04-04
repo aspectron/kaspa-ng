@@ -31,7 +31,7 @@ pub enum ServerAction {
 
 pub struct Adaptor {
     sender: Arc<dyn transport::Sender>,
-    application_events: ApplicationEventsChannel,
+    _application_events: ApplicationEventsChannel,
     request: Mutex<Option<Request>>,
     response: Channel<Vec<u8>>,
 }
@@ -39,23 +39,23 @@ pub struct Adaptor {
 impl Adaptor {
     pub fn new(
         sender: Arc<dyn transport::Sender>,
-        application_events: ApplicationEventsChannel,
+        _application_events: ApplicationEventsChannel,
     ) -> Self {
         Self {
             sender,
-            application_events,
+            _application_events,
             request: Mutex::new(None),
             response: Channel::unbounded(),
         }
     }
 
     pub async fn init(self: Arc<Self>) -> Result<()> {
-        log_info!("Adaptor:init");
+        log_info!("Adaptor::init()");
         let res = self
             .sender
             .send_message(Target::Adaptor, ServerAction::PendingRequests.try_to_vec()?)
             .await?;
-        log_info!("Adaptor:init res: {res:?}");
+        // log_info!("Adaptor:init res: {res:?}");
         if !res.is_empty() {
             let this = self.clone();
             let PendingRequest {
@@ -63,11 +63,11 @@ impl Adaptor {
                 id,
                 request,
             } = PendingRequest::try_from_slice(&res)?;
-            log_info!("Adaptor:init req-id:{id:?}, action: {request:?}");
+            // log_info!("Adaptor:init req-id:{id:?}, action: {request:?}");
             workflow_core::task::spawn(async move {
                 match self.handle_message(request).await {
                     Ok(data) => {
-                        log_info!("Adaptor:init handle_message: data:{data:?}");
+                        // log_info!("Adaptor:init handle_message: data:{data:?}");
                         let res = this
                             .sender
                             .send_message(

@@ -108,7 +108,7 @@ pub fn load_public_servers() {
 
 async fn fetch_public_servers() -> Result<Arc<HashMap<Network, Vec<Server>>>> {
     cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
+        if #[cfg(all(target_arch = "wasm32", not(feature = "browser-extension")))] {
             let href = location()?.href()?;
             let location = if let Some(index) = href.find('#') {
                 let (location, _) = href.split_at(index);

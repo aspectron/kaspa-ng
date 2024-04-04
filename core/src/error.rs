@@ -14,6 +14,9 @@ pub enum Error {
     #[error(transparent)]
     WalletError(#[from] kaspa_wallet_core::error::Error),
 
+    #[error("Not a local wallet")]
+    WalletIsNotLocal,
+
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 

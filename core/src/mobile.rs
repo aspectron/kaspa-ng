@@ -99,8 +99,9 @@ impl<'core> MobileMenu<'core> {
                     "HOME",
                     Box::new(|core, _ui| {
                         let device = core.device().clone();
+                        let wallet = core.wallet();
                         core.get_mut::<modules::AccountManager>()
-                            .select(None, device);
+                            .select(wallet, None, device, true);
                         core.select::<modules::AccountManager>();
                     }),
                 ),

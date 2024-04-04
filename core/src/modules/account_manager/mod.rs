@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use egui_phosphor::thin::{CLOUD_ARROW_DOWN, CLOUD_SLASH};
 use kaspa_wallet_core::tx::{GeneratorSummary, PaymentOutput, Fees};
 use kaspa_wallet_core::api::*;
+use workflow_core::runtime;
 use crate::primitives::descriptor::*;
 
 mod address;
@@ -267,7 +268,8 @@ impl AccountManager {
         self.context.request_estimate = Some(true);
     }
 
-    pub fn select(&mut self, account: Option<Account>, device : Device) {
+    pub fn select(&mut self, wallet : Arc<dyn WalletApi>, account: Option<Account>, device : Device, notify : bool) {
+
         if let Some(account) = account {
             self.state = AccountManagerState::Overview {
                 account: account.clone(),
@@ -278,9 +280,24 @@ impl AccountManager {
             } else {
                 self.section = AccountManagerSection::Transactions;
             }
+
+            if notify {
+                let account_id = account.id();
+                spawn(async move {
+                    wallet.accounts_select(Some(account_id)).await?;
+                    Ok(())
+                });
+            }
         } else {
             self.state = AccountManagerState::Select;
             self.context.loading = false;
+
+            if notify {
+                spawn(async move {
+                    wallet.accounts_select(None).await?;
+                    Ok(())
+                });
+            }
         }
 
     }
@@ -334,7 +351,7 @@ impl AccountManager {
                             }).render(ui);
                     } else if account_collection.len() == 1 {
                         let account = account_collection.first().unwrap();
-                        self.select(Some(account.clone()), core.device().clone());
+                        self.select(core.wallet(), Some(account.clone()), core.device().clone(), true);
                     } else {
                         Panel::new(self)
                             .with_caption(i18n("Select Account"))
@@ -362,10 +379,7 @@ impl AccountManager {
 
                                 account_collection.iter().for_each(|account_select| {
                                     if ui.account_selector_button(account_select, &network_type, false, core.balance_padding()).clicked() {
-                                        this.select(Some(account_select.clone()), core.device().clone());
-                                        // let id =  account_select.id();
-                                        // let _ = core.sender().try_send(Events::Wallet { event: Box::new(kaspa_wallet_core::events::Events::AccountSelection{id: Some(id)}) });
-                                        // runtime().post_to_server(crate::adaptor::WebEvent::AccountSelection(id));
+                                        this.select(core.wallet(), Some(account_select.clone()), core.device().clone(), true);
                                         if core.device().single_pane() {
                                             this.section = AccountManagerSection::Overview;
                                         } else {
@@ -394,8 +408,6 @@ impl AccountManager {
                     return Ok(());
                 }
 
-                // let rc = self.make_render_context(core)?;
-                // let rc = RenderContext::new(&account, network_type, current_daa_score)?;
                 let rc = RenderContext::new(account.clone(),core.network().into(), core.state().current_daa_score())?;
 
                 if core.device().mobile() {
@@ -426,61 +438,85 @@ impl AccountManager {
         }
     }
 
-    // pub fn make_render_context(&mut self, core: &Core) -> Result<RenderContext> {
-    //     if let AccountManagerState::Overview { account } = &self.state {
-    //         let network_type = if let Some(network_id) = core.state().network_id() {
-    //             network_id.network_type()
-    //         } else {
-    //             core.settings.node.network.into()
-    //         };
-
-    //         let current_daa_score = core.state().current_daa_score();
-
-    //         Ok(RenderContext::new(account.clone(), network_type, current_daa_score)?)
-    //     } else {
-    //         Err(Error::custom("Account is missing context"))
-    //     }
-    // }
-
     fn render_menu(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext) {
         ui.horizontal(|ui| {
             let screen_rect_height = ui.ctx().screen_rect().height();
-            WalletMenu::default().render(core,ui,screen_rect_height * 0.8);
-            ui.separator();
-            AccountMenu::default().render(core,ui,screen_rect_height * 0.8,self,rc);
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 
-                if ui.add(Label::new(RichText::new(egui_phosphor::light::LOCK).size(18.)).sense(Sense::click())).clicked() {
-                    let wallet = core.wallet().clone();
-                    spawn(async move {
-                        wallet.wallet_close().await?;
-                        Ok(())
+            if runtime::is_chrome_extension() {
+
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        WalletMenu::default().render(core,ui,screen_rect_height * 0.8);
+                        ui.separator();
+                        AccountMenu::default().render(core,ui,screen_rect_height * 0.8,self,rc);
+                        
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
+                        });
                     });
-                }
+                    
 
+                    ui.horizontal(|ui| {
+
+                        if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
+                            self.section = AccountManagerSection::Transactions;
+                        }
+
+                        ui.separator();
+                        if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
+                            self.section = AccountManagerSection::Details;
+                        }
+
+                        if core.device().desktop() {
+                            ui.separator();
+                            if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                                self.section = AccountManagerSection::UtxoManager;
+                            }
+                        }
+
+                    });
+
+                });
+            } else {
+
+                WalletMenu::default().render(core,ui,screen_rect_height * 0.8);
                 ui.separator();
-                ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
+                AccountMenu::default().render(core,ui,screen_rect_height * 0.8,self,rc);
+                
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 
-                if core.device().desktop() {
-                    ui.separator();
-                    if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
-                        self.section = AccountManagerSection::UtxoManager;
+                    if ui.add(Label::new(RichText::new(egui_phosphor::light::LOCK).size(18.)).sense(Sense::click())).clicked() {
+                        let wallet = core.wallet();
+                        spawn(async move {
+                            wallet.wallet_close().await?;
+                            Ok(())
+                        });
                     }
-                }
 
-                ui.separator();
-                if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
-                    self.section = AccountManagerSection::Details;
-                }
-                ui.separator();
-                if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
-                    self.section = AccountManagerSection::Transactions;
-                }
+                    ui.separator();
+                    ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
 
-            });
+                    if core.device().desktop() {
+                        ui.separator();
+                        if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                            self.section = AccountManagerSection::UtxoManager;
+                        }
+                    }
+
+                    ui.separator();
+                    if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
+                        self.section = AccountManagerSection::Details;
+                    }
+                    ui.separator();
+                    if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
+                        self.section = AccountManagerSection::Transactions;
+                    }
+
+                });
+            }
         });
     }
-
+    
     pub fn change_section(&mut self, section : AccountManagerSection) {
         self.section = section;
     }

@@ -68,7 +68,7 @@ impl ModuleT for Node {
                                             render_peer(ui, peer);
                                         });
                                     });
-                            } else if core.metrics.as_ref().map(|m| m.data.node_active_peers).unwrap_or_default() > 0 {
+                            } else if core.state().metrics().as_ref().map(|m| m.data.node_active_peers).unwrap_or_default() > 0 {
                                 ui.horizontal(|ui| {
                                     ui.spinner();
                                     ui.label(i18n("Updating..."));

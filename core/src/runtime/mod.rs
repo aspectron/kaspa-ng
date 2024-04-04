@@ -66,7 +66,11 @@ impl Runtime {
         let application_events =
             application_events.unwrap_or_else(ApplicationEventsChannel::unbounded);
         let repaint_service = Arc::new(RepaintService::new(application_events.clone(), settings));
-        let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
+        let kaspa = Arc::new(KaspaService::new(
+            application_events.clone(),
+            settings,
+            wallet_api,
+        ));
         let peer_monitor_service = Arc::new(PeerMonitorService::new(
             application_events.clone(),
             settings,

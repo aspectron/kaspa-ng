@@ -3,15 +3,16 @@ pub use downcast_rs::{impl_downcast, Downcast, DowncastSync};
 pub use kaspa_consensus_core::constants::SOMPI_PER_KASPA;
 pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
 pub use kaspa_consensus_core::Hash as KaspaHash;
+pub use kaspa_metrics_core::MetricsSnapshot;
 pub use kaspa_rpc_core::api::rpc::RpcApi;
 pub use kaspa_utils::hex::{FromHex, ToHex};
 pub use kaspa_utils::{hashmap::GroupExtension, networking::ContextualNetAddress};
 pub use kaspa_wallet_core::prelude::{
     Account as CoreAccount, AccountCreateArgs, AccountCreateArgsBip32, AccountDescriptor,
-    AccountId, AccountKind, Address, Balance, DynRpcApi, IdT, KaspaRpcClient, Language, Mnemonic,
-    PrvKeyDataArgs, PrvKeyDataCreateArgs, PrvKeyDataId, PrvKeyDataInfo, Secret, SyncState,
-    TransactionId, TransactionRecord, Wallet as CoreWallet, WalletApi, WalletCreateArgs,
-    WalletDescriptor, WordCount, WrpcEncoding,
+    AccountId, AccountKind, Address, Balance, DynRpcApi, IdT, KaspaRpcClient, Language,
+    MetricsUpdate, MetricsUpdateKind, Mnemonic, PrvKeyDataArgs, PrvKeyDataCreateArgs, PrvKeyDataId,
+    PrvKeyDataInfo, Secret, SyncState, TransactionId, TransactionRecord, Wallet as CoreWallet,
+    WalletApi, WalletCreateArgs, WalletDescriptor, WordCount, WrpcEncoding,
 };
 pub use kaspa_wallet_core::utils::*;
 
