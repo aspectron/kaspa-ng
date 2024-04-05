@@ -57,33 +57,10 @@ enum ExtensionActions {
 }
 
 #[derive(Debug)]
-struct ExtensionMessage {
+struct Message {
     action: ExtensionActions,
     rid: Option<String>,
     data: JsValue,
-}
-
-#[derive(Debug)]
-struct InternalMessage {
-    target: Target,
-    data: Vec<u8>,
-}
-
-#[derive(Debug)]
-enum Message {
-    Web(ExtensionMessage),
-    Internal(InternalMessage),
-}
-
-impl From<ExtensionMessage> for Message {
-    fn from(value: ExtensionMessage) -> Self {
-        Self::Web(value)
-    }
-}
-impl From<InternalMessage> for Message {
-    fn from(value: InternalMessage) -> Self {
-        Self::Internal(value)
-    }
 }
 
 fn msg_to_req(msg: js_sys::Object) -> Result<Message> {
@@ -96,13 +73,7 @@ fn msg_to_req(msg: js_sys::Object) -> Result<Message> {
         let data = info.get_value("data")?;
         let rid = info.try_get_string("rid")?;
 
-        return Ok(ExtensionMessage { action, data, rid }.into());
-    }
-
-    if msg_type == "Internal" {
-        let info = msg.get_value("data")?;
-        let (target, data) = jsv_to_req(info)?;
-        return Ok(InternalMessage { target, data }.into());
+        return Ok(Message { action, data, rid });
     }
 
     Err("Invalid msg: {msg_type}".to_string().into())
@@ -302,38 +273,33 @@ impl Server {
     ) -> JsValue {
         let msg = msg_to_req(msg_jsv.clone()).unwrap();
         workflow_log::log_info!("handle_port_event: msg {:?}", msg);
-        match msg {
-            Message::Web(msg) => match msg.action {
-                ExtensionActions::InjectPageScript => {
-                    let tab_id = port.sender().tab().id();
-                    init_page_script(tab_id, msg.data);
-                }
-                ExtensionActions::Connect => {
-                    self.pending_request
-                        .lock()
-                        .unwrap()
-                        .replace(PendingRequest::new(port_id, msg.rid, Request::Connect {}));
-                    open_popup_window();
-                }
-                ExtensionActions::TestRequestResponse => {
-                    // TODO - ENQUEUE PENDING REQUEST DATA
-                    self.pending_request
-                        .lock()
-                        .unwrap()
-                        .replace(PendingRequest::new(
-                            port_id,
-                            msg.rid,
-                            Request::Test {
-                                data: msg.data.as_string().unwrap(),
-                            },
-                        ));
+        match msg.action {
+            ExtensionActions::InjectPageScript => {
+                let tab_id = port.sender().tab().id();
+                init_page_script(tab_id, msg.data);
+            }
+            ExtensionActions::Connect => {
+                self.pending_request
+                    .lock()
+                    .unwrap()
+                    .replace(PendingRequest::new(port_id, msg.rid, Request::Connect {}));
+                open_popup_window();
+            }
+            ExtensionActions::TestRequestResponse => {
+                // TODO - ENQUEUE PENDING REQUEST DATA
+                self.pending_request
+                    .lock()
+                    .unwrap()
+                    .replace(PendingRequest::new(
+                        port_id,
+                        msg.rid,
+                        Request::Test {
+                            data: msg.data.as_string().unwrap(),
+                        },
+                    ));
 
-                    // OPENED POPUP MUST CONSUME PENDING REQUEST
-                    open_popup_window();
-                }
-            },
-            Message::Internal(_) => {
-                //
+                // OPENED POPUP MUST CONSUME PENDING REQUEST
+                open_popup_window();
             }
         }
 
