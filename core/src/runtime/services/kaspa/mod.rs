@@ -393,22 +393,10 @@ impl KaspaService {
     }
 
     async fn handle_network_change(&self, network: Network) -> Result<()> {
-        log_info!("~~~ handle_network_change ~~~");
         if network != self.network() {
-            log_info!(
-                "~~~ handle_network_change ~~~ {} -> {}",
-                self.network(),
-                network
-            );
             self.application_events
                 .send(Events::NetworkChange(network))
                 .await?;
-        } else {
-            log_info!(
-                "~~~ handle_network_change ~~~ {} -> {}",
-                self.network(),
-                network
-            );
         }
 
         Ok(())
@@ -534,8 +522,10 @@ impl KaspaService {
             } => {
                 if runtime::is_chrome_extension() {
                     self.stop_all_services().await?;
+
                     self.handle_network_change(network).await?;
                     self.wallet().change_network_id(network.into()).await.ok();
+
                     self.start_all_services(None, network).await?;
                     self.connect_rpc_client().await?;
                 } else {
