@@ -3317,6 +3317,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "faster-hex 0.6.1",
  "hex",
+ "itertools 0.11.0",
  "js-sys",
  "kaspa-addresses",
  "kaspa-consensus-core",
