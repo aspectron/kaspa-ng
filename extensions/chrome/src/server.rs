@@ -31,14 +31,14 @@ extern "C" {
     fn open_popup_window();
 }
 
+type PortEventsClosures = Mutex<HashMap<PortId, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>;
 pub struct Server {
     #[allow(dead_code)]
     wallet: Arc<CoreWallet>,
     wallet_server: Arc<WalletServer>,
     closure: Mutex<Option<Rc<ListenerClosure>>>,
     port_closure: Mutex<Option<Rc<PortListenerClosure>>>,
-    port_events_closures:
-        Mutex<HashMap<PortId, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>,
+    port_events_closures: PortEventsClosures,
     chrome_extension_id: String,
     // event pending delivery after the popup is open
     pending_request: Mutex<Option<PendingRequest>>,
@@ -171,6 +171,7 @@ impl Server {
             None,
             Some(resolver),
             Some(network_id),
+            None,
         )?);
         let rpc_ctl = wrpc_client.ctl().clone();
         let rpc_api: Arc<DynRpcApi> = wrpc_client;

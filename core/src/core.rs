@@ -955,7 +955,7 @@ impl Core {
                     CoreWallet::AccountSelection { id } => {
                         if let Some(account_collection) = self.account_collection.as_ref() {
                             if let Some(id) = id {
-                                if let Some(account) = account_collection.get(&id.into()) {
+                                if let Some(account) = account_collection.get(&id) {
                                     let account = account.clone();
                                     let device = self.device().clone();
                                     let wallet = self.wallet();
