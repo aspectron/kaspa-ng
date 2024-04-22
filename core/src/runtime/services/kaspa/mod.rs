@@ -166,7 +166,8 @@ impl KaspaService {
                 let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
                     *encoding,
                     Some(url.as_str()),
-                    // TODO ex1
+                    // TODO: introduce resolver for public node resolution
+                    None,
                     None,
                     None,
                 )?);
@@ -632,7 +633,13 @@ impl Service for KaspaService {
         // ^ TODO: - CHECK IF THE WALLET IS OPEN, GET WALLET CONTEXT
         // ^ TODO: - CHECK IF THE WALLET IS OPEN, GET WALLET CONTEXT
 
-        if let Ok(status) = self.wallet().get_status(Some("kaspa-ng")).await {
+        let status = if runtime::is_chrome_extension() {
+            self.wallet().get_status(Some("kaspa-ng")).await.ok()
+        } else {
+            None
+        };
+
+        if let Some(status) = status {
             let GetStatusResponse {
                 is_connected,
                 is_open: _,
@@ -728,6 +735,11 @@ impl Service for KaspaService {
                 self.wallet()
                     .retain_context("kaspa-ng", Some(context.try_to_vec()?))
                     .await?;
+            }
+        } else {
+            // new instance - emit startup event
+            if let Some(node_settings) = self.connect_on_startup.as_ref() {
+                self.apply_node_settings(node_settings).await?;
             }
         }
         // else if let Some(node_settings) = self.connect_on_startup.as_ref() {

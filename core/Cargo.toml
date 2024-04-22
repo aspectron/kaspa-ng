@@ -16,8 +16,8 @@ browser-extension = ["lean"]
 mobile = ["lean"]
 lean = []
 cli = []
-# default = []
-default = ["browser-extension"]
+default = []
+# default = ["browser-extension"]
 
 [build-dependencies]
 vergen = { version = "8.2.6", features = ["build", "git", "gitcl", "rustc", "cargo"] }

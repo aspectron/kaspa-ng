@@ -370,7 +370,7 @@ impl Overview {
 
         let mut metric_iter = METRICS.iter();
 
-        if let Some(snapshot) = core.metrics.as_ref() {
+        if let Some(snapshot) = core.metrics() {
             let view_width = ui.available_width();
             if view_width < 200. {
                 return;
