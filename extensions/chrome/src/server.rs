@@ -31,7 +31,8 @@ extern "C" {
     fn open_popup_window();
 }
 
-type PortEventsClosures = Mutex<HashMap<PortId, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>;
+type PortEventsClosures =
+    Mutex<HashMap<PortId, (Rc<chrome_runtime_port::Port>, Vec<Rc<PortEventClosure>>)>>;
 pub struct Server {
     #[allow(dead_code)]
     wallet: Arc<CoreWallet>,
