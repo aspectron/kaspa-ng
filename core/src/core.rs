@@ -737,7 +737,7 @@ impl Core {
                 runtime().notify(UserNotification::error(error.as_str()));
             }
             Events::WalletList { wallet_list } => {
-                self.wallet_list = (*wallet_list).clone();
+                self.wallet_list.clone_from(&*wallet_list);
                 self.wallet_list.sort();
             }
             Events::WalletUpdate => {

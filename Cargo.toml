@@ -9,7 +9,7 @@ members = [
 default-members = ["app"]
 
 [workspace.package]
-rust-version = "1.77.1"
+rust-version = "1.78.0"
 version = "0.2.5"
 authors = ["ASPECTRON Inc.","Kaspa Developers"]
 license = "PROPRIETARY"
