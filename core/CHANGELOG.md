@@ -1,7 +1,10 @@
 # Changelog
 
-# 0.2.4
+# 0.2.5
+- Update Rusty Kaspa p2p client (kaspad) to `0.14.1`.
+- WASM SDK is now available that allows developers using TypeScript and JavaScript to access and interface with wallets created using Kaspa NG and Rusty Kaspa CLI - https://aspectron.org/en/projects/kaspa-wasm.html
 
+# 0.2.4
 - Add `Settings > Node > Custom Data Folder` option
 - Preserve current language setting between restarts
 - Add Fonts for various languages (AR,HE,JA,KR,SC)

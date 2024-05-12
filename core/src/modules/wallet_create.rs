@@ -237,7 +237,7 @@ impl ModuleT for WalletCreate {
                         ui.checkbox(&mut this.context.import_legacy, i18n("I have a 12 word mnemonic legacy account"));
                         ui.label(i18n("Select this option if your wallet was created"));
                         ui.label(i18n("using KDX or kaspanet.io web wallet"));
-                        ui.label(RichText::new("NOT SUPPORTED IN THIS ALPHA RELEASE").size(10.).color(warning_color()));
+                        ui.label(RichText::new("NOT SUPPORTED IN THIS BETA RELEASE").size(10.).color(warning_color()));
 
                         if !this.context.import_legacy {
                             ui.label("");
@@ -260,7 +260,7 @@ impl ModuleT for WalletCreate {
                                     this.context.word_count = WordCount::Words12;
                                     submit = true;
                                 }
-                                ui.label(RichText::new("NOT SUPPORTED IN THIS ALPHA RELEASE").size(10.).color(warning_color()));
+                                ui.label(RichText::new("NOT SUPPORTED IN THIS BETA RELEASE").size(10.).color(warning_color()));
                             }
                         }
 

@@ -16,7 +16,7 @@ impl UtxoManager {
             ui.label(i18n("UTXO Manager"));
 
             ui.label("");
-            ui.label("UTXO management is not implemented in this alpha release.");
+            ui.label("UTXO management is not implemented in this beta release.");
             ui.label("");
 
         });
