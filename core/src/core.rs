@@ -430,9 +430,10 @@ impl eframe::App for Core {
                     pressed,
                     modifiers,
                     repeat,
+                    physical_key,
                 } = event
                 {
-                    self.handle_keyboard_events(*key, *pressed, modifiers, *repeat);
+                    self.handle_keyboard_events(*key, *pressed, modifiers, *repeat, physical_key);
                 }
             });
 
@@ -1217,6 +1218,7 @@ impl Core {
         pressed: bool,
         modifiers: &Modifiers,
         _repeat: bool,
+        _physical_key: &Option<Key>,
     ) {
         if !pressed {
             return;
