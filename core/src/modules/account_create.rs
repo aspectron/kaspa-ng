@@ -255,7 +255,7 @@ impl ModuleT for AccountCreate {
                     .with_header(|_ctx,ui| {
                         ui.label(i18n(i18n("Your private key requires BIP39 passphrase, please enter it now.")));
                     })
-                    .with_body(|this,_ui| {
+                    .with_body(|this,ui| {
                         TextEditor::new(
                             &mut this.context.payment_secret,
                             &mut this.focus,
@@ -271,7 +271,8 @@ impl ModuleT for AccountCreate {
                                 this.state = State::CreateAccount;
                                 focus.clear()
                             }
-                        });
+                        })
+                        .build(ui);
                     })
                     .with_footer(|this,ui| {
                         let enabled = !this.context.payment_secret.is_empty();

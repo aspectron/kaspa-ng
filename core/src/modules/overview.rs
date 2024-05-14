@@ -241,7 +241,7 @@ impl Overview {
                         );
                         ui.hyperlink_to_tab(
                             format!("• {}",i18n("WASM SDK for JavaScript and TypeScript")),
-                            "https://github.com/kaspanet/rusty-kaspa/wasm",
+                            "https://aspectron.org/en/projects/kaspa-wasm.html",
                         );
                         ui.hyperlink_to_tab(
                             format!("• {}",i18n("Rust Wallet SDK")),

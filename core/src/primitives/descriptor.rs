@@ -21,7 +21,7 @@ pub trait RenderAccountDescriptor {
 impl RenderAccountDescriptor for AccountDescriptor {
     fn render(&self, ui: &mut Ui) {
         grid(ui, &self.account_id, |ui| {
-            let color = Color32::WHITE;
+            let color = strong_color();
 
             ui.label(i18n("Account Name"));
             ui.colored_label(
