@@ -1,5 +1,9 @@
 #![warn(clippy::all, rust_2018_idioms)]
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+// hide console window on Windows in release mode
+#![cfg_attr(
+    all(not(debug_assertions), feature = "console"),
+    windows_subsystem = "windows"
+)] 
 
 use cfg_if::cfg_if;
 use kaspa_ng_core::app::{kaspa_ng_main, ApplicationContext};
