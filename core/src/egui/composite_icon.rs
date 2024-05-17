@@ -1,5 +1,6 @@
-use egui::widget_text::WidgetTextGalley;
+//use egui::widget_text::WidgetTextGalley;
 use egui::*;
+use std::sync::Arc;
 
 /// Clickable button with text.
 ///
@@ -162,9 +163,9 @@ impl CompositeIcon {
         Pos2,
         Pos2,
         Response,
-        WidgetTextGalley,
-        Option<WidgetTextGalley>,
-        Option<WidgetTextGalley>,
+        Arc<Galley>,
+        Option<Arc<Galley>>,
+        Option<Arc<Galley>>,
     ) {
         let sense = {
             // We only want to focus icon if the screen reader is on.
@@ -245,11 +246,8 @@ impl CompositeIcon {
         // }
 
         let valign = ui.layout().vertical_align();
-        let mut text_job = WidgetText::from(self.icon.clone().size(self.icon_size)).into_text_job(
-            ui.style(),
-            FontSelection::Default,
-            valign,
-        );
+        let mut layout_job = WidgetText::from(self.icon.clone().size(self.icon_size))
+            .into_layout_job(ui.style(), FontSelection::Default, valign);
 
         let truncate = true;
         let wrap = !truncate && ui.wrap_text();
@@ -267,22 +265,19 @@ impl CompositeIcon {
             let first_row_indentation = available_width - ui.available_size_before_wrap().x;
             egui_assert!(first_row_indentation.is_finite());
 
-            text_job.job.wrap.max_width = available_width;
-            text_job.job.first_row_min_height = cursor.height();
-            text_job.job.halign = Align::Min;
-            text_job.job.justify = false;
-            if let Some(first_section) = text_job.job.sections.first_mut() {
+            layout_job.wrap.max_width = available_width;
+            layout_job.first_row_min_height = cursor.height();
+            layout_job.halign = Align::Min;
+            layout_job.justify = false;
+            if let Some(first_section) = layout_job.sections.first_mut() {
                 first_section.leading_space = first_row_indentation;
             }
-            let text_galley = ui.fonts(|f| text_job.into_galley(f));
+            let text_galley = ui.fonts(|fonts| fonts.layout_job(layout_job));
 
             let pos = pos2(ui.max_rect().left(), ui.cursor().top());
-            assert!(
-                !text_galley.galley.rows.is_empty(),
-                "Galleys are never empty"
-            );
+            assert!(!text_galley.rows.is_empty(), "Galleys are never empty");
             // collect a response from many rows:
-            let mut rect = text_galley.galley.rows[0].rect;
+            let mut rect = text_galley.rows[0].rect;
             let mut rect_size = rect.size();
             let icon_size = rect_size;
             rect_size.x = text_size.x.max(rect_size.x) + padding.x * 2.0;
@@ -292,7 +287,7 @@ impl CompositeIcon {
 
             let rect = rect.translate(vec2(pos.x, pos.y));
             let mut response = ui.allocate_rect(rect, sense);
-            for row in text_galley.galley.rows.iter().skip(1) {
+            for row in text_galley.rows.iter().skip(1) {
                 let rect = row.rect.translate(vec2(pos.x, pos.y));
                 response |= ui.allocate_rect(rect, sense);
             }
@@ -300,19 +295,19 @@ impl CompositeIcon {
             create_result(pos, icon_size, response, text_galley, text, secondary_text)
         } else {
             if truncate {
-                text_job.job.wrap.max_width = available_width;
-                text_job.job.wrap.max_rows = 1;
-                text_job.job.wrap.break_anywhere = true;
+                layout_job.wrap.max_width = available_width;
+                layout_job.wrap.max_rows = 1;
+                layout_job.wrap.break_anywhere = true;
             } else if wrap {
-                text_job.job.wrap.max_width = available_width;
+                layout_job.wrap.max_width = available_width;
             } else {
-                text_job.job.wrap.max_width = f32::INFINITY;
+                layout_job.wrap.max_width = f32::INFINITY;
             };
 
-            text_job.job.halign = Align::Center;
-            text_job.job.justify = ui.layout().horizontal_justify();
+            layout_job.halign = Align::Center;
+            layout_job.justify = ui.layout().horizontal_justify();
 
-            let text_galley = ui.fonts(|f| text_job.into_galley(f));
+            let text_galley = ui.fonts(|fonts| fonts.layout_job(layout_job));
 
             let mut size = text_galley.size();
             let icon_size = size;
@@ -320,7 +315,7 @@ impl CompositeIcon {
             size.y += text_size.y + padding.y * 2.0;
 
             let (rect, response) = ui.allocate_exact_size(size, sense);
-            let pos = match text_galley.galley.job.halign {
+            let pos = match text_galley.job.halign {
                 Align::LEFT => rect.left_top(),
                 Align::Center => rect.center_top(),
                 Align::RIGHT => rect.right_top(),
@@ -381,23 +376,28 @@ impl Widget for CompositeIcon {
                 );
             }
 
-            let override_text_color = if icon_text.galley_has_color {
-                None
-            } else {
-                Some(
-                    ui.style()
-                        .interact_selectable(&response, self.selected)
-                        .text_color(),
-                )
-            };
+            // let override_text_color = if icon_text.job.galley_has_color {
+            //     None
+            // } else {
+            // let override_text_color = Some(
+            //     ui.style()
+            //         .interact_selectable(&response, self.selected)
+            //         .text_color(),
+            // );
+            //};
 
             let button_padding = self._padding(ui);
             ui.painter().add(epaint::TextShape {
                 pos,
-                galley: icon_text.galley,
-                override_text_color,
+                galley: icon_text,
+                override_text_color: None,
                 underline: Stroke::NONE,
                 angle: 0.0,
+                fallback_color: ui
+                    .style()
+                    .interact_selectable(&response, self.selected)
+                    .text_color(),
+                opacity_factor: 1.0,
             });
 
             let mut cursor_y = text_pos.y + ui.spacing().item_spacing.y;
@@ -410,7 +410,8 @@ impl Widget for CompositeIcon {
                 pos.y = cursor_y;
                 cursor_y += text.size().y + ui.spacing().item_spacing.y;
 
-                text.paint_with_visuals(ui.painter(), pos, visuals);
+                //text.paint_with_visuals(ui.painter(), pos, visuals);
+                ui.painter().galley(pos, text, visuals.text_color());
             }
 
             if let Some(secondary_text) = secondary_text {
@@ -420,7 +421,9 @@ impl Widget for CompositeIcon {
                     .min;
                 pos.y = cursor_y;
 
-                secondary_text.paint_with_visuals(ui.painter(), pos, visuals);
+                //secondary_text.paint_with_visuals(ui.painter(), pos, visuals);
+                ui.painter()
+                    .galley(pos, secondary_text, visuals.text_color());
             }
         }
 
