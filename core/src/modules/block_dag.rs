@@ -336,7 +336,7 @@ impl ModuleT for BlockDag {
             .allow_scroll(true)
             .allow_double_click_reset(true)
             .x_axis_formatter(move |x, _size, _range| {
-                format!("{} DAA", x.trunc().separated_string())
+                format!("{} DAA", x.value.trunc().separated_string())
             })
             .x_grid_spacer(
                 uniform_grid_spacer(move |input| {
@@ -357,7 +357,7 @@ impl ModuleT for BlockDag {
 
         // kick it into gear when starting up
         if reset_plot {
-            plot = plot.auto_bounds_x().auto_bounds_y();
+            plot = plot.auto_bounds([true, true].into());
             plot = plot.reset();
         }
 

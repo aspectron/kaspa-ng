@@ -407,11 +407,14 @@ impl Widget for CompositeButton<'_> {
                             galley.size(),
                         );
                         cursor_x += galley.size().x;
-                        galley.paint_with_fallback_color(
-                            ui.painter(),
-                            image_rect.min,
-                            visuals.fg_stroke.color,
-                        );
+                        // galley.paint_with_fallback_color(
+                        //     ui.painter(),
+                        //     image_rect.min,
+                        //     visuals.fg_stroke.color,
+                        // );
+
+                        ui.painter()
+                            .galley(image_rect.min, galley, visuals.fg_stroke.color);
                     }
                 }
             }
@@ -439,14 +442,17 @@ impl Widget for CompositeButton<'_> {
                             .align_size_within_rect(text.size(), rect.shrink2(button_padding))
                             .min
                     };
-                text.paint_with_visuals(ui.painter(), text_pos, visuals);
+                //text.paint_with_visuals(ui.painter(), text_pos, visuals);
+                ui.painter().galley(text_pos, text, visuals.text_color());
             }
 
             if let Some(secondary_text) = secondary_text {
                 let y =
                     text_max_y.unwrap_or_else(|| rect.center().y - 0.5 * secondary_text.size().y);
                 let secondary_text_pos = pos2(cursor_x, y);
-                secondary_text.paint_with_visuals(ui.painter(), secondary_text_pos, visuals);
+                //secondary_text.paint_with_visuals(ui.painter(), secondary_text_pos, visuals);
+                ui.painter()
+                    .galley(secondary_text_pos, secondary_text, visuals.text_color());
             }
 
             if let Some(shortcut_text) = shortcut_text {
@@ -454,11 +460,13 @@ impl Widget for CompositeButton<'_> {
                     rect.max.x - button_padding.x - shortcut_text.size().x,
                     rect.center().y - 0.5 * shortcut_text.size().y,
                 );
-                shortcut_text.paint_with_fallback_color(
-                    ui.painter(),
-                    shortcut_text_pos,
-                    ui.visuals().weak_text_color(),
-                );
+                // shortcut_text.paint_with_fallback_color(
+                //     ui.painter(),
+                //     shortcut_text_pos,
+                //     ui.visuals().weak_text_color(),
+                // );
+                ui.painter()
+                    .galley(shortcut_text_pos, shortcut_text, visuals.text_color());
             }
 
             if pulldown_selector {
@@ -476,11 +484,13 @@ impl Widget for CompositeButton<'_> {
                     galley.size(),
                 );
 
-                galley.paint_with_fallback_color(
-                    ui.painter(),
-                    image_rect.min,
-                    visuals.fg_stroke.color,
-                );
+                // galley.paint_with_fallback_color(
+                //     ui.painter(),
+                //     image_rect.min,
+                //     visuals.fg_stroke.color,
+                // );
+                ui.painter()
+                    .galley(image_rect.min, galley, visuals.fg_stroke.color);
             }
         }
 
