@@ -3,7 +3,7 @@
 #![cfg_attr(
     all(not(debug_assertions), feature = "console"),
     windows_subsystem = "windows"
-)] 
+)]
 
 use cfg_if::cfg_if;
 use kaspa_ng_core::app::{kaspa_ng_main, ApplicationContext};
