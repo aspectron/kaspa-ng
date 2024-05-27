@@ -154,64 +154,6 @@ pub fn public_servers(network: &Network) -> Vec<Server> {
         .collect::<Vec<_>>()
 }
 
-pub fn random_public_server(network: &Network, options: Option<RpcOptions>) -> Option<Server> {
-    let servers = public_server_config().lock().unwrap().clone();
-
-    let RpcOptions {
-        force_server,
-        blacklist_servers,
-    } = options.unwrap_or_default();
-
-    if let Some(server) = force_server.clone() {
-        return Some(server);
-    }
-
-    if let Some(servers) = servers.get(network) {
-        #[allow(clippy::nonminimal_bool)]
-        let mut servers = servers
-            .iter()
-            .filter(|server| {
-                server.enable.unwrap_or(true)
-                    && !server.manual.unwrap_or(false)
-                    && !server.address.contains("localhost")
-                    && !server.address.contains("127.0.0.1")
-                    && !(tls()
-                        && !(server.address.starts_with("wss://")
-                            || server.address.starts_with("wrpcs://")))
-                    && !blacklist_servers.contains(&server.address)
-            })
-            .cloned()
-            .collect::<Vec<_>>();
-
-        let max = servers
-            .iter()
-            .map(|server| server.bias.unwrap_or(1.))
-            .max_by(|a, b| a.total_cmp(b))
-            .unwrap_or(1.);
-        servers.iter_mut().for_each(|server| {
-            server.bias = Some(server.bias.unwrap_or(1.) / max);
-        });
-
-        if servers.is_empty() {
-            log_error!("Unable to select random public server: no servers available");
-            None
-        } else {
-            let mut server = None;
-            while server.is_none() {
-                let selected = &servers[rand::thread_rng().gen::<usize>() % servers.len()];
-                let f = rand::thread_rng().gen_range(0.0..1.0);
-                if f < selected.bias.unwrap_or(1.) {
-                    server = Some(selected.clone());
-                }
-            }
-            server
-        }
-    } else {
-        log_error!("Unable to select random public server: no servers available for this network");
-        None
-    }
-}
-
 pub fn render_public_server_selector(
     core: &mut Core,
     ui: &mut egui::Ui,

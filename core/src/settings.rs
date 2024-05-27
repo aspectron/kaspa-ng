@@ -1,4 +1,4 @@
-use crate::{imports::*, servers::random_public_server};
+use crate::imports::*;
 use kaspa_metrics_core::Metric;
 use kaspa_utils::networking::ContextualNetAddress;
 use kaspa_wallet_core::storage::local::storage::Storage;
@@ -144,6 +144,7 @@ pub enum RpcConfig {
     Wrpc {
         url: Option<String>,
         encoding: WrpcEncoding,
+        resolver_urls: Option<Vec<Arc<String>>>,
     },
     Grpc {
         url: Option<NetworkInterfaceConfig>,
@@ -163,6 +164,7 @@ impl Default for RpcConfig {
         RpcConfig::Wrpc {
             url: Some(url.to_string()),
             encoding: WrpcEncoding::Borsh,
+            resolver_urls: None,
         }
     }
 }
@@ -466,12 +468,13 @@ impl NodeSettings {
 }
 
 impl RpcConfig {
-    pub fn from_node_settings(settings: &NodeSettings, options: Option<RpcOptions>) -> Self {
+    pub fn from_node_settings(settings: &NodeSettings, _options: Option<RpcOptions>) -> Self {
         match settings.connection_config_kind {
             NodeConnectionConfigKind::Custom => match settings.rpc_kind {
                 RpcKind::Wrpc => RpcConfig::Wrpc {
                     url: Some(settings.wrpc_url.clone()),
                     encoding: settings.wrpc_encoding,
+                    resolver_urls:None
                 },
                 RpcKind::Grpc => RpcConfig::Grpc {
                     url: Some(settings.grpc_network_interface.clone()),
@@ -482,19 +485,19 @@ impl RpcConfig {
                     RpcConfig::Wrpc {
                         url: Some(public_server.address()),
                         encoding: public_server.wrpc_encoding(),
+                        resolver_urls:None
+
                     }
                 } else {
                     RpcConfig::default()
                 }
             }
             NodeConnectionConfigKind::PublicServerRandom => {
-                if let Some(public_server) = random_public_server(&settings.network, options) {
-                    RpcConfig::Wrpc {
-                        url: Some(public_server.address()),
-                        encoding: public_server.wrpc_encoding(),
-                    }
-                } else {
-                    RpcConfig::default()
+                println!("NodeConnectionConfigKind::PublicServerRandom");
+                RpcConfig::Wrpc {
+                    url: None,
+                    encoding: settings.wrpc_encoding,
+                    resolver_urls:None
                 }
             }
         }
