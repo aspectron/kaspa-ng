@@ -474,7 +474,7 @@ impl RpcConfig {
                 RpcKind::Wrpc => RpcConfig::Wrpc {
                     url: Some(settings.wrpc_url.clone()),
                     encoding: settings.wrpc_encoding,
-                    resolver_urls:None
+                    resolver_urls: None,
                 },
                 RpcKind::Grpc => RpcConfig::Grpc {
                     url: Some(settings.grpc_network_interface.clone()),
@@ -485,8 +485,7 @@ impl RpcConfig {
                     RpcConfig::Wrpc {
                         url: Some(public_server.address()),
                         encoding: public_server.wrpc_encoding(),
-                        resolver_urls:None
-
+                        resolver_urls: None,
                     }
                 } else {
                     RpcConfig::default()
@@ -497,7 +496,7 @@ impl RpcConfig {
                 RpcConfig::Wrpc {
                     url: None,
                     encoding: settings.wrpc_encoding,
-                    resolver_urls:None
+                    resolver_urls: None,
                 }
             }
         }
