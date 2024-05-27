@@ -145,7 +145,13 @@ impl<'core> Status<'core> {
                     }
                 });
             }
-
+            
+            if self.core.settings.node.connection_config_kind
+                == NodeConnectionConfigKind::PublicServerRandom
+            {
+                return;
+            }
+            
             PopupPanel::new(
                 popup_id,
                 |_ui| response,
