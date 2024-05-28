@@ -741,7 +741,6 @@ impl Core {
                 self.wallet_list.sort();
             }
             Events::WalletUpdate => {
-
                 self.select::<modules::AccountManager>();
                 self.get_mut::<modules::WalletOpen>().state = Default::default();
 
@@ -754,7 +753,6 @@ impl Core {
                     account_manager
                         .get_mut::<modules::AccountManager>()
                         .update(account_collection);
-
                 }
             }
             Events::Notify {
