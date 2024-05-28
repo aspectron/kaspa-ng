@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.2.6
+
+- Fix an issue in WASM32 (browser) where after the wallet is loaded, even though the balance is displayed correctly, attempt to send a transaction would result in the "Insufficient funds" error.
+
 # 0.2.5
 - Update Rusty Kaspa p2p client (kaspad) to `0.14.1`.
 - WASM SDK is now available that allows developers using TypeScript and JavaScript to access and interface with wallets created using Kaspa NG and Rusty Kaspa CLI - [https://aspectron.org/en/projects/kaspa-wasm.html](https://aspectron.org/en/projects/kaspa-wasm.html)

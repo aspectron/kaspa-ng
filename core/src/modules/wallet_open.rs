@@ -181,9 +181,9 @@ impl ModuleT for WalletOpen {
                     if let Some(result) = unlock_result.take() {
                         match result {
                             Ok(_) => {
-                                // println!("Unlock success");
-                                core.select::<modules::AccountManager>();
-                                self.state = Default::default();
+                                // relocated to Core WalletUpdate event handler
+                                // core.select::<modules::AccountManager>();
+                                // self.state = Default::default();
                             }
                             Err(err) => {
                                 // println!("Unlock error: {}", err);
