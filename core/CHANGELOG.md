@@ -3,6 +3,7 @@
 # 0.2.6
 
 - Fix an issue in WASM32 (browser) where after the wallet is loaded, even though the balance is displayed correctly, attempt to send a transaction would result in the "Insufficient funds" error.
+- Fix a bug in the node info panel reversing inbound and outbound peers (native/desktop only).
 
 # 0.2.5
 - Update Rusty Kaspa p2p client (kaspad) to `0.14.1`.
