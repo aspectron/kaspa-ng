@@ -253,7 +253,7 @@ impl ModuleT for AccountCreate {
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
-                        ui.label(i18n(i18n("Your private key requires BIP39 passphrase, please enter it now.")));
+                        ui.label(i18n("Your private key requires BIP39 passphrase, please enter it now."));
                     })
                     .with_body(|this,ui| {
                         TextEditor::new(

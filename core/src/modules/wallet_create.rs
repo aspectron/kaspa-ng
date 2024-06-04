@@ -584,11 +584,10 @@ impl ModuleT for WalletCreate {
                         } else {
                             ui.heading(i18n("Optional"));
                             ui.label(" ");
-                            // TODO i18n
-                            ui.label("The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to \
+                            ui.label(i18n("The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to \
                             send payments. This passphrase will also be required when recovering your wallet in addition to your mnemonic.\
-                            If you loose or forget this passphrase, you will not \
-                            be able to use mnemonic to recover your wallet!");
+                            If you lose or forget this passphrase, you will not \
+                            be able to use mnemonic to recover your wallet!"));
                         }
                     })
                     .with_body(|this,ui| {
