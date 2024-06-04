@@ -167,7 +167,6 @@ impl KaspaService {
                     Some(_) => None,
                     None => {
                         if resolver_urls.is_none() {
-                            println!("URL not set! Using default resolver!");
                             Some(Resolver::default())
                         } else {
                             Some(Resolver::new(resolver_urls.clone().unwrap()))

@@ -492,7 +492,6 @@ impl RpcConfig {
                 }
             }
             NodeConnectionConfigKind::PublicServerRandom => {
-                println!("NodeConnectionConfigKind::PublicServerRandom");
                 RpcConfig::Wrpc {
                     url: None,
                     encoding: settings.wrpc_encoding,

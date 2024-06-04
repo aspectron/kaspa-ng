@@ -1,96 +1,55 @@
+use kaspa_wrpc_client::Resolver;
+
 use crate::imports::*;
 
 type ServerCollection = Arc<Mutex<Arc<HashMap<Network, Vec<Server>>>>>;
 
 pub fn public_server_config() -> &'static ServerCollection {
     static SERVERS: OnceLock<ServerCollection> = OnceLock::new();
-    SERVERS.get_or_init(|| Arc::new(Mutex::new(parse_default_servers().clone())))
+    SERVERS.get_or_init(|| Arc::new(Mutex::new(HashMap::new().into())))
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Server {
-    pub name: Option<String>,
-    pub ident: Option<String>,
-    pub location: Option<String>,
-    pub protocol: WrpcEncoding,
-    pub address: String,
-    pub enable: Option<bool>,
-    pub link: Option<String>,
+    pub id: String,
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider_url: Option<String>,
+    pub encoding: WrpcEncoding,
     pub network: Network,
-    pub bias: Option<f32>,
-    pub manual: Option<bool>,
-    pub version: Option<String>,
+    pub online: bool,
+    pub status: String,
 }
 
 impl Eq for Server {}
 
 impl PartialEq for Server {
     fn eq(&self, other: &Self) -> bool {
-        self.address == other.address
+        self.url == other.url
     }
 }
 
 impl std::fmt::Display for Server {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut title = self.name.clone().unwrap_or(self.address.to_string());
-        if let Some(ident) = self.ident.as_ref() {
-            title += format!(" ({ident})").as_str();
-        } else if let Some(location) = self.location.as_ref() {
-            title += format!(" ({location})").as_str();
-        }
-
-        write!(f, "{}", title)
+        write!(f, "{} - {}", self.id, self.url)
     }
 }
 
 impl Server {
     pub fn address(&self) -> String {
-        self.address.clone()
+        self.url.clone()
     }
 
     pub fn wrpc_encoding(&self) -> WrpcEncoding {
-        self.protocol
+        self.encoding
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ServerConfig {
     server: Vec<Server>,
-}
-
-fn try_parse_servers(toml: &str) -> Result<Arc<HashMap<Network, Vec<Server>>>> {
-    let servers: Vec<Server> = toml::from_str::<ServerConfig>(toml)?
-        .server
-        .into_iter()
-        .filter(|server| server.enable.unwrap_or(true))
-        .collect::<Vec<_>>();
-
-    let servers = HashMap::group_from(servers.into_iter().map(|server| (server.network, server)));
-
-    Ok(servers.into())
-}
-
-// fn parse_servers(toml: &str) -> Arc<Vec<Server>> {
-fn parse_servers(toml: &str) -> Arc<HashMap<Network, Vec<Server>>> {
-    match try_parse_servers(toml) {
-        Ok(servers) => servers,
-        Err(e) => {
-            cfg_if! {
-                if #[cfg(not(target_arch = "wasm32"))] {
-                    println!();
-                    panic!("Error parsing Servers.toml: {}", e);
-                } else {
-                    log_error!("Error parsing Servers.toml: {}", e);
-                    HashMap::default().into()
-                }
-            }
-        }
-    }
-}
-
-pub fn parse_default_servers() -> &'static Arc<HashMap<Network, Vec<Server>>> {
-    static EMBEDDED_SERVERS: OnceLock<Arc<HashMap<Network, Vec<Server>>>> = OnceLock::new();
-    EMBEDDED_SERVERS.get_or_init(|| parse_servers(include_str!("../resources/Servers.toml")))
 }
 
 pub fn update_public_servers() {
@@ -102,28 +61,32 @@ pub fn update_public_servers() {
 }
 
 pub fn load_public_servers() {
-    parse_default_servers();
     update_public_servers();
 }
 
-async fn fetch_public_servers() -> Result<Arc<HashMap<Network, Vec<Server>>>> {
-    cfg_if! {
-        if #[cfg(all(target_arch = "wasm32", not(feature = "browser-extension")))] {
-            let href = location()?.href()?;
-            let location = if let Some(index) = href.find('#') {
-                let (location, _) = href.split_at(index);
-                location.to_string()
-            } else {
-                href
-            };
-            let url = format!("{}/Servers.toml", location.trim_end_matches('/'));
-            let servers_toml = http::get(url).await?;
-            try_parse_servers(&servers_toml)
-        } else {
-            // TODO - parse local Servers.toml file
-            Ok(parse_default_servers().clone())
+async fn get_server_list()->Result<Vec<Server>>{
+    // Get all resolver urls
+    let resolvers = Resolver::default().urls();
+
+    // Try to connect to each resolver
+    for resolver in resolvers {
+        // Retrieve server list
+        let server_list = workflow_http::get_json::<Vec<Server>>(format!("{}/status", resolver)).await;
+        if server_list.is_ok() {
+            return Ok(server_list?);
         }
     }
+
+    // If no resolver was able to connect, return an error
+    Err(Error::custom("Unable to connect to any resolver")) 
+}
+
+async fn fetch_public_servers() -> Result<Arc<HashMap<Network, Vec<Server>>>> {
+    // Get server list
+    let servers=get_server_list().await?;
+    // Group servers by network
+    let servers = HashMap::group_from(servers.into_iter().map(|server| (server.network, server)));
+    Ok(servers.into())
 }
 
 pub fn tls() -> bool {
@@ -145,10 +108,9 @@ pub fn public_servers(network: &Network) -> Vec<Server> {
     servers
         .iter()
         .filter(|server| {
-            server.enable.unwrap_or(true)
+            server.online
                 && !(tls()
-                    && !(server.address.starts_with("wss://")
-                        || server.address.starts_with("wrpcs://")))
+                    && !(server.url.starts_with("wss://") || server.url.starts_with("wrpcs://")))
         })
         .cloned()
         .collect::<Vec<_>>()
@@ -212,11 +174,9 @@ pub fn render_public_server_selector(
                             *close = true;
                         }
 
-                        if let Some(link) = server.link.as_ref() {
-                            ui.add_space(4.);
-                            ui.hyperlink_url_to_tab(link);
-                            ui.add_space(4.);
-                        }
+                        ui.add_space(4.);
+                        ui.hyperlink_url_to_tab(server.url);
+                        ui.add_space(4.);
                     }
                 });
         },
