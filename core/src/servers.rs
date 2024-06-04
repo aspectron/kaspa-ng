@@ -64,26 +64,27 @@ pub fn load_public_servers() {
     update_public_servers();
 }
 
-async fn get_server_list()->Result<Vec<Server>>{
+async fn get_server_list() -> Result<Vec<Server>> {
     // Get all resolver urls
     let resolvers = Resolver::default().urls();
 
     // Try to connect to each resolver
     for resolver in resolvers {
         // Retrieve server list
-        let server_list = workflow_http::get_json::<Vec<Server>>(format!("{}/status", resolver)).await;
+        let server_list =
+            workflow_http::get_json::<Vec<Server>>(format!("{}/status", resolver)).await;
         if server_list.is_ok() {
             return Ok(server_list?);
         }
     }
 
     // If no resolver was able to connect, return an error
-    Err(Error::custom("Unable to connect to any resolver")) 
+    Err(Error::custom("Unable to connect to any resolver"))
 }
 
 async fn fetch_public_servers() -> Result<Arc<HashMap<Network, Vec<Server>>>> {
     // Get server list
-    let servers=get_server_list().await?;
+    let servers = get_server_list().await?;
     // Group servers by network
     let servers = HashMap::group_from(servers.into_iter().map(|server| (server.network, server)));
     Ok(servers.into())

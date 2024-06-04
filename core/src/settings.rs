@@ -491,13 +491,11 @@ impl RpcConfig {
                     RpcConfig::default()
                 }
             }
-            NodeConnectionConfigKind::PublicServerRandom => {
-                RpcConfig::Wrpc {
-                    url: None,
-                    encoding: settings.wrpc_encoding,
-                    resolver_urls: None,
-                }
-            }
+            NodeConnectionConfigKind::PublicServerRandom => RpcConfig::Wrpc {
+                url: None,
+                encoding: settings.wrpc_encoding,
+                resolver_urls: None,
+            },
         }
     }
 }
