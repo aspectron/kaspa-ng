@@ -53,7 +53,10 @@ impl Adaptor {
         log_info!("Adaptor::init()");
         let res = self
             .sender
-            .send_message(Target::Adaptor, ServerAction::PendingRequests.try_to_vec()?)
+            .send_message(
+                Target::Adaptor,
+                borsh::to_vec(&ServerAction::PendingRequests)?,
+            )
             .await?;
         // log_info!("Adaptor:init res: {res:?}");
         if !res.is_empty() {
@@ -72,7 +75,7 @@ impl Adaptor {
                             .sender
                             .send_message(
                                 Target::Adaptor,
-                                ServerAction::Response(sender_id, id, data).try_to_vec()?,
+                                borsh::to_vec(&ServerAction::Response(sender_id, id, data))?,
                             )
                             .await;
                         if res.is_ok() {
@@ -118,7 +121,7 @@ impl Adaptor {
                                 response: "xyz".into(),
                             };
                             self.response
-                                .try_send(response.try_to_vec().unwrap())
+                                .try_send(borsh::to_vec(&response).unwrap())
                                 .unwrap();
 
                             // clear the action
@@ -144,7 +147,7 @@ impl Adaptor {
                         address: account.receive_address().to_string(),
                     };
                     self.response
-                        .try_send(response.try_to_vec().unwrap())
+                        .try_send(borsh::to_vec(&response).unwrap())
                         .unwrap();
                     self.clear();
                 }
