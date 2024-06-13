@@ -13,6 +13,7 @@ use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
 
 pub enum Exception {
+    #[allow(dead_code)]
     UtxoIndexNotEnabled { url: Option<String> },
 }
 
