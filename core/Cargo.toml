@@ -12,6 +12,7 @@ build = "build.rs"
 crate-type = ["cdylib", "lib"]
 
 [features]
+console = []
 browser-extension = ["lean"]
 mobile = ["lean"]
 lean = []

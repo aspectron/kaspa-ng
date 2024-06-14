@@ -213,11 +213,19 @@ zeroize = { version = "1", default-features = false, features = ["alloc"] }
 
 [profile.release]
 opt-level = 2
-# opt-level = 3
 # lto = true
+# opt-level = 3
 
 [profile.native-release]
 inherits = "release"
 opt-level = 3
-lto = true
+# lto = true
 # strip = true
+
+[profile.console]
+inherits = "release"
+opt-level = 2
+strip = false
+# lto = true
+# strip = true
+

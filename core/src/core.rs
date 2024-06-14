@@ -1224,6 +1224,9 @@ impl Core {
 
         if modifiers.ctrl || modifiers.mac_cmd {
             match key {
+                // Key::X => {
+                //     panic!("Testing panic!");
+                // }
                 Key::O => {
                     self.select::<modules::WalletOpen>();
                 }
