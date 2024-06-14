@@ -13,6 +13,7 @@ use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
 
 pub enum Exception {
+    #[allow(dead_code)]
     UtxoIndexNotEnabled { url: Option<String> },
 }
 
@@ -741,6 +742,9 @@ impl Core {
                 self.wallet_list.sort();
             }
             Events::WalletUpdate => {
+                self.select::<modules::AccountManager>();
+                self.get_mut::<modules::WalletOpen>().state = Default::default();
+
                 if let Some(account_collection) = self.account_collection.as_ref() {
                     let mut account_manager = self
                         .modules

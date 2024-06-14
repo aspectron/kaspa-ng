@@ -39,7 +39,7 @@ impl Settings {
 
 
             ui.horizontal_wrapped(|ui|{
-                ui.label(i18n(i18n("Remote Connection:")));
+                ui.label(i18n("Remote Connection:"));
                 NodeConnectionConfigKind::iter().for_each(|kind| {
                     ui.radio_value(&mut settings.connection_config_kind, *kind, kind.to_string());
                 });
@@ -54,7 +54,7 @@ impl Settings {
 
 
                             ui.horizontal(|ui|{
-                                ui.label(i18n(i18n("wRPC Encoding:")));
+                                ui.label(i18n("wRPC Encoding:"));
                                 WrpcEncoding::iter().for_each(|encoding| {
                                     ui.radio_value(&mut settings.wrpc_encoding, *encoding, encoding.to_string());
                                 });
@@ -62,7 +62,7 @@ impl Settings {
 
 
                             ui.horizontal(|ui|{
-                                ui.label(i18n(i18n("wRPC URL:")));
+                                ui.label(i18n("wRPC URL:"));
                                 ui.add(TextEdit::singleline(&mut settings.wrpc_url));
                                 
                             });

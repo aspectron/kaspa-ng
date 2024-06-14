@@ -2,6 +2,7 @@ use crate::imports::*;
 use super::*;
 
 pub struct NetworkState<'context> {
+    #[allow(dead_code)]
     pub context: &'context ManagerContext,
 }
 

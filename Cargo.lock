@@ -3775,7 +3775,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "cfg-if 1.0.0",
  "kaspa-alloc",
@@ -3787,7 +3787,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-chrome"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3810,7 +3810,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-core"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "ahash 0.8.11",
  "async-trait",
@@ -3890,7 +3890,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-macros"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "convert_case 0.6.0",
  "parse-variants",

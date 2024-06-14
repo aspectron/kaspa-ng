@@ -17,6 +17,7 @@ impl<'context> Estimator<'context> {
 
         let RenderContext { network_type, .. } = rc;
 
+        let mut request_send = false;
         let mut request_estimate = self.context.request_estimate.take().unwrap_or_default();
 
         match self.context.transaction_kind.as_ref().unwrap() {
@@ -50,8 +51,7 @@ impl<'context> Estimator<'context> {
             if self.context.enable_priority_fees {
                 self.context.focus.next(Focus::Fees);
             } else if self.update_user_args() {
-                self.context.action = Action::Sending;
-                self.context.focus.next(Focus::WalletSecret);
+                request_send = true;
             }
         }
 
@@ -96,7 +96,7 @@ impl<'context> Estimator<'context> {
                 request_estimate = true;
             })
             .submit(|_,_|{
-                self.context.action = Action::Sending;
+                request_send = true;
             })
             .build(ui); 
         }
@@ -127,6 +127,15 @@ impl<'context> Estimator<'context> {
             }
         };
         ui.add_space(8.);
+
+        if request_send {
+            if ready_to_send {
+                self.context.action = Action::Sending;
+                self.context.focus.next(Focus::WalletSecret);
+            } else if self.context.address_status != AddressStatus::Valid {
+                self.context.focus.next(Focus::Address);
+            }
+        }
 
         ui.horizontal(|ui| {
             ui.vertical_centered(|ui|{
