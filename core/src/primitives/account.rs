@@ -47,6 +47,7 @@ struct Inner {
     context: Mutex<Option<Arc<AccountContext>>>,
     transactions: Mutex<TransactionCollection>,
     total_transaction_count: AtomicU64,
+    transaction_start: AtomicU64,
     is_loading: AtomicBool,
     network: Mutex<Network>,
 }
@@ -62,6 +63,7 @@ impl Inner {
             context: Mutex::new(context),
             transactions: Mutex::new(TransactionCollection::default()),
             total_transaction_count: AtomicU64::new(0),
+            transaction_start: AtomicU64::new(0),
             is_loading: AtomicBool::new(true),
             network: Mutex::new(network),
         }
@@ -180,6 +182,16 @@ impl Account {
 
     pub fn transaction_count(&self) -> u64 {
         self.inner.total_transaction_count.load(Ordering::SeqCst)
+    }
+
+    pub fn set_transaction_start(&self, start: u64) {
+        self.inner
+            .transaction_start
+            .store(start, Ordering::SeqCst);
+    }
+
+    pub fn transaction_start(&self) -> u64 {
+        self.inner.transaction_start.load(Ordering::SeqCst)
     }
 
     pub fn load_transactions(
