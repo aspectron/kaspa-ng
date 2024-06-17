@@ -126,33 +126,37 @@ impl Pagination {
             pages: Arc::new(pages),
             max_pages,
             half,
-            btn_size1: Vec2::new(30_f32, 30_f32),// numbers
+            btn_size1: Vec2::new(30_f32, 30_f32), // numbers
             btn_size2: Vec2::new(50_f32, 30_f32), // first,prev,next,last
             options: None,
         }
     }
-
 
     pub fn with_options(mut self, options: PaginationOptions) -> Result<Self> {
         self.options = Some(options);
         Ok(self)
     }
 
-    fn calculate_padding(&self, ui: &mut Ui, options: &PaginationOptions) -> f32{
+    fn calculate_padding(&self, ui: &mut Ui, options: &PaginationOptions) -> f32 {
         let available_width = ui.available_width();
         let mut total_width = ui.spacing().item_spacing.x;
-        
+
         let btns = vec![&options.first, &options.last, &options.last, &options.last];
         let btn_margin = ui.spacing().item_spacing.x;
         let btn_padding = ui.spacing().button_padding.x * 2.0;
         let pages = self.pages.clone();
-        for p in pages.iter(){
-            let g = WidgetText::from(p.page.to_string()).into_galley(ui, None, available_width, TextStyle::Button);
+        for p in pages.iter() {
+            let g = WidgetText::from(p.page.to_string()).into_galley(
+                ui,
+                None,
+                available_width,
+                TextStyle::Button,
+            );
             let button_width = (g.size().x + btn_padding).max(self.btn_size1.x);
             total_width += button_width + btn_margin;
         }
 
-        for btn in btns{
+        for btn in btns {
             let g = WidgetText::from(btn).into_galley(ui, None, available_width, TextStyle::Button);
             let button_width = (g.size().x + btn_padding).max(self.btn_size2.x);
             total_width += button_width + btn_margin;
@@ -164,7 +168,6 @@ impl Pagination {
     }
 
     pub fn render(&self, ui: &mut Ui) -> Option<u64> {
-
         let pages = self.pages.clone();
         let is_first = self.is_first;
         let is_last = self.is_last;
@@ -184,49 +187,48 @@ impl Pagination {
         let next_text = options.next;
         let mut start = None;
 
-        
         //ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-            ui.horizontal(|ui| {
-                ui.add_space(padding);
+        ui.horizontal(|ui| {
+            ui.add_space(padding);
 
-                if add_btn(ui, !is_first, prev_text, btn_size2).clicked() {
-                    start = Some(prev_skip);
-                }
+            if add_btn(ui, !is_first, prev_text, btn_size2).clicked() {
+                start = Some(prev_skip);
+            }
 
-                if add_btn(ui, !is_first, first_text, btn_size2).clicked() {
-                    start = Some(0);
-                }
+            if add_btn(ui, !is_first, first_text, btn_size2).clicked() {
+                start = Some(0);
+            }
 
-                for page in pages.iter(){
-                    if add_num_btn(ui, page.active, page.page.to_string(), btn_size1).clicked() {
-                        start = Some(page.skip);
-                    }
+            for page in pages.iter() {
+                if add_num_btn(ui, page.active, page.page.to_string(), btn_size1).clicked() {
+                    start = Some(page.skip);
                 }
+            }
 
-                if add_btn(ui, !is_last, last_text, btn_size2).clicked() {
-                    start = Some(last_skip);
-                }
+            if add_btn(ui, !is_last, last_text, btn_size2).clicked() {
+                start = Some(last_skip);
+            }
 
-                if add_btn(ui, !is_last, next_text, btn_size2).clicked() {
-                    start = Some(next_skip);
-                }
-            });
+            if add_btn(ui, !is_last, next_text, btn_size2).clicked() {
+                start = Some(next_skip);
+            }
+        });
         //});
 
         start
     }
 }
 
-fn add_btn(ui: &mut Ui, enabled: bool, text: impl Into<WidgetText>, min_size: Vec2) -> Response{
-    ui.add_enabled(
-        enabled,
-        Button::new(text).min_size(min_size),
-    )
+fn add_btn(ui: &mut Ui, enabled: bool, text: impl Into<WidgetText>, min_size: Vec2) -> Response {
+    ui.add_enabled(enabled, Button::new(text).min_size(min_size))
 }
 
-fn add_num_btn(ui: &mut Ui, active: bool, text: impl Into<WidgetText>, min_size: Vec2) -> Response{
+fn add_num_btn(ui: &mut Ui, active: bool, text: impl Into<WidgetText>, min_size: Vec2) -> Response {
     ui.add_enabled(
         !active,
-        Button::new(text).rounding(ui.visuals().widgets.hovered.rounding).selected(active).min_size(min_size),
+        Button::new(text)
+            .rounding(ui.visuals().widgets.hovered.rounding)
+            .selected(active)
+            .min_size(min_size),
     )
 }

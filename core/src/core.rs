@@ -12,7 +12,7 @@ use std::future::IntoFuture;
 #[allow(unused_imports)]
 use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
-pub const TRANSACTION_PAGE_SIZE:u64 = 100;
+pub const TRANSACTION_PAGE_SIZE: u64 = 100;
 
 pub enum Exception {
     #[allow(dead_code)]
@@ -1086,8 +1086,11 @@ impl Core {
         });
     }
 
-    pub fn load_account_transactions_with_range(&mut self, account: &Account, range: std::ops::Range<u64>) -> Result<()>{
-
+    pub fn load_account_transactions_with_range(
+        &mut self,
+        account: &Account,
+        range: std::ops::Range<u64>,
+    ) -> Result<()> {
         let account_id = account.id();
         let network_id = self
             .state
@@ -1098,8 +1101,10 @@ impl Core {
         spawn(async move {
             let data = runtime
                 .wallet()
-                .transactions_data_get_range(account_id, network_id, range).into_future().await?;
-        
+                .transactions_data_get_range(account_id, network_id, range)
+                .into_future()
+                .await?;
+
             let TransactionsDataGetResponse {
                 account_id,
                 transactions,
@@ -1167,9 +1172,11 @@ impl Core {
             let futures = account_ids
                 .into_iter()
                 .map(|account_id| {
-                    runtime
-                        .wallet()
-                        .transactions_data_get_range(account_id, network_id, 0..TRANSACTION_PAGE_SIZE)
+                    runtime.wallet().transactions_data_get_range(
+                        account_id,
+                        network_id,
+                        0..TRANSACTION_PAGE_SIZE,
+                    )
                 })
                 .collect::<Vec<_>>();
 

@@ -185,9 +185,7 @@ impl Account {
     }
 
     pub fn set_transaction_start(&self, start: u64) {
-        self.inner
-            .transaction_start
-            .store(start, Ordering::SeqCst);
+        self.inner.transaction_start.store(start, Ordering::SeqCst);
     }
 
     pub fn transaction_start(&self) -> u64 {
