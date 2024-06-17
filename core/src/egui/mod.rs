@@ -9,6 +9,7 @@ mod network;
 mod panel;
 mod popup;
 mod theme;
+mod pagination;
 
 pub use collapsable::*;
 pub use composite_button::{Composite, CompositeButton};
@@ -21,3 +22,4 @@ pub use network::NetworkInterfaceEditor;
 pub use panel::Panel;
 pub use popup::PopupPanel;
 pub use theme::*;
+pub use pagination::*;
