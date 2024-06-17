@@ -11,3 +11,4 @@ datadir
 /discard
 analyzer-target
 .vscode/launch.json
+*.log
