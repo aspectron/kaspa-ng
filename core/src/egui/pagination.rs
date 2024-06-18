@@ -89,7 +89,7 @@ impl Pagination {
         let active_page = total_pages.min(((skip + 1) as f64 / limit as f64).ceil() as u64);
         let max_pages = max_pages.unwrap_or(10).min(total_pages).min(10);
         let half = (max_pages as f64 / 2.0).floor() as u64;
-        let prev = 1.max(active_page - 1);
+        let prev = 1.max(active_page.saturating_sub(1));
         let next = total_pages.min(active_page + 1);
         let mut page = 1;
         // log_info!(
@@ -113,13 +113,13 @@ impl Pagination {
             total_pages,
             active_page,
             is_last: active_page == total_pages,
-            is_first: active_page == 1,
+            is_first: active_page < 2,
             prev,
             next,
             last: total_pages,
-            last_skip: (total_pages - 1) * limit,
-            prev_skip: (prev - 1) * limit,
-            next_skip: (next - 1) * limit,
+            last_skip: total_pages.saturating_sub(1) * limit,
+            prev_skip: prev.saturating_sub(1) * limit,
+            next_skip: next.saturating_sub(1) * limit,
             total,
             skip,
             limit,

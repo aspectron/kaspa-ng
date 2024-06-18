@@ -12,7 +12,7 @@ use std::future::IntoFuture;
 #[allow(unused_imports)]
 use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
-pub const TRANSACTION_PAGE_SIZE: u64 = 100;
+pub const TRANSACTION_PAGE_SIZE: u64 = 13;
 
 pub enum Exception {
     #[allow(dead_code)]
@@ -1018,6 +1018,9 @@ impl Core {
                                                 .is_none()
                                             {
                                                 //no old record
+                                                account.set_transaction_count(
+                                                    account.transaction_count() + 1,
+                                                );
                                                 let mut binding = account.transactions();
                                                 let list = binding.list_mut();
                                                 while list.len() as u64 > TRANSACTION_PAGE_SIZE {
@@ -1046,6 +1049,9 @@ impl Core {
                                             .is_none()
                                         {
                                             //no old record
+                                            account.set_transaction_count(
+                                                account.transaction_count() + 1,
+                                            );
                                             let mut binding = account.transactions();
                                             let list = binding.list_mut();
                                             while list.len() as u64 > TRANSACTION_PAGE_SIZE {
