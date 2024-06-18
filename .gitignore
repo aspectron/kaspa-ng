@@ -12,3 +12,4 @@ datadir
 analyzer-target
 .vscode/launch.json
 *.log
+kaspa-ng*

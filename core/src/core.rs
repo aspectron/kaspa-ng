@@ -13,6 +13,7 @@ use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
 
 pub enum Exception {
+    #[allow(dead_code)]
     UtxoIndexNotEnabled { url: Option<String> },
 }
 
@@ -1227,6 +1228,9 @@ impl Core {
 
         if modifiers.ctrl || modifiers.mac_cmd {
             match key {
+                // Key::X => {
+                //     panic!("Testing panic!");
+                // }
                 Key::O => {
                     self.select::<modules::WalletOpen>();
                 }
