@@ -126,6 +126,7 @@ impl Transaction {
         &self,
         ui: &mut Ui,
         network_type: NetworkType,
+        network: Network,
         current_daa_score: Option<u64>,
         _include_utxos: bool,
         largest: Option<u64>,
@@ -160,6 +161,12 @@ impl Transaction {
         let content = LayoutJobBuilderSettings::new(width, 8.0, Some(content_font.clone()));
 
         let is_transfer = record.is_transfer();
+
+        let explorer = match network {
+            Network::Mainnet => "https://explorer.kaspa.org",
+            Network::Testnet10 => "https://explorer-tn10.kaspa.org",
+            Network::Testnet11 => "https://explorer-tn11.kaspa.org",
+        };
 
         match record.transaction_data() {
             TransactionData::Reorg { utxo_entries, .. }
@@ -256,8 +263,12 @@ impl Transaction {
                 collapsing_header.show(ui, |ui| {
                     ljb(&content)
                         .padded(15, "Transaction id:", default_color)
-                        .text(&transaction_id, default_color)
-                        .label(ui);
+                        .hyperlink(
+                            ui,
+                            &transaction_id,
+                            &format!("{explorer}/txs/{transaction_id}"),
+                            default_color,
+                        );
 
                     ljb(&content)
                         .padded(15, "Received at:", default_color)
@@ -277,7 +288,12 @@ impl Transaction {
                             .map(|addr| addr.to_string())
                             .unwrap_or_else(|| "n/a".to_string());
 
-                        ljb(&content).text(&address, default_color).label(ui);
+                        ljb(&content).hyperlink(
+                            ui,
+                            &address,
+                            &format!("{explorer}/addresses/{address}"),
+                            default_color,
+                        );
 
                         if *is_coinbase {
                             ljb(&content)

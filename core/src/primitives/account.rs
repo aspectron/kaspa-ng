@@ -166,6 +166,10 @@ impl Account {
         *self.inner.network.lock().unwrap() = network;
     }
 
+    pub fn network(&self) -> Network {
+        *self.inner.network.lock().unwrap()
+    }
+
     pub fn set_loading(&self, is_loading: bool) {
         self.inner.is_loading.store(is_loading, Ordering::SeqCst);
     }

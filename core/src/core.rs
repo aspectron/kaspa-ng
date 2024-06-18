@@ -1010,9 +1010,20 @@ impl Core {
                                     .as_ref()
                                     .and_then(|account_collection| {
                                         account_collection.get(&id).map(|account| {
-                                            account.transactions().replace_or_insert(
-                                                Transaction::new_confirmed(Arc::new(record)),
-                                            );
+                                            if account
+                                                .transactions()
+                                                .replace_or_insert(Transaction::new_confirmed(
+                                                    Arc::new(record),
+                                                ))
+                                                .is_none()
+                                            {
+                                                //no old record
+                                                let mut binding = account.transactions();
+                                                let list = binding.list_mut();
+                                                while list.len() as u64 > TRANSACTION_PAGE_SIZE {
+                                                    list.pop();
+                                                }
+                                            }
                                         })
                                     });
                             }
@@ -1027,9 +1038,20 @@ impl Core {
                                 .as_ref()
                                 .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
-                                        account.transactions().replace_or_insert(
-                                            Transaction::new_processing(Arc::new(record)),
-                                        );
+                                        if account
+                                            .transactions()
+                                            .replace_or_insert(Transaction::new_processing(
+                                                Arc::new(record),
+                                            ))
+                                            .is_none()
+                                        {
+                                            //no old record
+                                            let mut binding = account.transactions();
+                                            let list = binding.list_mut();
+                                            while list.len() as u64 > TRANSACTION_PAGE_SIZE {
+                                                list.pop();
+                                            }
+                                        }
                                     })
                                 });
                         }

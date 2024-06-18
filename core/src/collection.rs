@@ -43,27 +43,31 @@ where
         self.list.push(v);
     }
 
-    pub fn replace_or_insert(&mut self, v: T) {
+    pub fn replace_or_insert(&mut self, v: T) -> Option<T> {
         if self.map.insert(*v.id(), v.clone()).is_some() {
             let id = v.id();
             let index = self.list.iter().position(|item| item.id() == id).unwrap_or_else(|| {
                 panic!("Collection::replace_or_insert(): failed to find index for id: {} while inserting: {:?}", id.to_hex(), v)
             });
-            let _ = std::mem::replace(&mut self.list[index], v);
+            let t = std::mem::replace(&mut self.list[index], v);
+            Some(t)
         } else {
             self.list.insert(0, v);
+            None
         }
     }
 
-    pub fn replace_or_push(&mut self, v: T) {
+    pub fn replace_or_push(&mut self, v: T) -> Option<T> {
         if self.map.insert(*v.id(), v.clone()).is_some() {
             let id = v.id();
             let index = self.list.iter().position(|item| item.id() == id).unwrap_or_else(|| {
                 panic!("Collection::replace_or_insert(): failed to find index for id: {} while inserting: {:?}", id.to_hex(), v)
             });
-            let _ = std::mem::replace(&mut self.list[index], v);
+            let t = std::mem::replace(&mut self.list[index], v);
+            Some(t)
         } else {
             self.list.push(v);
+            None
         }
     }
 
