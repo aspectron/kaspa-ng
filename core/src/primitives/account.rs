@@ -201,10 +201,16 @@ impl Account {
         mut transactions: Vec<Arc<TransactionRecord>>,
         total: u64,
     ) -> Result<()> {
-        // TODO - pagination
         self.transactions().clear();
 
-        transactions.sort_by(|a, b| b.block_daa_score.cmp(&a.block_daa_score));
+        transactions.sort_by(|a, b| {
+            if let Some(b_ts) = b.unixtime_msec {
+                if let Some(a_ts) = a.unixtime_msec {
+                    return b_ts.cmp(&a_ts);
+                }
+            }
+            b.block_daa_score.cmp(&a.block_daa_score)
+        });
 
         self.set_transaction_count(total);
         self.transactions()
