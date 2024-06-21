@@ -79,6 +79,14 @@ where
         self.map.get(id)
     }
 
+    pub fn pop(&mut self) -> Option<T> {
+        if let Some(item) = self.list.pop() {
+            self.map.remove(item.id());
+            return Some(item);
+        }
+        None
+    }
+
     pub fn list(&self) -> &Vec<T> {
         &self.list
     }

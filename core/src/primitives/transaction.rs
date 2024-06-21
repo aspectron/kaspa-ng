@@ -163,9 +163,9 @@ impl Transaction {
         let is_transfer = record.is_transfer();
 
         let explorer = match network {
-            Network::Mainnet => "https://explorer.kaspa.org",
-            Network::Testnet10 => "https://explorer-tn10.kaspa.org",
-            Network::Testnet11 => "https://explorer-tn11.kaspa.org",
+            Network::Mainnet => MAINNET_EXPLORER,
+            Network::Testnet10 => TESTNET10_EXPLORER,
+            Network::Testnet11 => TESTNET11_EXPLORER,
         };
 
         match record.transaction_data() {
@@ -430,11 +430,13 @@ impl Transaction {
                 }
                 collapsing_header.show(ui, |ui| {
                     ljb(&content)
-                        .text(
-                            &format!("{}: {}", "Transaction id", transaction_id),
+                        .padded(15, "Transaction id:", default_color)
+                        .hyperlink(
+                            ui,
+                            &transaction_id,
+                            &format!("{explorer}/txs/{transaction_id}"),
                             default_color,
-                        )
-                        .label(ui);
+                        );
 
                     ljb(&content)
                         .padded(15, "Submitted at:", default_color)

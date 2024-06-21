@@ -12,7 +12,10 @@ use std::future::IntoFuture;
 #[allow(unused_imports)]
 use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
-pub const TRANSACTION_PAGE_SIZE: u64 = 13;
+pub const TRANSACTION_PAGE_SIZE: u64 = 20;
+pub const MAINNET_EXPLORER: &str = "https://explorer.kaspa.org";
+pub const TESTNET10_EXPLORER: &str = "https://explorer-testnet.kaspa.ws";
+pub const TESTNET11_EXPLORER: &str = "https://explorer-tn11.kaspa.org";
 
 pub enum Exception {
     #[allow(dead_code)]
@@ -986,9 +989,19 @@ impl Core {
                                 .as_ref()
                                 .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
-                                        account.transactions().replace_or_insert(
-                                            Transaction::new_confirmed(Arc::new(record)),
-                                        );
+                                        if account
+                                            .transactions()
+                                            .replace_or_insert(Transaction::new_confirmed(
+                                                Arc::new(record),
+                                            ))
+                                            .is_none()
+                                        {
+                                            let mut binding = account.transactions();
+                                            while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
+                                                binding.pop();
+                                            }
+                                            account.set_transaction_count(binding.len() as u64);
+                                        }
                                     })
                                 });
                         }
@@ -1017,15 +1030,11 @@ impl Core {
                                                 ))
                                                 .is_none()
                                             {
-                                                //no old record
-                                                account.set_transaction_count(
-                                                    account.transaction_count() + 1,
-                                                );
                                                 let mut binding = account.transactions();
-                                                let list = binding.list_mut();
-                                                while list.len() as u64 > TRANSACTION_PAGE_SIZE {
-                                                    list.pop();
+                                                while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
+                                                    binding.pop();
                                                 }
+                                                account.set_transaction_count(binding.len() as u64);
                                             }
                                         })
                                     });
@@ -1048,15 +1057,11 @@ impl Core {
                                             ))
                                             .is_none()
                                         {
-                                            //no old record
-                                            account.set_transaction_count(
-                                                account.transaction_count() + 1,
-                                            );
                                             let mut binding = account.transactions();
-                                            let list = binding.list_mut();
-                                            while list.len() as u64 > TRANSACTION_PAGE_SIZE {
-                                                list.pop();
+                                            while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
+                                                binding.pop();
                                             }
+                                            account.set_transaction_count(binding.len() as u64);
                                         }
                                     })
                                 });
