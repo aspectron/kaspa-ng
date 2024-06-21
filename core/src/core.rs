@@ -1000,7 +1000,9 @@ impl Core {
                                             while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
                                                 binding.pop();
                                             }
-                                            account.set_transaction_count(binding.len() as u64);
+                                            account.set_transaction_count(
+                                                account.transaction_count() + 1,
+                                            );
                                         }
                                     })
                                 });
@@ -1034,7 +1036,9 @@ impl Core {
                                                 while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
                                                     binding.pop();
                                                 }
-                                                account.set_transaction_count(binding.len() as u64);
+                                                account.set_transaction_count(
+                                                    account.transaction_count() + 1,
+                                                );
                                             }
                                         })
                                     });
@@ -1061,7 +1065,9 @@ impl Core {
                                             while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
                                                 binding.pop();
                                             }
-                                            account.set_transaction_count(binding.len() as u64);
+                                            account.set_transaction_count(
+                                                account.transaction_count() + 1,
+                                            );
                                         }
                                     })
                                 });
