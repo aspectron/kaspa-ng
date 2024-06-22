@@ -7,6 +7,7 @@ use kaspa_wallet_core::events::Events as CoreWalletEvents;
 use kaspa_wallet_core::rpc::{
     ConnectOptions, ConnectStrategy, NotificationMode, Rpc, RpcCtl, WrpcEncoding,
 };
+use kaspa_wrpc_client::Resolver;
 use workflow_core::runtime;
 
 const ENABLE_PREEMPTIVE_DISCONNECT: bool = true;
@@ -157,18 +158,35 @@ impl KaspaService {
 
     pub fn create_rpc_client(config: &RpcConfig, network: Network) -> Result<Rpc> {
         match config {
-            RpcConfig::Wrpc { url, encoding } => {
-                // log_warn!("create_rpc_client - RPC URL: {:?}", url);
+            RpcConfig::Wrpc {
+                url,
+                encoding,
+                resolver_urls,
+            } => {
+                let resolver_or_none = match url {
+                    Some(_) => None,
+                    None => {
+                        if resolver_urls.is_none() {
+                            Some(Resolver::default())
+                        } else {
+                            Some(Resolver::new(resolver_urls.clone().unwrap()))
+                        }
+                    }
+                };
+
                 let url = url.clone().unwrap_or_else(|| "127.0.0.1".to_string());
                 let url =
                     KaspaRpcClient::parse_url(url, *encoding, NetworkId::from(network).into())?;
 
                 let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
                     *encoding,
-                    Some(url.as_str()),
-                    // TODO: introduce resolver for public node resolution
-                    None,
-                    None,
+                    if resolver_or_none.is_some() {
+                        None
+                    } else {
+                        Some(url.as_str())
+                    },
+                    resolver_or_none,
+                    Some(NetworkId::from(network)),
                     None,
                 )?);
                 let rpc_ctl = wrpc_client.ctl().clone();
@@ -481,6 +499,7 @@ impl KaspaService {
                 let rpc_config = RpcConfig::Wrpc {
                     url: None,
                     encoding: WrpcEncoding::Borsh,
+                    resolver_urls: None,
                 };
 
                 let rpc = Self::create_rpc_client(&rpc_config, network)
@@ -508,6 +527,7 @@ impl KaspaService {
                 let rpc_config = RpcConfig::Wrpc {
                     url: None,
                     encoding: WrpcEncoding::Borsh,
+                    resolver_urls: None,
                 };
 
                 let rpc = Self::create_rpc_client(&rpc_config, network)
