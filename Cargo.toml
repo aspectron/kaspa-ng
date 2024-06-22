@@ -76,22 +76,22 @@ egui-notify = "=0.11.0"
 # kaspa-wrpc-server = "0.13.4"
 # kaspad = "0.13.4"
 
-# kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
-# kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
-# kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
-# kaspa-cli = { path = "../rusty-kaspa/cli" }
-# kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
-# kaspa-core = { path = "../rusty-kaspa/core" }
-# kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
-# kaspa-notify = { path = "../rusty-kaspa/notify" }
-# kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
-# kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
-# kaspa-utils = { path = "../rusty-kaspa/utils" }
-# kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
-# kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
-# kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
-# kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
-# kaspad = { path = "../rusty-kaspa/kaspad" }
+kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
+kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
+kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
+kaspa-cli = { path = "../rusty-kaspa/cli" }
+kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
+kaspa-core = { path = "../rusty-kaspa/core" }
+kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
+kaspa-notify = { path = "../rusty-kaspa/notify" }
+kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
+kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
+kaspa-utils = { path = "../rusty-kaspa/utils" }
+kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
+kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
+kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
+kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
+kaspad = { path = "../rusty-kaspa/kaspad" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
@@ -110,22 +110,22 @@ egui-notify = "=0.11.0"
 # kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 
-kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
 
 # _________________________________________________________
 #  _ _ _ ____ ____ _  _ ____ _    ____ _ _ _    ____ ____ 

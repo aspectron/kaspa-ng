@@ -63,6 +63,9 @@ pub use egui_plot::{PlotPoint, PlotPoints};
 
 pub use crate::collection::Collection;
 pub use crate::core::Core;
+pub use crate::core::MAINNET_EXPLORER;
+pub use crate::core::TESTNET10_EXPLORER;
+pub use crate::core::TESTNET11_EXPLORER;
 pub use crate::device::{Device, Orientation};
 pub use crate::egui::*;
 pub use crate::error::Error;

@@ -212,6 +212,18 @@ impl LayoutJobBuilder {
     pub fn label(self, ui: &mut Ui) -> Response {
         ui.label(self.job)
     }
+
+    pub fn hyperlink(self, ui: &mut Ui, text: &str, url: &str, color: Color32) {
+        ui.horizontal(|ui| {
+            ui.label(self.job);
+            ui.hyperlink_to_tab(
+                RichText::new(text)
+                    .font(self.font_id.unwrap_or_default())
+                    .color(color),
+                url,
+            );
+        });
+    }
 }
 
 impl From<LayoutJobBuilder> for LayoutJob {
