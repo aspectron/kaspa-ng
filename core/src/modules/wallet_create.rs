@@ -611,7 +611,7 @@ impl ModuleT for WalletCreate {
                                     // ui.add_space(8.);
                                     ui.label(RichText::new(i18n("Enter BIP39 passphrase")).size(12.).raised());
                                     ui.add_sized(editor_size, TextEdit::singleline(text)
-                                        .password(this.context.payment_secret_show)
+                                        .password(!this.context.payment_secret_show)
                                         .vertical_align(Align::Center))
                                 },
                             )
@@ -635,7 +635,7 @@ impl ModuleT for WalletCreate {
                                 |ui, text| {
                                     ui.label(RichText::new(i18n("Confirm BIP39 passphrase")).size(12.).raised());
                                     ui.add_sized(editor_size, TextEdit::singleline(text)
-                                        .password(this.context.payment_secret_show)
+                                        .password(!this.context.payment_secret_show)
                                         .vertical_align(Align::Center))
                                 },
                             )

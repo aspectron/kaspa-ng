@@ -9,7 +9,7 @@ description = "Kaspa NG - Desktop p2p node based on Rusty Kaspa"
 readme = "../README.md"
 
 [features]
-console = []
+console = ["kaspa-ng-core/console"]
 
 [dependencies]
 kaspa-ng-core.workspace = true

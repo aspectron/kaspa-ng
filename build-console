@@ -1,0 +1,1 @@
+cargo build --profile console --features console

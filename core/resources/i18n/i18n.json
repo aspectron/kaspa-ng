@@ -1176,6 +1176,7 @@
       "The node is currently syncing with the Kaspa p2p network. Account balances may be out of date.": "The node is currently syncing with the Kaspa p2p network. Account balances may be out of date.",
       "The node is spawned as a child daemon process (recommended).": "The node is spawned as a child daemon process (recommended).",
       "The node runs as a part of the Kaspa-NG application process. This reduces communication overhead (experimental).": "The node runs as a part of the Kaspa-NG application process. This reduces communication overhead (experimental).",
+      "The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to send payments. This passphrase will also be required when recovering your wallet in addition to your mnemonic.If you lose or forget this passphrase, you will not be able to use mnemonic to recover your wallet!": "The optional payment & mnemonic recovery passphrase, known as BIP39 passphrase, if provided, will be required to send payments. This passphrase will also be required when recovering your wallet in addition to your mnemonic.If you lose or forget this passphrase, you will not be able to use mnemonic to recover your wallet!",
       "Theme Color": "Theme Color",
       "Theme Color:": "Theme Color:",
       "Theme Style": "Theme Style",
