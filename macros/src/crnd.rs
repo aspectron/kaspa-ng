@@ -4,12 +4,12 @@ use quote::quote;
 use rand::Rng;
 use syn::LitByte;
 
-pub fn mask(_input: TokenStream) -> TokenStream {
+pub fn crnd(_input: TokenStream) -> TokenStream {
     let mut bytes = [0u8; 32];
     rand::thread_rng().fill(&mut bytes);
-    let mask = bytes.iter().map(|b| LitByte::new(*b, Span::call_site()));
+    let crnd = bytes.iter().map(|b| LitByte::new(*b, Span::call_site()));
     quote! {
-        [#(#mask),*]
+        [#(#crnd),*]
     }
     .into()
 }

@@ -199,7 +199,7 @@ impl ModuleT for Metrics {
 
         ui.separator();
 
-        if let Some(metrics) = core.metrics.as_ref() {
+        if let Some(metrics) = core.metrics().as_ref() {
 
             egui::ScrollArea::vertical()
                 .id_source("node_metrics")

@@ -114,13 +114,13 @@ impl Service for MetricsService {
 
         self.reset_metrics_data()?;
         self.metrics.start_task().await?;
-        self.metrics.set_rpc(Some(rpc_api.clone()));
+        self.metrics.bind_rpc(Some(rpc_api.clone()));
         Ok(())
     }
     async fn detach_rpc(self: Arc<Self>) -> Result<()> {
         self.metrics.unregister_sink();
         self.metrics.stop_task().await?;
-        self.metrics.set_rpc(None);
+        self.metrics.bind_rpc(None);
 
         Ok(())
     }

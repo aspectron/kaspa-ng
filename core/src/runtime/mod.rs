@@ -13,6 +13,9 @@ pub mod channel;
 pub mod payload;
 pub mod services;
 pub mod system;
+// use crate::adaptor::{Adaptor, WebEvent};
+// use crate::adaptor::{Adaptor, WebEvent};
+use crate::interop::Adaptor;
 pub use payload::Payload;
 pub use services::Service;
 use services::*;
@@ -27,12 +30,18 @@ pub struct Inner {
     start_time: Instant,
     system: Option<System>,
 
+    // adaptor: Option<Arc<dyn Adaptor>>,
+    adaptor: Option<Arc<Adaptor>>,
+
     kaspa: Arc<KaspaService>,
     peer_monitor_service: Arc<PeerMonitorService>,
-    metrics_service: Arc<MetricsService>,
-    block_dag_monitor_service: Arc<BlockDagMonitorService>,
-    market_monitor_service: Arc<MarketMonitorService>,
     update_monitor_service: Arc<UpdateMonitorService>,
+    market_monitor_service: Arc<MarketMonitorService>,
+
+    // #[cfg(not(feature = "lean"))]
+    metrics_service: Arc<MetricsService>,
+    #[cfg(not(feature = "lean"))]
+    block_dag_monitor_service: Arc<BlockDagMonitorService>,
 }
 
 /// Runtime is a core component of the Kaspa NG application responsible for
@@ -44,18 +53,25 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub fn new(egui_ctx: &egui::Context, settings: &Settings) -> Self {
+    pub fn new(
+        egui_ctx: &egui::Context,
+        settings: &Settings,
+        wallet_api: Option<Arc<dyn WalletApi>>,
+        application_events: Option<ApplicationEventsChannel>,
+        // adaptor: Option<Arc<dyn Adaptor>>,
+        adaptor: Option<Arc<Adaptor>>,
+    ) -> Self {
         let system = System::new();
 
-        let application_events = ApplicationEventsChannel::unbounded();
+        let application_events =
+            application_events.unwrap_or_else(ApplicationEventsChannel::unbounded);
         let repaint_service = Arc::new(RepaintService::new(application_events.clone(), settings));
-        let kaspa = Arc::new(KaspaService::new(application_events.clone(), settings));
-        let peer_monitor_service = Arc::new(PeerMonitorService::new(
+        let kaspa = Arc::new(KaspaService::new(
             application_events.clone(),
             settings,
+            wallet_api,
         ));
-        let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
-        let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(
+        let peer_monitor_service = Arc::new(PeerMonitorService::new(
             application_events.clone(),
             settings,
         ));
@@ -69,14 +85,31 @@ impl Runtime {
             settings,
         ));
 
+        let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
+        cfg_if! {
+            if #[cfg(not(feature = "lean"))] {
+                let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(
+                    application_events.clone(),
+                    settings,
+                ));
+            }
+        }
+        // let metrics_service = Arc::new(MetricsService::new(application_events.clone(), settings));
+        // let block_dag_monitor_service = Arc::new(BlockDagMonitorService::new(
+        //     application_events.clone(),
+        //     settings,
+        // ));
+
         let services: Mutex<Vec<Arc<dyn Service>>> = Mutex::new(vec![
             repaint_service.clone(),
             kaspa.clone(),
             peer_monitor_service.clone(),
-            metrics_service.clone(),
-            block_dag_monitor_service.clone(),
             market_monitor_service.clone(),
             update_monitor_service.clone(),
+            // #[cfg(not(feature = "lean"))]
+            metrics_service.clone(),
+            #[cfg(not(feature = "lean"))]
+            block_dag_monitor_service.clone(),
         ]);
 
         let runtime = Self {
@@ -88,18 +121,35 @@ impl Runtime {
                 peer_monitor_service,
                 market_monitor_service,
                 update_monitor_service,
-                metrics_service,
-                block_dag_monitor_service,
                 egui_ctx: egui_ctx.clone(),
                 is_running: Arc::new(AtomicBool::new(false)),
                 start_time: Instant::now(),
                 system: Some(system),
+                adaptor,
+                // #[cfg(not(feature = "lean"))]
+                metrics_service,
+                #[cfg(not(feature = "lean"))]
+                block_dag_monitor_service,
             }),
         };
 
         register_global(Some(runtime.clone()));
 
         runtime
+    }
+
+    // pub fn set_adaptor(&self, adapter:Adaptor){
+    //     self.inner.adaptor.lock().unwrap().adaptor = Some(adapter);
+    // }
+
+    // pub fn post_to_server(&self, event: WebEvent) {
+    //     if let Some(adaptor) = self.inner.adaptor.as_ref() {
+    //         adaptor.post_to_server(event);
+    //     }
+    // }
+
+    pub fn adaptor(&self) -> &Option<Arc<Adaptor>> {
+        &self.inner.adaptor
     }
 
     pub fn uptime(&self) -> Duration {
@@ -185,8 +235,13 @@ impl Runtime {
         &self.inner.metrics_service
     }
 
-    pub fn block_dag_monitor_service(&self) -> &Arc<BlockDagMonitorService> {
-        &self.inner.block_dag_monitor_service
+    cfg_if! {
+        if #[cfg(not(feature = "lean"))] {
+
+            pub fn block_dag_monitor_service(&self) -> &Arc<BlockDagMonitorService> {
+                &self.inner.block_dag_monitor_service
+            }
+        }
     }
 
     pub fn market_monitor_service(&self) -> &Arc<MarketMonitorService> {
@@ -404,6 +459,13 @@ pub fn abort() {
     flag.store(true, Ordering::SeqCst);
     if let Some(thread) = thread {
         thread.join().unwrap();
+    }
+
+    #[cfg(feature = "console")]
+    {
+        println!("Press Enter to exit...");
+        let mut input = String::new();
+        let _ = std::io::stdin().read_line(&mut input);
     }
 
     std::process::exit(1);

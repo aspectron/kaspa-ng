@@ -3,23 +3,50 @@ use egui_phosphor::thin::*;
 use crate::imports::*;
 use super::*;
 
+#[derive(Default)]
 pub struct WalletMenu { }
 
 impl WalletMenu {
-    pub fn new() -> Self {
-        Self { }
-    }
+    // pub fn new() -> Self {
+    //     Self { }
+    // }
 
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, max_height: f32) {
+        
+        // let (wallet_name,wallet_filename) = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
+        //     (wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str()).to_string(),wallet_descriptor.filename.clone())
+        // } else {
+        //     ui.label("Missing wallet descriptor");
+        //     return;
+        // };
 
-        let (wallet_name,wallet_filename) = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
-            (wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str()).to_string(),wallet_descriptor.filename.clone())
+        let wallet_name = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
+            wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str()).to_string()
         } else {
             ui.label("Missing wallet descriptor");
             return;
         };
 
-        PopupPanel::new(PopupPanel::id(ui,"wallet_selector_popup"),|ui|{ ui.add(Label::new(format!("{} {} ⏷", i18n("Wallet:"), wallet_name)).sense(Sense::click())) }, |ui, _| {
+        self.render_selector(core,ui,max_height,|ui|{ ui.add(Label::new(format!("{} {} ⏷", i18n("Wallet:"), wallet_name)).sense(Sense::click())) });
+    }
+    
+    pub fn render_selector(
+        &mut self,
+        core: &mut Core,
+        ui : &mut Ui,
+        max_height: f32,
+        widget: impl FnOnce(&mut Ui) -> Response,
+    ) {
+    
+        let wallet_filename = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
+            wallet_descriptor.filename.clone()
+        } else {
+            ui.label("Missing wallet descriptor");
+            return;
+        };
+
+        // PopupPanel::new(PopupPanel::id(ui,"wallet_selector_popup"),|ui|{ ui.add(Label::new(format!("{} {} ⏷", i18n("Wallet:"), wallet_name)).sense(Sense::click())) }, |ui, _| {
+        PopupPanel::new(PopupPanel::id(ui,"wallet_selector_popup"),widget, |ui, _| {
 
             ScrollArea::vertical()
                 .id_source("wallet_selector_popup_scroll")
@@ -89,17 +116,43 @@ impl WalletMenu {
     }
 }
 
+#[derive(Default)]
 pub struct AccountMenu { }
 
 impl AccountMenu {
-    pub fn new() -> Self {
-        Self { }
+    // pub fn new() -> Self {
+    //     Self { }
+    // }
+
+    pub fn render(
+        &mut self, 
+        core: &mut Core, 
+        ui : &mut Ui, 
+        max_height: f32,
+        account_manager : &mut AccountManager, 
+        rc : &RenderContext, 
+        // rc : &RenderContext, 
+    ) {
+
+        self.render_selector(core,ui,max_height,account_manager,rc,|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), rc.account.name_or_id())).sense(Sense::click())) });
+        
     }
 
-    pub fn render(&mut self, core: &mut Core, ui : &mut Ui, account_manager : &mut AccountManager, rc : &RenderContext<'_>, max_height: f32) {
+    pub fn render_selector(
+        &mut self,
+        core: &mut Core,
+        ui : &mut Ui,
+        max_height: f32,
+        account_manager : &mut AccountManager, 
+        // rc : &RenderContext, 
+        rc : &RenderContext, 
+        widget: impl FnOnce(&mut Ui) -> Response,
+    ) {
+
         let RenderContext { account, network_type, .. } = rc;
 
-        PopupPanel::new(PopupPanel::id(ui,"account_selector_popup"),|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), account.name_or_id())).sense(Sense::click())) }, |ui, close| {
+        // PopupPanel::new(PopupPanel::id(ui,"account_selector_popup"),|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), account.name_or_id())).sense(Sense::click())) }, |ui, close| {
+        PopupPanel::new(PopupPanel::id(ui,"account_selector_popup"),widget, |ui, close| {
 
             egui::ScrollArea::vertical()
                 .id_source("account_selector_popup_scroll")
@@ -126,9 +179,10 @@ impl AccountMenu {
 
                                             if ui.account_selector_button(selectable_account, network_type, account.id() == selectable_account.id(), core.balance_padding()).clicked() {
                                                 account_manager.request_estimate();
-                                                account_manager.state = AccountManagerState::Overview {
-                                                    account: selectable_account.clone(),
-                                                };
+                                                let wallet = core.wallet();
+                                                let device = core.device().clone();
+
+                                                account_manager.select(wallet,Some(selectable_account.clone()),device,true);
                                             }
 
                                             false
@@ -179,13 +233,14 @@ impl AccountMenu {
 }
 
 
+#[derive(Default)]
 pub struct ToolsMenu { }
 
 impl ToolsMenu {
     pub fn new() -> Self {
         Self { }
     }
-    pub fn render(&mut self, core: &mut Core, ui : &mut Ui, _account_manager : &mut AccountManager, _rc : &RenderContext<'_>, max_height: f32) {
+    pub fn render(&mut self, core: &mut Core, ui : &mut Ui, _account_manager : &mut AccountManager, _rc : &RenderContext, max_height: f32) {
 
         PopupPanel::new(PopupPanel::id(ui,"tools_popup"),|ui|{ ui.add(Label::new(i18n("Tools ⏷")).sense(Sense::click())) }, |ui, _| {
 

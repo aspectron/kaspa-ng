@@ -108,7 +108,7 @@ pub fn load_public_servers() {
 
 async fn fetch_public_servers() -> Result<Arc<HashMap<Network, Vec<Server>>>> {
     cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
+        if #[cfg(all(target_arch = "wasm32", not(feature = "browser-extension")))] {
             let href = location()?.href()?;
             let location = if let Some(index) = href.find('#') {
                 let (location, _) = href.split_at(index);
@@ -116,9 +116,9 @@ async fn fetch_public_servers() -> Result<Arc<HashMap<Network, Vec<Server>>>> {
             } else {
                 href
             };
-            let url = format!("{}/Servers.toml", location.trim_end_matches("/"));
+            let url = format!("{}/Servers.toml", location.trim_end_matches('/'));
             let servers_toml = http::get(url).await?;
-            Ok(try_parse_servers(&servers_toml)?)
+            try_parse_servers(&servers_toml)
         } else {
             // TODO - parse local Servers.toml file
             Ok(parse_default_servers().clone())

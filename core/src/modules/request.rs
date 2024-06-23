@@ -87,7 +87,7 @@ impl Request {
         });
 
         if response.clicked() {
-            ui.output_mut(|o| o.copied_text = address.to_owned());
+            ui.output_mut(|o| address.clone_into(&mut o.copied_text));
             runtime().notify_clipboard(i18n("Address copied to clipboard"));
         }
 
@@ -103,7 +103,7 @@ impl Request {
         });
 
         if response.clicked() {
-            ui.output_mut(|o| o.copied_text = request_uri.to_owned());
+            ui.output_mut(|o| address.clone_into(&mut o.copied_text));
             runtime().notify_clipboard(i18n("URI copied to clipboard"));
         }
 

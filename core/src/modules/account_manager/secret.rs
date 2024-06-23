@@ -11,7 +11,7 @@ impl<'context> WalletSecret<'context> {
         Self { context }
     }
 
-    pub fn render(&mut self, ui : &mut Ui, core: &mut Core, rc : &RenderContext<'_>) -> bool {
+    pub fn render(&mut self, ui : &mut Ui, core: &mut Core, rc : &RenderContext) -> bool {
         use egui_phosphor::light::{CHECK, X};
 
         let RenderContext { account, .. } = rc;

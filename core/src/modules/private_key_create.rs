@@ -212,7 +212,7 @@ impl ModuleT for PrivateKeyCreate {
                             ui.label(" ");
                             ui.label(i18n("The optional payment & recovery password, if provided, will be required to \
                                 send payments. This password will also be required when recovering your wallet \
-                                in addition to your private key or mnemonic. If you loose this password, you will not \
+                                in addition to your private key or mnemonic. If you lose this password, you will not \
                                 be able to use mnemonic to recover your wallet!"));
                         })
                         .with_body(|this,ui| {
@@ -449,7 +449,8 @@ impl ModuleT for PrivateKeyCreate {
 
                                 core.select::<modules::AccountManager>();
                                 let device = core.device().clone();
-                                core.get_mut::<modules::AccountManager>().select(Some(account), device);
+                                let wallet = core.wallet();
+                                core.get_mut::<modules::AccountManager>().select(wallet, Some(account), device, true);
                             }
                         })
                         .render(ui);

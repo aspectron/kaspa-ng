@@ -49,7 +49,7 @@ impl ModuleT for Node {
                         ui.vertical(|ui| {
 
                             if let Some(peers) = self.runtime.peer_monitor_service().peer_info() {
-                                let (inbound, outbound) : (Vec<_>,Vec<_>) = peers.iter().partition(|peer| peer.is_outbound);
+                                let (outbound, inbound) : (Vec<_>,Vec<_>) = peers.iter().partition(|peer| peer.is_outbound);
 
                                 CollapsingHeader::new(i18n("Inbound"))
                                     .default_open(true)
@@ -68,7 +68,7 @@ impl ModuleT for Node {
                                             render_peer(ui, peer);
                                         });
                                     });
-                            } else if core.metrics.as_ref().map(|m| m.data.node_active_peers).unwrap_or_default() > 0 {
+                            } else if core.state().metrics().as_ref().map(|m| m.data.node_active_peers).unwrap_or_default() > 0 {
                                 ui.horizontal(|ui| {
                                     ui.spinner();
                                     ui.label(i18n("Updating..."));

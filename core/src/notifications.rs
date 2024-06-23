@@ -180,7 +180,7 @@ impl Notifications {
         self.notifications.push(notification);
     }
 
-    pub fn render(&mut self, ui: &mut Ui) {
+    pub fn render(&mut self, ui: &mut Ui, device: &Device) {
         use egui_phosphor::light::*;
 
         if self.notifications.len() != self.last_notification {
@@ -205,7 +205,8 @@ impl Notifications {
 
         PopupPanel::new(
             PopupPanel::id(ui, "notification_popup"),
-            |ui| ui.add(Label::new(icon.size(16.)).sense(Sense::click())),
+            // |ui| ui.add(Label::new(icon.size(16.)).sense(Sense::click())),
+            |ui| ui.add(Label::new(icon.size(device.top_icon_size())).sense(Sense::click())),
             |ui, close| {
                 egui::ScrollArea::vertical()
                     .id_source("notification_popup_scroll")

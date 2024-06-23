@@ -1,43 +1,118 @@
-use crate::ipc::*;
-use async_trait::async_trait;
-use kaspa_wallet_core::api::transport::BorshTransport;
-use kaspa_wallet_core::error::Error;
-use kaspa_wallet_core::result::Result;
-//use kaspa_wallet_core::runtime::api::transport::*;
-use wasm_bindgen_futures::spawn_local;
-use workflow_core::channel::oneshot;
-use workflow_log::*;
+use crate::imports::*;
+// use kaspa_ng_core::interop; //::transport;
+use kaspa_ng_core::{
+    imports::window,
+    interop::{Client, Request},
+};
 
-#[derive(Default)]
-pub struct ClientTransport {}
-
-unsafe impl Send for ClientTransport {}
-unsafe impl Sync for ClientTransport {}
-
-impl ClientTransport {
-    // pub fn new() -> Self {
-    //     Self {}
-    // }
+pub struct ClientReceiver {
+    _sender: Arc<dyn interop::Sender>,
+    client: Arc<Client>,
+    application_events: ApplicationEventsChannel,
+    closure: Mutex<Option<Rc<ListenerClosure>>>,
+    chrome_extension_id: String,
 }
 
-#[async_trait]
-impl BorshTransport for ClientTransport {
-    async fn call(&self, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
-        let (tx, rx) = oneshot::<Result<Vec<u8>>>();
-        spawn_local(async move {
-            match send_message(&req_to_jsv(Target::Wallet, op, &data)).await {
-                Ok(jsv) => {
-                    let resp = jsv_to_resp(&jsv);
-                    tx.send(resp).await.unwrap();
+unsafe impl Send for ClientReceiver {}
+unsafe impl Sync for ClientReceiver {}
+
+impl ClientReceiver {
+    pub fn new(
+        _sender: Arc<dyn interop::Sender>,
+        client: Arc<Client>,
+        application_events: ApplicationEventsChannel,
+    ) -> Self {
+        Self {
+            _sender,
+            client,
+            application_events,
+            chrome_extension_id: runtime_id().unwrap(),
+            closure: Mutex::new(None),
+        }
+    }
+
+    pub fn start(self: &Arc<Self>) {
+        self.register_listener();
+        chrome_runtime_connect(chrome_runtime::ConnectInfo::new("POPUP"));
+    }
+
+    fn register_listener(self: &Arc<Self>) {
+        let this = self.clone();
+
+        let closure = Rc::new(Closure::new(
+            move |msg, sender: Sender, _callback: JsValue| -> JsValue {
+                if let Err(err) = this.handle_notification(msg, sender) {
+                    log_error!("notification handling error: {:?}", err);
                 }
-                Err(err) => {
-                    log_error!("error sending message: {err:?}");
-                    tx.send(Err(err.into())).await.unwrap();
+                JsValue::from(false)
+            },
+        ));
+
+        chrome_runtime_on_message::add_listener(closure.clone().as_ref());
+        *self.closure.lock().unwrap() = Some(closure);
+    }
+
+    fn handle_notification(
+        self: &Arc<Self>,
+        msg: JsValue,
+        sender: Sender,
+        // callback: Function,
+    ) -> Result<()> {
+        if let Some(id) = sender.id() {
+            if id != self.chrome_extension_id {
+                return Err(Error::custom(
+                    "Unknown sender id - foreign requests are forbidden",
+                ));
+            }
+        } else {
+            return Err(Error::custom("Sender is missing id"));
+        }
+
+        // log_info!(
+        //     "[WASM] notification: {:?}, sender id:{:?}",
+        //     msg,
+        //     sender.id(),
+        //     // callback
+        // );
+
+        let (target, data) = jsv_to_notify(msg)?;
+
+        match target {
+            Target::Wallet => {
+                let event = Box::new(kaspa_wallet_core::events::Events::try_from_slice(&data)?);
+
+                self.application_events
+                    .sender
+                    .try_send(kaspa_ng_core::events::Events::Wallet { event })
+                    .unwrap();
+            }
+            Target::Runtime => {
+                let req = Request::try_from_slice(&data)?;
+                match req {
+                    Request::CloseWindow => {
+                        //let _ = window().alert_with_message("Closing window");
+                        let _ = window().close();
+                    }
+                    _ => {
+                        let self_ = self.clone();
+                        spawn_local(async move {
+                            if let Err(err) = self_.client.handle_message(target, data).await {
+                                log_error!("error handling message: {:?}", err);
+                            }
+                        });
+                    }
                 }
-            };
-        });
-        rx.recv()
-            .await
-            .map_err(|_| Error::custom("Client transport receive channel error"))?
+            }
+            _ => {
+                let self_ = self.clone();
+                spawn_local(async move {
+                    if let Err(err) = self_.client.handle_message(target, data).await {
+                        log_error!("error handling message: {:?}", err);
+                    }
+                });
+            }
+        }
+
+        Ok(())
     }
 }

@@ -9,8 +9,8 @@ members = [
 default-members = ["app"]
 
 [workspace.package]
-rust-version = "1.77.1"
-version = "0.2.5"
+rust-version = "1.78.0"
+version = "0.2.6"
 authors = ["ASPECTRON Inc.","Kaspa Developers"]
 license = "PROPRIETARY"
 edition = "2021"
@@ -87,42 +87,45 @@ egui-notify = "=0.11.0"
 # kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
 # kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
 # kaspa-utils = { path = "../rusty-kaspa/utils" }
-# kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core", features=["no-unsafe-eval"] }
-# kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client", features=["no-unsafe-eval"] }
+# kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
+# kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
+# kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
 # kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
 # kaspad = { path = "../rusty-kaspa/kaspad" }
 
-kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-cli = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-metrics-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-notify = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-rpc-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-rpc-service = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-utils = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master", features=["no-unsafe-eval"] }
-kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master", features=["no-unsafe-eval"] }
-kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-cli = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-metrics-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-notify = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-rpc-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-rpc-service = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-utils = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-wallet-keys = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
+# kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 
-# kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev", features=["no-unsafe-eval"] }
-# kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev", features=["no-unsafe-eval"] }
-# kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
-# kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "dev" }
+kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
 
 # _________________________________________________________
 #  _ _ _ ____ ____ _  _ ____ _    ____ _ _ _    ____ ____ 
@@ -130,17 +133,17 @@ kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-workflow-core = { version = "0.10.3", features = ["no-unsafe-eval"] }
-workflow-i18n = { version = "0.11.0" }
-workflow-chrome = "0.10.3"
-workflow-dom = "0.10.3"
-workflow-http = "0.10.3"
-workflow-log = "0.10.3"
-workflow-store = "0.10.3"
-workflow-wasm = "0.10.3"
+workflow-core = "0.12.0"
+workflow-i18n = "0.12.0"
+workflow-chrome = "0.12.0"
+workflow-dom = "0.12.0"
+workflow-http = "0.12.0"
+workflow-log = "0.12.0"
+workflow-store = "0.12.0"
+workflow-wasm = "0.12.0"
 
-# workflow-core = { path = "../workflow-rs/core", features = ["no-unsafe-eval"] }
-# workflow-i18n = { path = "../workflow-rs/i18n", features = ["preserve-order"] }
+# workflow-core = { path = "../workflow-rs/core" }
+# workflow-i18n = { path = "../workflow-rs/i18n" }
 # workflow-chrome = { path = "../workflow-rs/chrome" }
 # workflow-dom = { path = "../workflow-rs/dom" }
 # workflow-http = { path = "../workflow-rs/http" }
@@ -149,7 +152,7 @@ workflow-wasm = "0.10.3"
 # workflow-wasm = { path = "../workflow-rs/wasm" }
 
 # workflow-core = {  git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["no-unsafe-eval"] }
-# workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["preserve-order"] }
+# workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-chrome = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-dom = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
 # workflow-http = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
@@ -163,12 +166,14 @@ workflow-wasm = "0.10.3"
 
 ahash = "0.8.6"
 async-trait = "0.1.73"
+borsh = { version = "0.9.1", features = ["rc"] } # please keep this fixed
 cfg-if = "1.0.0"
-chrome-sys = "0.1.0"
+chrome-sys = "0.2.0"
 # chrome-sys = {path = "../chrome-sys"}
 chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["derive", "string", "cargo"] }
 convert_case = "0.6.0"
+crypto_box = { version = "0.9.1", features = ["chacha20"] }
 ctrlc = { version = "3.2", features = ["termination"] }
 derivative = "2.2.0"
 downcast = "0.11.0"
@@ -179,7 +184,7 @@ futures-util = { version = "0.3.29", default-features = false, features = ["allo
 image = { version = "0.24.7", default-features = false, features = ["png"] }
 js-sys = "0.3.64"
 log = "0.4.20"
-nix = "0.27.1"
+nix = "0.28.0"
 num_cpus = "1.15.0"
 open = "5.0.1"
 pad = "0.1.6"
@@ -191,6 +196,7 @@ ritehash = "0.2.0"
 rlimit = "0.10.1"
 separator = "0.4.1"
 serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6.5"
 serde_json = "1.0.108"
 slug = "0.1.5"
 smallvec = { version = "1.11.1", features = ["serde"] }
@@ -199,7 +205,7 @@ thiserror = "1.0.50"
 tokio = { version = "1", features = ["sync", "rt-multi-thread", "process"] }
 toml = "0.8.12"
 walkdir = "2.4.0"
-wasm-bindgen = "0.2.87"
+wasm-bindgen = "0.2.92"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3.64", features = ['Window'] }
 xxhash-rust = { version = "0.8.7", features = ["xxh3"] }
@@ -207,11 +213,19 @@ zeroize = { version = "1", default-features = false, features = ["alloc"] }
 
 [profile.release]
 opt-level = 2
-# opt-level = 3
 # lto = true
+# opt-level = 3
 
 [profile.native-release]
 inherits = "release"
 opt-level = 3
-lto = true
+# lto = true
 # strip = true
+
+[profile.console]
+inherits = "release"
+opt-level = 2
+strip = false
+# lto = true
+# strip = true
+

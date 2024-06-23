@@ -9,7 +9,7 @@ impl Details {
         Self { }
     }
 
-    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, rc : &RenderContext<'_>) {
+    pub fn render(&mut self, _core: &mut Core, ui : &mut Ui, rc : &RenderContext) {
         let RenderContext { account, .. } = rc;
 
         egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {

@@ -4,7 +4,6 @@ use crate::market::*;
 use crate::mobile::MobileMenu;
 use egui::load::Bytes;
 use egui_notify::Toasts;
-use kaspa_metrics_core::MetricsSnapshot;
 use kaspa_wallet_core::api::TransactionsDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint, PrvKeyDataInfo};
@@ -14,6 +13,7 @@ use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
 
 pub enum Exception {
+    #[allow(dead_code)]
     UtxoIndexNotEnabled { url: Option<String> },
 }
 
@@ -40,7 +40,6 @@ pub struct Core {
     exception: Option<Exception>,
     screenshot: Option<Arc<ColorImage>>,
 
-    pub metrics: Option<Box<MetricsSnapshot>>,
     pub wallet_descriptor: Option<WalletDescriptor>,
     pub wallet_list: Vec<WalletDescriptor>,
     pub prv_key_data_map: Option<HashMap<PrvKeyDataId, Arc<PrvKeyDataInfo>>>,
@@ -126,32 +125,49 @@ impl Core {
 
         let modules: HashMap<TypeId, Module> = {
             cfg_if! {
-                if #[cfg(not(target_arch = "wasm32"))] {
+                if #[cfg(feature = "lean")] {
+                    crate::modules::register_generic_modules(&runtime).into_iter().collect()
+
+                } else if #[cfg(target_arch = "wasm32")] {
                     crate::modules::register_generic_modules(&runtime).into_iter().chain(
-                        crate::modules::register_native_modules(&runtime)
+                        crate::modules::register_advanced_modules(&runtime)
                     ).collect()
                 } else {
-                    crate::modules::register_generic_modules(&runtime)
+                    crate::modules::register_generic_modules(&runtime).into_iter().chain(
+                        crate::modules::register_advanced_modules(&runtime)
+                    ).chain(
+                        crate::modules::register_native_modules(&runtime)
+                    ).collect()
                 }
             }
         };
 
+        let device = Device::new(window_frame);
+
         #[allow(unused_mut)]
-        let mut module = modules
-            .get(&TypeId::of::<modules::Overview>())
-            .unwrap()
-            .clone();
+        let mut module_typeid = if workflow_core::runtime::is_chrome_extension() {
+            TypeId::of::<modules::WalletOpen>()
+        } else {
+            TypeId::of::<modules::Overview>()
+        };
 
         #[cfg(not(target_arch = "wasm32"))]
         if settings.version != env!("CARGO_PKG_VERSION") {
             settings.version = env!("CARGO_PKG_VERSION").to_string();
             settings.store_sync().unwrap();
 
-            module = modules
-                .get(&TypeId::of::<modules::Changelog>())
-                .unwrap()
-                .clone();
+            module_typeid = TypeId::of::<modules::Changelog>();
+            // module = modules
+            //     .get(&TypeId::of::<modules::Changelog>())
+            //     .unwrap()
+            //     .clone();
         }
+
+        let module = modules.get(&module_typeid).unwrap().clone();
+        // let mut module = modules
+        //     .get(&TypeId::of::<modules::Overview>())
+        //     .unwrap()
+        //     .clone();
 
         let application_events_channel = runtime.application_events().clone();
         let wallet = runtime.wallet().clone();
@@ -183,7 +199,6 @@ impl Core {
             wallet_list: Vec::new(),
             prv_key_data_map: None,
             account_collection: None,
-            metrics: None,
             state: Default::default(),
             hint: None,
             discard_hint: false,
@@ -192,7 +207,7 @@ impl Core {
 
             release: None,
 
-            device: Device::new(window_frame),
+            device,
             market: None,
             debug: false,
             window_frame,
@@ -296,8 +311,8 @@ impl Core {
         self.settings.node.network
     }
 
-    pub fn wallet(&self) -> &Arc<dyn WalletApi> {
-        &self.wallet
+    pub fn wallet(&self) -> Arc<dyn WalletApi> {
+        self.wallet.clone()
     }
 
     pub fn state(&self) -> &State {
@@ -321,7 +336,7 @@ impl Core {
     }
 
     pub fn metrics(&self) -> &Option<Box<MetricsSnapshot>> {
-        &self.metrics
+        &self.state.node_metrics
     }
 
     pub fn device(&self) -> &Device {
@@ -467,6 +482,14 @@ impl Core {
                 });
 
                 return;
+            }
+
+            // delegate rendering to the adaptor, if any
+            // return if adaptor consumes the rendering phase
+            if let Some(adaptor) = runtime().adaptor() {
+                if adaptor.render(self, ui) {
+                    return;
+                }
             }
 
             if !self.module.modal() && !self.device.mobile() {
@@ -635,8 +658,19 @@ impl Core {
         _ctx: &egui::Context,
         _frame: &mut eframe::Frame,
     ) -> Result<()> {
-        // println!("event: {:?}", event);
+        // log_info!("--- event: {:?}", event);
         match event {
+            // Events::Adaptor { event } => {
+            //     if let Some(adaptor) = runtime().adaptor() {
+            //         adaptor.handle_event(self, event);
+            //     }
+            // }
+            // Events::WebMessage(msg)=>{
+            //     log_info!("Events::WebMessage msg: {msg}");
+            // }
+            Events::ChangeSection(type_id) => {
+                self.select_with_type_id(type_id);
+            }
             Events::NetworkChange(network) => {
                 self.modules.clone().values().for_each(|module| {
                     module.network_change(self, network);
@@ -686,7 +720,7 @@ impl Core {
             }
             Events::UpdateLogs => {}
             Events::Metrics { snapshot } => {
-                self.metrics = Some(snapshot);
+                self.state.node_metrics = Some(snapshot);
             }
             Events::MempoolSize { mempool_size } => {
                 self.network_pressure
@@ -704,10 +738,13 @@ impl Core {
                 runtime().notify(UserNotification::error(error.as_str()));
             }
             Events::WalletList { wallet_list } => {
-                self.wallet_list = (*wallet_list).clone();
+                self.wallet_list.clone_from(&*wallet_list);
                 self.wallet_list.sort();
             }
             Events::WalletUpdate => {
+                self.select::<modules::AccountManager>();
+                self.get_mut::<modules::WalletOpen>().state = Default::default();
+
                 if let Some(account_collection) = self.account_collection.as_ref() {
                     let mut account_manager = self
                         .modules
@@ -739,6 +776,32 @@ impl Core {
             Events::Wallet { event } => {
                 // println!("event: {:?}", event);
                 match *event {
+                    CoreWallet::WalletPing => {
+                        // log_info!("received wallet ping event...");
+                        // crate::runtime::runtime().notify(UserNotification::info("Wallet ping"));
+                    }
+                    CoreWallet::Metrics {
+                        network_id: _,
+                        metrics,
+                    } => {
+                        // log_info!("Kaspa NG - received metrics event {metrics:?}");
+
+                        match metrics {
+                            MetricsUpdate::WalletMetrics {
+                                mempool_size,
+                                node_peers: peers,
+                                network_tps: tps,
+                            } => {
+                                self.sender().try_send(Events::MempoolSize {
+                                    mempool_size: mempool_size as usize,
+                                })?;
+
+                                self.state.node_peers = Some(peers as usize);
+                                self.state.node_mempool_size = Some(mempool_size as usize);
+                                self.state.network_tps = Some(tps);
+                            }
+                        }
+                    }
                     CoreWallet::Error { message } => {
                         // runtime().notify(UserNotification::error(message.as_str()));
                         println!("{message}");
@@ -786,7 +849,9 @@ impl Core {
                         self.state.network_id = None;
                         self.state.current_daa_score = None;
                         self.state.error = None;
-                        self.metrics = None;
+                        self.state.node_metrics = None;
+                        self.state.node_peers = None;
+                        self.state.node_mempool_size = None;
                         self.network_pressure.clear();
 
                         self.modules.clone().values().for_each(|module| {
@@ -818,6 +883,8 @@ impl Core {
                         wallet_descriptor,
                         account_descriptors,
                     } => {
+                        self.state.is_open = true;
+
                         self.wallet_descriptor = wallet_descriptor;
                         let network_id = self
                             .state
@@ -889,8 +956,25 @@ impl Core {
 
                         self.purge_secure_stack();
                     }
-                    CoreWallet::AccountSelection { id: _ } => {}
-                    CoreWallet::DAAScoreChange { current_daa_score } => {
+                    CoreWallet::AccountSelection { id } => {
+                        if let Some(account_collection) = self.account_collection.as_ref() {
+                            if let Some(id) = id {
+                                if let Some(account) = account_collection.get(&id) {
+                                    let account = account.clone();
+                                    let device = self.device().clone();
+                                    let wallet = self.wallet();
+                                    // log_info!("--- selecting account: {id:?}");
+                                    self.get_mut::<modules::AccountManager>().select(
+                                        wallet,
+                                        Some(account),
+                                        device,
+                                        false,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    CoreWallet::DaaScoreChange { current_daa_score } => {
                         self.state.current_daa_score.replace(current_daa_score);
                     }
                     // Ignore scan notifications
@@ -1108,8 +1192,13 @@ impl Core {
 
         if let Some(first) = accounts.first() {
             let device = self.device().clone();
-            self.get_mut::<modules::AccountManager>()
-                .select(Some(first.clone()), device);
+            let wallet = self.wallet();
+            self.get_mut::<modules::AccountManager>().select(
+                wallet,
+                Some(first.clone()),
+                device,
+                true,
+            );
         }
 
         let account_ids = accounts
@@ -1139,6 +1228,9 @@ impl Core {
 
         if modifiers.ctrl || modifiers.mac_cmd {
             match key {
+                // Key::X => {
+                //     panic!("Testing panic!");
+                // }
                 Key::O => {
                     self.select::<modules::WalletOpen>();
                 }
@@ -1185,11 +1277,14 @@ impl Core {
     pub fn register_visibility_handler(&self) {
         use workflow_wasm::callback::*;
 
+        #[cfg(not(feature = "lean"))]
         let block_dag_background_state = self.get::<modules::BlockDag>().background_state();
 
         let sender = self.sender();
         let callback = callback!(move || {
             let visibility_state = document().visibility_state();
+
+            #[cfg(not(feature = "lean"))]
             match visibility_state {
                 VisibilityState::Visible => {
                     let block_dag_monitor_service = crate::runtime::runtime()

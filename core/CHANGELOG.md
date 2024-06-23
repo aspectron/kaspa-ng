@@ -1,7 +1,16 @@
 # Changelog
 
-# 0.2.4
+# 0.2.6
 
+- Fix an issue in WASM32 (browser) where after the wallet is loaded, even though the balance is displayed correctly, attempt to send a transaction would result in the "Insufficient funds" error.
+- Fix a bug in the node info panel reversing inbound and outbound peers (native/desktop only).
+- Fix a crash in the Send panel when the user enters an invalid address, some amount and then hits the enter key.
+
+# 0.2.5
+- Update Rusty Kaspa p2p client (kaspad) to `0.14.1`.
+- WASM SDK is now available that allows developers using TypeScript and JavaScript to access and interface with wallets created using Kaspa NG and Rusty Kaspa CLI - [https://aspectron.org/en/projects/kaspa-wasm.html](https://aspectron.org/en/projects/kaspa-wasm.html)
+
+# 0.2.4
 - Add `Settings > Node > Custom Data Folder` option
 - Preserve current language setting between restarts
 - Add Fonts for various languages (AR,HE,JA,KR,SC)

@@ -137,6 +137,32 @@ pub fn s2kws_layout_job(
     }
 }
 
+// pub fn text_layout_job(text: &[&str]) -> LayoutJob {
+//     let mut layout_job = LayoutJob::default();
+//     let text_format = TextFormat {
+//         valign: Align::Center,
+//         ..Default::default()
+//     };
+//     for t in text {
+//         layout_job.append(t, 0.0, text_format.clone())
+//     }
+//     layout_job
+// }
+
+pub fn layout_job(text: Vec<RichText>) -> LayoutJob {
+    let style = Style::default();
+    let mut layout_job = LayoutJob::default();
+    for t in text {
+        t.append_to(
+            &mut layout_job,
+            &style,
+            FontSelection::Default,
+            Align::Center,
+        );
+    }
+    layout_job
+}
+
 pub fn format_currency(price: f64, precision: usize) -> String {
     if precision == 0 {
         price.trunc().separated_string()

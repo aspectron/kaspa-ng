@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use egui_phosphor::thin::{CLOUD_ARROW_DOWN, CLOUD_SLASH};
 use kaspa_wallet_core::tx::{GeneratorSummary, PaymentOutput, Fees};
 use kaspa_wallet_core::api::*;
+use workflow_core::runtime;
 use crate::primitives::descriptor::*;
 
 mod address;
@@ -11,7 +12,7 @@ mod balance;
 mod destination;
 mod details;
 mod estimator;
-mod menus;
+pub mod menus;
 mod network;
 mod overview;
 mod processor;
@@ -163,15 +164,37 @@ impl Zeroize for ManagerContext {
     }
 }
 
-pub struct RenderContext<'render> {
-    pub account : &'render Account,
+// pub struct RenderContext<'render> {
+//     pub account : &'render Account,
+pub struct RenderContext {
+    pub account : Account,
     pub context : Arc<account::AccountContext>,
     pub network_type : NetworkType,
     pub current_daa_score : Option<u64>,
 }
 
-impl<'render> RenderContext<'render> {
-    pub fn new(account : &'render Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
+// impl<'render> RenderContext<'render> {
+impl RenderContext {
+    // pub fn new(account : &'render Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
+    // pub fn new(account : Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
+    // pub fn new(account : Account, core: &Core) -> Result<Self> {
+    pub fn new(account : Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
+
+
+        // if let AccountManagerState::Overview { account } = &account_manager.state {
+        // let network_type = if let Some(network_id) = core.state().network_id() {
+        //     network_id.network_type()
+        // } else {
+        //     core.settings.node.network.into()
+        // };
+
+        // let current_daa_score = core.state().current_daa_score();
+
+        // Ok(RenderContext::new(account, network_type, current_daa_score)?)
+        // } else {
+        //     Err(Error::custom("Account is missing context"))
+        // }
+
 
         let context = if let Some(context) = account.context() {
             context
@@ -245,7 +268,8 @@ impl AccountManager {
         self.context.request_estimate = Some(true);
     }
 
-    pub fn select(&mut self, account: Option<Account>, device : Device) {
+    pub fn select(&mut self, wallet : Arc<dyn WalletApi>, account: Option<Account>, device : Device, notify : bool) {
+
         if let Some(account) = account {
             self.state = AccountManagerState::Overview {
                 account: account.clone(),
@@ -256,9 +280,24 @@ impl AccountManager {
             } else {
                 self.section = AccountManagerSection::Transactions;
             }
+
+            if notify {
+                let account_id = account.id();
+                spawn(async move {
+                    wallet.accounts_select(Some(account_id)).await?;
+                    Ok(())
+                });
+            }
         } else {
             self.state = AccountManagerState::Select;
             self.context.loading = false;
+
+            if notify {
+                spawn(async move {
+                    wallet.accounts_select(None).await?;
+                    Ok(())
+                });
+            }
         }
 
     }
@@ -291,7 +330,7 @@ impl AccountManager {
             core.settings.node.network.into()
         };
 
-        let current_daa_score = core.state().current_daa_score();
+        // let current_daa_score = core.state().current_daa_score();
 
         match self.state.clone() {
             AccountManagerState::Select => {
@@ -311,7 +350,8 @@ impl AccountManager {
                                 }
                             }).render(ui);
                     } else if account_collection.len() == 1 {
-                        self.select(Some(account_collection.first().unwrap().clone()), core.device().clone());
+                        let account = account_collection.first().unwrap();
+                        self.select(core.wallet(), Some(account.clone()), core.device().clone(), true);
                     } else {
                         Panel::new(self)
                             .with_caption(i18n("Select Account"))
@@ -339,7 +379,7 @@ impl AccountManager {
 
                                 account_collection.iter().for_each(|account_select| {
                                     if ui.account_selector_button(account_select, &network_type, false, core.balance_padding()).clicked() {
-                                        this.select(Some(account_select.clone()), core.device().clone());
+                                        this.select(core.wallet(), Some(account_select.clone()), core.device().clone(), true);
                                         if core.device().single_pane() {
                                             this.section = AccountManagerSection::Overview;
                                         } else {
@@ -368,8 +408,15 @@ impl AccountManager {
                     return Ok(());
                 }
 
-                let rc = RenderContext::new(&account, network_type, current_daa_score)?;
-                if core.device().single_pane() {
+                let rc = RenderContext::new(account.clone(),core.network().into(), core.state().current_daa_score())?;
+
+                if core.device().mobile() {
+
+                    self.render_singular_layout(core,ui,&rc, self.section);
+                } else if core.device().single_pane() {
+
+                    self.render_menu(core,ui,&rc);
+
                     self.render_singular_layout(core,ui,&rc, self.section);
                 } else {
                     if self.section == AccountManagerSection::Overview {
@@ -383,46 +430,98 @@ impl AccountManager {
         Ok(())
     }
 
-
-    fn render_menu(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext<'_>) {
-        ui.horizontal(|ui| {
-            let screen_rect_height = ui.ctx().screen_rect().height();
-            WalletMenu::new().render(core,ui,screen_rect_height * 0.8);
-            ui.separator();
-            AccountMenu::new().render(core,ui,self,rc, screen_rect_height * 0.8);
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-
-                if ui.add(Label::new(RichText::new(egui_phosphor::light::LOCK).size(18.)).sense(Sense::click())).clicked() {
-                    let wallet = core.wallet().clone();
-                    spawn(async move {
-                        wallet.wallet_close().await?;
-                        Ok(())
-                    });
-                }
-
-                ui.separator();
-
-                ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
-
-                ui.separator();
-
-                if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
-                    self.section = AccountManagerSection::UtxoManager;
-                }
-                ui.separator();
-                if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
-                    self.section = AccountManagerSection::Details;
-                }
-                ui.separator();
-                if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
-                    self.section = AccountManagerSection::Transactions;
-                }
-
-            });
-        });
+    pub fn account(&self) -> Option<Account> {
+        if let AccountManagerState::Overview { account } = &self.state {
+            Some(account.clone())
+        } else {
+            None
+        }
     }
 
-    fn render_landscape(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext<'_>, section : AccountManagerSection) {
+    fn render_menu(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext) {
+        ui.horizontal(|ui| {
+            let screen_rect_height = ui.ctx().screen_rect().height();
+
+            if runtime::is_chrome_extension() {
+
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        WalletMenu::default().render(core,ui,screen_rect_height * 0.8);
+                        ui.separator();
+                        AccountMenu::default().render(core,ui,screen_rect_height * 0.8,self,rc);
+                        
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
+                        });
+                    });
+                    
+
+                    ui.horizontal(|ui| {
+
+                        if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
+                            self.section = AccountManagerSection::Transactions;
+                        }
+
+                        ui.separator();
+                        if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
+                            self.section = AccountManagerSection::Details;
+                        }
+
+                        if core.device().desktop() {
+                            ui.separator();
+                            if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                                self.section = AccountManagerSection::UtxoManager;
+                            }
+                        }
+
+                    });
+
+                });
+            } else {
+
+                WalletMenu::default().render(core,ui,screen_rect_height * 0.8);
+                ui.separator();
+                AccountMenu::default().render(core,ui,screen_rect_height * 0.8,self,rc);
+                
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+
+                    if ui.add(Label::new(RichText::new(egui_phosphor::light::LOCK).size(18.)).sense(Sense::click())).clicked() {
+                        let wallet = core.wallet();
+                        spawn(async move {
+                            wallet.wallet_close().await?;
+                            Ok(())
+                        });
+                    }
+
+                    ui.separator();
+                    ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
+
+                    if core.device().desktop() {
+                        ui.separator();
+                        if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                            self.section = AccountManagerSection::UtxoManager;
+                        }
+                    }
+
+                    ui.separator();
+                    if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
+                        self.section = AccountManagerSection::Details;
+                    }
+                    ui.separator();
+                    if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
+                        self.section = AccountManagerSection::Transactions;
+                    }
+
+                });
+            }
+        });
+    }
+    
+    pub fn change_section(&mut self, section : AccountManagerSection) {
+        self.section = section;
+    }
+
+    fn render_landscape(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext, section : AccountManagerSection) {
 
         let panel_width = ui.available_width() * 0.5;
 
@@ -466,7 +565,7 @@ impl AccountManager {
 
     }
 
-    fn render_singular_layout(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext<'_>, section : AccountManagerSection) {
+    fn render_singular_layout(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext, section : AccountManagerSection) {
 
         match section {
             AccountManagerSection::Overview => {

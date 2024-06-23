@@ -237,7 +237,7 @@ impl ModuleT for WalletCreate {
                         ui.checkbox(&mut this.context.import_legacy, i18n("I have a 12 word mnemonic legacy account"));
                         ui.label(i18n("Select this option if your wallet was created"));
                         ui.label(i18n("using KDX or kaspanet.io web wallet"));
-                        ui.label(RichText::new("NOT SUPPORTED IN THIS ALPHA RELEASE").size(10.).color(warning_color()));
+                        ui.label(RichText::new("NOT SUPPORTED IN THIS BETA RELEASE").size(10.).color(warning_color()));
 
                         if !this.context.import_legacy {
                             ui.label("");
@@ -260,7 +260,7 @@ impl ModuleT for WalletCreate {
                                     this.context.word_count = WordCount::Words12;
                                     submit = true;
                                 }
-                                ui.label(RichText::new("NOT SUPPORTED IN THIS ALPHA RELEASE").size(10.).color(warning_color()));
+                                ui.label(RichText::new("NOT SUPPORTED IN THIS BETA RELEASE").size(10.).color(warning_color()));
                             }
                         }
 
@@ -610,7 +610,7 @@ impl ModuleT for WalletCreate {
                                     // ui.add_space(8.);
                                     ui.label(RichText::new(i18n("Enter BIP39 passphrase")).size(12.).raised());
                                     ui.add_sized(editor_size, TextEdit::singleline(text)
-                                        .password(this.context.payment_secret_show)
+                                        .password(!this.context.payment_secret_show)
                                         .vertical_align(Align::Center))
                                 },
                             )
@@ -634,7 +634,7 @@ impl ModuleT for WalletCreate {
                                 |ui, text| {
                                     ui.label(RichText::new(i18n("Confirm BIP39 passphrase")).size(12.).raised());
                                     ui.add_sized(editor_size, TextEdit::singleline(text)
-                                        .password(this.context.payment_secret_show)
+                                        .password(!this.context.payment_secret_show)
                                         .vertical_align(Align::Center))
                                 },
                             )
@@ -850,7 +850,7 @@ impl ModuleT for WalletCreate {
 
                         let wallet_secret = Secret::from(args.wallet_secret.as_str());
                         let payment_secret = args.import_with_bip39_passphrase.then_some(Secret::from(args.payment_secret.as_str()));
-                        let mnemonic = sanitize_mnemonic(args.import_private_key_mnemonic.as_str());
+                        let mnemonic = Secret::from(sanitize_mnemonic(args.import_private_key_mnemonic.as_str()));
 
 
                         let request = AccountsDiscoveryRequest {
@@ -971,7 +971,7 @@ impl ModuleT for WalletCreate {
                         let prv_key_data_args = PrvKeyDataCreateArgs::new(
                             None,
                             payment_secret.clone(),
-                            mnemonic_phrase_string.clone(),
+                            Secret::from(mnemonic_phrase_string.clone()),
                         );
 
                         let prv_key_data_id = wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?;

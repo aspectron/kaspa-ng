@@ -8,6 +8,9 @@ repository.workspace = true
 description = "Kaspa NG - Desktop p2p node based on Rusty Kaspa"
 readme = "../README.md"
 
+[features]
+console = ["kaspa-ng-core/console"]
+
 [dependencies]
 kaspa-ng-core.workspace = true
 workflow-log.workspace = true

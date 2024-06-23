@@ -50,6 +50,7 @@ impl BlockDagMonitorService {
     pub async fn register_notification_listener(&self) -> Result<()> {
         if let Some(rpc_api) = self.rpc_api() {
             let listener_id = rpc_api.register_new_listener(ChannelConnection::new(
+                "blockdag-monitor",
                 self.notification_channel.sender.clone(),
                 ChannelType::Persistent,
             ));

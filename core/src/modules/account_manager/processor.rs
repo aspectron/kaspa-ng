@@ -10,7 +10,7 @@ impl<'context> Processor<'context> {
         Self { context }
     }
 
-    pub fn render(&mut self, core : &mut Core, ui: &mut Ui, rc : &RenderContext<'_>) {
+    pub fn render(&mut self, core : &mut Core, ui: &mut Ui, rc : &RenderContext) {
 
         let RenderContext { account, network_type, .. } = rc;
 

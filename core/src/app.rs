@@ -1,3 +1,5 @@
+use crate::events::ApplicationEventsChannel;
+use crate::interop::Adaptor;
 use crate::result::Result;
 use crate::servers::parse_default_servers;
 use cfg_if::cfg_if;
@@ -10,6 +12,8 @@ use workflow_log::*;
 
 // pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../../resources/images/kaspa.svg");
 pub const KASPA_NG_ICON_SVG: &[u8] = include_bytes!("../resources/images/kaspa-node-dark.svg");
+pub const KASPA_NG_ICON_TRANSPARENT_SVG: &[u8] =
+    include_bytes!("../resources/images/kaspa-node-transparent.svg");
 pub const KASPA_NG_LOGO_SVG: &[u8] = include_bytes!("../resources/images/kaspa-ng.svg");
 pub const I18N_EMBEDDED: &str = include_str!("../resources/i18n/i18n.json");
 pub const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
@@ -24,6 +28,27 @@ pub const RUSTC_SEMVER: &str = env!("VERGEN_RUSTC_SEMVER");
 pub const CARGO_TARGET_TRIPLE: &str = env!("VERGEN_CARGO_TARGET_TRIPLE");
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const CODENAME: &str = "DNA";
+
+#[derive(Default, Clone)]
+pub struct ApplicationContext {
+    pub wallet_api: Option<Arc<dyn WalletApi>>,
+    pub application_events: Option<ApplicationEventsChannel>,
+    pub adaptor: Option<Arc<Adaptor>>,
+}
+
+impl ApplicationContext {
+    pub fn new(
+        wallet_api: Option<Arc<dyn WalletApi>>,
+        application_events: Option<ApplicationEventsChannel>,
+        adaptor: Option<Arc<Adaptor>>,
+    ) -> Self {
+        Self {
+            wallet_api,
+            application_events,
+            adaptor,
+        }
+    }
+}
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -136,8 +161,11 @@ cfg_if! {
             }
         }
 
-        pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
+        // pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, _adaptor: Option<Arc<Adaptor>>) -> Result<()> {
+        pub async fn kaspa_ng_main(application_context : ApplicationContext) -> Result<()> {
             use std::sync::Mutex;
+
+            let ApplicationContext { wallet_api, application_events, adaptor: _ } = application_context;
 
             match try_set_fd_limit(DESIRED_DAEMON_SOFT_FD_LIMIT) {
                 Ok(limit) => {
@@ -249,11 +277,14 @@ cfg_if! {
                         viewport,
                         ..Default::default()
                     };
+
+                    // let application_events = ApplicationEventsChannel::unbounded();
+
                     eframe::run_native(
                         "Kaspa NG",
                         native_options,
                         Box::new(move |cc| {
-                            let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings);
+                            let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings, wallet_api, application_events, None);
                             delegate.lock().unwrap().replace(runtime.clone());
                             runtime::signals::Signals::bind(&runtime);
                             runtime.start();
@@ -273,10 +304,13 @@ cfg_if! {
     } else {
 
         // use crate::result::Result;
+        // use crate::adaptor::Adaptor;
 
-        pub async fn kaspa_ng_main(_wallet_api : Option<Arc<dyn WalletApi>>) -> Result<()> {
-            use wasm_bindgen::prelude::*;
+        // pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, adaptor: Option<Arc<Adaptor>>) -> Result<()> {
+        pub async fn kaspa_ng_main(application_context : ApplicationContext) -> Result<()> {
             use workflow_dom::utils::document;
+
+            let ApplicationContext { wallet_api, application_events, adaptor } = application_context;
 
             // ------------------------------------------------------------
             // ------------------------------------------------------------
@@ -321,16 +355,21 @@ cfg_if! {
                     "kaspa-ng",
                     web_options,
                     Box::new(move |cc| {
-                        let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings);
+
+                        // wallet_api.ping()
+
+                        // let adaptor = kaspa_ng_core::adaptor::Adaptor::new(runtime.clone());
+                        // let window = web_sys::window().expect("no global `window` exists");
+                        // js_sys::Reflect::set(
+                        //     &window,
+                        //     &JsValue::from_str("adaptor"),
+                        //     &JsValue::from(adaptor),
+                        // ).expect("failed to set adaptor");
+
+                        let runtime = runtime::Runtime::new(&cc.egui_ctx, &settings, wallet_api, application_events, adaptor);
                         runtime.start();
 
-                        let adaptor = kaspa_ng_core::adaptor::Adaptor::new(runtime.clone());
-                        let window = web_sys::window().expect("no global `window` exists");
-                        js_sys::Reflect::set(
-                            &window,
-                            &JsValue::from_str("adaptor"),
-                            &JsValue::from(adaptor),
-                        ).expect("failed to set adaptor");
+
 
                         Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, false))
                     }),

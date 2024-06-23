@@ -4,7 +4,7 @@ use super::*;
 pub struct Qr { }
 
 impl Qr {
-    pub fn render(ui : &mut Ui, rc : &RenderContext<'_>) {
+    pub fn render(ui : &mut Ui, rc : &RenderContext) {
         let RenderContext { context, .. } = rc;
 
         ui.add(
