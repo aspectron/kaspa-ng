@@ -410,7 +410,7 @@ impl ModuleT for WalletCreate {
                         ui.heading(i18n("Optional"));
                         ui.label(" ");
                         ui.label(i18n("\
-                            \"Phishing hint\" is a secret word or a phrase that is displayed \
+                            'Phishing hint' is a secret word or a phrase that is displayed \
                             when you open your wallet. If you do not see the hint when opening \
                             your wallet, you may be accessing a fake wallet designed to steal \
                             your funds. If this occurs, stop using the wallet immediately, \
