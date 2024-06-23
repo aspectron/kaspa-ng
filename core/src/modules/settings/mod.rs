@@ -606,7 +606,7 @@ impl Settings {
                         
                         ui.checkbox(
                             &mut self.settings.developer.disable_password_restrictions, 
-                            i18n("Disable password score restrictions")
+                            i18n("Disable password safety rules")
                         ).on_hover_text_at_pointer(
                             i18n("Removes security restrictions, allows for single-letter passwords")
                         );
