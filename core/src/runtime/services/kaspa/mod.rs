@@ -368,6 +368,7 @@ impl KaspaService {
                     network_id: network.into(),
                     retry_on_error : true,
                     block_async_connect : false,
+                    require_sync : false,
                 })
                 .await?;
 
