@@ -309,7 +309,17 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cargo build --bin kaspa-ng --release
+          cargo build --bin kaspa-ng --profile console --features console
+          mkdir kaspa-ng-console-windows-x64 || true
+          cp target/release/kaspa-ng.exe kaspa-ng-console-windows-x64/kaspa-ng-console.exe
+          archive="kaspa-ng-console-windows-x64/kaspa-ng-console-windows-x64.zip"
+          powershell "Compress-Archive kaspa-ng-console-windows-x64/* \"${archive}\""
+
+      - name: Upload Windows Console build to GitHub 
+        uses: actions/upload-artifact@v4
+        with: 
+          name: kaspa-ng-console-windows-x64
+          path: kaspa-ng-console-windows-x64/kaspa-ng-console-windows-x64.zip
 
       - name: Build on MacOS
         if: runner.os == 'macOS'
