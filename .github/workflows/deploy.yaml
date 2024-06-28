@@ -54,9 +54,11 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cargo build --bin kaspa-ng --release
           mkdir kaspa-ng-${{ github.event.release.tag_name }}-windows-x64 || true
+          cargo build --bin kaspa-ng --release
           cp target/release/kaspa-ng.exe kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/
+          cargo build --bin kaspa-ng --release --features console
+          cp target/release/kaspa-ng.exe kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/kaspa-ng-console.exe
           archive="kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/kaspa-ng-${{ github.event.release.tag_name }}-windows-x64.zip"
           asset_name="kaspa-ng-${{ github.event.release.tag_name }}-windows-x64.zip"
           powershell "Compress-Archive kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/* \"${archive}\""
