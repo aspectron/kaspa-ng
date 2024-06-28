@@ -530,6 +530,8 @@ pub struct UserInterfaceSettings {
     pub scale: f32,
     pub metrics: MetricsSettings,
     pub balance_padding: bool,
+    #[serde(default)]
+    pub disable_frame: bool,
 }
 
 impl Default for UserInterfaceSettings {
@@ -540,6 +542,7 @@ impl Default for UserInterfaceSettings {
             scale: 1.0,
             metrics: MetricsSettings::default(),
             balance_padding: true,
+            disable_frame: false,
         }
     }
 }
@@ -600,6 +603,8 @@ pub struct Settings {
     pub language_code: String,
     pub update_monitor: bool,
     pub market_monitor: bool,
+    // #[serde(default)]
+    // pub disable_frame: bool,
 }
 
 impl Default for Settings {
@@ -617,6 +622,7 @@ impl Default for Settings {
             language_code: "en".to_string(),
             update_monitor: true,
             market_monitor: true,
+            // disable_frame: false,
         }
     }
 }

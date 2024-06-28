@@ -254,7 +254,7 @@ cfg_if! {
                     let runtime: Arc<Mutex<Option<runtime::Runtime>>> = Arc::new(Mutex::new(None));
                     let delegate = runtime.clone();
 
-                    let window_frame = true;
+                    let window_frame = !settings.user_interface.disable_frame;
 
                     let mut viewport = egui::ViewportBuilder::default()
                         .with_resizable(true)
