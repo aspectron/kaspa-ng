@@ -57,7 +57,7 @@ jobs:
           mkdir kaspa-ng-${{ github.event.release.tag_name }}-windows-x64 || true
           cargo build --bin kaspa-ng --release
           cp target/release/kaspa-ng.exe kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/
-          cargo build --bin kaspa-ng --release --features console
+          cargo build --bin kaspa-ng --profile console --features console
           cp target/release/kaspa-ng.exe kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/kaspa-ng-console.exe
           archive="kaspa-ng-${{ github.event.release.tag_name }}-windows-x64/kaspa-ng-${{ github.event.release.tag_name }}-windows-x64.zip"
           asset_name="kaspa-ng-${{ github.event.release.tag_name }}-windows-x64.zip"
