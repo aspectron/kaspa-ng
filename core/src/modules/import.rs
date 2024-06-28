@@ -104,9 +104,9 @@ impl ModuleT for Import {
 
                         })
                         // .with_footer(|_this,ui| {
-                        //     // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
+                        //     // if ui.add_sized(theme().large_button_size, egui::Button::new(i18n("Continue"))).clicked() {
                         //     let size = theme().large_button_size;
-                        //     if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                        //     if ui.add_sized(size, egui::Button::new(i18n("Continue"))).clicked() {
                         //         // this.state = State::WalletName;
                         //     }
                         // })
