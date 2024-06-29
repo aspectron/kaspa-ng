@@ -266,10 +266,6 @@ jobs:
     name: Building, ${{ matrix.os }}
     steps:
 
-      - name: Setup Environment
-        id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Fix CRLF on Windows
         if: runner.os == 'Windows'
         run: git config --global core.autocrlf false
@@ -283,6 +279,10 @@ jobs:
 
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      - name: Setup Environment
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
