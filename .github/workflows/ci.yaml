@@ -316,9 +316,10 @@ jobs:
           powershell "Compress-Archive kaspa-ng-console-windows-x64/* \"${archive}\""
 
       - name: Upload Windows Console build to GitHub 
+        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-console-windows-x64
+          name: kaspa-ng-console-windows-x64.zip
           path: kaspa-ng-console-windows-x64/kaspa-ng-console-windows-x64.zip
 
       - name: Build on MacOS
