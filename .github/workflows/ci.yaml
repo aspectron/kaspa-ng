@@ -280,9 +280,21 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
+      # - name: Setup Environment for Windows
+      #   if: runner.os == 'Windows'
+      #   run: echo "SHORT_SHA=$("${{ github.sha }}".SubString(0, 7))" >> $env:GITHUB_ENV
+      
+      # - name: Setup Environment for MacOS
+      #   if: runner.os == 'macOS'
+      #   run: echo "SHORT_SHA=`git rev-parse --short HEAD`" >> $GITHUB_ENV
+      
+      # - name: Setup Environment for Linux
+      #   if: runner.os == 'Linux'
+      #   run: echo "SHORT_SHA=`git rev-parse --short HEAD`" >> $GITHUB_ENV
+
       - name: Setup Environment
-        id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        shell: bash
+        run: echo "SHORT_SHA=`git rev-parse --short HEAD`" >> $GITHUB_ENV
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
@@ -307,54 +319,54 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          mkdir kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64 || true
+          mkdir kaspa-ng-${{ env.SHORT_SHA }}-windows-x64 || true
           cargo build --bin kaspa-ng --release
-          cp target/release/kaspa-ng.exe kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64/kaspa-ng.exe
+          cp target/release/kaspa-ng.exe kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng.exe
           cargo build --bin kaspa-ng --profile console --features console
-          cp target/release/kaspa-ng.exe kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64/kaspa-ng-console.exe
-          archive="kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64/kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64.zip"
-          powershell "Compress-Archive kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64/* \"${archive}\""
+          cp target/release/kaspa-ng.exe kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-console.exe
+          archive="kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip"
+          powershell "Compress-Archive kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/* \"${archive}\""
 
       - name: Upload Windows build to GitHub 
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64.zip
-          path: kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64/kaspa-ng-${{ steps.vars.outputs.sha_short }}-windows-x64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip
+          path: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip
 
       - name: Build on MacOS
         if: runner.os == 'macOS'
         run: |
-          mkdir kaspa-ng-${{ steps.vars.outputs.sha_short }}-macos-arm64 || true
+          mkdir kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64 || true
           cargo build --bin kaspa-ng --release
-          cp target/release/kaspa-ng kaspa-ng-${{ steps.vars.outputs.sha_short }}-macos-arm64/
-          archive="kaspa-ng-${{ steps.vars.outputs.sha_short }}-macos-arm64/kaspa-ng-${{ steps.vars.outputs.sha_short }}-macos-arm64.zip"
-          zip -r "${archive}" ./kaspa-ng-${{ steps.vars.outputs.sha_short }}-macos-arm64/*
+          cp target/release/kaspa-ng kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/
+          archive="kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/*
 
       - name: Upload MacOS build to GitHub 
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-${{ steps.vars.outputs.sha_short }}-macos-arm64.zip
-          path: kaspa-ng-${{ steps.vars.outputs.sha_short }}-macos-arm64/kaspa-ng-${{ steps.vars.outputs.sha_short }}-macos-arm64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip
+          path: kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip
 
       - name: Build on Linux
         if: runner.os == 'Linux'
         run: |
-          mkdir kaspa-ng-linux-gnu-amd64 || true
+          mkdir kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64 || true
           cargo build --bin kaspa-ng --release
           mkdir -p .debpkg/usr/bin
           cp target/release/kaspa-ng .debpkg/usr/bin/
-          cp target/release/kaspa-ng kaspa-ng-linux-gnu-amd64/
-          archive="kaspa-ng-${{ steps.vars.outputs.sha_short }}-linux-gnu-amd64/kaspa-ng-${{ steps.vars.outputs.sha_short }}-linux-gnu-amd64.zip"
-          zip -r "${archive}" ./kaspa-ng-${{ steps.vars.outputs.sha_short }}-linux-gnu-amd64/*
+          cp target/release/kaspa-ng kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/
+          archive="kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/*
 
       - name: Upload Linux build to GitHub 
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-${{ steps.vars.outputs.sha_short }}-linux-gnu-amd64.zip
-          path: kaspa-ng-${{ steps.vars.outputs.sha_short }}-linux-gnu-amd64/kaspa-ng-${{ steps.vars.outputs.sha_short }}-linux-gnu-amd64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip
+          path: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip
 
       - name: Package Debian Release
         if: runner.os == 'Linux'
