@@ -280,18 +280,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      # - name: Setup Environment for Windows
-      #   if: runner.os == 'Windows'
-      #   run: echo "SHORT_SHA=$("${{ github.sha }}".SubString(0, 7))" >> $env:GITHUB_ENV
-      
-      # - name: Setup Environment for MacOS
-      #   if: runner.os == 'macOS'
-      #   run: echo "SHORT_SHA=`git rev-parse --short HEAD`" >> $GITHUB_ENV
-      
-      # - name: Setup Environment for Linux
-      #   if: runner.os == 'Linux'
-      #   run: echo "SHORT_SHA=`git rev-parse --short HEAD`" >> $GITHUB_ENV
-
       - name: Setup Environment
         shell: bash
         run: echo "SHORT_SHA=`git rev-parse --short HEAD`" >> $GITHUB_ENV
