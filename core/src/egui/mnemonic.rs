@@ -43,7 +43,7 @@ impl<'render> MnemonicPresenter<'render> {
     pub fn render(&mut self, ui: &mut Ui, caption: Option<impl Into<String>>) {
         ui.vertical_centered(|ui| {
             ui.label(
-                RichText::new("Never share your mnemonic with anyone!")
+                RichText::new(i18n("Never share your mnemonic with anyone!"))
                     .color(theme_color().alert_color),
             );
             // ui.separator();
@@ -116,7 +116,7 @@ impl<'render> MnemonicPresenter<'render> {
 
         ui.vertical_centered(|ui| {
             ui.label("");
-            ui.checkbox(&mut self.context.allow_clipboard, " Allow clipboard copy");
+            ui.checkbox(&mut self.context.allow_clipboard, i18n("Allow clipboard copy"));
             if self.context.allow_clipboard {
                 ui.label("");
                 ui.label(i18n("Please note, copying to clipboard carries a risk of exposing your mnemonic to malware."));

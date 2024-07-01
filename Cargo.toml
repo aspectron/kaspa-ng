@@ -133,14 +133,14 @@ kaspad = { path = "../rusty-kaspa/kaspad" }
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-workflow-core = "0.12.0"
-workflow-i18n = "0.12.0"
-workflow-chrome = "0.12.0"
-workflow-dom = "0.12.0"
-workflow-http = "0.12.0"
-workflow-log = "0.12.0"
-workflow-store = "0.12.0"
-workflow-wasm = "0.12.0"
+workflow-core = "0.12.1"
+workflow-i18n = "0.12.1"
+workflow-chrome = "0.12.1"
+workflow-dom = "0.12.1"
+workflow-http = "0.12.1"
+workflow-log = "0.12.1"
+workflow-store = "0.12.1"
+workflow-wasm = "0.12.1"
 
 # workflow-core = { path = "../workflow-rs/core" }
 # workflow-i18n = { path = "../workflow-rs/i18n" }
