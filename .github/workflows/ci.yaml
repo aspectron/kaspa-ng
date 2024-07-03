@@ -265,6 +265,7 @@ jobs:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     name: Building, ${{ matrix.os }}
     steps:
+
       - name: Fix CRLF on Windows
         if: runner.os == 'Windows'
         run: git config --global core.autocrlf false
@@ -278,6 +279,10 @@ jobs:
 
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      - name: Setup Environment
+        shell: bash
+        run: echo "SHORT_SHA=`git rev-parse --short HEAD`" >> $GITHUB_ENV
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
@@ -302,54 +307,54 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          mkdir kaspa-ng-windows-x64 || true
+          mkdir kaspa-ng-${{ env.SHORT_SHA }}-windows-x64 || true
           cargo build --bin kaspa-ng --release
-          cp target/release/kaspa-ng.exe kaspa-ng-windows-x64/kaspa-ng.exe
+          cp target/release/kaspa-ng.exe kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng.exe
           cargo build --bin kaspa-ng --profile console --features console
-          cp target/release/kaspa-ng.exe kaspa-ng-windows-x64/kaspa-ng-console.exe
-          archive="kaspa-ng-windows-x64/kaspa-ng-windows-x64.zip"
-          powershell "Compress-Archive kaspa-ng-windows-x64/* \"${archive}\""
+          cp target/release/kaspa-ng.exe kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-console.exe
+          archive="kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip"
+          powershell "Compress-Archive kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/* \"${archive}\""
 
       - name: Upload Windows build to GitHub 
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-windows-x64.zip
-          path: kaspa-ng-windows-x64/kaspa-ng-windows-x64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip
+          path: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip
 
       - name: Build on MacOS
         if: runner.os == 'macOS'
         run: |
-          mkdir kaspa-ng-macos-arm64 || true
+          mkdir kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64 || true
           cargo build --bin kaspa-ng --release
-          cp target/release/kaspa-ng kaspa-ng-macos-arm64/
-          archive="kaspa-ng-macos-arm64/kaspa-ng-macos-arm64.zip"
-          zip -r "${archive}" ./kaspa-ng-macos-arm64/*
+          cp target/release/kaspa-ng kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/
+          archive="kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/*
 
       - name: Upload MacOS build to GitHub 
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-macos-arm64.zip
-          path: kaspa-ng-macos-arm64/kaspa-ng-macos-arm64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip
+          path: kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip
 
       - name: Build on Linux
         if: runner.os == 'Linux'
         run: |
-          mkdir kaspa-ng-linux-gnu-amd64 || true
+          mkdir kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64 || true
           cargo build --bin kaspa-ng --release
           mkdir -p .debpkg/usr/bin
           cp target/release/kaspa-ng .debpkg/usr/bin/
-          cp target/release/kaspa-ng kaspa-ng-linux-gnu-amd64/
-          archive="kaspa-ng-linux-gnu-amd64/kaspa-ng-linux-gnu-amd64.zip"
-          zip -r "${archive}" ./kaspa-ng-linux-gnu-amd64/*
+          cp target/release/kaspa-ng kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/
+          archive="kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/*
 
       - name: Upload Linux build to GitHub 
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-linux-gnu-amd64.zip
-          path: kaspa-ng-linux-gnu-amd64/kaspa-ng-linux-gnu-amd64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip
+          path: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip
 
       - name: Package Debian Release
         if: runner.os == 'Linux'
