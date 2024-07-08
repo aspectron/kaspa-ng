@@ -76,7 +76,7 @@ Kaspa NG application binary can be started in 3 ways:
 
 If you need access to the wallet in a headless environment, you can start Kaspa NG in daemon mode and then use the CLI wallet to access the wallet.
 
-#### Mining
+#### Solo Mining
 
 You can use the following stratum bridge to solo mine with Kaspa NG: https://github.com/rdugan/kaspa-stratum-bridge/releases
 In order to allow for mining, you need to enable gRPC interface in the Settings panel (*'Local'* if running the stratum bridge on the same machine, *'Any'* if running the stratum bridge on a different machine).
