@@ -106,7 +106,7 @@ impl ModuleT for Metrics {
 
                             ui.separator();
 
-                            for group in MetricGroup::list() {
+                            for group in MetricGroup::iter() {
                                 CollapsingHeader::new(i18n(group.title()))
                                     .default_open(true)
                                     .show(ui, |ui| {
