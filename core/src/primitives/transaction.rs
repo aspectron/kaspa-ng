@@ -1,6 +1,7 @@
 use crate::imports::*;
 use egui_phosphor::light::*;
 use kaspa_consensus_core::tx::{TransactionInput, TransactionOutpoint, TransactionOutput};
+use kaspa_txscript::standard::extract_script_pub_key_address;
 use kaspa_wallet_core::storage::{
     transaction::{TransactionData, UtxoRecord},
     TransactionKind,
@@ -512,22 +513,52 @@ impl Transaction {
                         )
                         .label(ui);
 
+                    let address_prefix: kaspa_addresses::Prefix = network.into();
+
                     for output in transaction.outputs.iter() {
                         let TransactionOutput {
                             value,
-                            script_public_key,
+                            ..
+                            //script_public_key,
                         } = output;
 
                         ljb(&content)
-                            .text(
-                                &format!(
-                                    "  {} {}",
-                                    ps2k(*value),
-                                    script_public_key.script_as_hex()
-                                ),
-                                default_color,
-                            )
+                            .text(&format!("   {}", ps2k(*value)), default_color)
                             .label(ui);
+
+                        // ljb(&content)
+                        //     .text(&format!("   {}", script_public_key.script_as_hex()), default_color)
+                        //     .label(ui);
+
+                        let address_info = extract_script_pub_key_address(
+                            &output.script_public_key,
+                            address_prefix,
+                        );
+                        match address_info {
+                            Ok(address) => {
+                                let address = address.to_string();
+                                ljb(&content).padded(2, "", default_color).hyperlink(
+                                    ui,
+                                    &address,
+                                    &format!("{explorer}/addresses/{address}"),
+                                    default_color,
+                                );
+                            }
+                            Err(err) => {
+                                log_info!("scriptpubkey to address error: {:?}", err)
+                            }
+                        }
+
+                        // ljb(&content)
+                        //     .text(
+                        //         &format!(
+                        //             "  {} {}",
+                        //             ps2k(*value),
+                        //             script_public_key.script_as_hex()
+                        //         ),
+                        //         default_color,
+                        //     )
+                        //     .label(ui);
                     }
                 });
             }

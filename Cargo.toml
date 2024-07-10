@@ -125,6 +125,7 @@ kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", bran
 kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
 kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
 kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
 kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
 
 # _________________________________________________________

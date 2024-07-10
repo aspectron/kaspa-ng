@@ -3828,6 +3828,7 @@ dependencies = [
  "kaspa-notify",
  "kaspa-rpc-core",
  "kaspa-rpc-service",
+ "kaspa-txscript",
  "kaspa-utils",
  "kaspa-wallet-core",
  "kaspa-wallet-keys",
