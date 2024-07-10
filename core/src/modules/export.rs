@@ -119,7 +119,7 @@ impl ModuleT for Export {
                         .with_body(|this,ui| {
 
                             ui.vertical_centered(|ui| {
-                                for kind in ExportKind::list() {
+                                for kind in ExportKind::into_iter() {
                                     if kind == ExportKind::Transportable {
                                         continue;
                                     }

@@ -273,7 +273,9 @@ impl ModuleT for Scanner {
 
                     spawn(async move {
 
-                        if let Some(account) = wallet.get_account_by_id(&account.id()).await? {
+                        let guard = wallet.guard();
+                        let guard = guard.lock().await;
+                        if let Some(account) = wallet.get_account_by_id(&account.id(),&guard).await? {
 
                             account.as_derivation_capable()?
                                 .derivation_scan(

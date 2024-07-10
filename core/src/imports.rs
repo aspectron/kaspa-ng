@@ -45,8 +45,8 @@ pub use workflow_core::task;
 pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
 pub use workflow_dom::utils::*;
 pub use workflow_http as http;
-pub use workflow_i18n::*;
-pub use workflow_log::*;
+pub use workflow_i18n::prelude::*;
+pub use workflow_log::prelude::*;
 
 pub use ahash::{AHashMap, AHashSet};
 pub use pad::{Alignment, PadStr};

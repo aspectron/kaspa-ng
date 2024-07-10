@@ -384,6 +384,9 @@ impl KaspaService {
                 .connect_call(ConnectRequest {
                     url: None,
                     network_id: network.into(),
+                    retry_on_error: true,
+                    block_async_connect: false,
+                    require_sync: false,
                 })
                 .await?;
 
@@ -753,7 +756,7 @@ impl Service for KaspaService {
                 // new instance - setup new context
                 let context = Context {};
                 self.wallet()
-                    .retain_context("kaspa-ng", Some(context.try_to_vec()?))
+                    .retain_context("kaspa-ng", Some(borsh::to_vec(&context)?))
                     .await?;
             }
         } else {
