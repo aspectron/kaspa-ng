@@ -50,7 +50,7 @@ pub struct Server {
 unsafe impl Send for Server {}
 unsafe impl Sync for Server {}
 
-#[derive(Debug, Describe)]
+#[derive(Debug, Describe, Clone)]
 enum ExtensionActions {
     InjectPageScript,
     Connect,
