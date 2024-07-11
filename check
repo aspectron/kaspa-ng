@@ -6,3 +6,4 @@ cargo fmt --all
 # cargo clippy --workspace --all-targets --  -D warnings -W clippy::all
 # cargo clippy --workspace --all-targets -- -W clippy::all
 cargo clippy --workspace --all-targets
+cargo clippy --target wasm32-unknown-unknown
