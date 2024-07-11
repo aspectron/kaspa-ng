@@ -147,7 +147,7 @@ impl LayoutJobBuilder {
         let job = LayoutJob {
             wrap: TextWrapping {
                 max_width: width,
-                max_rows: 4,
+                max_rows: 1,
                 break_anywhere: true,
                 overflow_character: Some('…'),
             },

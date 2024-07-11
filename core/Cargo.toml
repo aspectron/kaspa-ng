@@ -37,7 +37,6 @@ kaspa-utils.workspace = true
 kaspa-wallet-core.workspace = true
 kaspa-wallet-keys.workspace = true
 kaspa-wrpc-client.workspace = true
-kaspa-txscript.workspace = true
 
 workflow-core.workspace = true
 workflow-i18n.workspace = true
