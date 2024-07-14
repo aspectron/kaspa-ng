@@ -777,7 +777,8 @@ impl ModuleT for WalletCreate {
                         #[allow(clippy::comparison_chain)]
                         if phrase.len() < needed {
                             ui.label("");
-                            ui.label(format!("{} {} {}", i18n("Please enter additional"), needed - phrase.len(), i18n("words")));
+                            // ui.label(format!("{} {} {}", i18n("Please enter additional"), needed - phrase.len(), i18n("words")));
+                            ui.label(format!("{}", i18n_args("Please enter additional {amount} words", vec![("amount", &(needed - phrase.len()).to_string())])));
                             ui.label("");
                         } else if phrase.len() > needed {
                             ui.label("");

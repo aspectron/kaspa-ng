@@ -81,7 +81,8 @@ impl ModuleT for Import {
                             ui.add_sized(
                                 size,
                                 TextEdit::singleline(&mut this.word)
-                                    .hint_text(format!("Enter Word {}...", this.mnemonic.len()+1))
+                                    // .hint_text(format!("Enter Word {}...", this.mnemonic.len()+1))
+                                    .hint_text(i18n_args("Enter Word {number}...", vec![("number", &(this.mnemonic.len() + 1).to_string())]))
                                     .horizontal_align(Align::Center)
                                     // .vertical_align(Align::Center),
                             );
