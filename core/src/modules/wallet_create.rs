@@ -838,6 +838,7 @@ impl ModuleT for WalletCreate {
                 if !wallet_import_result.is_pending() {
 
                     let wallet = self.runtime.wallet().clone();
+                    let import_legacy = self.context.import_legacy;
                     spawn_with_result(&wallet_import_result, async move {
 
                         if args.import_with_bip39_passphrase && args.payment_secret.is_empty() {
@@ -885,14 +886,24 @@ impl ModuleT for WalletCreate {
                         let prv_key_data_id = wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?;
 
                         let mut account_descriptors = Vec::with_capacity(number_of_accounts);
-                        for account_index in 0..number_of_accounts {
-                            let account_create_args = AccountCreateArgs::new_bip32(
-                                prv_key_data_id,
-                                payment_secret.clone(),
-                                args.account_name.is_not_empty().then_some(args.account_name.clone()),
-                                Some(account_index as u64),
-                            );
-                            account_descriptors.push(wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?);
+                        if import_legacy{
+                            for _account_index in 0..number_of_accounts {
+                                let account_create_args = AccountCreateArgs::new_legacy(
+                                    prv_key_data_id,
+                                    args.account_name.is_not_empty().then_some(args.account_name.clone()),
+                                );
+                                account_descriptors.push(wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?);
+                            }
+                        }else{
+                            for account_index in 0..number_of_accounts {
+                                let account_create_args = AccountCreateArgs::new_bip32(
+                                    prv_key_data_id,
+                                    payment_secret.clone(),
+                                    args.account_name.is_not_empty().then_some(args.account_name.clone()),
+                                    Some(account_index as u64),
+                                );
+                                account_descriptors.push(wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?);
+                            }
                         }
 
                         wallet.clone().flush(wallet_secret).await?;
