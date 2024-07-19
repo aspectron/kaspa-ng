@@ -95,11 +95,11 @@ impl ModuleT for Metrics {
                                 }
 
                                 if ui.button(i18n("None")).clicked() {
-                                    core.settings.user_interface.metrics.disabled = Metric::list().into_iter().collect::<AHashSet<_>>();
+                                    core.settings.user_interface.metrics.disabled = Metric::into_iter().collect::<AHashSet<_>>();
                                 }
                                 
                                 if ui.button(i18n("Key Perf.")).clicked() {
-                                    core.settings.user_interface.metrics.disabled = Metric::list().into_iter().filter(|metric|!metric.is_key_performance_metric()).collect::<AHashSet<_>>();
+                                    core.settings.user_interface.metrics.disabled = Metric::into_iter().filter(|metric|!metric.is_key_performance_metric()).collect::<AHashSet<_>>();
                                 }
 
                             });
@@ -215,7 +215,7 @@ impl ModuleT for Metrics {
                     };
 
 
-                        let mut metric_iter = Metric::list().into_iter().filter(|metric| !core.settings.user_interface.metrics.disabled.contains(metric));
+                        let mut metric_iter = Metric::iter().filter(|metric| !core.settings.user_interface.metrics.disabled.contains(metric));
                         let mut draw = true;
                         while draw {
                             ui.horizontal(|ui| {
@@ -223,7 +223,7 @@ impl ModuleT for Metrics {
                                     if let Some(metric) = metric_iter.next() {
                                         let range_from = core.settings.user_interface.metrics.graph_range_from;
                                         let range_to = core.settings.user_interface.metrics.graph_range_to;
-                                        self.render_metric(ui,metric,metrics,range_from..range_to,graph_width,graph_height);
+                                        self.render_metric(ui, *metric, metrics,range_from..range_to,graph_width,graph_height);
                                     } else {
                                         draw = false;
                                     }
