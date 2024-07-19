@@ -101,7 +101,7 @@ impl ThemeColor {
 
             qr_background: Color32::from_rgba(0, 0, 0, 0),
             qr_foreground: Color32::WHITE,
-            selection_background_color: Color32::from_rgb(0, 0, 0),
+            selection_background_color: Color32::from_rgb(50, 50, 50),
             selection_text_color: Color32::from_rgb(255, 255, 255),
             progress_color: Color32::from_rgb(71, 105, 97),
 

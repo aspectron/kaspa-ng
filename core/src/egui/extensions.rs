@@ -25,7 +25,11 @@ pub trait UiExtension {
     fn large_button(&mut self, text: impl Into<WidgetText>) -> Response {
         self.large_button_enabled(true, text)
     }
+    fn large_selected_button(&mut self, selected: bool, text: impl Into<WidgetText>) -> Response {
+        self.large_button_enabled_selected(true, selected, text)
+    }
     fn large_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response;
+    fn large_button_enabled_selected(&mut self, enabled: bool, selected: bool, text: impl Into<WidgetText>) -> Response;
     fn confirm_medium(
         &mut self,
         align: Align,
@@ -35,20 +39,82 @@ pub trait UiExtension {
     fn confirm_medium_apply_cancel(&mut self, align: Align) -> Option<Confirm>;
     fn confirm_medium_cancel(&mut self, align: Align) -> Option<Confirm>;
     fn sized_separator(&mut self, size: Vec2) -> Response;
+    fn widgets_rounding(&self) -> Rounding;
+    fn small_separator(&mut self){
+        self.add_separator(self.create_separator(None, 0.5, None));
+    }
+    fn medium_separator(&mut self){
+        self.add_separator(self.create_separator(None, 0.3, None));
+    }
+    fn large_separator(&mut self){
+        self.add_separator(self.create_separator(None, 0.1, None));
+    }
+    fn small_separator_with_direction_and_spacing(&mut self, spacing:f32, is_horizontal: bool){
+        self.add_separator(self.create_separator(Some(spacing), 0.5, Some(is_horizontal)));
+    }
+    fn create_separator(&self, spacing:Option<f32>, shrink: f32, is_horizontal: Option<bool>)->Separator;
+    fn add_separator(&mut self, separator: Separator);
 }
 
 impl UiExtension for Ui {
+    fn create_separator(&self, spacing:Option<f32>, shrink:f32, is_horizontal: Option<bool>)->Separator{
+        let mut sep = Separator::default();
+        if let Some(spacing) = spacing{
+            sep = sep.spacing(spacing)
+        } 
+        if let Some(is_horizontal) = is_horizontal{
+            if is_horizontal{
+                sep = sep.horizontal();
+            }else{
+                sep = sep.vertical();
+            }
+        }
+
+        //let sep = is_horizontal.map_or(sep, |is_horizontal| if is_horizontal{sep.horizontal()}else{sep.vertical()});
+
+        let is_horizontal_line = is_horizontal
+            .unwrap_or_else( || !self.layout().main_dir().is_horizontal());
+
+        let available_space = self.available_size_before_wrap();
+
+        //log_info!("spacing:{spacing:?}, is_horizontal: {is_horizontal:?}, is_horizontal_line:{is_horizontal_line}");
+
+        let size = if is_horizontal_line {
+            available_space.x
+        } else {
+            available_space.y
+        };
+
+        let shrink = (size * shrink)/2.0;
+
+        sep.shrink(shrink)
+    }
+    fn add_separator(&mut self, separator: Separator){
+        self.add(separator);
+    }
+
+    fn widgets_rounding(&self) -> Rounding{
+        self.visuals().widgets.hovered.rounding
+    }
+
     fn medium_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
-            Button::new(text).min_size(theme_style().medium_button_size()),
+            Button::new(text).rounding(self.widgets_rounding()).min_size(theme_style().medium_button_size()),
         )
     }
 
     fn large_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
-            Button::new(text).min_size(theme_style().large_button_size()),
+            Button::new(text).rounding(self.widgets_rounding()).min_size(theme_style().large_button_size()),
+        )
+    }
+
+    fn large_button_enabled_selected(&mut self, enabled: bool, selected: bool, text: impl Into<WidgetText>) -> Response {
+        self.add_enabled(
+            enabled,
+            Button::new(text).rounding(self.widgets_rounding()).selected(selected).min_size(theme_style().large_button_size()),
         )
     }
 

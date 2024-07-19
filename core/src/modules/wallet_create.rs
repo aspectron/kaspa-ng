@@ -227,41 +227,40 @@ impl ModuleT for WalletCreate {
                     })
                     .with_body(|this,ui| {
                         // ui.label("(You can import additional private keys later, once the wallet has been created)");
-
-                        if ui.large_button(i18n("12 word mnemonic")).clicked() {
+                        let word_12_selected = !this.context.import_legacy && this.context.word_count == WordCount::Words12;
+                        if ui.large_selected_button(word_12_selected, i18n("12 word mnemonic")).clicked() {
                             this.context.word_count = WordCount::Words12;
-                            submit = true;
+                            this.context.import_legacy = false;
                         }
-
                         ui.label("");
-                        ui.checkbox(&mut this.context.import_legacy, i18n("I have a 12 word mnemonic legacy account"));
+
+                        if ui.large_selected_button(this.context.word_count == WordCount::Words24, i18n("24 word mnemonic")).clicked() {
+                            this.context.word_count = WordCount::Words24;
+                            this.context.import_legacy = false;
+                        }
+                        ui.label("");
+
+                        ui.checkbox(&mut this.context.import_with_bip39_passphrase, i18n("Your mnemonic is protected with a bip39 passphrase"));
+                        ui.label("");
+
+                        ui.medium_separator();
+                        ui.label("");
+
                         ui.label(i18n("Select this option if your wallet was created"));
                         ui.label(i18n("using KDX or kaspanet.io web wallet"));
-                        ui.label(RichText::new("NOT SUPPORTED IN THIS BETA RELEASE").size(10.).color(warning_color()));
+                        ui.label("");
+                        if ui.large_selected_button(this.context.import_legacy, format!("    {}    ", i18n("Legacy 12 word mnemonic"))).clicked() {
+                            this.context.word_count = WordCount::Words12;
+                            this.context.import_legacy = true;
+                            this.context.import_with_bip39_passphrase = false;
+                        }
+                        ui.label("");
 
-                        if !this.context.import_legacy {
-                            ui.label("");
-                            if ui.large_button(i18n("24 word mnemonic")).clicked() {
-                                this.context.word_count = WordCount::Words24;
-                                submit = true;
-                            }
-                            // ui.label("");
-                            // if ui.large_button("MultiSig account").clicked() {
-                            // }
-
-                            ui.label("");
-                            ui.checkbox(&mut this.context.import_with_bip39_passphrase, i18n("Your mnemonic is protected with a bip39 passphrase"));
-
-                            ui.label("");
-                            ui.checkbox(&mut this.context.import_advanced, i18n("Advanced Options"));
-                            if this.context.import_advanced {
-                                ui.label("");
-                                if ui.large_button_enabled(false, i18n("secp256k1 keypair")).clicked() {
-                                    this.context.word_count = WordCount::Words12;
-                                    submit = true;
-                                }
-                                ui.label(RichText::new("NOT SUPPORTED IN THIS BETA RELEASE").size(10.).color(warning_color()));
-                            }
+                        ui.medium_separator();
+                        ui.label("");
+                        
+                        if ui.large_button(i18n("Continue")).clicked() {
+                            submit = true;
                         }
 
 
