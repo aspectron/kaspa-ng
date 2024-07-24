@@ -1,6 +1,8 @@
 use modules::wallet_create::WalletCreate;
 
 use crate::imports::*;
+use kaspa_wallet_core::storage::AssocPrvKeyDataIds;
+use kaspa_wallet_core::deterministic::bip32::BIP32_ACCOUNT_KIND;
 
 #[derive(Clone)]
 pub enum CreateAccountKind {
@@ -17,6 +19,7 @@ pub enum CreateAccountKind {
 #[derive(Clone)]
 pub enum State {
     Start,
+    KeySelection,
     StartImport,
     ImportMnemonic,
     ImportMnemonicWithEditor,
@@ -76,6 +79,7 @@ struct Context {
     import_legacy: bool,
     import_with_bip39_passphrase: bool,
     import_private_key_mnemonic: String,
+    prv_keys: Vec<Arc<PrvKeyDataInfo>>,
 }
 
 impl Zeroize for Context {
@@ -125,29 +129,81 @@ impl ModuleT for AccountCreate {
     ) {
         match self.state.clone() {
             State::Start => {
-                self.context.import_mnemonic = false;
-                let prv_key_data_map = core.prv_key_data_map.clone();
-
+                {
+                    let account_list = core.account_collection().iter();
+                    let mut prv_keys = HashMap::new();
+                    if let Some(prv_key_data_map) = core.prv_key_data_map.clone(){
+                        account_list
+                        .flat_map(|a|a.iter())
+                        .for_each(|account|{
+                            if account.account_kind() != &BIP32_ACCOUNT_KIND {
+                                return;
+                            }
+                            if let AssocPrvKeyDataIds::Single(key_id) = account.descriptor().prv_key_data_ids {
+                                if let Some(prv_key) = prv_key_data_map.get(&key_id){
+                                    prv_keys.insert(*prv_key.id(), prv_key.clone());
+                                }
+                            }
+                        });
+                    }
+                    self.context.prv_keys = prv_keys.into_values().collect();
+                }
+                
                 Panel::new(self)
-                    .with_caption("Create Account")
+                    .with_caption("Add Account")
                     .with_back_enabled(core.has_stack(), |this| {
                         this.context.zeroize();
                         core.back();
+                    })
+                    .with_close_enabled(false, |_|{ })
+                    .with_header(|_ctx,ui| {
+                        // ui.add_space(64.);
+                        ui.label(i18n("Add a new account by importing a mnemonic"));
+                        ui.label(i18n("or by deriving an already imported BIP-44 private key."));
+                        ui.label(" ");
+                    })
+                    .with_body(|this,ui|{
+                        let no_keys = this.context.prv_keys.is_empty();
+                        if ui.large_button_enabled(!no_keys, i18n("Create Account")).clicked(){
+                            this.state = State::KeySelection;
+                        }
+                        ui.label(i18n("Derive a private key to create a new account."));
+                        if no_keys {
+                            ui.label(i18n("No BIP-44 private keys found"));
+                        }
+
+                        ui.add(ui.create_separator(Some(32.0), 0.5, Some(true)));
+
+
+                        if ui.large_button(i18n("Import Account")).clicked(){
+                            this.state = State::StartImport;
+                        }
+                        ui.label(i18n("Create an account by importing a private key."));
+
+                    })
+                    .render(ui);
+            }
+            State::KeySelection => {
+                self.context.import_mnemonic = false;
+                Panel::new(self)
+                    .with_caption("Create Account")
+                    .with_back_enabled(core.has_stack(), |this| {
+                        this.state = State::Start;
                     })
                     .with_close_enabled(false, |_|{
                     })
                     .with_header(|_ctx,ui| {
                         // ui.add_space(64.);
-                        ui.label(i18n("Please select an account type"));
+                        ui.label(i18n("Please select private key"));
                         ui.label(" ");
                     })
                     .with_body(|this,ui|{
 
                         let margin = ui.available_width() * 0.5;
 
-                        if let Some(prv_key_data_map) = prv_key_data_map {
+                        if !this.context.prv_keys.is_empty() {
 
-                            for (_, prv_key_data_info) in prv_key_data_map.into_iter() {
+                            for prv_key_data_info in &this.context.prv_keys{
                                 ui.add(Separator::default().horizontal().shrink(margin));
                                 ui.add_space(16.);
                                 ui.label(format!("Private Key: {}", prv_key_data_info.name_or_id()));
@@ -188,10 +244,8 @@ impl ModuleT for AccountCreate {
                     &mut self.context.import_legacy,
                     &mut self.context.import_with_bip39_passphrase,
                     ui,
-                    Some(|_ctx: &mut State|{
-                        if core.has_stack() {
-                            core.back();
-                        }
+                    Some(|state: &mut State|{
+                        *state = State::Start;
                     }
                 ));
                 if submit {
@@ -359,18 +413,6 @@ impl ModuleT for AccountCreate {
                     .render(ui);
             }
 
-            // State::AddAccount =>{
-            //     // if self.context.import_mnemonic {
-            //     //     self.state = State::ImportAccount;
-            //     // }else{
-            //     //     self.state = State::CreateAccount;
-            //     // }
-            // }
-
-            // State::ImportAccount => {
-                
-            // }
-
             State::PrivateKeyCreate => {
             }
 
@@ -400,7 +442,7 @@ impl ModuleT for AccountCreate {
 
                     let wallet = self.runtime.wallet().clone();
                     spawn_with_result(&account_create_result, async move {
-
+                        sleep(Duration::from_secs(2)).await;
                         let account_name = args.account_name.trim();
                         let account_name = account_name.is_not_empty().then_some(account_name.to_string());
                         let wallet_secret = Secret::from(args.wallet_secret);
