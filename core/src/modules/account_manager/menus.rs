@@ -217,6 +217,23 @@ impl AccountMenu {
                         None,
                     )).clicked() {
                         *close = true;
+                        {
+                            let mut module = core.get_mut::<modules::AccountCreate>();
+                            module.state = crate::modules::account_create::State::Start;
+                        }
+                        core.select::<modules::AccountCreate>();
+                    }
+
+                    if ui.add_sized(theme_style().large_button_size,CompositeButton::opt_image_and_text(
+                        Some(Composite::icon(LIST)),
+                        Some(i18n("Import Existing Account").into()),
+                        None,
+                    )).clicked() {
+                        *close = true;
+                        {
+                            let mut module = core.get_mut::<modules::AccountCreate>();
+                            module.state = crate::modules::account_create::State::StartImport;
+                        }
                         core.select::<modules::AccountCreate>();
                     }
 

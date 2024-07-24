@@ -1,3 +1,5 @@
+use modules::wallet_create::WalletCreate;
+
 use crate::imports::*;
 
 #[derive(Clone)]
@@ -15,12 +17,17 @@ pub enum CreateAccountKind {
 #[derive(Clone)]
 pub enum State {
     Start,
+    StartImport,
+    ImportMnemonic,
+    ImportMnemonicWithEditor,
     PrivateKeyCreate,
     PrivateKeyConfirm,
     AccountName,
     WalletSecret,
     PaymentSecret,
-    CreateAccount,
+    AddAccount,
+    //CreateAccount,
+    //ImportAccount,
     AccountError(Arc<Error>),
     PresentMnemonic(Arc<CreationData>),
     ConfirmMnemonic(Arc<CreationData>),
@@ -50,6 +57,7 @@ enum Focus {
     AccountName,
     WalletSecret,
     PaymentSecret,
+    WalletMnemonic,
 }
 
 #[derive(Clone, Default)]
@@ -63,6 +71,20 @@ struct Context {
     wallet_secret : String,
     payment_secret: String,
     // payment_secret_confirm: String,
+    word_count: WordCount,
+    import_mnemonic: bool,
+    import_legacy: bool,
+    import_with_bip39_passphrase: bool,
+    import_private_key_mnemonic: String,
+}
+
+impl Zeroize for Context {
+    fn zeroize(&mut self) {
+        self.account_name.zeroize();
+        self.wallet_secret.zeroize();
+        self.payment_secret.zeroize();
+        self.import_private_key_mnemonic.zeroize();
+    }
 }
 
 pub struct AccountCreate {
@@ -103,12 +125,13 @@ impl ModuleT for AccountCreate {
     ) {
         match self.state.clone() {
             State::Start => {
-
+                self.context.import_mnemonic = false;
                 let prv_key_data_map = core.prv_key_data_map.clone();
 
                 Panel::new(self)
                     .with_caption("Create Account")
-                    .with_back_enabled(core.has_stack(), |_this| {
+                    .with_back_enabled(core.has_stack(), |this| {
+                        this.context.zeroize();
                         core.back();
                     })
                     .with_close_enabled(false, |_|{
@@ -152,12 +175,65 @@ impl ModuleT for AccountCreate {
                     })
                     .render(ui);
             }
+            State::StartImport => {
+                self.context.import_mnemonic = true;
+                self.context.import_private_key_mnemonic.zeroize();
+                self.context.wallet_secret.zeroize();
+                self.context.payment_secret.zeroize();
+                self.context.prv_key_data_info = None;
+
+                let submit = WalletCreate::import_selection::<State>(
+                    &mut self.state,
+                    &mut self.context.word_count,
+                    &mut self.context.import_legacy,
+                    &mut self.context.import_with_bip39_passphrase,
+                    ui,
+                    Some(|_ctx: &mut State|{
+                        if core.has_stack() {
+                            core.back();
+                        }
+                    }
+                ));
+                if submit {
+                    self.state = State::ImportMnemonic;
+                }
+            }
+
+            State::ImportMnemonic => {
+                self.state = State::ImportMnemonicWithEditor;
+                self.focus.next(Focus::WalletMnemonic);
+            }
+
+            State::ImportMnemonicWithEditor => {
+                let proceed = WalletCreate::import_mnemonic::<Focus, State>(
+                    &mut self.state,
+                    &mut self.context.import_private_key_mnemonic,
+                    &self.context.word_count,
+                    &mut self.focus,
+                    Focus::WalletMnemonic,
+                    ui,
+                    |m| {
+                        *m = State::StartImport;
+                    }
+                );
+
+                if proceed {
+                    self.state = State::AccountName;
+                    self.focus.clear();
+                }
+
+            }
+
             State::AccountName => {
 
                 Panel::new(self)
                     .with_caption(i18n("Account Name"))
                     .with_back(|this| {
-                        this.state = State::Start;
+                        if this.context.import_mnemonic{
+                            this.state = State::StartImport;
+                        }else{
+                            this.state = State::Start;
+                        }
                     })
                     .with_close_enabled(false, |_|{
                     })
@@ -235,11 +311,11 @@ impl ModuleT for AccountCreate {
                     .render(ui);
 
                 if *submit.borrow() {
-                    if self.context.prv_key_data_info.as_ref().map(|info| info.requires_bip39_passphrase()).unwrap_or(false) {
+                    if self.context.import_with_bip39_passphrase || self.context.prv_key_data_info.as_ref().map(|info| info.requires_bip39_passphrase()).unwrap_or(false) {
                         self.state = State::PaymentSecret;
                         self.focus.next(Focus::PaymentSecret);
                     } else {
-                        self.state = State::CreateAccount;
+                        self.state = State::AddAccount;
                     }
                 }
             }
@@ -268,7 +344,7 @@ impl ModuleT for AccountCreate {
                             },
                         ).submit(|text,focus| {
                             if !text.is_empty() {
-                                this.state = State::CreateAccount;
+                                this.state = State::AddAccount;
                                 focus.clear()
                             }
                         })
@@ -277,11 +353,23 @@ impl ModuleT for AccountCreate {
                     .with_footer(|this,ui| {
                         let enabled = !this.context.payment_secret.is_empty();
                         if ui.large_button_enabled(enabled,i18n("Continue")).clicked() {
-                            this.state = State::CreateAccount;
+                            this.state = State::AddAccount;
                         }
                     })
                     .render(ui);
             }
+
+            // State::AddAccount =>{
+            //     // if self.context.import_mnemonic {
+            //     //     self.state = State::ImportAccount;
+            //     // }else{
+            //     //     self.state = State::CreateAccount;
+            //     // }
+            // }
+
+            // State::ImportAccount => {
+                
+            // }
 
             State::PrivateKeyCreate => {
             }
@@ -289,19 +377,20 @@ impl ModuleT for AccountCreate {
             State::PrivateKeyConfirm => {
             }
 
-            State::CreateAccount => {
+            State::AddAccount => {
+                let caption = if self.context.import_mnemonic {i18n("Importing Account")}else{i18n("Creating Account")};
 
                 Panel::new(self)
-                .with_caption(i18n("Creating Account"))
-                .with_header(|_, ui|{
-                    ui.label(" ");
-                    ui.label(i18n("Please wait..."));
-                    ui.label(" ");
-                    ui.label(" ");
-                    ui.add_space(64.);
-                    ui.add(egui::Spinner::new().size(92.));
-                })
-                .render(ui);
+                    .with_caption(caption)
+                    .with_header(|_, ui|{
+                        ui.label(" ");
+                        ui.label(i18n("Please wait..."));
+                        ui.label(" ");
+                        ui.label(" ");
+                        ui.add_space(64.);
+                        ui.add(egui::Spinner::new().size(92.));
+                    })
+                    .render(ui);
 
                 let args = self.context.clone();
                 self.context = Default::default();
@@ -313,18 +402,34 @@ impl ModuleT for AccountCreate {
                     spawn_with_result(&account_create_result, async move {
 
                         let account_name = args.account_name.trim();
-                        let account_name = (!account_name.is_empty()).then_some(account_name.to_string());
+                        let account_name = account_name.is_not_empty().then_some(account_name.to_string());
                         let wallet_secret = Secret::from(args.wallet_secret);
-                        let payment_secret = args.prv_key_data_info.as_ref().and_then(|secret| {
-                            secret.requires_bip39_passphrase().then_some(Secret::from(args.payment_secret))
-                        });
 
-                        let prv_key_data_id = *args.prv_key_data_info.as_ref().unwrap().id();
+                        let payment_secret;
 
-                        let prv_key_data_args = PrvKeyDataArgs { prv_key_data_id, payment_secret };
-                        let account_args = AccountCreateArgsBip32 { account_name, account_index: None };
-                        let account_create_args = AccountCreateArgs::Bip32 { prv_key_data_args, account_args };
+                        let prv_key_data_id = if args.import_mnemonic {
+                            let requires_bip39_passphrase = !args.import_legacy && args.import_with_bip39_passphrase;
+                            payment_secret = requires_bip39_passphrase.then_some(Secret::from(args.payment_secret.as_str()));
+                            let mnemonic = Secret::from(sanitize_mnemonic(args.import_private_key_mnemonic.as_str()));
+                            let key_data_name = None;
+                            let prv_key_data_args = PrvKeyDataCreateArgs::new(
+                                key_data_name,
+                                payment_secret.clone(),
+                                mnemonic,
+                            );
+                            wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?
+                        }else{
+                            payment_secret = args.prv_key_data_info.as_ref().and_then(|key| {
+                                key.requires_bip39_passphrase().then_some(Secret::from(args.payment_secret))
+                            });
+                            *args.prv_key_data_info.as_ref().unwrap().id()
+                        };
 
+                        let account_create_args = if args.import_legacy {
+                            AccountCreateArgs::new_legacy(prv_key_data_id, account_name)
+                        }else{
+                            AccountCreateArgs::new_bip32(prv_key_data_id, payment_secret, account_name, None)
+                        };
                         let account_descriptor = wallet.accounts_create(wallet_secret, account_create_args).await?;
                         Ok(account_descriptor)
                     });
@@ -338,7 +443,12 @@ impl ModuleT for AccountCreate {
                             self.state = State::Start;
                         }
                         Err(err) => {
-                            println!("Account creation error: {}", err);
+                            if self.context.import_mnemonic{
+                                log_info!("Account import error: {}", err);
+                            }else{
+                                log_info!("Account creation error: {}", err);
+                            }
+                            
                             self.state = State::AccountError(Arc::new(err));
                         }
                     }
@@ -355,7 +465,11 @@ impl ModuleT for AccountCreate {
                     ui.label(RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
 
                     if ui.large_button(i18n("Restart")).clicked() {
-                        this.state = State::Start;
+                        if this.context.import_mnemonic{
+                            this.state = State::StartImport;
+                        }else{
+                            this.state = State::Start;
+                        }
                     }
                 })
                 .render(ui);
