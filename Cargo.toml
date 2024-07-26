@@ -135,14 +135,14 @@ kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "omega
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-workflow-core = "0.14.0"
-workflow-i18n = "0.14.0"
-workflow-chrome = "0.14.0"
-workflow-dom = "0.14.0"
-workflow-http = "0.14.0"
-workflow-log = "0.14.0"
-workflow-store = "0.14.0"
-workflow-wasm = "0.14.0"
+workflow-core = "0.15.0"
+workflow-i18n = "0.15.0"
+workflow-chrome = "0.15.0"
+workflow-dom = "0.15.0"
+workflow-http = "0.15.0"
+workflow-log = "0.15.0"
+workflow-store = "0.15.0"
+workflow-wasm = "0.15.0"
 
 # workflow-core = { path = "../workflow-rs/core" }
 # workflow-i18n = { path = "../workflow-rs/i18n" }
