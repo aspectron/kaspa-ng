@@ -16,6 +16,7 @@ enum Focus {
     PaymentSecret,
     PaymentSecretConfirm,
     WalletMnemonic,
+    DecryptWalletSecret,
 }
 
 #[derive(Clone)]
@@ -26,6 +27,8 @@ pub enum State {
     ImportMnemonic,
     ImportMnemonicWithEditor,
     ImportMnemonicInteractive,
+    WalletFileSecret,
+    DecryptWalletFile,
     ImportWallet,
     WalletName,
     AccountName,
@@ -34,7 +37,7 @@ pub enum State {
     PaymentSecret,
     CreateWalletConfirm,
     CreateWallet,
-    WalletError(Arc<Error>),
+    WalletError(Arc<Error>, Arc<State>),
     PresentMnemonic(String),
     ConfirmMnemonic(String),
     Finish,
@@ -49,6 +52,7 @@ struct Context {
     enable_phishing_hint: bool,
     phishing_hint: String,
     wallet_secret: String,
+    decrypt_wallet_secret: String,
     wallet_secret_confirm: String,
     wallet_secret_show: bool,
     wallet_secret_score: Option<f64>,
@@ -59,11 +63,13 @@ struct Context {
     payment_secret_score: Option<f64>,
     mnemonic_presenter_context : MnemonicPresenterContext,
     import_private_key : bool,
+    import_private_key_file: bool,
     import_private_key_mnemonic : String,
     import_private_key_mnemonic_error : Option<String>,
     import_with_bip39_passphrase : bool,
     import_legacy : bool,
     import_advanced : bool,
+    wallet_file_data: Option<WalletFileEncryptedData>
 }
 
 impl Zeroize for Context {
@@ -305,11 +311,10 @@ impl ModuleT for WalletCreate {
             }
             State::KeySelection => {
 
-                let mut submit = false;
-                let mut import = false;
                 self.context.import_with_bip39_passphrase = false;
                 self.context.import_legacy = false;
                 self.context.import_private_key = false;
+                self.context.import_private_key_file = false;
 
                 Panel::new(self)
                     .with_caption(i18n("Select Private Key Type"))
@@ -323,7 +328,7 @@ impl ModuleT for WalletCreate {
                         ui.label(i18n("Please specify the private key type for the new wallet"));
                     })
                     .with_body(|this,ui| {
-
+                        let mut submit = false;
                         if ui.large_button(i18n("12 word mnemonic")).clicked() {
                             this.context.word_count = WordCount::Words12;
                             submit = true;
@@ -332,6 +337,11 @@ impl ModuleT for WalletCreate {
                         if ui.large_button(i18n("24 word mnemonic")).clicked() {
                             this.context.word_count = WordCount::Words24;
                             submit = true;
+                        }
+
+                        if submit {
+                            this.state = State::WalletName;
+                            this.focus.next(Focus::WalletName);
                         }
                         // ui.label("");
                         // if ui.large_button_enabled(false,"MultiSig account").clicked() {
@@ -343,7 +353,14 @@ impl ModuleT for WalletCreate {
                         ui.label("");
 
                         if ui.large_button(i18n("Import existing")).clicked() {
-                            import = true;
+                            this.state = State::ImportSelection;
+                            this.focus.clear();
+                        }
+                        ui.label("");
+
+                        if ui.large_button(i18n("Import existing file")).clicked() {
+                            this.context.import_private_key_file = true;
+                            this.state = State::ImportMnemonicInteractive;
                         }
                         ui.label("");
 
@@ -351,16 +368,6 @@ impl ModuleT for WalletCreate {
                     .with_footer(|_this,_ui| {
                     })
                     .render(ui);
-
-                    if import {
-                        self.state = State::ImportSelection;
-                        self.focus.clear();
-
-                    } else if submit {
-                        self.state = State::WalletName;
-                        self.focus.next(Focus::WalletName);
-                    }
-
             }
 
             State::ImportSelection => {
@@ -669,7 +676,7 @@ impl ModuleT for WalletCreate {
             }
             State::PaymentSecret => {
 
-                let mut proceed = self.context.import_private_key && !self.context.import_with_bip39_passphrase;
+                let mut proceed = self.context.import_legacy || (self.context.import_private_key && !self.context.import_with_bip39_passphrase);
                 if !self.context.import_legacy {
                     Panel::new(self)
                         .with_caption(i18n("Payment & Recovery Password"))
@@ -809,7 +816,10 @@ impl ModuleT for WalletCreate {
                 }
 
                 if proceed {
-                    if self.context.import_private_key {
+                    if self.context.import_private_key_file {
+                        self.state = State::ImportWallet;
+                        self.focus.clear();
+                    } else if self.context.import_private_key {
                         self.state = State::ImportMnemonic;
                     } else {
                         self.state = State::CreateWalletConfirm;
@@ -846,7 +856,188 @@ impl ModuleT for WalletCreate {
             }
 
             State::ImportMnemonicInteractive => {
-                // TODO
+                Panel::new(self)
+                    .with_caption(i18n("Importing Wallet File"))
+                    .with_header(|_, ui|{
+                        ui.label(" ");
+                        ui.label(i18n("Select file..."));
+                        ui.label(" ");
+                        ui.label(" ");
+                        ui.add_space(64.);
+                        ui.add(egui::Spinner::new().size(92.));
+                    })
+                    .render(ui);
+                
+                let wallet_import_result = Payload::<Result<Option<String>>>::new("wallet_import_file_dialog");
+                if !wallet_import_result.is_pending() {
+                    wallet_import_result.mark_pending();
+                    let import_result = wallet_import_result.clone();
+                    //#[cfg(target_arch="wasm32")]
+                    wasm_bindgen_futures::spawn_local(async move {
+                        let file_handle = rfd::AsyncFileDialog::new()
+                            .add_filter("LegacyWallet", &["kpk"])
+                            .set_directory("/")
+                            .pick_file();
+                        
+                        if let Some(file_handle) = file_handle.await{
+                            log_info!("file_name: {:?}", file_handle.file_name());
+                            let file_data = file_handle.read().await;
+                            let json = String::from_utf8_lossy(&file_data.clone()).to_string();
+                            log_info!("json: {json}");
+                            import_result.store(Ok(Some(json)));
+                        }else{
+                            import_result.store(Ok(None));
+                        }
+                    });
+                }
+
+                if let Some(result) = wallet_import_result.take() {
+                    match result {
+                        Ok(json) => {
+                            if let Some(json) = json{
+                                match parse_wallet_file(&json){
+                                    Ok(data)=>{
+                                        self.context.wallet_file_data = Some(data);
+                                        self.state = State::WalletFileSecret;
+                                    }
+                                    Err(err)=>{
+                                        log_error!("{} {}",i18n("Wallet import error:"), err);
+                                        self.state = State::WalletError(Arc::new(err), State::ImportMnemonicInteractive.into());
+                                    }
+                                }
+                            }else{
+                                //
+                            }
+                        }
+                        Err(err) => {
+                            log_error!("{} {}",i18n("Wallet creation error:"), err);
+                            self.state = State::WalletError(Arc::new(err), State::ImportMnemonicInteractive.into());
+                        }
+                    }
+                }
+            }
+
+            State::WalletFileSecret =>{
+                let data = self.context.wallet_file_data.as_ref().unwrap().clone();
+                Panel::new(self)
+                .with_caption(i18n("Wallet File Secret"))
+                .with_back(|this|{
+                    this.state = State::ImportMnemonicInteractive;
+                })
+                .with_header(move |_this,ui| {
+                    ui.label(" ");
+                    ui.label(i18n("For decrypting uploaded file please enter wallet secret."));
+                    ui.label(" ");
+                })
+                .with_body(|this, ui|{
+                    ui.label("File contents:");
+                    ui.label(data.to_string());
+                    ui.label(" ");
+                    TextEditor::new(
+                        &mut this.context.decrypt_wallet_secret,
+                        &mut this.focus,
+                        Focus::DecryptWalletSecret,
+                        |ui, text| {
+                            ui.label(RichText::new(i18n("Enter password to decrypt this wallet file")).size(12.).raised());
+                            ui.add_sized(editor_size, TextEdit::singleline(text).password(true)
+                                .vertical_align(Align::Center))
+                        },
+                    )
+                    .submit(|text,focus| {
+                        if text.is_not_empty(){
+                            this.state = State::DecryptWalletFile;
+                            focus.clear();
+                        }
+                    })
+                    .build(ui);
+                    ui.label(" ");
+                    if ui.large_button_enabled(this.context.decrypt_wallet_secret.is_not_empty(), i18n("Decrypt")).clicked(){
+                        this.state = State::DecryptWalletFile;
+                    }
+                })
+                .render(ui);
+            }
+
+            State::DecryptWalletFile=>{
+                Panel::new(self)
+                    .with_caption(i18n("Decrypting Wallet File"))
+                    .with_header(|_, ui|{
+                        ui.label(" ");
+                        ui.label(i18n("Please wait..."));
+                        ui.label(" ");
+                        ui.label(" ");
+                        ui.add_space(64.);
+                        ui.add(egui::Spinner::new().size(92.));
+                    })
+                    .render(ui);
+                let wallet_file_data = self.context.wallet_file_data.as_ref().unwrap().clone();
+                let wallet_secret = Secret::from(self.context.decrypt_wallet_secret.as_str());
+                let wallet_decrypt_result = Payload::<Result<WalletFileDecryptedData>>::new("wallet_file_decrypt_result");
+                if !wallet_decrypt_result.is_pending() {
+                    //let wallet = self.runtime.wallet().clone();
+                    spawn_with_result(&wallet_decrypt_result, async move {
+                        sleep(Duration::from_secs(2)).await;
+    
+                        match wallet_file_data{
+                            WalletFileData::Legacy(data)=>{
+                                let key_data = kaspa_wallet_core::compat::gen0::get_v0_keydata(&data, &wallet_secret)?;
+                                Ok(WalletFileDecryptedData::Legacy(key_data.mnemonic.clone()))
+                            }
+                            WalletFileData::GoWallet(data)=>{
+                                Ok(WalletFileDecryptedData::GoWallet(data))
+                            }
+                            WalletFileData::Core(_data)=>{
+                                // let key_data = kaspa_wallet_core::compat::gen1::get_keydata(data, &wallet_secret)?;
+                                // Ok(WalletFileDecryptedData::Legacy(key_data.mnemonic))
+                                Err(Error::custom("WalletFileData::Core TODO:"))
+                            }
+                        }
+                        
+                    })
+                }
+
+                if let Some(result) = wallet_decrypt_result.take() {
+                    match result {
+                        Ok(wallet_file_decrypted_data) => {
+                            match wallet_file_decrypted_data{
+                                WalletFileDecryptedData::Legacy(mnemonic)=>{
+                                    self.context.word_count = WordCount::Words12;
+                                    self.context.import_legacy = true;
+                                    self.context.import_with_bip39_passphrase = false;
+                                    self.context.import_private_key_mnemonic = mnemonic;
+                                    self.state = State::WalletName;
+                                }
+                                WalletFileDecryptedData::GoWallet(data)=>{
+                                    
+                                }
+                                WalletFileDecryptedData::Core(mnemonic)=>{
+                                    let size = mnemonic.trim().split(" ").collect::<Vec<_>>().len();
+                                    match size{
+                                        24|12=>{
+                                            if size == 12 {
+                                                self.context.word_count = WordCount::Words12;
+                                            }else{
+                                                self.context.word_count = WordCount::Words24;
+                                            }
+                                            self.context.import_legacy = false;
+                                            self.context.import_with_bip39_passphrase = true;
+                                            self.context.import_private_key_mnemonic = mnemonic;
+                                            self.state = State::WalletName;
+                                        }
+                                        _=>{
+                                            self.state = State::WalletError(Arc::new(Error::Custom(format!("Invalid mnemonic count: {size}"))), State::ImportMnemonicInteractive.into());
+                                        }
+                                    }
+                                    
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            log_error!("{} {}",i18n("Wallet decrypting error:"), err);
+                            self.state = State::WalletError(Arc::new(err), State::WalletFileSecret.into());
+                        }
+                    }
+                }
             }
 
             State::ImportWallet => {
@@ -957,7 +1148,7 @@ impl ModuleT for WalletCreate {
                         }
                         Err(err) => {
                             log_error!("{} {}",i18n("Wallet creation error:"), err);
-                            self.state = State::WalletError(Arc::new(err));
+                            self.state = State::WalletError(Arc::new(err), State::Start.into());
                         }
                     }
                 }
@@ -1045,27 +1236,27 @@ impl ModuleT for WalletCreate {
                         }
                         Err(err) => {
                             log_error!("{} {}",i18n("Wallet creation error:"), err);
-                            self.state = State::WalletError(Arc::new(err));
+                            self.state = State::WalletError(Arc::new(err), State::Start.into());
                         }
                     }
                 }
 
             }
 
-            State::WalletError(err) => {
-
+            State::WalletError(err, back_state) => {
+                let msg = (self.context.import_private_key || self.context.import_private_key_file).then_some(i18n("Error importing a wallet")).unwrap_or(i18n("Error creating a wallet"));
                 Panel::new(self)
                 .with_caption(i18n("Error"))
                 .with_header(move |this,ui| {
                     ui.label(" ");
                     ui.label(" ");
-                    ui.label(RichText::new(i18n("Error creating a wallet")).color(egui::Color32::from_rgb(255, 120, 120)));
+                    ui.label(RichText::new(msg).color(egui::Color32::from_rgb(255, 120, 120)));
                     ui.label(RichText::new(err.to_string()).color(egui::Color32::from_rgb(255, 120, 120)));
                     ui.label(" ");
                     ui.label(" ");
 
                     if ui.large_button(i18n("Restart")).clicked() {
-                        this.state = State::Start;
+                        this.state = back_state.as_ref().clone();
                     }
                 })
                 .render(ui);

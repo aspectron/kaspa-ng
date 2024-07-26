@@ -135,14 +135,14 @@ kaspad = { path = "../rusty-kaspa/kaspad" }
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-workflow-core = "0.14.0"
-workflow-i18n = "0.14.0"
-workflow-chrome = "0.14.0"
-workflow-dom = "0.14.0"
-workflow-http = "0.14.0"
-workflow-log = "0.14.0"
-workflow-store = "0.14.0"
-workflow-wasm = "0.14.0"
+workflow-core = "0.15.0"
+workflow-i18n = "0.15.0"
+workflow-chrome = "0.15.0"
+workflow-dom = "0.15.0"
+workflow-http = "0.15.0"
+workflow-log = "0.15.0"
+workflow-store = "0.15.0"
+workflow-wasm = "0.15.0"
 
 # workflow-core = { path = "../workflow-rs/core" }
 # workflow-i18n = { path = "../workflow-rs/i18n" }
@@ -193,7 +193,7 @@ pad = "0.1.6"
 passwords = "3.1.16"
 qrcode = "0.12.0"
 rand = "0.8.5"
-rfd = "0.12.1"
+rfd = "0.14.1"
 ritehash = "0.2.0"
 rlimit = "0.10.1"
 separator = "0.4.1"
