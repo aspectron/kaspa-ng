@@ -69,7 +69,7 @@ struct Context {
     import_with_bip39_passphrase : bool,
     import_legacy : bool,
     import_advanced : bool,
-    wallet_file_data: Option<WalletFileEncryptedData>
+    wallet_file_data: Option<WalletFileData>
 }
 
 impl Zeroize for Context {
@@ -88,6 +88,7 @@ impl Zeroize for Context {
         self.import_private_key_mnemonic.zeroize();
         self.import_private_key_mnemonic_error.zeroize();
         self.import_with_bip39_passphrase.zeroize();
+        self.decrypt_wallet_secret.zeroize();
         self.import_legacy.zeroize();
         self.import_advanced.zeroize();
     }
@@ -872,13 +873,13 @@ impl ModuleT for WalletCreate {
                 if !wallet_import_result.is_pending() {
                     wallet_import_result.mark_pending();
                     let import_result = wallet_import_result.clone();
-                    //#[cfg(target_arch="wasm32")]
+                    let file_handle = rfd::AsyncFileDialog::new()
+                        .add_filter("LegacyWallet", &["kpk"])
+                        .add_filter("GolangWallet", &["json"])
+                        .set_directory("/")
+                        .pick_file();
+                    #[cfg(target_arch="wasm32")]
                     wasm_bindgen_futures::spawn_local(async move {
-                        let file_handle = rfd::AsyncFileDialog::new()
-                            .add_filter("LegacyWallet", &["kpk"])
-                            .set_directory("/")
-                            .pick_file();
-                        
                         if let Some(file_handle) = file_handle.await{
                             log_info!("file_name: {:?}", file_handle.file_name());
                             let file_data = file_handle.read().await;
@@ -887,6 +888,18 @@ impl ModuleT for WalletCreate {
                             import_result.store(Ok(Some(json)));
                         }else{
                             import_result.store(Ok(None));
+                        }
+                    });
+                    #[cfg(not(target_arch="wasm32"))]
+                    spawn_with_result(&import_result, async move {
+                        if let Some(file_handle) = file_handle.await{
+                            log_info!("file_name: {:?}", file_handle.file_name());
+                            let file_data = file_handle.read().await;
+                            let json = String::from_utf8_lossy(&file_data.clone()).to_string();
+                            log_info!("json: {json}");
+                            Ok(Some(json))
+                        }else{
+                            Ok(None)
                         }
                     });
                 }
@@ -910,7 +923,7 @@ impl ModuleT for WalletCreate {
                             }
                         }
                         Err(err) => {
-                            log_error!("{} {}",i18n("Wallet creation error:"), err);
+                            log_error!("{} {}",i18n("Wallet import error:"), err);
                             self.state = State::WalletError(Arc::new(err), State::ImportMnemonicInteractive.into());
                         }
                     }
@@ -971,7 +984,7 @@ impl ModuleT for WalletCreate {
                     })
                     .render(ui);
                 let wallet_file_data = self.context.wallet_file_data.as_ref().unwrap().clone();
-                let wallet_secret = Secret::from(self.context.decrypt_wallet_secret.as_str());
+                let import_secret = Secret::from(self.context.decrypt_wallet_secret.as_str());
                 let wallet_decrypt_result = Payload::<Result<WalletFileDecryptedData>>::new("wallet_file_decrypt_result");
                 if !wallet_decrypt_result.is_pending() {
                     //let wallet = self.runtime.wallet().clone();
@@ -980,23 +993,30 @@ impl ModuleT for WalletCreate {
     
                         match wallet_file_data{
                             WalletFileData::Legacy(data)=>{
-                                let key_data = kaspa_wallet_core::compat::gen0::get_v0_keydata(&data, &wallet_secret)?;
+                                let key_data = kaspa_wallet_core::compat::gen0::get_v0_keydata(&data, &import_secret)?;
                                 Ok(WalletFileDecryptedData::Legacy(key_data.mnemonic.clone()))
                             }
                             WalletFileData::GoWallet(data)=>{
-                                Ok(WalletFileDecryptedData::GoWallet(data))
+                                let mnemonic = match data {
+                                    WalletType::SingleV0(data)=>{
+                                        kaspa_wallet_core::compat::gen1::decrypt_mnemonic(
+                                            data.num_threads,
+                                            data.encrypted_mnemonic,
+                                            import_secret.as_ref()
+                                        )?
+                                    }
+                                };
+                                Ok(WalletFileDecryptedData::Core(mnemonic))
                             }
                             WalletFileData::Core(_data)=>{
-                                // let key_data = kaspa_wallet_core::compat::gen1::get_keydata(data, &wallet_secret)?;
-                                // Ok(WalletFileDecryptedData::Legacy(key_data.mnemonic))
-                                Err(Error::custom("WalletFileData::Core TODO:"))
+                                Err(Error::custom("Core wallet import not supported yet."))
                             }
                         }
-                        
                     })
                 }
 
                 if let Some(result) = wallet_decrypt_result.take() {
+                    self.context.decrypt_wallet_secret.zeroize(); 
                     match result {
                         Ok(wallet_file_decrypted_data) => {
                             match wallet_file_decrypted_data{
@@ -1007,11 +1027,8 @@ impl ModuleT for WalletCreate {
                                     self.context.import_private_key_mnemonic = mnemonic;
                                     self.state = State::WalletName;
                                 }
-                                WalletFileDecryptedData::GoWallet(data)=>{
-                                    
-                                }
                                 WalletFileDecryptedData::Core(mnemonic)=>{
-                                    let size = mnemonic.trim().split(" ").collect::<Vec<_>>().len();
+                                    let size = mnemonic.trim().split(' ').collect::<Vec<_>>().len();
                                     match size{
                                         24|12=>{
                                             if size == 12 {
@@ -1020,7 +1037,7 @@ impl ModuleT for WalletCreate {
                                                 self.context.word_count = WordCount::Words24;
                                             }
                                             self.context.import_legacy = false;
-                                            self.context.import_with_bip39_passphrase = true;
+                                            self.context.import_with_bip39_passphrase = false;
                                             self.context.import_private_key_mnemonic = mnemonic;
                                             self.state = State::WalletName;
                                         }
@@ -1153,7 +1170,6 @@ impl ModuleT for WalletCreate {
                     }
                 }
             }
-
             State::CreateWalletConfirm => {
                 // - TODO: present summary information
                 self.state = State::CreateWallet;
@@ -1242,9 +1258,8 @@ impl ModuleT for WalletCreate {
                 }
 
             }
-
             State::WalletError(err, back_state) => {
-                let msg = (self.context.import_private_key || self.context.import_private_key_file).then_some(i18n("Error importing a wallet")).unwrap_or(i18n("Error creating a wallet"));
+                let msg = if self.context.import_private_key || self.context.import_private_key_file{i18n("Error importing a wallet")}else{i18n("Error creating a wallet")};
                 Panel::new(self)
                 .with_caption(i18n("Error"))
                 .with_header(move |this,ui| {
