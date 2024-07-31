@@ -63,7 +63,7 @@ dependencies = [
  "futures-lite 1.13.0",
  "once_cell",
  "serde",
- "zbus",
+ "zbus 3.15.2",
 ]
 
 [[package]]
@@ -313,6 +313,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
 
 [[package]]
+name = "ashpd"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd884d7c72877a94102c3715f3b1cd09ff4fac28221add3e57cfbe25c236d093"
+dependencies = [
+ "async-fs 2.1.2",
+ "async-net",
+ "enumflags2",
+ "futures-channel",
+ "futures-util",
+ "rand",
+ "serde",
+ "serde_repr",
+ "url",
+ "zbus 4.4.0",
+]
+
+[[package]]
 name = "async-attributes"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -330,6 +348,18 @@ checksum = "7c48ccdbf6ca6b121e0f586cbc0e73ae440e56c67c30fa0873b4e110d9c26d2b"
 dependencies = [
  "event-listener 2.5.3",
  "futures-core",
+]
+
+[[package]]
+name = "async-broadcast"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20cd0e2e25ea8e5f7e9df04578dc6cf5c83577fd09b1a46aaf5c85e1c33f2a7e"
+dependencies = [
+ "event-listener 5.3.1",
+ "event-listener-strategy",
+ "futures-core",
+ "pin-project-lite",
 ]
 
 [[package]]
@@ -378,6 +408,17 @@ dependencies = [
  "autocfg",
  "blocking",
  "futures-lite 1.13.0",
+]
+
+[[package]]
+name = "async-fs"
+version = "2.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebcd09b382f40fcd159c2d695175b2ae620ffa5f3bd6f664131efff4e8b9e04a"
+dependencies = [
+ "async-lock 3.4.0",
+ "blocking",
+ "futures-lite 2.3.0",
 ]
 
 [[package]]
@@ -455,6 +496,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-net"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b948000fad4873c1c9339d60f2623323a0cfd3816e5181033c6a5cb68b2accf7"
+dependencies = [
+ "async-io 2.3.3",
+ "blocking",
+ "futures-lite 2.3.0",
+]
+
+[[package]]
 name = "async-once-cell"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -475,6 +527,26 @@ dependencies = [
  "futures-lite 1.13.0",
  "rustix 0.38.34",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "async-process"
+version = "2.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7eda79bbd84e29c2b308d1dc099d7de8dcc7035e48f4bf5dc4a531a44ff5e2a"
+dependencies = [
+ "async-channel 2.3.1",
+ "async-io 2.3.3",
+ "async-lock 3.4.0",
+ "async-signal",
+ "async-task",
+ "blocking",
+ "cfg-if 1.0.0",
+ "event-listener 5.3.1",
+ "futures-lite 2.3.0",
+ "rustix 0.38.34",
+ "tracing",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -573,18 +645,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "atk-sys"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "251e0b7d90e33e0ba930891a505a9a35ece37b2dd37a14f3ffc306c13b980009"
-dependencies = [
- "glib-sys",
- "gobject-sys",
- "libc",
- "system-deps",
-]
-
-[[package]]
 name = "atomic-polyfill"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -619,9 +679,9 @@ dependencies = [
  "enumflags2",
  "serde",
  "static_assertions",
- "zbus",
- "zbus_names",
- "zvariant",
+ "zbus 3.15.2",
+ "zbus_names 2.6.1",
+ "zvariant 3.15.2",
 ]
 
 [[package]]
@@ -633,7 +693,7 @@ dependencies = [
  "atspi-common",
  "atspi-proxies",
  "futures-lite 1.13.0",
- "zbus",
+ "zbus 3.15.2",
 ]
 
 [[package]]
@@ -644,7 +704,7 @@ checksum = "6495661273703e7a229356dcbe8c8f38223d697aacfaf0e13590a9ac9977bb52"
 dependencies = [
  "atspi-common",
  "serde",
- "zbus",
+ "zbus 3.15.2",
 ]
 
 [[package]]
@@ -987,16 +1047,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cairo-sys-rs"
-version = "0.18.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "685c9fa8e590b8b3d678873528d83411db17242a73fccaed827770ea0fedda51"
-dependencies = [
- "libc",
- "system-deps",
-]
-
-[[package]]
 name = "calloop"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1074,16 +1124,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "738b8d467867f80a71351933f70461f5b56f24d5c93e0cf216e59229c968d330"
 dependencies = [
  "cipher",
-]
-
-[[package]]
-name = "cfg-expr"
-version = "0.15.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d067ad48b8650848b989a59a86c6c36a995d02d2bf778d45c3c5d57bc2718f02"
-dependencies = [
- "smallvec",
- "target-lexicon",
 ]
 
 [[package]]
@@ -1811,7 +1851,7 @@ dependencies = [
  "objc",
  "parking_lot",
  "percent-encoding",
- "raw-window-handle",
+ "raw-window-handle 0.5.2",
  "ron",
  "serde",
  "static_assertions",
@@ -1866,7 +1906,7 @@ dependencies = [
  "arboard",
  "egui",
  "log",
- "raw-window-handle",
+ "raw-window-handle 0.5.2",
  "serde",
  "smithay-clipboard",
  "web-time",
@@ -1945,6 +1985,12 @@ checksum = "b45de904aa0b010bce2ab45264d0631681847fa7b6f2eaa7dab7619943bc4f59"
 dependencies = [
  "cfg-if 1.0.0",
 ]
+
+[[package]]
+name = "endi"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3d8a32ae18130a3c84dd492d4215c3d913c3b07c6b63c2eb3eb7ff1101ab7bf"
 
 [[package]]
 name = "enum-map"
@@ -2370,36 +2416,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gdk-pixbuf-sys"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f9839ea644ed9c97a34d129ad56d38a25e6756f99f3a88e15cd39c20629caf7"
-dependencies = [
- "gio-sys",
- "glib-sys",
- "gobject-sys",
- "libc",
- "system-deps",
-]
-
-[[package]]
-name = "gdk-sys"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31ff856cb3386dae1703a920f803abafcc580e9b5f711ca62ed1620c25b51ff2"
-dependencies = [
- "cairo-sys-rs",
- "gdk-pixbuf-sys",
- "gio-sys",
- "glib-sys",
- "gobject-sys",
- "libc",
- "pango-sys",
- "pkg-config",
- "system-deps",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2440,19 +2456,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40ecd4077b5ae9fd2e9e169b102c6c330d0605168eb0e8bf79952b256dbefffd"
 
 [[package]]
-name = "gio-sys"
-version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37566df850baf5e4cb0dfb78af2e4b9898d817ed9263d1090a2df958c64737d2"
-dependencies = [
- "glib-sys",
- "gobject-sys",
- "libc",
- "system-deps",
- "winapi",
-]
-
-[[package]]
 name = "gl_generator"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2461,16 +2464,6 @@ dependencies = [
  "khronos_api",
  "log",
  "xml-rs",
-]
-
-[[package]]
-name = "glib-sys"
-version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "063ce2eb6a8d0ea93d2bf8ba1957e78dbab6be1c2220dd3daca57d5a9d869898"
-dependencies = [
- "libc",
- "system-deps",
 ]
 
 [[package]]
@@ -2520,7 +2513,7 @@ dependencies = [
  "libloading 0.7.4",
  "objc2 0.3.0-beta.3.patch-leaks.3",
  "once_cell",
- "raw-window-handle",
+ "raw-window-handle 0.5.2",
  "wayland-sys 0.30.1",
  "windows-sys 0.45.0",
  "x11-dl",
@@ -2534,7 +2527,7 @@ checksum = "629a873fc04062830bfe8f97c03773bcd7b371e23bcc465d0a61448cd1588fa4"
 dependencies = [
  "cfg_aliases 0.1.1",
  "glutin",
- "raw-window-handle",
+ "raw-window-handle 0.5.2",
  "winit",
 ]
 
@@ -2565,35 +2558,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef89398e90033fc6bc65e9bd42fd29bbbfd483bda5b56dc5562f455550618165"
 dependencies = [
  "gl_generator",
-]
-
-[[package]]
-name = "gobject-sys"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0850127b514d1c4a4654ead6dedadb18198999985908e6ffe4436f53c785ce44"
-dependencies = [
- "glib-sys",
- "libc",
- "system-deps",
-]
-
-[[package]]
-name = "gtk-sys"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "771437bf1de2c1c0b496c11505bdf748e26066bbe942dfc8f614c9460f6d7722"
-dependencies = [
- "atk-sys",
- "cairo-sys-rs",
- "gdk-pixbuf-sys",
- "gdk-sys",
- "gio-sys",
- "glib-sys",
- "gobject-sys",
- "libc",
- "pango-sys",
- "system-deps",
 ]
 
 [[package]]
@@ -3227,7 +3191,6 @@ dependencies = [
 [[package]]
 name = "kaspa-addresses"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "borsh",
  "js-sys",
@@ -3242,7 +3205,6 @@ dependencies = [
 [[package]]
 name = "kaspa-addressmanager"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "borsh",
  "igd-next",
@@ -3264,7 +3226,6 @@ dependencies = [
 [[package]]
 name = "kaspa-alloc"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "mimalloc",
 ]
@@ -3272,7 +3233,6 @@ dependencies = [
 [[package]]
 name = "kaspa-bip32"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "borsh",
  "bs58",
@@ -3299,7 +3259,6 @@ dependencies = [
 [[package]]
 name = "kaspa-cli"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3345,7 +3304,6 @@ dependencies = [
 [[package]]
 name = "kaspa-connectionmanager"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "duration-string",
  "futures-util",
@@ -3363,7 +3321,6 @@ dependencies = [
 [[package]]
 name = "kaspa-consensus"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "arc-swap",
  "async-channel 2.3.1",
@@ -3403,7 +3360,6 @@ dependencies = [
 [[package]]
 name = "kaspa-consensus-client"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "ahash",
  "cfg-if 1.0.0",
@@ -3432,7 +3388,6 @@ dependencies = [
 [[package]]
 name = "kaspa-consensus-core"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3467,7 +3422,6 @@ dependencies = [
 [[package]]
 name = "kaspa-consensus-notify"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "cfg-if 1.0.0",
@@ -3487,7 +3441,6 @@ dependencies = [
 [[package]]
 name = "kaspa-consensus-wasm"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "cfg-if 1.0.0",
  "faster-hex 0.6.1",
@@ -3512,7 +3465,6 @@ dependencies = [
 [[package]]
 name = "kaspa-consensusmanager"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "duration-string",
  "futures",
@@ -3531,7 +3483,6 @@ dependencies = [
 [[package]]
 name = "kaspa-core"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "cfg-if 1.0.0",
  "ctrlc",
@@ -3550,7 +3501,6 @@ dependencies = [
 [[package]]
 name = "kaspa-daemon"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3573,7 +3523,6 @@ dependencies = [
 [[package]]
 name = "kaspa-database"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "bincode",
  "enum-primitive-derive",
@@ -3596,7 +3545,6 @@ dependencies = [
 [[package]]
 name = "kaspa-grpc-client"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "async-stream",
@@ -3628,7 +3576,6 @@ dependencies = [
 [[package]]
 name = "kaspa-grpc-core"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "async-stream",
@@ -3658,7 +3605,6 @@ dependencies = [
 [[package]]
 name = "kaspa-grpc-server"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "async-stream",
@@ -3693,7 +3639,6 @@ dependencies = [
 [[package]]
 name = "kaspa-hashes"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "blake2b_simd",
  "borsh",
@@ -3712,7 +3657,6 @@ dependencies = [
 [[package]]
 name = "kaspa-index-core"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "async-trait",
@@ -3732,7 +3676,6 @@ dependencies = [
 [[package]]
 name = "kaspa-index-processor"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "async-trait",
@@ -3758,7 +3701,6 @@ dependencies = [
 [[package]]
 name = "kaspa-math"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "borsh",
  "faster-hex 0.6.1",
@@ -3778,7 +3720,6 @@ dependencies = [
 [[package]]
 name = "kaspa-merkle"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "kaspa-hashes",
 ]
@@ -3786,7 +3727,6 @@ dependencies = [
 [[package]]
 name = "kaspa-metrics-core"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3803,7 +3743,6 @@ dependencies = [
 [[package]]
 name = "kaspa-mining"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "futures-util",
  "itertools 0.11.0",
@@ -3828,7 +3767,6 @@ dependencies = [
 [[package]]
 name = "kaspa-mining-errors"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "kaspa-consensus-core",
  "thiserror",
@@ -3837,7 +3775,6 @@ dependencies = [
 [[package]]
 name = "kaspa-muhash"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "kaspa-hashes",
  "kaspa-math",
@@ -3978,7 +3915,6 @@ dependencies = [
 [[package]]
 name = "kaspa-notify"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "async-trait",
@@ -4010,7 +3946,6 @@ dependencies = [
 [[package]]
 name = "kaspa-p2p-flows"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4042,7 +3977,6 @@ dependencies = [
 [[package]]
 name = "kaspa-p2p-lib"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "borsh",
  "ctrlc",
@@ -4073,7 +4007,6 @@ dependencies = [
 [[package]]
 name = "kaspa-perf-monitor"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "kaspa-core",
  "log",
@@ -4086,7 +4019,6 @@ dependencies = [
 [[package]]
 name = "kaspa-pow"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "js-sys",
  "kaspa-consensus-client",
@@ -4102,7 +4034,6 @@ dependencies = [
 [[package]]
 name = "kaspa-rpc-core"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "async-trait",
@@ -4144,7 +4075,6 @@ dependencies = [
 [[package]]
 name = "kaspa-rpc-macros"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-error",
@@ -4157,7 +4087,6 @@ dependencies = [
 [[package]]
 name = "kaspa-rpc-service"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-trait",
  "kaspa-addresses",
@@ -4187,7 +4116,6 @@ dependencies = [
 [[package]]
 name = "kaspa-txscript"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "blake2b_simd",
  "borsh",
@@ -4218,7 +4146,6 @@ dependencies = [
 [[package]]
 name = "kaspa-txscript-errors"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "secp256k1",
  "thiserror",
@@ -4227,7 +4154,6 @@ dependencies = [
 [[package]]
 name = "kaspa-utils"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "borsh",
@@ -4255,7 +4181,6 @@ dependencies = [
 [[package]]
 name = "kaspa-utils-tower"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "cfg-if 1.0.0",
  "futures",
@@ -4270,7 +4195,6 @@ dependencies = [
 [[package]]
 name = "kaspa-utxoindex"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "futures",
  "kaspa-consensus-core",
@@ -4290,7 +4214,6 @@ dependencies = [
 [[package]]
 name = "kaspa-wallet-core"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "aes",
  "ahash",
@@ -4336,7 +4259,6 @@ dependencies = [
  "kaspa-wasm-core",
  "kaspa-wrpc-client",
  "kaspa-wrpc-wasm",
- "lazy_static",
  "md-5",
  "pad",
  "pbkdf2",
@@ -4369,7 +4291,6 @@ dependencies = [
 [[package]]
 name = "kaspa-wallet-keys"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-trait",
  "borsh",
@@ -4402,7 +4323,6 @@ dependencies = [
 [[package]]
 name = "kaspa-wallet-macros"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "convert_case 0.5.0",
  "proc-macro-error",
@@ -4416,7 +4336,6 @@ dependencies = [
 [[package]]
 name = "kaspa-wasm-core"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "faster-hex 0.6.1",
  "hexplay",
@@ -4428,7 +4347,6 @@ dependencies = [
 [[package]]
 name = "kaspa-wrpc-client"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-std",
  "async-trait",
@@ -4464,7 +4382,6 @@ dependencies = [
 [[package]]
 name = "kaspa-wrpc-server"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-trait",
  "borsh",
@@ -4493,7 +4410,6 @@ dependencies = [
 [[package]]
 name = "kaspa-wrpc-wasm"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "ahash",
  "async-std",
@@ -4523,7 +4439,6 @@ dependencies = [
 [[package]]
 name = "kaspad"
 version = "0.14.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=omega#762cb9fffef6ef5b441b9ce5933cd415701c9f99"
 dependencies = [
  "async-channel 2.3.1",
  "clap 4.5.11",
@@ -5081,7 +4996,7 @@ dependencies = [
  "jni-sys",
  "ndk-sys",
  "num_enum 0.5.11",
- "raw-window-handle",
+ "raw-window-handle 0.5.2",
  "thiserror",
 ]
 
@@ -5171,6 +5086,19 @@ dependencies = [
  "bitflags 2.6.0",
  "cfg-if 1.0.0",
  "cfg_aliases 0.1.1",
+ "libc",
+ "memoffset 0.9.1",
+]
+
+[[package]]
+name = "nix"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71e2746dc3a24dd78b3cfcb7be93368c6de9963d30f43a6a73998a9cf4b17b46"
+dependencies = [
+ "bitflags 2.6.0",
+ "cfg-if 1.0.0",
+ "cfg_aliases 0.2.1",
  "libc",
  "memoffset 0.9.1",
 ]
@@ -5686,18 +5614,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pango-sys"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "436737e391a843e5933d6d9aa102cb126d501e815b83601365a948a518555dc5"
-dependencies = [
- "glib-sys",
- "gobject-sys",
- "libc",
- "system-deps",
-]
-
-[[package]]
 name = "parking"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5908,6 +5824,12 @@ dependencies = [
  "tracing",
  "windows-sys 0.52.0",
 ]
+
+[[package]]
+name = "pollster"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22686f4785f02a4fcc856d3b3bb19bf6c8160d103f7a99cc258bddd0251dc7f2"
 
 [[package]]
 name = "poly1305"
@@ -6145,6 +6067,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2ff9a1f06a88b01621b7ae906ef0211290d1c8a168a15542486a8f61c0833b9"
 
 [[package]]
+name = "raw-window-handle"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20675572f6f24e9e76ef639bc5552774ed45f1c30e2951e1e99c59888861c539"
+
+[[package]]
 name = "rayon"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6296,21 +6224,21 @@ dependencies = [
 
 [[package]]
 name = "rfd"
-version = "0.12.1"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c9e7b57df6e8472152674607f6cc68aa14a748a3157a857a94f516e11aeacc2"
+checksum = "25a73a7337fc24366edfca76ec521f51877b114e42dab584008209cca6719251"
 dependencies = [
+ "ashpd",
  "block",
  "dispatch",
- "glib-sys",
- "gobject-sys",
- "gtk-sys",
  "js-sys",
  "log",
  "objc",
  "objc-foundation",
  "objc_id",
- "raw-window-handle",
+ "pollster",
+ "raw-window-handle 0.6.2",
+ "urlencoding",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -7122,25 +7050,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "system-deps"
-version = "6.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3e535eb8dded36d55ec13eddacd30dec501792ff23a0b1682c38601b8cf2349"
-dependencies = [
- "cfg-expr",
- "heck",
- "pkg-config",
- "toml",
- "version-compare",
-]
-
-[[package]]
-name = "target-lexicon"
-version = "0.12.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4873307b7c257eddcb50c9bedf158eb669578359fb28428bef438fec8e6ba7c2"
-
-[[package]]
 name = "tempfile"
 version = "3.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7724,7 +7633,14 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
+
+[[package]]
+name = "urlencoding"
+version = "2.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
 
 [[package]]
 name = "usvg"
@@ -7811,12 +7727,6 @@ dependencies = [
  "rustversion",
  "time",
 ]
-
-[[package]]
-name = "version-compare"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "852e951cb7832cb45cb1169900d19760cfa39b82bc0ea9c0e5a14ae88411c98b"
 
 [[package]]
 name = "version_check"
@@ -8040,7 +7950,7 @@ dependencies = [
  "log",
  "ndk-context",
  "objc",
- "raw-window-handle",
+ "raw-window-handle 0.5.2",
  "url",
  "web-sys",
 ]
@@ -8366,7 +8276,7 @@ dependencies = [
  "once_cell",
  "orbclient",
  "percent-encoding",
- "raw-window-handle",
+ "raw-window-handle 0.5.2",
  "redox_syscall 0.3.5",
  "smithay-client-toolkit",
  "wasm-bindgen",
@@ -8916,12 +8826,12 @@ version = "3.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "675d170b632a6ad49804c8cf2105d7c31eddd3312555cffd4b740e08e97c25e6"
 dependencies = [
- "async-broadcast",
+ "async-broadcast 0.5.1",
  "async-executor",
- "async-fs",
+ "async-fs 1.6.0",
  "async-io 1.13.0",
  "async-lock 2.8.0",
- "async-process",
+ "async-process 1.8.1",
  "async-recursion",
  "async-task",
  "async-trait",
@@ -8946,9 +8856,47 @@ dependencies = [
  "uds_windows",
  "winapi",
  "xdg-home",
- "zbus_macros",
- "zbus_names",
- "zvariant",
+ "zbus_macros 3.15.2",
+ "zbus_names 2.6.1",
+ "zvariant 3.15.2",
+]
+
+[[package]]
+name = "zbus"
+version = "4.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb97012beadd29e654708a0fdb4c84bc046f537aecfde2c3ee0a9e4b4d48c725"
+dependencies = [
+ "async-broadcast 0.7.1",
+ "async-executor",
+ "async-fs 2.1.2",
+ "async-io 2.3.3",
+ "async-lock 3.4.0",
+ "async-process 2.2.3",
+ "async-recursion",
+ "async-task",
+ "async-trait",
+ "blocking",
+ "enumflags2",
+ "event-listener 5.3.1",
+ "futures-core",
+ "futures-sink",
+ "futures-util",
+ "hex",
+ "nix 0.29.0",
+ "ordered-stream",
+ "rand",
+ "serde",
+ "serde_repr",
+ "sha1",
+ "static_assertions",
+ "tracing",
+ "uds_windows",
+ "windows-sys 0.52.0",
+ "xdg-home",
+ "zbus_macros 4.4.0",
+ "zbus_names 3.0.0",
+ "zvariant 4.2.0",
 ]
 
 [[package]]
@@ -8962,7 +8910,20 @@ dependencies = [
  "quote",
  "regex",
  "syn 1.0.109",
- "zvariant_utils",
+ "zvariant_utils 1.0.1",
+]
+
+[[package]]
+name = "zbus_macros"
+version = "4.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "267db9407081e90bbfa46d841d3cbc60f59c0351838c4bc65199ecd79ab1983e"
+dependencies = [
+ "proc-macro-crate 3.1.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.72",
+ "zvariant_utils 2.1.0",
 ]
 
 [[package]]
@@ -8973,7 +8934,18 @@ checksum = "437d738d3750bed6ca9b8d423ccc7a8eb284f6b1d6d4e225a0e4e6258d864c8d"
 dependencies = [
  "serde",
  "static_assertions",
- "zvariant",
+ "zvariant 3.15.2",
+]
+
+[[package]]
+name = "zbus_names"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b9b1fef7d021261cc16cba64c351d291b715febe0fa10dc3a443ac5a5022e6c"
+dependencies = [
+ "serde",
+ "static_assertions",
+ "zvariant 4.2.0",
 ]
 
 [[package]]
@@ -9023,7 +8995,21 @@ dependencies = [
  "libc",
  "serde",
  "static_assertions",
- "zvariant_derive",
+ "zvariant_derive 3.15.2",
+]
+
+[[package]]
+name = "zvariant"
+version = "4.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2084290ab9a1c471c38fc524945837734fbf124487e105daec2bb57fd48c81fe"
+dependencies = [
+ "endi",
+ "enumflags2",
+ "serde",
+ "static_assertions",
+ "url",
+ "zvariant_derive 4.2.0",
 ]
 
 [[package]]
@@ -9036,7 +9022,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
- "zvariant_utils",
+ "zvariant_utils 1.0.1",
+]
+
+[[package]]
+name = "zvariant_derive"
+version = "4.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73e2ba546bda683a90652bac4a279bc146adad1386f25379cf73200d2002c449"
+dependencies = [
+ "proc-macro-crate 3.1.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.72",
+ "zvariant_utils 2.1.0",
 ]
 
 [[package]]
@@ -9048,4 +9047,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "zvariant_utils"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c51bcff7cc3dbb5055396bcf774748c3dab426b4b8659046963523cee4808340"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.72",
 ]

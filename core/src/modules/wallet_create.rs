@@ -370,7 +370,6 @@ impl ModuleT for WalletCreate {
                     })
                     .render(ui);
             }
-
             State::ImportSelection => {
                 let submit = Self::import_selection::<State>(&mut self.state,
                     &mut self.context.word_count,
@@ -387,8 +386,6 @@ impl ModuleT for WalletCreate {
                     self.focus.next(Focus::WalletName);
                 }
             }
-
-
             State::WalletName => {
 
                 let wallet_exists = Rc::new(RefCell::new(false));
@@ -919,7 +916,7 @@ impl ModuleT for WalletCreate {
                                     }
                                 }
                             }else{
-                                //
+                                self.state = State::KeySelection;
                             }
                         }
                         Err(err) => {
@@ -943,9 +940,14 @@ impl ModuleT for WalletCreate {
                     ui.label(" ");
                 })
                 .with_body(|this, ui|{
-                    ui.label("File contents:");
-                    ui.label(data.to_string());
-                    ui.label(" ");
+                    if core.settings.developer.enable {
+                        CollapsingHeader::new(i18n("File contents"))
+                            .default_open(false)
+                            .show_unindented(ui, |ui| {
+                                ui.label(data.to_string());
+                                ui.label(" ");
+                            });
+                    }
                     TextEditor::new(
                         &mut this.context.decrypt_wallet_secret,
                         &mut this.focus,
@@ -966,6 +968,15 @@ impl ModuleT for WalletCreate {
                     ui.label(" ");
                     if ui.large_button_enabled(this.context.decrypt_wallet_secret.is_not_empty(), i18n("Decrypt")).clicked(){
                         this.state = State::DecryptWalletFile;
+                    }
+                    ui.label(" ");
+                    if ui.large_button(i18n("Cancel")).clicked(){
+                        this.state = State::Start;
+                        this.context.decrypt_wallet_secret.zeroize();
+                        this.context.wallet_file_data = None;
+                        if core.has_stack() {
+                            core.back();
+                        }
                     }
                 })
                 .render(ui);
