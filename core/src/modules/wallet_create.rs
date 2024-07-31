@@ -878,10 +878,9 @@ impl ModuleT for WalletCreate {
                     #[cfg(target_arch="wasm32")]
                     wasm_bindgen_futures::spawn_local(async move {
                         if let Some(file_handle) = file_handle.await{
-                            log_info!("file_name: {:?}", file_handle.file_name());
                             let file_data = file_handle.read().await;
                             let json = String::from_utf8_lossy(&file_data.clone()).to_string();
-                            log_info!("json: {json}");
+                            log_trace!("json: {json}");
                             import_result.store(Ok(Some(json)));
                         }else{
                             import_result.store(Ok(None));
@@ -890,10 +889,9 @@ impl ModuleT for WalletCreate {
                     #[cfg(not(target_arch="wasm32"))]
                     spawn_with_result(&import_result, async move {
                         if let Some(file_handle) = file_handle.await{
-                            log_info!("file_name: {:?}", file_handle.file_name());
                             let file_data = file_handle.read().await;
                             let json = String::from_utf8_lossy(&file_data.clone()).to_string();
-                            log_info!("json: {json}");
+                            log_trace!("json: {json}");
                             Ok(Some(json))
                         }else{
                             Ok(None)
