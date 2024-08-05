@@ -11,8 +11,8 @@ impl Transactions {
 
     pub fn render(&mut self, ui: &mut Ui, core : &mut Core, rc : &RenderContext) {
         let RenderContext { account, network_type, current_daa_score, .. } = rc;
-
-        egui::ScrollArea::vertical().auto_shrink([false,false]).show(ui, |ui| {
+        let max_height = ui.available_height() - (ui.fonts(|fonts|RichText::new("YWgy").font_height(fonts, ui.style())).at_least(ui.spacing().interact_size.y) * 2.0 + 5.0);
+        egui::ScrollArea::vertical().max_height(max_height).auto_shrink([false,false]).show(ui, |ui| {
             let transactions = account.transactions();
             if transactions.is_empty() {
                 ui.vertical_centered(|ui| {

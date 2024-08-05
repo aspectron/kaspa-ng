@@ -1268,17 +1268,6 @@ impl Core {
             .expect("account collection")
             .extend_unchecked(accounts.clone());
 
-        if let Some(first) = accounts.first() {
-            let device = self.device().clone();
-            let wallet = self.wallet();
-            self.get_mut::<modules::AccountManager>().select(
-                wallet,
-                Some(first.clone()),
-                device,
-                true,
-            );
-        }
-
         let account_ids = accounts
             .iter()
             .map(|account| account.id())
@@ -1289,6 +1278,17 @@ impl Core {
             wallet.accounts_activate(Some(account_ids)).await?;
             Ok(())
         });
+
+        if let Some(first) = accounts.first() {
+            let device = self.device().clone();
+            let wallet = self.wallet();
+            self.get_mut::<modules::AccountManager>().select(
+                wallet,
+                Some(first.clone()),
+                device,
+                true,
+            );
+        }
 
         accounts
     }
