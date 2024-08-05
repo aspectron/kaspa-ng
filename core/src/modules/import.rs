@@ -182,15 +182,16 @@ impl ModuleT for Import {
                                 self.wallet_secret.zeroize();
                                 let wallet = self.runtime.wallet().clone();
                                 let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
-
+                                self.state = State::Unlocking;
+                                
                                 spawn_with_result(&unlock_result, async move {
-
+                                    sleep(Duration::from_secs(2)).await;
                                     wallet.wallet_open(wallet_secret, wallet_name, true, true).await?;
                                     // wallet.load(secret, wallet_name).await?;
                                     Ok(())
                                 });
 
-                                self.state = State::Unlocking;
+                                
                             }
 
                             ui.label(" ");

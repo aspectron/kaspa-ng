@@ -42,6 +42,7 @@ pub use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub use workflow_core::enums::Describe;
 pub use workflow_core::extensions::is_not_empty::*;
 pub use workflow_core::task;
+pub use workflow_core::task::{sleep, yield_executor};
 pub use workflow_core::time::{unixtime_as_millis_f64, Instant};
 pub use workflow_dom::utils::*;
 pub use workflow_http as http;

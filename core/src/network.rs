@@ -121,15 +121,15 @@ impl From<&Network> for Params {
     }
 }
 
-impl From<Network> for NetworkParams {
+impl From<Network> for &'static NetworkParams {
     fn from(network: Network) -> Self {
-        NetworkId::from(network).into()
+        NetworkParams::from(NetworkId::from(network))
     }
 }
 
-impl From<&Network> for NetworkParams {
+impl From<&Network> for &'static NetworkParams {
     fn from(network: &Network) -> Self {
-        NetworkId::from(network).into()
+        NetworkParams::from(NetworkId::from(network))
     }
 }
 
