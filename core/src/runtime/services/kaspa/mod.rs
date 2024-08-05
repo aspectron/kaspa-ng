@@ -169,7 +169,7 @@ impl KaspaService {
                         if resolver_urls.is_none() {
                             Some(Resolver::default())
                         } else {
-                            Some(Resolver::new(resolver_urls.clone().unwrap()))
+                            Some(Resolver::new(resolver_urls.clone(), false))
                         }
                     }
                 };
