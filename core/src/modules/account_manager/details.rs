@@ -16,7 +16,7 @@ impl Details {
 
             let descriptor = account.descriptor();
 
-            descriptor.render(ui);
+            descriptor.render(ui, account.network());
             ui.add_space(8.);
 
             let mut address_kind : Option<NewAddressKind> = None;
