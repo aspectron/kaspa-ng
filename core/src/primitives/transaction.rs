@@ -264,7 +264,7 @@ impl Transaction {
                 collapsing_header.show(ui, |ui| {
                     ljb(&content)
                         .padded(15, "Transaction id:", default_color)
-                        .hyperlink(
+                        .transaction_id(
                             ui,
                             &transaction_id,
                             &format!("{explorer}/txs/{transaction_id}"),
@@ -289,7 +289,7 @@ impl Transaction {
                             .map(|addr| addr.to_string())
                             .unwrap_or_else(|| "n/a".to_string());
 
-                        ljb(&content).hyperlink(
+                        ljb(&content).address(
                             ui,
                             &address,
                             &format!("{explorer}/addresses/{address}"),
@@ -306,12 +306,18 @@ impl Transaction {
                                 .label(ui);
                         }
 
-                        ljb(&content)
-                            .text(
-                                &format!("Script: {}", script_public_key.script_as_hex()),
-                                default_color,
-                            )
-                            .label(ui);
+                        ljb(&content).text("Script:", default_color).script(
+                            ui,
+                            &script_public_key.script_as_hex(),
+                            default_color,
+                        );
+
+                        // ljb(&content)
+                        //     .text(
+                        //         &format!("Script: {}", script_public_key.script_as_hex()),
+                        //         default_color,
+                        //     )
+                        //     .label(ui);
                     });
                 });
             }
@@ -432,7 +438,7 @@ impl Transaction {
                 collapsing_header.show(ui, |ui| {
                     ljb(&content)
                         .padded(15, "Transaction id:", default_color)
-                        .hyperlink(
+                        .transaction_id(
                             ui,
                             &transaction_id,
                             &format!("{explorer}/txs/{transaction_id}"),
@@ -494,16 +500,16 @@ impl Transaction {
                             transaction_id,
                             index,
                         } = previous_outpoint;
-
+                        let transaction_id = transaction_id.to_string();
                         ljb(&content)
                             .text(
                                 &format!(
                                     "  {sequence:>2}: {}:{index} SigOps: {sig_op_count}",
-                                    transaction_id
+                                    format_partial_string(&transaction_id, Some(6))
                                 ),
                                 default_color,
                             )
-                            .label(ui);
+                            .with_clipboard_icon(ui, &transaction_id);
                     }
 
                     ljb(&content)
@@ -537,7 +543,7 @@ impl Transaction {
                         match address_info {
                             Ok(address) => {
                                 let address = address.to_string();
-                                ljb(&content).padded(2, "", default_color).hyperlink(
+                                ljb(&content).padded(2, "", default_color).address(
                                     ui,
                                     &address,
                                     &format!("{explorer}/addresses/{address}"),
