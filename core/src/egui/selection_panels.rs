@@ -1,20 +1,76 @@
 use egui::*;
+use std::hash::Hash;
 
-// trait LayoutWithMaxRect{
-//     fn layout_with_max_rect<R>(&mut self, max_rect:Rect, layout:Layout, add_contents: impl FnOnce(&mut Ui) -> R)->InnerResponse<R>;
-// }
+trait UILayoutExt{
+    //fn layout_with_max_rect<R>(&mut self, max_rect:Rect, layout:Layout, add_contents: impl FnOnce(&mut Ui) -> R)->InnerResponse<R>;
+    fn indent_with_size<'c, R>(
+        &mut self,
+        id_source: impl Hash,
+        indent: f32,
+        add_contents: Box<dyn FnOnce(&mut Ui) -> R + 'c>,
+    ) -> InnerResponse<R>;
+}
 
-// impl LayoutWithMaxRect for Ui{
-//     fn layout_with_max_rect<R>(&mut self, max_rect:Rect, layout:Layout, add_contents: impl FnOnce(&mut Ui) -> R)->InnerResponse<R> {
-//         let mut child_ui = self.child_ui(max_rect, layout);
-//         let inner = add_contents(&mut child_ui);
-//         let rect = child_ui.min_rect();
-//         let id = self.advance_cursor_after_rect(rect);
+impl UILayoutExt for Ui{
+    // fn layout_with_max_rect<R>(&mut self, max_rect:Rect, layout:Layout, add_contents: impl FnOnce(&mut Ui) -> R)->InnerResponse<R> {
+    //     let mut child_ui = self.child_ui(max_rect, layout);
+    //     let inner = add_contents(&mut child_ui);
+    //     let rect = child_ui.min_rect();
+    //     let id = self.advance_cursor_after_rect(rect);
 
-//         InnerResponse::new(inner, self.interact(rect, id, Sense::hover()))
+    //     InnerResponse::new(inner, self.interact(rect, id, Sense::hover()))
 
-//     }
-// }
+    // }
+
+    fn indent_with_size<'c, R>(
+        &mut self,
+        id_source: impl Hash,
+        indent: f32,
+        add_contents: Box<dyn FnOnce(&mut Ui) -> R + 'c>,
+    ) -> InnerResponse<R> {
+        assert!(
+            self.layout().is_vertical(),
+            "You can only indent vertical layouts, found {:?}",
+            self.layout()
+        );
+
+        let mut child_rect = self.available_rect_before_wrap();
+        child_rect.min.x += indent;
+
+        let mut child_ui = self.child_ui_with_id_source(child_rect, *self.layout(), id_source);
+        let ret = add_contents(&mut child_ui);
+
+        // let left_vline = self.visuals().indent_has_left_vline;
+        // let end_with_horizontal_line = self.spacing().indent_ends_with_horizontal_line;
+
+        // if left_vline || end_with_horizontal_line {
+        //     if end_with_horizontal_line {
+        //         child_ui.add_space(4.0);
+        //     }
+
+        //     let stroke = self.visuals().widgets.noninteractive.bg_stroke;
+        //     let left_top = child_rect.min - 0.5 * indent * Vec2::X;
+        //     let left_top = self.painter().round_pos_to_pixels(left_top);
+        //     let left_bottom = pos2(left_top.x, child_ui.min_rect().bottom() - 2.0);
+        //     let left_bottom = self.painter().round_pos_to_pixels(left_bottom);
+
+        //     if left_vline {
+        //         // draw a faint line on the left to mark the indented section
+        //         self.painter.line_segment([left_top, left_bottom], stroke);
+        //     }
+
+        //     if end_with_horizontal_line {
+        //         let fudge = 2.0; // looks nicer with button rounding in collapsing headers
+        //         let right_bottom = pos2(child_ui.min_rect().right() - fudge, left_bottom.y);
+        //         self.painter
+        //             .line_segment([left_bottom, right_bottom], stroke);
+        //     }
+        // }
+
+        let response = self.allocate_rect(child_ui.min_rect(), Sense::hover());
+        InnerResponse::new(ret, response)
+    }
+}
 
 type UiBuilderFn = Box<dyn FnOnce(&'_ mut Ui)>;
 type FooterUiBuilderFn<V> = Box<dyn FnOnce(&'_ mut Ui, &'_ mut V)>;
@@ -55,8 +111,11 @@ impl<Value: PartialEq> SelectionPanel<Value> {
         current_value: &mut Value,
     ) -> Response {
         let selected = *current_value == self.value;
-        let selected_bg = Color32::from_rgb(67, 76, 84);
-        let hover_stroke_color = Color32::WHITE;
+        let visuals = ui.visuals();
+        // let selected_bg = Color32::from_rgb(67, 76, 84);
+        // let hover_stroke_color = Color32::WHITE;
+        let selected_bg = visuals.selection.bg_fill;
+        let hover_stroke = visuals.window_stroke;//Color32::WHITE;
         // let mut rect = ui.cursor();
         // rect.set_width(width);
 
@@ -97,9 +156,9 @@ impl<Value: PartialEq> SelectionPanel<Value> {
                     } else {
                         egui_phosphor::bold::DOT_OUTLINE
                     };
-                    ui.label(RichText::new(icon).heading().color(Color32::WHITE));
+                    ui.label(RichText::new(icon).heading());
                     if let Some(build) = self.build_footer {
-                        ui.visuals_mut().override_text_color = Some(Color32::WHITE);
+                        //ui.visuals_mut().override_text_color = Some(Color32::WHITE);
                         (build)(ui);
                     }
                     ui.label(" ");
@@ -116,7 +175,7 @@ impl<Value: PartialEq> SelectionPanel<Value> {
             .inner_margin
             .expand_rect(prepared.content_ui.min_rect());
         if ui.allocate_rect(rect, Sense::hover()).hovered() {
-            prepared.frame = prepared.frame.stroke(Stroke::new(1.0, hover_stroke_color))
+            prepared.frame = prepared.frame.stroke(hover_stroke)
         }
 
         let res = prepared.end(ui);
@@ -188,45 +247,66 @@ impl<Value: PartialEq> SelectionPanels<Value> {
     }
 
     pub fn render(self, ui: &mut Ui, current_value: &mut Value) -> Response {
-        let frame_bg = Color32::from_rgb(17, 19, 24);
-        let text_color = Color32::WHITE;
-        let even_panel_bg = Color32::from_rgb(44, 50, 59);
-        let odd_panel_bg = Color32::from_rgb(54, 63, 71);
+        let visuals = ui.visuals();
+        //let frame_bg = visuals.extreme_bg_color;//Color32::from_rgb(17, 19, 24);
+        let text_color = visuals.text_color();
+        let even_panel_bg = visuals.extreme_bg_color;//Color32::from_rgb(44, 50, 59);
+        let odd_panel_bg = visuals.code_bg_color;//Color32::from_rgb(54, 63, 71);
 
-        let frame = Frame::none()
-            .fill(frame_bg)
-            .rounding(egui::Rounding::same(10.0))
-            .stroke(Stroke::NONE);
+        // let frame = Frame::none()
+        //     .fill(frame_bg)
+        //     .rounding(egui::Rounding::same(if visuals.widgets.hovered.rounding == Rounding::ZERO{0.0}else{10.0}));
 
-        let mut prepared = frame.begin(ui);
+        // let mut prepared = frame.begin(ui);
+
+        let before_wrap_width = ui.available_rect_before_wrap().width();
+        let panel_width = self.panel_min_width.max(
+            self.panel_max_width
+                .min(before_wrap_width / self.panels.len() as f32),
+        );
+        let vertical = self.vertical || (before_wrap_width < (panel_width + 2.0) * 3.0);
+        let panels_width = if vertical{
+            panel_width
+        }else{
+            let mut width = 0.0;
+            let mut available_width = ui.available_rect_before_wrap().width();
+            for _ in 0..self.panels.len() {
+                if (available_width - 2.0) < panel_width {
+                    break;
+                }
+                available_width -= panel_width;
+                width += panel_width;
+            }
+            width
+        };
+
+        let indent = (before_wrap_width - panels_width) / 2.0;
+
         let add_contents = |ui: &mut Ui| {
             let mut responce = ui.label(" ");
             //ui.visuals_mut().override_text_color = Some(Color32::WHITE);
             //ui.button(text)
             {
+                let available_width = ui.available_width() - indent;
                 let title = self.title.into_galley(
                     ui,
                     Some(true),
-                    ui.available_width(),
+                    available_width,
                     TextStyle::Heading,
                 );
-                let rect = ui.cursor().translate(Vec2::splat(10.0));
+                let text_indent = (available_width - title.size().x)/2.0;
+                let rect = ui.cursor().translate(Vec2::new(text_indent, 10.0));
                 ui.allocate_exact_size(
-                    title.size() + Vec2::splat(10.0),
+                    title.size() + Vec2::new(text_indent, 10.0),
                     Sense::focusable_noninteractive(),
                 );
                 title.paint_with_fallback_color(ui.painter(), rect.min, text_color);
             }
+            
 
-            let before_wrap_width = ui.available_rect_before_wrap().width();
-            let panel_width = self.panel_min_width.max(
-                self.panel_max_width
-                    .min(before_wrap_width / self.panels.len() as f32),
-            );
-            let vertical = self.vertical || (before_wrap_width - 2. < panel_width * 3.0);
             // ui.label(format!("before_wrap_width: {before_wrap_width}"));
             // ui.label(format!("panel_width: {panel_width}"));
-            let panels_res = ui.horizontal_wrapped(|ui| {
+            let _panels_res = ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing = Vec2::ZERO;
                 let mut min_height = self.panel_min_height;
                 for (index, panel) in self.panels.into_iter().enumerate() {
@@ -244,22 +324,32 @@ impl<Value: PartialEq> SelectionPanels<Value> {
                 }
             });
 
-            let total_width = panels_res.response.rect.width();
-            ui.allocate_ui_with_layout(
-                egui::vec2(total_width, ui.available_height()),
-                Layout::top_down(Align::Center),
-                |ui| (self.build_footer)(ui, current_value),
-            );
-            ui.label(" ");
-            // ui.label(format!(" vertical: {vertical}"));
-            // ui.label(format!("panels width {}", total_width));
+            // let total_width = panels_res.response.rect.width();
+            // ui.allocate_ui_with_layout(
+            //     egui::vec2(total_width, ui.available_height()),
+            //     Layout::top_down(Align::Center),
+            //     |ui| {
+            //         ui.set_width(total_width);
+            //         (self.build_footer)(ui, current_value)
+            //     }
+            // );
+           
             // ui.label(format!("bottom width {}", b.response.rect.width()));
             // ui.label(format!("ui.min_rect().width() {}", ui.min_rect().width()));
             responce
         };
 
-        let res = add_contents(&mut prepared.content_ui);
-        //prepared.frame = prepared.frame.fill(Color32::GREEN);
-        res | prepared.end(ui)
+        // let res = add_contents(&mut prepared.content_ui);
+        // crate::imports::log_info!("min_width {min_width}, min: {}", prepared.content_ui.min_size().x);
+        // res | prepared.end(ui)
+        
+        let mut response = ui.indent_with_size("selection-panels", indent, Box::new(add_contents)).response;
+        response |= ui.vertical_centered(|ui|{
+            (self.build_footer)(ui, current_value)
+        }).response;
+        ui.label(" ");
+        // ui.label(format!(" vertical: {vertical}"));
+        // ui.label(format!("panels_width {}", panels_width));
+        response
     }
 }

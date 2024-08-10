@@ -111,6 +111,15 @@ enum AddressStatus {
     Invalid(String),
 }
 
+#[derive(PartialEq, Debug, Default)]
+pub enum FeeMode{
+    #[default]
+    None,
+    LowPriority,
+    Economic,
+    Normal,
+}
+
 #[derive(Default)]
 pub struct ManagerContext {
     transfer_to_account : Option<Account>,
@@ -129,6 +138,7 @@ pub struct ManagerContext {
     wallet_secret : String,
     payment_secret : String,
     loading : bool,
+    fee_mode : FeeMode
 }
 
 impl ManagerContext {

@@ -69,6 +69,54 @@ impl<'context> Estimator<'context> {
         }
 
         ui.add_space(8.);
+
+        if core.settings.developer.enable{
+            //let child_ui = ui.child_ui(max_rect, Layout::top_down(Align::Center));
+            let fee_selection = SelectionPanels::new(
+                150.0,
+                180.0,
+                i18n("Miner Fee"),
+                |ui, value|{
+                    ui.label("1 in / 2 outputs, ~1.2 Kg");
+                    ui.label(format!("Fee Mode: {:?}", value));
+                })
+                //.panel_min_height(300.)
+                //.vertical(true)
+                //.add(FeeMode::LowPriority, i18n("Low-priority"), i18n("3 hours or more"))
+                .add_with_footer(FeeMode::LowPriority, i18n("Low-priority"), i18n("3 hours or more"), |ui|{
+                    ui.label("12.88716 µKAS");
+                    ui.label(RichText::new("~0.00000215 USD").strong());
+                    ui.label("9 SOMPI/G");
+                })
+                .add_with_footer(FeeMode::Economic, i18n("Economic"), i18n("~2 hours"), |ui|{
+                    ui.label("15.83525 µKAS");
+                    ui.label(RichText::new("~0.00000264 USD").strong());
+                    ui.label("10 SOMPI/G");
+                })
+                .add_with_footer(FeeMode::Normal, i18n("Normal"), i18n("~30 minutes"), |ui|{
+                    ui.label("20.78334 µKAS");
+                    ui.label(RichText::new("~0.00000347 USD").strong());
+                    ui.label("10 SOMPI/G");
+                });
+                // .add_with_footer(FeeMode::Economic, i18n("Economic"), i18n("~2 hours"), |ui|{
+                //     ui.label("13.83525 µKAS");
+                //     ui.label(RichText::new("~608.83 USD").strong());
+                //     ui.label("10 SOMPI/G");
+                // })
+                // .add_with_footer(FeeMode::Normal, i18n("Normal"), i18n("~30 minutes"), |ui|{
+                //     ui.label("14.78334 µKAS");
+                //     ui.label(RichText::new("~650.56 USD").strong());
+                //     ui.label("10 SOMPI/G");
+                // });
+    
+            if fee_selection.render(ui, &mut self.context.fee_mode).clicked(){
+                log_info!("clicked: self.fee_mode: {:?}", self.context.fee_mode);
+                runtime().toast(UserNotification::success(format!("selection: {:?}", self.context.fee_mode)).short())
+            }
+            ui.add_space(8.);
+        }
+
+
         if ui
             .checkbox(&mut self.context.enable_priority_fees,i18n("Include QoS Priority Fees"))
             // .on_hover_text_at_pointer(i18n("Add priority fees to ensure faster confirmation.\nUseful only if the network is congested."))
