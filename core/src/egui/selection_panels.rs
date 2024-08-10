@@ -1,7 +1,7 @@
 use egui::*;
 use std::hash::Hash;
 
-trait UILayoutExt{
+trait UILayoutExt {
     //fn layout_with_max_rect<R>(&mut self, max_rect:Rect, layout:Layout, add_contents: impl FnOnce(&mut Ui) -> R)->InnerResponse<R>;
     fn indent_with_size<'c, R>(
         &mut self,
@@ -11,7 +11,7 @@ trait UILayoutExt{
     ) -> InnerResponse<R>;
 }
 
-impl UILayoutExt for Ui{
+impl UILayoutExt for Ui {
     // fn layout_with_max_rect<R>(&mut self, max_rect:Rect, layout:Layout, add_contents: impl FnOnce(&mut Ui) -> R)->InnerResponse<R> {
     //     let mut child_ui = self.child_ui(max_rect, layout);
     //     let inner = add_contents(&mut child_ui);
@@ -115,9 +115,9 @@ impl<Value: PartialEq> SelectionPanel<Value> {
         // let selected_bg = Color32::from_rgb(67, 76, 84);
         // let hover_stroke_color = Color32::WHITE;
         let selected_bg = visuals.selection.bg_fill;
-        let hover_stroke = visuals.window_stroke;//Color32::WHITE;
-        // let mut rect = ui.cursor();
-        // rect.set_width(width);
+        let hover_stroke = visuals.window_stroke; //Color32::WHITE;
+                                                  // let mut rect = ui.cursor();
+                                                  // rect.set_width(width);
 
         // ui.painter().rect(
         //     rect,
@@ -250,8 +250,8 @@ impl<Value: PartialEq> SelectionPanels<Value> {
         let visuals = ui.visuals();
         //let frame_bg = visuals.extreme_bg_color;//Color32::from_rgb(17, 19, 24);
         let text_color = visuals.text_color();
-        let even_panel_bg = visuals.extreme_bg_color;//Color32::from_rgb(44, 50, 59);
-        let odd_panel_bg = visuals.code_bg_color;//Color32::from_rgb(54, 63, 71);
+        let even_panel_bg = visuals.extreme_bg_color; //Color32::from_rgb(44, 50, 59);
+        let odd_panel_bg = visuals.code_bg_color; //Color32::from_rgb(54, 63, 71);
 
         // let frame = Frame::none()
         //     .fill(frame_bg)
@@ -265,9 +265,9 @@ impl<Value: PartialEq> SelectionPanels<Value> {
                 .min(before_wrap_width / self.panels.len() as f32),
         );
         let vertical = self.vertical || (before_wrap_width < (panel_width + 2.0) * 3.0);
-        let panels_width = if vertical{
+        let panels_width = if vertical {
             panel_width
-        }else{
+        } else {
             let mut width = 0.0;
             let mut available_width = ui.available_rect_before_wrap().width();
             for _ in 0..self.panels.len() {
@@ -288,13 +288,10 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             //ui.button(text)
             {
                 let available_width = ui.available_width() - indent;
-                let title = self.title.into_galley(
-                    ui,
-                    Some(true),
-                    available_width,
-                    TextStyle::Heading,
-                );
-                let text_indent = (available_width - title.size().x)/2.0;
+                let title =
+                    self.title
+                        .into_galley(ui, Some(true), available_width, TextStyle::Heading);
+                let text_indent = (available_width - title.size().x) / 2.0;
                 let rect = ui.cursor().translate(Vec2::new(text_indent, 10.0));
                 ui.allocate_exact_size(
                     title.size() + Vec2::new(text_indent, 10.0),
@@ -302,7 +299,6 @@ impl<Value: PartialEq> SelectionPanels<Value> {
                 );
                 title.paint_with_fallback_color(ui.painter(), rect.min, text_color);
             }
-            
 
             // ui.label(format!("before_wrap_width: {before_wrap_width}"));
             // ui.label(format!("panel_width: {panel_width}"));
@@ -333,7 +329,7 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             //         (self.build_footer)(ui, current_value)
             //     }
             // );
-           
+
             // ui.label(format!("bottom width {}", b.response.rect.width()));
             // ui.label(format!("ui.min_rect().width() {}", ui.min_rect().width()));
             responce
@@ -342,11 +338,13 @@ impl<Value: PartialEq> SelectionPanels<Value> {
         // let res = add_contents(&mut prepared.content_ui);
         // crate::imports::log_info!("min_width {min_width}, min: {}", prepared.content_ui.min_size().x);
         // res | prepared.end(ui)
-        
-        let mut response = ui.indent_with_size("selection-panels", indent, Box::new(add_contents)).response;
-        response |= ui.vertical_centered(|ui|{
-            (self.build_footer)(ui, current_value)
-        }).response;
+
+        let mut response = ui
+            .indent_with_size("selection-panels", indent, Box::new(add_contents))
+            .response;
+        response |= ui
+            .vertical_centered(|ui| (self.build_footer)(ui, current_value))
+            .response;
         ui.label(" ");
         // ui.label(format!(" vertical: {vertical}"));
         // ui.label(format!("panels_width {}", panels_width));
