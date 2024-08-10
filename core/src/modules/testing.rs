@@ -1,5 +1,4 @@
 use kaspa_bip32::{Mnemonic,WordCount};
-
 use crate::imports::*;
 // use egui_plot::PlotPoint;
 
@@ -12,9 +11,18 @@ pub enum State {
     Unlocking,
 }
 
+#[derive(PartialEq, Debug)]
+pub enum FeeMode{
+    None,
+    LowPriority,
+    Economic,
+    Normal,
+}
+
 pub struct Testing {
     #[allow(dead_code)]
     runtime: Runtime,
+    fee_mode: FeeMode,
     // pub state: State,
     // pub message: Option<String>,
 
@@ -44,6 +52,7 @@ impl Testing {
 
         Self {
             runtime,
+            fee_mode: FeeMode::None,
             // state: State::Select,
             // message: None,
             // graph_data,
@@ -94,6 +103,49 @@ impl ModuleT for Testing {
 
         if ui.large_button("notify info").clicked() {
             runtime().notify(UserNotification::info("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, ").short());
+        }
+
+
+        let fee_selection = SelectionPanels::new(
+            100.0,
+            150.0,
+            i18n("Miner Fee"),
+            |ui, value|{
+                ui.label("1 in / 2 outputs, ~1.2 Kg");
+                ui.label(format!("Fee Mode: {:?}", value));
+            })
+            //.panel_min_height(300.)
+            //.vertical(true)
+            //.add(FeeMode::LowPriority, i18n("Low-priority"), i18n("3 hours or more"))
+            .add_with_footer(FeeMode::LowPriority, i18n("Low-priority"), i18n("3 hours or more"), |ui|{
+                ui.label("12.88716 µKAS");
+                ui.label(RichText::new("~0.00000215 USD").strong());
+                ui.label("9 SOMPI/G");
+            })
+            .add_with_footer(FeeMode::Economic, i18n("Economic"), i18n("~2 hours"), |ui|{
+                ui.label("15.83525 µKAS");
+                ui.label(RichText::new("~0.00000264 USD").strong());
+                ui.label("10 SOMPI/G");
+            })
+            .add_with_footer(FeeMode::Normal, i18n("Normal"), i18n("~30 minutes"), |ui|{
+                ui.label("20.78334 µKAS");
+                ui.label(RichText::new("~0.00000347 USD").strong());
+                ui.label("10 SOMPI/G");
+            });
+            // .add_with_footer(FeeMode::Economic, i18n("Economic"), i18n("~2 hours"), |ui|{
+            //     ui.label("13.83525 µKAS");
+            //     ui.label(RichText::new("~608.83 USD").strong());
+            //     ui.label("10 SOMPI/G");
+            // })
+            // .add_with_footer(FeeMode::Normal, i18n("Normal"), i18n("~30 minutes"), |ui|{
+            //     ui.label("14.78334 µKAS");
+            //     ui.label(RichText::new("~650.56 USD").strong());
+            //     ui.label("10 SOMPI/G");
+            // });
+
+        if fee_selection.render(ui, &mut self.fee_mode).clicked(){
+            log_info!("clicked: self.fee_mode: {:?}", self.fee_mode);
+            runtime().toast(UserNotification::success(format!("selection: {:?}", self.fee_mode)).short())
         }
         
     }
