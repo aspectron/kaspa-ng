@@ -112,32 +112,11 @@ impl<Value: PartialEq> SelectionPanel<Value> {
     ) -> Response {
         let selected = *current_value == self.value;
         let visuals = ui.visuals();
-        // let selected_bg = Color32::from_rgb(67, 76, 84);
-        // let hover_stroke_color = Color32::WHITE;
         let selected_bg = visuals.selection.bg_fill;
-        let hover_stroke = visuals.window_stroke; //Color32::WHITE;
-                                                  // let mut rect = ui.cursor();
-                                                  // rect.set_width(width);
-
-        // ui.painter().rect(
-        //     rect,
-        //     Rounding::ZERO,
-        //     Color32::GRAY,
-        //     Stroke::new(1.0, Color32::GREEN),
-        // );
-
-        // let res = ui.layout_with_max_rect(rect, Layout::top_down(Align::Center), |ui|{
-        //     ui.label(self.title);
-        //     ui.label(self.sub);
-        //     if let Some(build) = self.build_heading{
-        //         (build)(ui);
-        //     }
-        //     ui.checkbox(&mut selected, "");
-        //     if let Some(build) = self.build_footer{
-        //         (build)(ui);
-        //     }
-        // }).response;
-        let frame = Frame::none().fill(if selected { selected_bg } else { bg_color });
+        let hover_stroke = Stroke::new(1.0, visuals.text_color()); //visuals.window_stroke;
+        let frame = Frame::none()
+            .stroke(Stroke::new(1.0, Color32::TRANSPARENT))
+            .fill(if selected { selected_bg } else { bg_color });
         let mut prepared = frame.begin(ui);
 
         let add_contents = |ui: &mut Ui| {
@@ -174,8 +153,9 @@ impl<Value: PartialEq> SelectionPanel<Value> {
             .frame
             .inner_margin
             .expand_rect(prepared.content_ui.min_rect());
-        if ui.allocate_rect(rect, Sense::hover()).hovered() {
-            prepared.frame = prepared.frame.stroke(hover_stroke)
+        if !selected && ui.allocate_rect(rect, Sense::hover()).hovered() {
+            //prepared.frame = prepared.frame.stroke(hover_stroke);
+            prepared.frame = prepared.frame.fill(selected_bg).stroke(hover_stroke);
         }
 
         let res = prepared.end(ui);
@@ -197,6 +177,7 @@ pub struct SelectionPanels<V> {
     pub build_footer: FooterUiBuilderFn<V>,
     pub panel_min_height: f32,
     pub vertical: bool,
+    pub sep_ratio: f32,
 }
 
 impl<Value: PartialEq> SelectionPanels<Value> {
@@ -214,6 +195,7 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             panels: vec![],
             panel_min_height: 0.,
             vertical: false,
+            sep_ratio: 1.0,
         }
     }
     pub fn add(
@@ -245,27 +227,26 @@ impl<Value: PartialEq> SelectionPanels<Value> {
         self.vertical = vertical;
         self
     }
+    pub fn sep_ratio(mut self, sep_ratio: f32) -> Self {
+        self.sep_ratio = sep_ratio;
+        self
+    }
 
     pub fn render(self, ui: &mut Ui, current_value: &mut Value) -> Response {
         let visuals = ui.visuals();
-        //let frame_bg = visuals.extreme_bg_color;//Color32::from_rgb(17, 19, 24);
+        let sep_ratio = self.sep_ratio;
         let text_color = visuals.text_color();
-        let even_panel_bg = visuals.extreme_bg_color; //Color32::from_rgb(44, 50, 59);
-        let odd_panel_bg = visuals.code_bg_color; //Color32::from_rgb(54, 63, 71);
-
-        // let frame = Frame::none()
-        //     .fill(frame_bg)
-        //     .rounding(egui::Rounding::same(if visuals.widgets.hovered.rounding == Rounding::ZERO{0.0}else{10.0}));
-
-        // let mut prepared = frame.begin(ui);
-
+        let bg_color = visuals.code_bg_color;
         let before_wrap_width = ui.available_rect_before_wrap().width();
-        let panel_width = self.panel_min_width.max(
+        let mut panel_width = self.panel_min_width.max(
             self.panel_max_width
                 .min(before_wrap_width / self.panels.len() as f32),
         );
         let vertical = self.vertical || (before_wrap_width < (panel_width + 2.0) * 3.0);
         let panels_width = if vertical {
+            panel_width = self
+                .panel_min_width
+                .max(self.panel_max_width.min(before_wrap_width - 10.0));
             panel_width
         } else {
             let mut width = 0.0;
@@ -285,7 +266,6 @@ impl<Value: PartialEq> SelectionPanels<Value> {
         let add_contents = |ui: &mut Ui| {
             let mut responce = ui.label(" ");
             //ui.visuals_mut().override_text_color = Some(Color32::WHITE);
-            //ui.button(text)
             {
                 let available_width = ui.available_width() - indent;
                 let title =
@@ -305,16 +285,38 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             let _panels_res = ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing = Vec2::ZERO;
                 let mut min_height = self.panel_min_height;
+                let mut first_row = true;
                 for (index, panel) in self.panels.into_iter().enumerate() {
                     let rect = ui.available_rect_before_wrap();
+                    let mut row_first_item = index == 0;
                     if (index > 0 && vertical) || rect.width() - 2.0 < panel_width {
                         ui.end_row();
+                        row_first_item = true;
+                        first_row = false;
                     }
-                    let bg_color = if index % 2 == 0 {
-                        even_panel_bg
-                    } else {
-                        odd_panel_bg
-                    };
+                    // left separator
+                    if !row_first_item {
+                        let Pos2 { x, y } = ui.cursor().min;
+                        let height = min_height * sep_ratio;
+                        let m = (min_height - height) / 2.0;
+                        ui.painter().vline(
+                            x,
+                            (y + m)..=(y + m + height),
+                            Stroke::new(1.0, text_color),
+                        );
+                    }
+
+                    // top seperator
+                    if !first_row {
+                        let Pos2 { x, y } = ui.cursor().min;
+                        let width = panel_width * sep_ratio;
+                        let m = (panel_width - width) / 2.0;
+                        ui.painter().hline(
+                            (x + m)..=(x + m + width),
+                            y,
+                            Stroke::new(1.0, text_color),
+                        );
+                    }
                     responce |=
                         panel.render(ui, bg_color, panel_width, &mut min_height, current_value);
                 }
@@ -334,10 +336,6 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             // ui.label(format!("ui.min_rect().width() {}", ui.min_rect().width()));
             responce
         };
-
-        // let res = add_contents(&mut prepared.content_ui);
-        // crate::imports::log_info!("min_width {min_width}, min: {}", prepared.content_ui.min_size().x);
-        // res | prepared.end(ui)
 
         let mut response = ui
             .indent_with_size("selection-panels", indent, Box::new(add_contents))

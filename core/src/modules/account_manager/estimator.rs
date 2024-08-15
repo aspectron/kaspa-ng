@@ -73,8 +73,8 @@ impl<'context> Estimator<'context> {
         if core.settings.developer.enable{
             //let child_ui = ui.child_ui(max_rect, Layout::top_down(Align::Center));
             let fee_selection = SelectionPanels::new(
+                120.0,
                 150.0,
-                180.0,
                 i18n("Miner Fee"),
                 |ui, value|{
                     ui.label("1 in / 2 outputs, ~1.2 Kg");
