@@ -1,5 +1,20 @@
 # Changelog
 
+# 0.2.7
+
+- Pagination in transaction history panel
+- Resolve an issue with some transactions not being displayed in the correct sort order.
+- Refactor public node connectivity (now using Rusty Kaspa public node resolver).
+- Add `Settings > User Interface > Options > Disable Window Frame` options that allows the user to disable custom window frame. Custom window frame currently affects ability to resize KaspaNG window on the Windows operating system.
+
+NOTE: This release includes the underlying changes to the wRPC Borsh protocol that breaks compatibility with older versions of Kaspa nodes (all versions before `0.14.2`). This change is necessary to support future features and improvements.
+
+# 0.2.6
+
+- Fix an issue in WASM32 (browser) where after the wallet is loaded, even though the balance is displayed correctly, attempt to send a transaction would result in the "Insufficient funds" error.
+- Fix a bug in the node info panel reversing inbound and outbound peers (native/desktop only).
+- Fix a crash in the Send panel when the user enters an invalid address, some amount and then hits the enter key.
+
 # 0.2.5
 - Update Rusty Kaspa p2p client (kaspad) to `0.14.1`.
 - WASM SDK is now available that allows developers using TypeScript and JavaScript to access and interface with wallets created using Kaspa NG and Rusty Kaspa CLI - [https://aspectron.org/en/projects/kaspa-wasm.html](https://aspectron.org/en/projects/kaspa-wasm.html)

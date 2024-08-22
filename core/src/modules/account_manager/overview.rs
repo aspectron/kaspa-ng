@@ -54,7 +54,7 @@ impl<'manager> Overview<'manager> {
                                 ui.separator();
                                 ui.add_space(16.);
                                 // TODO - copy to clipboard?
-                                if ui.medium_button("Continue").clicked() {
+                                if ui.medium_button(i18n("Continue")).clicked() {
                                     self.context.action = Action::None;
                                 }
                             });

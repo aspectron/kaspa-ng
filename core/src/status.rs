@@ -146,6 +146,13 @@ impl<'core> Status<'core> {
                 });
             }
 
+            // We should not allow node selection when we use a random server
+            if self.core.settings.node.connection_config_kind
+                == NodeConnectionConfigKind::PublicServerRandom
+            {
+                return;
+            }
+
             PopupPanel::new(
                 popup_id,
                 |_ui| response,

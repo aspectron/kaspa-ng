@@ -8,11 +8,17 @@ use kaspa_wallet_core::api::TransactionsDataGetResponse;
 use kaspa_wallet_core::events::Events as CoreWallet;
 use kaspa_wallet_core::storage::{Binding, Hint, PrvKeyDataInfo};
 use std::borrow::Cow;
+use std::future::IntoFuture;
 #[allow(unused_imports)]
 use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
+pub const TRANSACTION_PAGE_SIZE: u64 = 20;
+pub const MAINNET_EXPLORER: &str = "https://explorer.kaspa.org";
+pub const TESTNET10_EXPLORER: &str = "https://explorer-testnet.kaspa.ws";
+pub const TESTNET11_EXPLORER: &str = "https://explorer-tn11.kaspa.org";
 
 pub enum Exception {
+    #[allow(dead_code)]
     UtxoIndexNotEnabled { url: Option<String> },
 }
 
@@ -742,6 +748,9 @@ impl Core {
                 self.wallet_list.sort();
             }
             Events::WalletUpdate => {
+                self.select::<modules::AccountManager>();
+                self.get_mut::<modules::WalletOpen>().state = Default::default();
+
                 if let Some(account_collection) = self.account_collection.as_ref() {
                     let mut account_manager = self
                         .modules
@@ -981,9 +990,21 @@ impl Core {
                                 .as_ref()
                                 .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
-                                        account.transactions().replace_or_insert(
-                                            Transaction::new_confirmed(Arc::new(record)),
-                                        );
+                                        if account
+                                            .transactions()
+                                            .replace_or_insert(Transaction::new_confirmed(
+                                                Arc::new(record),
+                                            ))
+                                            .is_none()
+                                        {
+                                            let mut binding = account.transactions();
+                                            while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
+                                                binding.pop();
+                                            }
+                                            account.set_transaction_count(
+                                                account.transaction_count() + 1,
+                                            );
+                                        }
                                     })
                                 });
                         }
@@ -1005,9 +1026,21 @@ impl Core {
                                     .as_ref()
                                     .and_then(|account_collection| {
                                         account_collection.get(&id).map(|account| {
-                                            account.transactions().replace_or_insert(
-                                                Transaction::new_confirmed(Arc::new(record)),
-                                            );
+                                            if account
+                                                .transactions()
+                                                .replace_or_insert(Transaction::new_confirmed(
+                                                    Arc::new(record),
+                                                ))
+                                                .is_none()
+                                            {
+                                                let mut binding = account.transactions();
+                                                while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
+                                                    binding.pop();
+                                                }
+                                                account.set_transaction_count(
+                                                    account.transaction_count() + 1,
+                                                );
+                                            }
                                         })
                                     });
                             }
@@ -1022,9 +1055,21 @@ impl Core {
                                 .as_ref()
                                 .and_then(|account_collection| {
                                     account_collection.get(&id).map(|account| {
-                                        account.transactions().replace_or_insert(
-                                            Transaction::new_processing(Arc::new(record)),
-                                        );
+                                        if account
+                                            .transactions()
+                                            .replace_or_insert(Transaction::new_processing(
+                                                Arc::new(record),
+                                            ))
+                                            .is_none()
+                                        {
+                                            let mut binding = account.transactions();
+                                            while binding.len() as u64 > TRANSACTION_PAGE_SIZE {
+                                                binding.pop();
+                                            }
+                                            account.set_transaction_count(
+                                                account.transaction_count() + 1,
+                                            );
+                                        }
                                     })
                                 });
                         }
@@ -1081,6 +1126,41 @@ impl Core {
         });
     }
 
+    pub fn load_account_transactions_with_range(
+        &mut self,
+        account: &Account,
+        range: std::ops::Range<u64>,
+    ) -> Result<()> {
+        let account_id = account.id();
+        let network_id = self
+            .state
+            .network_id
+            .unwrap_or(self.settings.node.network.into());
+        let runtime = self.runtime.clone();
+        let account = account.clone();
+        spawn(async move {
+            let data = runtime
+                .wallet()
+                .transactions_data_get_range(account_id, network_id, range)
+                .into_future()
+                .await?;
+
+            let TransactionsDataGetResponse {
+                account_id,
+                transactions,
+                start: _,
+                total,
+            } = data;
+
+            if let Err(err) = account.load_transactions(transactions, total) {
+                log_error!("error loading transactions into account {account_id}: {err}");
+            }
+            Ok(())
+        });
+
+        Ok(())
+    }
+
     fn load_accounts(
         &mut self,
         network_id: NetworkId,
@@ -1132,9 +1212,11 @@ impl Core {
             let futures = account_ids
                 .into_iter()
                 .map(|account_id| {
-                    runtime
-                        .wallet()
-                        .transactions_data_get_range(account_id, network_id, 0..16384)
+                    runtime.wallet().transactions_data_get_range(
+                        account_id,
+                        network_id,
+                        0..TRANSACTION_PAGE_SIZE,
+                    )
                 })
                 .collect::<Vec<_>>();
 
@@ -1187,17 +1269,6 @@ impl Core {
             .expect("account collection")
             .extend_unchecked(accounts.clone());
 
-        if let Some(first) = accounts.first() {
-            let device = self.device().clone();
-            let wallet = self.wallet();
-            self.get_mut::<modules::AccountManager>().select(
-                wallet,
-                Some(first.clone()),
-                device,
-                true,
-            );
-        }
-
         let account_ids = accounts
             .iter()
             .map(|account| account.id())
@@ -1208,6 +1279,17 @@ impl Core {
             wallet.accounts_activate(Some(account_ids)).await?;
             Ok(())
         });
+
+        if let Some(first) = accounts.first() {
+            let device = self.device().clone();
+            let wallet = self.wallet();
+            self.get_mut::<modules::AccountManager>().select(
+                wallet,
+                Some(first.clone()),
+                device,
+                true,
+            );
+        }
 
         accounts
     }
@@ -1226,6 +1308,9 @@ impl Core {
 
         if modifiers.ctrl || modifiers.mac_cmd {
             match key {
+                // Key::X => {
+                //     panic!("Testing panic!");
+                // }
                 Key::O => {
                     self.select::<modules::WalletOpen>();
                 }

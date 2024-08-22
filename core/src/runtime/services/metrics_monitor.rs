@@ -19,8 +19,7 @@ pub struct MetricsService {
 impl MetricsService {
     pub fn new(application_events: ApplicationEventsChannel, _settings: &Settings) -> Self {
         let metrics = Arc::new(Metrics::default());
-        let metrics_data = Metric::list()
-            .into_iter()
+        let metrics_data = Metric::into_iter()
             .map(|metric| (metric, Vec::new()))
             .collect::<HashMap<Metric, Vec<_>>>();
 
@@ -43,7 +42,7 @@ impl MetricsService {
 
     pub fn reset_metrics_data(&self) -> Result<()> {
         let mut metrics_data = self.metrics_data.lock().unwrap();
-        for metric in Metric::list().into_iter() {
+        for metric in Metric::into_iter() {
             metrics_data.insert(metric, Vec::with_capacity(MAX_METRICS_SAMPLES));
         }
         Ok(())
@@ -52,7 +51,7 @@ impl MetricsService {
     pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
         let timestamp = snapshot.unixtime_millis;
         let mut metrics_data = self.metrics_data.lock().unwrap();
-        for metric in Metric::list().into_iter() {
+        for metric in Metric::into_iter() {
             let dest = metrics_data.get_mut(&metric).unwrap();
             if dest.is_empty() {
                 let y = snapshot.get(&metric);

@@ -1,4 +1,5 @@
 use crate::imports::*;
+use kaspa_addresses::Prefix as AddressPrefix;
 use kaspa_consensus_core::config::params::Params;
 use kaspa_wallet_core::utxo::NetworkParams;
 
@@ -70,6 +71,18 @@ impl From<Network> for NetworkId {
     }
 }
 
+impl From<&Network> for AddressPrefix {
+    fn from(network: &Network) -> Self {
+        NetworkType::from(network).into()
+    }
+}
+
+impl From<Network> for AddressPrefix {
+    fn from(network: Network) -> Self {
+        NetworkType::from(network).into()
+    }
+}
+
 impl From<&Network> for NetworkId {
     fn from(network: &Network) -> Self {
         match network {
@@ -108,15 +121,15 @@ impl From<&Network> for Params {
     }
 }
 
-impl From<Network> for NetworkParams {
+impl From<Network> for &'static NetworkParams {
     fn from(network: Network) -> Self {
-        NetworkId::from(network).into()
+        NetworkParams::from(NetworkId::from(network))
     }
 }
 
-impl From<&Network> for NetworkParams {
+impl From<&Network> for &'static NetworkParams {
     fn from(network: &Network) -> Self {
-        NetworkId::from(network).into()
+        NetworkParams::from(NetworkId::from(network))
     }
 }
 

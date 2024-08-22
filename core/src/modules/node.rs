@@ -49,7 +49,7 @@ impl ModuleT for Node {
                         ui.vertical(|ui| {
 
                             if let Some(peers) = self.runtime.peer_monitor_service().peer_info() {
-                                let (inbound, outbound) : (Vec<_>,Vec<_>) = peers.iter().partition(|peer| peer.is_outbound);
+                                let (outbound, inbound) : (Vec<_>,Vec<_>) = peers.iter().partition(|peer| peer.is_outbound);
 
                                 CollapsingHeader::new(i18n("Inbound"))
                                     .default_open(true)

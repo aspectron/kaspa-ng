@@ -1,4 +1,4 @@
-use crate::{imports::*, servers::random_public_server};
+use crate::imports::*;
 use kaspa_metrics_core::Metric;
 use kaspa_utils::networking::ContextualNetAddress;
 use kaspa_wallet_core::storage::local::storage::Storage;
@@ -144,6 +144,7 @@ pub enum RpcConfig {
     Wrpc {
         url: Option<String>,
         encoding: WrpcEncoding,
+        resolver_urls: Option<Vec<Arc<String>>>,
     },
     Grpc {
         url: Option<NetworkInterfaceConfig>,
@@ -163,6 +164,7 @@ impl Default for RpcConfig {
         RpcConfig::Wrpc {
             url: Some(url.to_string()),
             encoding: WrpcEncoding::Borsh,
+            resolver_urls: None,
         }
     }
 }
@@ -466,12 +468,13 @@ impl NodeSettings {
 }
 
 impl RpcConfig {
-    pub fn from_node_settings(settings: &NodeSettings, options: Option<RpcOptions>) -> Self {
+    pub fn from_node_settings(settings: &NodeSettings, _options: Option<RpcOptions>) -> Self {
         match settings.connection_config_kind {
             NodeConnectionConfigKind::Custom => match settings.rpc_kind {
                 RpcKind::Wrpc => RpcConfig::Wrpc {
                     url: Some(settings.wrpc_url.clone()),
                     encoding: settings.wrpc_encoding,
+                    resolver_urls: None,
                 },
                 RpcKind::Grpc => RpcConfig::Grpc {
                     url: Some(settings.grpc_network_interface.clone()),
@@ -482,21 +485,17 @@ impl RpcConfig {
                     RpcConfig::Wrpc {
                         url: Some(public_server.address()),
                         encoding: public_server.wrpc_encoding(),
+                        resolver_urls: None,
                     }
                 } else {
                     RpcConfig::default()
                 }
             }
-            NodeConnectionConfigKind::PublicServerRandom => {
-                if let Some(public_server) = random_public_server(&settings.network, options) {
-                    RpcConfig::Wrpc {
-                        url: Some(public_server.address()),
-                        encoding: public_server.wrpc_encoding(),
-                    }
-                } else {
-                    RpcConfig::default()
-                }
-            }
+            NodeConnectionConfigKind::PublicServerRandom => RpcConfig::Wrpc {
+                url: None,
+                encoding: settings.wrpc_encoding,
+                resolver_urls: None,
+            },
         }
     }
 }
@@ -531,6 +530,8 @@ pub struct UserInterfaceSettings {
     pub scale: f32,
     pub metrics: MetricsSettings,
     pub balance_padding: bool,
+    #[serde(default)]
+    pub disable_frame: bool,
 }
 
 impl Default for UserInterfaceSettings {
@@ -541,6 +542,7 @@ impl Default for UserInterfaceSettings {
             scale: 1.0,
             metrics: MetricsSettings::default(),
             balance_padding: true,
+            disable_frame: false,
         }
     }
 }
@@ -601,6 +603,8 @@ pub struct Settings {
     pub language_code: String,
     pub update_monitor: bool,
     pub market_monitor: bool,
+    // #[serde(default)]
+    // pub disable_frame: bool,
 }
 
 impl Default for Settings {
@@ -618,6 +622,7 @@ impl Default for Settings {
             language_code: "en".to_string(),
             update_monitor: true,
             market_monitor: true,
+            // disable_frame: false,
         }
     }
 }

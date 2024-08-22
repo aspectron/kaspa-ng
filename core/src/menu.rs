@@ -471,9 +471,18 @@ impl<'core> Menu<'core> {
         };
         #[allow(clippy::useless_format)]
         ui.menu_button(lang_menu, |ui| {
+            cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    let disable = ["ar","fa","he","hi","ja","ko","zh"];
+                } else {
+                    let disable = [];
+                }
+            }
+
             dictionary
                 .enabled_languages()
                 .into_iter()
+                .filter(|(code, _)| !disable.contains(&code.as_str()))
                 .for_each(|(code, lang)| {
                     let line_height = match code {
                         "ar" | "fa" => Some(26.),

@@ -1,6 +1,7 @@
 use crate::imports::*;
 use egui_phosphor::light::*;
 use kaspa_consensus_core::tx::{TransactionInput, TransactionOutpoint, TransactionOutput};
+use kaspa_txscript::standard::extract_script_pub_key_address;
 use kaspa_wallet_core::storage::{
     transaction::{TransactionData, UtxoRecord},
     TransactionKind,
@@ -126,6 +127,7 @@ impl Transaction {
         &self,
         ui: &mut Ui,
         network_type: NetworkType,
+        network: Network,
         current_daa_score: Option<u64>,
         _include_utxos: bool,
         largest: Option<u64>,
@@ -160,6 +162,12 @@ impl Transaction {
         let content = LayoutJobBuilderSettings::new(width, 8.0, Some(content_font.clone()));
 
         let is_transfer = record.is_transfer();
+
+        let explorer = match network {
+            Network::Mainnet => MAINNET_EXPLORER,
+            Network::Testnet10 => TESTNET10_EXPLORER,
+            Network::Testnet11 => TESTNET11_EXPLORER,
+        };
 
         match record.transaction_data() {
             TransactionData::Reorg { utxo_entries, .. }
@@ -256,8 +264,12 @@ impl Transaction {
                 collapsing_header.show(ui, |ui| {
                     ljb(&content)
                         .padded(15, "Transaction id:", default_color)
-                        .text(&transaction_id, default_color)
-                        .label(ui);
+                        .transaction_id(
+                            ui,
+                            &transaction_id,
+                            &format!("{explorer}/txs/{transaction_id}"),
+                            default_color,
+                        );
 
                     ljb(&content)
                         .padded(15, "Received at:", default_color)
@@ -277,7 +289,12 @@ impl Transaction {
                             .map(|addr| addr.to_string())
                             .unwrap_or_else(|| "n/a".to_string());
 
-                        ljb(&content).text(&address, default_color).label(ui);
+                        ljb(&content).address(
+                            ui,
+                            &address,
+                            &format!("{explorer}/addresses/{address}"),
+                            default_color,
+                        );
 
                         if *is_coinbase {
                             ljb(&content)
@@ -289,12 +306,18 @@ impl Transaction {
                                 .label(ui);
                         }
 
-                        ljb(&content)
-                            .text(
-                                &format!("Script: {}", script_public_key.script_as_hex()),
-                                default_color,
-                            )
-                            .label(ui);
+                        ljb(&content).text("Script:", default_color).script(
+                            ui,
+                            &script_public_key.script_as_hex(),
+                            default_color,
+                        );
+
+                        // ljb(&content)
+                        //     .text(
+                        //         &format!("Script: {}", script_public_key.script_as_hex()),
+                        //         default_color,
+                        //     )
+                        //     .label(ui);
                     });
                 });
             }
@@ -414,11 +437,13 @@ impl Transaction {
                 }
                 collapsing_header.show(ui, |ui| {
                     ljb(&content)
-                        .text(
-                            &format!("{}: {}", "Transaction id", transaction_id),
+                        .padded(15, "Transaction id:", default_color)
+                        .transaction_id(
+                            ui,
+                            &transaction_id,
+                            &format!("{explorer}/txs/{transaction_id}"),
                             default_color,
-                        )
-                        .label(ui);
+                        );
 
                     ljb(&content)
                         .padded(15, "Submitted at:", default_color)
@@ -475,16 +500,16 @@ impl Transaction {
                             transaction_id,
                             index,
                         } = previous_outpoint;
-
+                        let transaction_id = transaction_id.to_string();
                         ljb(&content)
                             .text(
                                 &format!(
                                     "  {sequence:>2}: {}:{index} SigOps: {sig_op_count}",
-                                    transaction_id
+                                    format_partial_string(&transaction_id, Some(6))
                                 ),
                                 default_color,
                             )
-                            .label(ui);
+                            .with_clipboard_icon(ui, &transaction_id);
                     }
 
                     ljb(&content)
@@ -494,22 +519,52 @@ impl Transaction {
                         )
                         .label(ui);
 
+                    let address_prefix: kaspa_addresses::Prefix = network.into();
+
                     for output in transaction.outputs.iter() {
                         let TransactionOutput {
                             value,
-                            script_public_key,
+                            ..
+                            //script_public_key,
                         } = output;
 
                         ljb(&content)
-                            .text(
-                                &format!(
-                                    "  {} {}",
-                                    ps2k(*value),
-                                    script_public_key.script_as_hex()
-                                ),
-                                default_color,
-                            )
+                            .text(&format!("   {}", ps2k(*value)), default_color)
                             .label(ui);
+
+                        // ljb(&content)
+                        //     .text(&format!("   {}", script_public_key.script_as_hex()), default_color)
+                        //     .label(ui);
+
+                        let address_info = extract_script_pub_key_address(
+                            &output.script_public_key,
+                            address_prefix,
+                        );
+                        match address_info {
+                            Ok(address) => {
+                                let address = address.to_string();
+                                ljb(&content).padded(2, "", default_color).address(
+                                    ui,
+                                    &address,
+                                    &format!("{explorer}/addresses/{address}"),
+                                    default_color,
+                                );
+                            }
+                            Err(err) => {
+                                log_info!("scriptpubkey to address error: {:?}", err)
+                            }
+                        }
+
+                        // ljb(&content)
+                        //     .text(
+                        //         &format!(
+                        //             "  {} {}",
+                        //             ps2k(*value),
+                        //             script_public_key.script_as_hex()
+                        //         ),
+                        //         default_color,
+                        //     )
+                        //     .label(ui);
                     }
                 });
             }

@@ -4,6 +4,7 @@ use kaspa_wallet_core::result::Result;
 
 #[repr(u8)]
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[borsh(use_discriminant = true)]
 pub enum Target {
     Wallet = 0,
     Runtime = 1,

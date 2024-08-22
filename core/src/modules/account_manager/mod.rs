@@ -275,10 +275,10 @@ impl AccountManager {
                 account: account.clone(),
             };
             
-            if device.orientation() == Orientation::Portrait {
+            if device.orientation() == Orientation::Portrait || Self::single_pane(&device){
                 self.section = AccountManagerSection::Overview;
             } else {
-                self.section = AccountManagerSection::Transactions;
+                self.section = AccountManagerSection::Details;
             }
 
             if notify {
@@ -413,7 +413,7 @@ impl AccountManager {
                 if core.device().mobile() {
 
                     self.render_singular_layout(core,ui,&rc, self.section);
-                } else if core.device().single_pane() {
+                } else if core.device().single_pane() || Self::single_pane(core.device()) {
 
                     self.render_menu(core,ui,&rc);
 
@@ -428,6 +428,10 @@ impl AccountManager {
         }
 
         Ok(())
+    }
+
+    fn single_pane(device: &Device)->bool{
+        device.screen_size.x < 800.
     }
 
     pub fn account(&self) -> Option<Account> {

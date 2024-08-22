@@ -104,9 +104,9 @@ impl ModuleT for Import {
 
                         })
                         // .with_footer(|_this,ui| {
-                        //     // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
+                        //     // if ui.add_sized(theme().large_button_size, egui::Button::new(i18n("Continue"))).clicked() {
                         //     let size = theme().large_button_size;
-                        //     if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                        //     if ui.add_sized(size, egui::Button::new(i18n("Continue"))).clicked() {
                         //         // this.state = State::WalletName;
                         //     }
                         // })
@@ -182,15 +182,16 @@ impl ModuleT for Import {
                                 self.wallet_secret.zeroize();
                                 let wallet = self.runtime.wallet().clone();
                                 let wallet_name = self.selected_wallet.clone(); //.expect("Wallet name not set");
-
+                                self.state = State::Unlocking;
+                                
                                 spawn_with_result(&unlock_result, async move {
-
+                                    sleep(Duration::from_secs(2)).await;
                                     wallet.wallet_open(wallet_secret, wallet_name, true, true).await?;
                                     // wallet.load(secret, wallet_name).await?;
                                     Ok(())
                                 });
 
-                                self.state = State::Unlocking;
+                                
                             }
 
                             ui.label(" ");

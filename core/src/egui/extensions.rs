@@ -25,7 +25,16 @@ pub trait UiExtension {
     fn large_button(&mut self, text: impl Into<WidgetText>) -> Response {
         self.large_button_enabled(true, text)
     }
+    fn large_selected_button(&mut self, selected: bool, text: impl Into<WidgetText>) -> Response {
+        self.large_button_enabled_selected(true, selected, text)
+    }
     fn large_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response;
+    fn large_button_enabled_selected(
+        &mut self,
+        enabled: bool,
+        selected: bool,
+        text: impl Into<WidgetText>,
+    ) -> Response;
     fn confirm_medium(
         &mut self,
         align: Align,
@@ -35,20 +44,104 @@ pub trait UiExtension {
     fn confirm_medium_apply_cancel(&mut self, align: Align) -> Option<Confirm>;
     fn confirm_medium_cancel(&mut self, align: Align) -> Option<Confirm>;
     fn sized_separator(&mut self, size: Vec2) -> Response;
+    fn widgets_rounding(&self) -> Rounding;
+    fn small_separator(&mut self) {
+        self.add_separator(self.create_separator(None, 0.5, None));
+    }
+    fn medium_separator(&mut self) {
+        self.add_separator(self.create_separator(None, 0.3, None));
+    }
+    fn large_separator(&mut self) {
+        self.add_separator(self.create_separator(None, 0.1, None));
+    }
+    fn small_separator_with_direction_and_spacing(&mut self, spacing: f32, is_horizontal: bool) {
+        self.add_separator(self.create_separator(Some(spacing), 0.5, Some(is_horizontal)));
+    }
+    fn create_separator(
+        &self,
+        spacing: Option<f32>,
+        shrink: f32,
+        is_horizontal: Option<bool>,
+    ) -> Separator;
+    fn add_separator(&mut self, separator: Separator);
 }
 
 impl UiExtension for Ui {
+    fn create_separator(
+        &self,
+        spacing: Option<f32>,
+        shrink: f32,
+        is_horizontal: Option<bool>,
+    ) -> Separator {
+        let mut sep = Separator::default();
+        if let Some(spacing) = spacing {
+            sep = sep.spacing(spacing)
+        }
+        if let Some(is_horizontal) = is_horizontal {
+            if is_horizontal {
+                sep = sep.horizontal();
+            } else {
+                sep = sep.vertical();
+            }
+        }
+
+        //let sep = is_horizontal.map_or(sep, |is_horizontal| if is_horizontal{sep.horizontal()}else{sep.vertical()});
+
+        let is_horizontal_line =
+            is_horizontal.unwrap_or_else(|| !self.layout().main_dir().is_horizontal());
+
+        let available_space = self.available_size_before_wrap();
+
+        //log_info!("spacing:{spacing:?}, is_horizontal: {is_horizontal:?}, is_horizontal_line:{is_horizontal_line}");
+
+        let size = if is_horizontal_line {
+            available_space.x
+        } else {
+            available_space.y
+        };
+
+        let shrink = (size * shrink) / 2.0;
+
+        sep.shrink(shrink)
+    }
+    fn add_separator(&mut self, separator: Separator) {
+        self.add(separator);
+    }
+
+    fn widgets_rounding(&self) -> Rounding {
+        self.visuals().widgets.hovered.rounding
+    }
+
     fn medium_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
-            Button::new(text).min_size(theme_style().medium_button_size()),
+            Button::new(text)
+                .rounding(self.widgets_rounding())
+                .min_size(theme_style().medium_button_size()),
         )
     }
 
     fn large_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
-            Button::new(text).min_size(theme_style().large_button_size()),
+            Button::new(text)
+                .rounding(self.widgets_rounding())
+                .min_size(theme_style().large_button_size()),
+        )
+    }
+
+    fn large_button_enabled_selected(
+        &mut self,
+        enabled: bool,
+        selected: bool,
+        text: impl Into<WidgetText>,
+    ) -> Response {
+        self.add_enabled(
+            enabled,
+            Button::new(text)
+                .rounding(self.widgets_rounding())
+                .selected(selected)
+                .min_size(theme_style().large_button_size()),
         )
     }
 
@@ -140,6 +233,7 @@ pub struct LayoutJobBuilder {
     leading: f32,
     icon_font_id: Option<FontId>,
     font_id: Option<FontId>,
+    heading: Option<(f32, f32, String, Color32)>,
 }
 
 impl LayoutJobBuilder {
@@ -147,7 +241,7 @@ impl LayoutJobBuilder {
         let job = LayoutJob {
             wrap: TextWrapping {
                 max_width: width,
-                max_rows: 1,
+                max_rows: 4,
                 break_anywhere: true,
                 overflow_character: Some('…'),
             },
@@ -158,6 +252,7 @@ impl LayoutJobBuilder {
             job,
             leading,
             font_id,
+            heading: None,
             ..Default::default()
         }
     }
@@ -209,8 +304,105 @@ impl LayoutJobBuilder {
         self
     }
 
+    pub fn heading(mut self, ui: &mut Ui, width: f32, text: &str, color: Color32) -> Self {
+        let galley = ui.painter().layout_no_wrap(
+            text.to_string(),
+            self.font_id.clone().unwrap_or_default(),
+            color,
+        );
+        self.heading = Some((width, galley.size().y, text.to_string(), color));
+        self
+    }
+
     pub fn label(self, ui: &mut Ui) -> Response {
-        ui.label(self.job)
+        Self::render_label(ui, self.job, self.heading)
+    }
+
+    fn render_label(
+        ui: &mut Ui,
+        job: LayoutJob,
+        heading: Option<(f32, f32, String, Color32)>,
+    ) -> Response {
+        if let Some((x, y, text, color)) = heading {
+            let desired_size = Vec2 { x, y };
+            ui.horizontal(|ui| {
+                ui.allocate_ui_with_layout(
+                    desired_size,
+                    Layout::right_to_left(Align::Center),
+                    |ui| ui.label(RichText::new(text).color(color).font(FontId::default())),
+                );
+                ui.label(job)
+            })
+            .inner
+        } else {
+            ui.label(job)
+        }
+    }
+
+    pub fn hyperlink_with_clipboard_icon(
+        self,
+        ui: &mut Ui,
+        text: &str,
+        url: &str,
+        color: Color32,
+        clipboard_text: Option<String>,
+    ) {
+        ui.horizontal(|ui| {
+            Self::render_label(ui, self.job, self.heading);
+            ui.hyperlink_to_tab(
+                RichText::new(text)
+                    .font(self.font_id.unwrap_or_default())
+                    .color(color),
+                url,
+            );
+            if let Some(text) = clipboard_text {
+                Self::clipboard_icon(ui, text);
+            }
+        });
+    }
+    pub fn hyperlink(self, ui: &mut Ui, text: &str, url: &str, color: Color32) {
+        self.hyperlink_with_clipboard_icon(ui, text, url, color, None)
+    }
+    pub fn transaction_id(self, ui: &mut Ui, txid: &str, url: &str, color: Color32) {
+        self.hyperlink_with_clipboard_icon(
+            ui,
+            &format_partial_string(txid, Some(6)),
+            url,
+            color,
+            Some(txid.to_string()),
+        )
+    }
+    pub fn script(self, ui: &mut Ui, script: &str, color: Color32) {
+        let this = self.text(&format_partial_string(script, Some(8)), color);
+        ui.horizontal(|ui| {
+            Self::render_label(ui, this.job, this.heading);
+            Self::clipboard_icon(ui, script.to_string());
+        });
+    }
+    pub fn with_clipboard_icon(self, ui: &mut Ui, text: &str) {
+        ui.horizontal(|ui| {
+            Self::render_label(ui, self.job, self.heading);
+            Self::clipboard_icon(ui, text.to_string());
+        });
+    }
+    pub fn address(self, ui: &mut Ui, address: &str, url: &str, color: Color32) {
+        self.hyperlink_with_clipboard_icon(
+            ui,
+            &format_address_string(address, Some(6)),
+            url,
+            color,
+            Some(address.to_string()),
+        )
+    }
+
+    pub fn clipboard_icon(ui: &mut Ui, text: String) {
+        if ui
+            .add(Label::new(egui_phosphor::light::CLIPBOARD_TEXT).sense(Sense::click()))
+            .clicked()
+        {
+            ui.output_mut(|o| o.copied_text = text);
+            runtime().notify_clipboard(i18n("Copied to clipboard"));
+        }
     }
 }
 

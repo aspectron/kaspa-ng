@@ -119,7 +119,7 @@ impl ModuleT for Export {
                         .with_body(|this,ui| {
 
                             ui.vertical_centered(|ui| {
-                                for kind in ExportKind::list() {
+                                for kind in ExportKind::into_iter() {
                                     if kind == ExportKind::Transportable {
                                         continue;
                                     }
@@ -130,7 +130,7 @@ impl ModuleT for Export {
 
                         })
                         .with_footer(|_this,ui| {
-                            if ui.large_button("Continue").clicked() {
+                            if ui.large_button(i18n("Continue")).clicked() {
                                 submit = true;
                             }
                         })
@@ -243,7 +243,7 @@ impl ModuleT for Export {
                         })
                         .with_footer(|this,ui| {
                             let ok = this.context.wallet_secret.is_not_empty() && (!requires_bip39_passphrase || this.context.payment_secret.is_not_empty());
-                            if ui.large_button_enabled(ok, "Continue").clicked() {
+                            if ui.large_button_enabled(ok, i18n("Continue")).clicked() {
                                 *submit.borrow_mut() = true;
                             }
                         })
@@ -350,7 +350,7 @@ impl ModuleT for Export {
                                     
                         })
                         .with_footer(|this,ui| {
-                            if ui.large_button("Continue").clicked() {
+                            if ui.large_button(i18n("Continue")).clicked() {
                                 this.context.zeroize();
                                 this.state = State::Select;
                                 core.select::<modules::AccountManager>();

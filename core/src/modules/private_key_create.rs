@@ -158,7 +158,7 @@ impl ModuleT for PrivateKeyCreate {
                             // ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
                         })
                         .with_footer(|_this,ui| {
-                            // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
+                            // if ui.add_sized(theme().large_button_size, egui::Button::new(i18n("Continue"))).clicked() {
                             if ui.large_button(i18n("Continue")).clicked() {
                                 // this.state = State::WalletName;
                             }
@@ -212,7 +212,7 @@ impl ModuleT for PrivateKeyCreate {
                             ui.label(" ");
                             ui.label(i18n("The optional payment & recovery password, if provided, will be required to \
                                 send payments. This password will also be required when recovering your wallet \
-                                in addition to your private key or mnemonic. If you loose this password, you will not \
+                                in addition to your private key or mnemonic. If you lose this password, you will not \
                                 be able to use mnemonic to recover your wallet!"));
                         })
                         .with_body(|this,ui| {
@@ -403,7 +403,7 @@ impl ModuleT for PrivateKeyCreate {
 
                     // })
                     // .with_footer(|this,ui| {
-                    //     if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                    //     if ui.add_sized(size, egui::Button::new(i18n("Continue"))).clicked() {
                     //         this.state = State::ConfirmMnemonic(mnemonic);
                     //     }
                     // })
