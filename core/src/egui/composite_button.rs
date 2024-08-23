@@ -291,11 +291,26 @@ impl Widget for CompositeButton<'_> {
             secondary_text_style = TextStyle::Monospace;
         }
 
-        let text = text.map(|text| text.into_galley(ui, wrap, text_wrap_width, TextStyle::Button));
+        let wrap_mode = wrap.map(|wrap| {
+            if wrap {
+                TextWrapMode::Wrap
+            } else {
+                TextWrapMode::Extend
+            }
+        });
+
+        let text =
+            text.map(|text| text.into_galley(ui, wrap_mode, text_wrap_width, TextStyle::Button));
         let secondary_text = secondary_text
-            .map(|text| text.into_galley(ui, wrap, text_wrap_width, secondary_text_style));
-        let shortcut_text = (!shortcut_text.is_empty())
-            .then(|| shortcut_text.into_galley(ui, Some(false), f32::INFINITY, TextStyle::Button));
+            .map(|text| text.into_galley(ui, wrap_mode, text_wrap_width, secondary_text_style));
+        let shortcut_text = (!shortcut_text.is_empty()).then(|| {
+            shortcut_text.into_galley(
+                ui,
+                Some(TextWrapMode::Extend),
+                f32::INFINITY,
+                TextStyle::Button,
+            )
+        });
 
         let mut desired_size = Vec2::new(pulldown_padding, 0.0); //Vec2::ZERO;
         let mut img_plus_spacing_width = 0.0;
@@ -340,7 +355,7 @@ impl Widget for CompositeButton<'_> {
         let (rect, mut response) = ui.allocate_at_least(desired_size, sense);
         response.widget_info(|| {
             if let Some(text) = &text {
-                WidgetInfo::labeled(WidgetType::Button, text.text())
+                WidgetInfo::labeled(WidgetType::Button, true, text.text())
             } else {
                 WidgetInfo::new(WidgetType::Button)
             }
@@ -397,11 +412,23 @@ impl Widget for CompositeButton<'_> {
                             image.image_options(),
                         );
 
-                        response = texture_load_result_response(image.source(), &tlr, response);
+                        response =
+                            texture_load_result_response(&image.source(ui.ctx()), &tlr, response);
                     }
                     Composite::Icon(icon) => {
                         let galley = WidgetText::RichText(icon.clone().size(image_size.y))
-                            .into_galley(ui, wrap, text_wrap_width, TextStyle::Button);
+                            .into_galley(
+                                ui,
+                                wrap.map(|wrap| {
+                                    if wrap {
+                                        TextWrapMode::Wrap
+                                    } else {
+                                        TextWrapMode::Extend
+                                    }
+                                }),
+                                text_wrap_width,
+                                TextStyle::Button,
+                            );
                         let image_rect = Rect::from_min_size(
                             pos2(cursor_x, rect.center().y - 0.5 - (galley.size().y / 2.0)),
                             galley.size(),
@@ -472,7 +499,13 @@ impl Widget for CompositeButton<'_> {
             if pulldown_selector {
                 let galley = WidgetText::RichText(RichText::new("⏷").size(14.)).into_galley(
                     ui,
-                    wrap,
+                    wrap.map(|wrap| {
+                        if wrap {
+                            TextWrapMode::Wrap
+                        } else {
+                            TextWrapMode::Extend
+                        }
+                    }),
                     text_wrap_width,
                     TextStyle::Button,
                 );

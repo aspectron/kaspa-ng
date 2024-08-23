@@ -306,16 +306,16 @@ impl Metrics {
                             .height(graph_height)
                             .auto_bounds([true, true].into())
                             .set_margin_fraction(vec2(0.0,0.0) )
-                            .y_axis_width(4)
+                            .y_axis_min_width(4.0 * 12.0)
                             .show_axes(true)
                             .show_grid(true)
                             // .allow_drag([true, false])
                             .allow_drag([false, false])
                             .allow_scroll(false)
-                            .y_axis_formatter(move |grid,_size,_range|{
+                            .y_axis_formatter(move |grid, _range|{
                                 metric.format(grid.value, true, true)
                             })
-                            .x_axis_formatter(move |grid, _size, _range| {
+                            .x_axis_formatter(move |grid, _range| {
                                 DateTime::<chrono::Utc>::from_timestamp((grid.value / 1000.0) as i64, 0)
                                     .expect("could not parse timestamp")
                                     .with_timezone(&chrono::Local)

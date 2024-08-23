@@ -329,13 +329,13 @@ impl ModuleT for BlockDag {
             .include_y(15.)
             .include_y(-15.)
             .data_aspect(0.2)
-            .y_axis_width(0)
+            .y_axis_min_width(0.0)
             .show_axes([self.settings.show_daa, false])
             .show_grid(self.settings.show_grid)
             .allow_drag([true, true])
             .allow_scroll(true)
             .allow_double_click_reset(true)
-            .x_axis_formatter(move |x, _size, _range| {
+            .x_axis_formatter(move |x, _range| {
                 format!("{} DAA", x.value.trunc().separated_string())
             })
             .x_grid_spacer(
