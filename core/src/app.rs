@@ -338,7 +338,6 @@ cfg_if! {
                 .with_static_json_data(I18N_EMBEDDED)
                 .try_init()?;
 
-            // wasm_bindgen_futures::spawn_local(async {
             use workflow_log::*;
             log_info!("Welcome to Kaspa NG! Have a great day!");
 
@@ -373,8 +372,7 @@ cfg_if! {
                 .await
                 .expect("failed to start eframe");
 
-                // log_info!("shutting down...");
-            // });
+                //log_info!("shutting down...");
 
             Ok(())
         }
