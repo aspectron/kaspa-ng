@@ -65,10 +65,11 @@ impl MetricsService {
             if dest.len() > MAX_METRICS_SAMPLES {
                 dest.drain(0..dest.len() - MAX_METRICS_SAMPLES);
             }
-            dest.push(PlotPoint {
-                x: timestamp,
-                y: snapshot.get(&metric),
-            });
+
+            let y = snapshot.get(&metric);
+            if y.is_finite() {
+                dest.push(PlotPoint { x: timestamp, y });
+            }
         }
 
         if snapshot.node_cpu_cores > 0.0 {

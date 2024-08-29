@@ -1,13 +1,14 @@
 PanicInfo {
     payload: Any { .. },
     message: Some(
-        Resolver requires network id in RPC client configuration,
+        Bad final plot bounds: PlotBounds { min: [1724970393169.5, 4.7064381313189626e17], max: [1724970393170.5, 4.7064381313189626e17] },
     ),
     location: Location {
-        file: "/home/starkbamse/.cargo/git/checkouts/rusty-kaspa-b06c3fe0c8c50fcd/c020968/rpc/wrpc/client/src/client.rs",
-        line: 219,
-        col: 48,
+        file: "/Users/surindersingh/.cargo/git/checkouts/egui_plot-dea8670af3c3a80c/eaee496/egui_plot/src/transform.rs",
+        line: 335,
+        col: 9,
     },
     can_unwind: true,
     force_no_backtrace: false,
 }
+<disabled>

@@ -408,9 +408,25 @@ impl Overview {
             if available_samples < duration {
                 duration = available_samples;
             }
-            let samples = if data.len() < duration { data.len() } else { duration };
-            data[data.len()-samples..].to_vec()
+            let len = data.len();
+            let samples = len.min(duration);
+            data[len-samples..].to_vec()
+            // let mut data = data[len-samples..].to_vec();
+            // if data.len() == 1{
+            //     let mut last_clone = data[0].clone();
+            //     if last_clone.y > 100000000000.0{
+            //         last_clone.x += 0.1;
+            //         last_clone.y += 100.0;
+            //         data.push(last_clone);
+            //     }
+            // }
+            // data
         };
+
+        //skip rendering
+        if graph_data.len() < 2 {
+            return;
+        }
 
         
         ui.vertical(|ui|{

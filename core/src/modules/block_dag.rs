@@ -88,13 +88,13 @@ impl BlockDag {
         let settings = BlockDagGraphSettings::new(preset.spread);
         runtime.block_dag_monitor_service().update_settings(settings.clone());
 
-        Self { 
-            runtime, 
-            daa_cursor : 0.0, 
-            last_daa_score : 0, 
-            running : false, 
-            plot_bounds : PlotBounds::NOTHING, 
-            bezier : true, 
+        Self {
+            runtime,
+            daa_cursor : 0.0,
+            last_daa_score : 0,
+            running : false,
+            plot_bounds : PlotBounds::NOTHING,
+            bezier : true,
             daa_offset : preset.daa_offset,
             daa_range : preset.daa_range,
             block_scale : preset.block_scale,
@@ -297,10 +297,13 @@ impl ModuleT for BlockDag {
 
         let mut reset_plot = false;
         let current_daa_score = core.state().current_daa_score().unwrap_or_default();
-        if self.last_daa_score != current_daa_score {
-
-            if !self.running {
-                self.running = true;
+        if self.last_daa_score != current_daa_score || current_daa_score==0 {
+           if !self.running || current_daa_score==0{
+                if current_daa_score > 0{
+                    self.running = true;
+                }else{
+                    self.running = false;
+                }
                 reset_plot = true;
                 self.daa_cursor = current_daa_score as f64 - 1.0;
             }
