@@ -25,7 +25,6 @@ pub mod notifications;
 pub mod primitives;
 pub mod result;
 pub mod runtime;
-pub mod servers;
 pub mod settings;
 pub mod state;
 pub mod status;

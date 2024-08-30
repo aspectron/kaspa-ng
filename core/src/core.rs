@@ -227,8 +227,6 @@ impl Core {
             module.init(&mut this);
         });
 
-        load_public_servers();
-
         this.wallet_update_list();
 
         cfg_if! {

@@ -117,8 +117,6 @@ impl<'core> Status<'core> {
     }
 
     fn render_connection_selector(&mut self, ui: &mut Ui) {
-        use egui_phosphor::light::CHECK;
-
         let connection_selector = !self.core.module().modal()
             && self.core.settings.node.connection_config_kind.is_public();
 
@@ -131,13 +129,13 @@ impl<'core> Status<'core> {
                 }
             });
         } else {
-            let mut response =
+            let response =
                 ui.add(Label::new(RichText::new(i18n("CONNECTED"))).sense(Sense::click()));
 
             let popup_id = PopupPanel::id(ui, "node_connection_selector_popup");
 
             if !PopupPanel::is_open(ui, popup_id) {
-                response = response.on_hover_ui(|ui| {
+                response.on_hover_ui(|ui| {
                     if let Some(wrpc_url) = runtime().kaspa_service().rpc_url() {
                         ui.horizontal(|ui| {
                             ui.label(wrpc_url);
@@ -145,59 +143,6 @@ impl<'core> Status<'core> {
                     }
                 });
             }
-
-            // We should not allow node selection when we use a random server
-            if self.core.settings.node.connection_config_kind
-                == NodeConnectionConfigKind::PublicServerRandom
-            {
-                return;
-            }
-
-            PopupPanel::new(
-                popup_id,
-                |_ui| response,
-                |ui, close| {
-                    set_menu_style(ui.style_mut());
-
-                    let wrpc_url = runtime().kaspa_service().rpc_url();
-                    let public_servers = public_servers(&self.settings().node.network);
-                    for server in public_servers.into_iter() {
-                        let name = if Some(server.address()) == wrpc_url {
-                            format!("{server} {CHECK}")
-                        } else {
-                            server.to_string()
-                        };
-
-                        if ui.button(name).clicked() {
-                            *close = true;
-
-                            match self.core.settings.node.connection_config_kind {
-                                NodeConnectionConfigKind::PublicServerCustom => {
-                                    self.core
-                                        .settings
-                                        .node
-                                        .public_servers
-                                        .insert(self.core.settings.node.network, server.clone());
-                                    self.core.settings.store_sync().ok();
-                                    runtime()
-                                        .kaspa_service()
-                                        .update_services(&self.core.settings.node, None);
-                                }
-                                NodeConnectionConfigKind::PublicServerRandom => {
-                                    let options = RpcOptions::new().force(server);
-                                    runtime()
-                                        .kaspa_service()
-                                        .update_services(&self.core.settings.node, Some(options));
-                                }
-                                _ => {}
-                            }
-                        }
-                    }
-                },
-            )
-            .with_min_width(140.0)
-            .with_above_or_below(AboveOrBelow::Above)
-            .build(ui);
         }
     }
 
