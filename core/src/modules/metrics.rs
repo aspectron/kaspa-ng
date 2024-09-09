@@ -304,20 +304,19 @@ impl Metrics {
                             .legend(Legend::default())
                             .width(graph_width)
                             .height(graph_height)
-                            .auto_bounds_x()
-                            .auto_bounds_y()
+                            .auto_bounds([true, true].into())
                             .set_margin_fraction(vec2(0.0,0.0) )
-                            .y_axis_width(4)
+                            .y_axis_min_width(4.0 * 12.0)
                             .show_axes(true)
                             .show_grid(true)
                             // .allow_drag([true, false])
                             .allow_drag([false, false])
                             .allow_scroll(false)
-                            .y_axis_formatter(move |y,_size,_range|{
-                                metric.format(y, true, true)
+                            .y_axis_formatter(move |grid, _range|{
+                                metric.format(grid.value, true, true)
                             })
-                            .x_axis_formatter(move |x, _size, _range| {
-                                DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
+                            .x_axis_formatter(move |grid, _range| {
+                                DateTime::<chrono::Utc>::from_timestamp((grid.value / 1000.0) as i64, 0)
                                     .expect("could not parse timestamp")
                                     .with_timezone(&chrono::Local)
                                     .format("%H:%M:%S")

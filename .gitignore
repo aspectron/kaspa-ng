@@ -14,3 +14,4 @@ analyzer-target
 kaspa-ng*
 /.idea
 *.log
+kaspa-ng.log

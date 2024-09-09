@@ -261,7 +261,7 @@ cfg_if! {
                         .with_title(i18n("Kaspa NG"))
                         .with_min_inner_size([400.0,320.0])
                         .with_inner_size([1000.0,600.0])
-                        .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, FitTo::Size(256,256)));
+                        .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, Some(SizeHint::Size(256,256))));
 
                     if window_frame {
                         viewport = viewport
@@ -286,7 +286,7 @@ cfg_if! {
                             runtime::signals::Signals::bind(&runtime);
                             runtime.start();
 
-                            Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, window_frame))
+                            Ok(Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, window_frame)))
                         }),
                     )?;
 
@@ -302,6 +302,7 @@ cfg_if! {
 
         // use crate::result::Result;
         // use crate::adaptor::Adaptor;
+        use wasm_bindgen::JsCast;
 
         // pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, adaptor: Option<Arc<Adaptor>>) -> Result<()> {
         pub async fn kaspa_ng_main(application_context : ApplicationContext) -> Result<()> {
@@ -337,7 +338,6 @@ cfg_if! {
                 .with_static_json_data(I18N_EMBEDDED)
                 .try_init()?;
 
-            // wasm_bindgen_futures::spawn_local(async {
             use workflow_log::*;
             log_info!("Welcome to Kaspa NG! Have a great day!");
 
@@ -347,7 +347,7 @@ cfg_if! {
 
             eframe::WebRunner::new()
                 .start(
-                    "kaspa-ng",
+                    document().get_element_by_id("kaspa-ng").expect("<canvas id=\"kaspa-ng\"> not found.").dyn_into::<web_sys::HtmlCanvasElement>().unwrap(),
                     web_options,
                     Box::new(move |cc| {
 
@@ -366,14 +366,13 @@ cfg_if! {
 
 
 
-                        Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, false))
+                        Ok(Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, false)))
                     }),
                 )
                 .await
                 .expect("failed to start eframe");
 
-                // log_info!("shutting down...");
-            // });
+                //log_info!("shutting down...");
 
             Ok(())
         }

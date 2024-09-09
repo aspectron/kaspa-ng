@@ -408,9 +408,25 @@ impl Overview {
             if available_samples < duration {
                 duration = available_samples;
             }
-            let samples = if data.len() < duration { data.len() } else { duration };
-            data[data.len()-samples..].to_vec()
+            let len = data.len();
+            let samples = len.min(duration);
+            data[len-samples..].to_vec()
+            // let mut data = data[len-samples..].to_vec();
+            // if data.len() == 1{
+            //     let mut last_clone = data[0].clone();
+            //     if last_clone.y > 100000000000.0{
+            //         last_clone.x += 0.1;
+            //         last_clone.y += 100.0;
+            //         data.push(last_clone);
+            //     }
+            // }
+            // data
         };
+
+        //skip rendering
+        if graph_data.len() < 2 {
+            return;
+        }
 
         
         ui.vertical(|ui|{
@@ -430,8 +446,7 @@ impl Overview {
                     .legend(Legend::default())
                     .width(128.)
                     .height(32.)
-                    .auto_bounds_x()
-                    .auto_bounds_y()
+                    .auto_bounds([true, true].into())
                     .set_margin_fraction(vec2(0.0,0.0) )
                     .show_axes(false)
                     .show_grid(false)
@@ -459,7 +474,7 @@ impl Overview {
 
                 let text = format!("{} {}", i18n(metric.title().1).to_uppercase(), metric.format(value, true, true));
                 let rich_text_top = RichText::new(&text).size(10.).color(theme_color().raised_text_color);
-                let label_top = Label::new(rich_text_top).wrap(false);
+                let label_top = Label::new(rich_text_top).extend();
                 let mut rect_top = plot_result.response.rect;
                 rect_top.set_bottom(rect_top.top() + 12.);
 
@@ -468,7 +483,7 @@ impl Overview {
                     vec2(1.0,1.0),vec2(1.0,-1.0),vec2(-1.0,1.0),vec2(-1.0,-1.0),
                 ].iter().for_each(|offset| {
                     let rich_text_back = RichText::new(&text).size(10.).color(theme_color().raised_text_shadow);
-                    let label_back = Label::new(rich_text_back).wrap(false);
+                    let label_back = Label::new(rich_text_back).extend();
                     let mut rect_back = rect_top;
                     rect_back.set_center(rect_back.center()+*offset);
                     ui.put(rect_back, label_back);

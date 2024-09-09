@@ -66,15 +66,15 @@ pub fn load_public_servers() {
 
 async fn get_server_list() -> Result<Vec<Server>> {
     // Get all resolver urls
-    let resolvers = Resolver::default().urls();
-
-    // Try to connect to each resolver
-    for resolver in resolvers {
-        // Retrieve server list
-        let server_list =
-            workflow_http::get_json::<Vec<Server>>(format!("{}/status", resolver)).await;
-        if server_list.is_ok() {
-            return Ok(server_list?);
+    if let Some(resolvers) = Resolver::default().urls() {
+        // Try to connect to each resolver
+        for resolver in resolvers {
+            // Retrieve server list
+            let server_list =
+                workflow_http::get_json::<Vec<Server>>(format!("{}/status", resolver)).await;
+            if server_list.is_ok() {
+                return Ok(server_list?);
+            }
         }
     }
 

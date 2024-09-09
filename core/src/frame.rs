@@ -70,7 +70,7 @@ pub fn window_frame(
             };
             // .shrink(4.0);
             // .shrink2(vec2(8.0,4.0));
-            let mut content_ui = ui.child_ui(content_rect, *ui.layout());
+            let mut content_ui = ui.child_ui(content_rect, *ui.layout(), None);
             add_contents(&mut content_ui);
 
             // panel_frame.show(ui);
@@ -86,7 +86,7 @@ pub fn window_frame(
 
         CentralPanel::default().frame(panel_frame).show(ctx, |ui| {
             let app_rect = ui.max_rect();
-            let mut content_ui = ui.child_ui(app_rect, *ui.layout());
+            let mut content_ui = ui.child_ui(app_rect, *ui.layout(), None);
             add_contents(&mut content_ui);
         });
     }
