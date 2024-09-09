@@ -112,7 +112,6 @@ impl KaspadNodeKind {
 #[derive(Default)]
 pub struct RpcOptions {
     pub blacklist_servers: Vec<String>,
-    pub force_server: Option<Server>,
 }
 
 impl RpcOptions {
@@ -122,11 +121,6 @@ impl RpcOptions {
 
     pub fn blacklist(mut self, server: String) -> Self {
         self.blacklist_servers.push(server);
-        self
-    }
-
-    pub fn force(mut self, server: Server) -> Self {
-        self.force_server = Some(server);
         self
     }
 }
@@ -240,7 +234,7 @@ impl NodeConnectionConfigKind {
     pub fn iter() -> impl Iterator<Item = &'static NodeConnectionConfigKind> {
         [
             NodeConnectionConfigKind::PublicServerRandom,
-            NodeConnectionConfigKind::PublicServerCustom,
+            // NodeConnectionConfigKind::PublicServerCustom,
             NodeConnectionConfigKind::Custom,
             // NodeConnectionConfigKind::Local,
         ]
@@ -357,7 +351,6 @@ impl NodeMemoryScale {
 #[serde(rename_all = "kebab-case")]
 pub struct NodeSettings {
     pub connection_config_kind: NodeConnectionConfigKind,
-    pub public_servers: HashMap<Network, Server>,
     pub rpc_kind: RpcKind,
     pub wrpc_url: String,
     pub wrpc_encoding: WrpcEncoding,
@@ -383,7 +376,6 @@ impl Default for NodeSettings {
     fn default() -> Self {
         Self {
             connection_config_kind: NodeConnectionConfigKind::default(),
-            public_servers: HashMap::default(),
             rpc_kind: RpcKind::Wrpc,
             wrpc_url: "127.0.0.1".to_string(),
             wrpc_encoding: WrpcEncoding::Borsh,
@@ -416,7 +408,6 @@ impl NodeSettings {
                 } else if self.memory_scale != other.memory_scale {
                     Some(true)
                 } else if self.connection_config_kind != other.connection_config_kind
-                    || (other.connection_config_kind == NodeConnectionConfigKind::PublicServerCustom && !self.public_servers.compare(&other.public_servers))
                 {
                     Some(true)
                 } else if self.kaspad_daemon_storage_folder_enable != other.kaspad_daemon_storage_folder_enable
@@ -449,9 +440,7 @@ impl NodeSettings {
                     Some(true)
                 } else if self.node_kind != other.node_kind {
                     Some(true)
-                } else if self.connection_config_kind != other.connection_config_kind
-                || (other.connection_config_kind == NodeConnectionConfigKind::PublicServerCustom && !self.public_servers.compare(&other.public_servers))
-                {
+                } else if self.connection_config_kind != other.connection_config_kind {
                     Some(true)
                 } else if self.rpc_kind != other.rpc_kind
                     || self.wrpc_url != other.wrpc_url
@@ -480,18 +469,8 @@ impl RpcConfig {
                     url: Some(settings.grpc_network_interface.clone()),
                 },
             },
-            NodeConnectionConfigKind::PublicServerCustom => {
-                if let Some(public_server) = settings.public_servers.get(&settings.network) {
-                    RpcConfig::Wrpc {
-                        url: Some(public_server.address()),
-                        encoding: public_server.wrpc_encoding(),
-                        resolver_urls: None,
-                    }
-                } else {
-                    RpcConfig::default()
-                }
-            }
-            NodeConnectionConfigKind::PublicServerRandom => RpcConfig::Wrpc {
+            NodeConnectionConfigKind::PublicServerCustom
+            | NodeConnectionConfigKind::PublicServerRandom => RpcConfig::Wrpc {
                 url: None,
                 encoding: settings.wrpc_encoding,
                 resolver_urls: None,
@@ -663,10 +642,18 @@ impl Settings {
         let storage = storage()?;
         if storage.exists().await.unwrap_or(false) {
             match read_json::<Self>(storage.filename()).await {
-                Ok(settings) => {
+                Ok(mut settings) => {
                     if settings.revision != SETTINGS_REVISION {
                         Ok(Self::default())
                     } else {
+                        if matches!(
+                            settings.node.connection_config_kind,
+                            NodeConnectionConfigKind::PublicServerCustom
+                        ) {
+                            settings.node.connection_config_kind =
+                                NodeConnectionConfigKind::PublicServerRandom;
+                        }
+
                         Ok(settings)
                     }
                 }

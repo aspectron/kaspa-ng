@@ -1,5 +1,4 @@
 use crate::imports::*;
-use crate::servers::render_public_server_selector;
 
 pub struct Settings {
     #[allow(dead_code)]
@@ -29,7 +28,7 @@ impl Settings {
         self.settings.node.network = network;
     }
 
-    pub fn render_remote_settings(core: &mut Core, ui: &mut Ui, settings : &mut NodeSettings) -> Option<&'static str> {
+    pub fn render_remote_settings(_core: &mut Core, ui: &mut Ui, settings : &mut NodeSettings) -> Option<&'static str> {
 
         let mut node_settings_error = None;
 
@@ -90,13 +89,6 @@ impl Settings {
 
                 },
                 NodeConnectionConfigKind::PublicServerCustom => {
-                    CollapsingHeader::new(i18n("Public Node"))
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            if let Some(error) = render_public_server_selector(core, ui, settings) {
-                                node_settings_error = Some(error);
-                            }
-                        });
                 },
                 NodeConnectionConfigKind::PublicServerRandom => {
                     ui.label(i18n("A random node will be selected on startup"));
