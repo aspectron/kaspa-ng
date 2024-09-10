@@ -9,6 +9,7 @@ mod network;
 mod pagination;
 mod panel;
 mod popup;
+mod selection_panels;
 mod theme;
 
 pub use collapsable::*;
@@ -22,4 +23,5 @@ pub use network::NetworkInterfaceEditor;
 pub use pagination::*;
 pub use panel::Panel;
 pub use popup::PopupPanel;
+pub use selection_panels::*;
 pub use theme::*;
