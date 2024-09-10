@@ -20,6 +20,13 @@ enum Focus {
 }
 
 #[derive(Clone)]
+pub enum KeyOperationKind {
+    Create,
+    ImportKey,
+    ImportFile,
+}
+
+#[derive(Clone)]
 pub enum State {
     Start,
     KeySelection,
@@ -30,6 +37,7 @@ pub enum State {
     WalletFileSecret,
     DecryptWalletFile,
     ImportWallet,
+    // WalletName { kind: KeyOperationKind },
     WalletName,
     AccountName,
     PhishingHint,
@@ -129,16 +137,20 @@ impl WalletCreate {
             })
             .with_body(|_this,ui| {
                 // ui.label("(You can import additional private keys later, once the wallet has been created)");
-                let word_12_selected = !*import_legacy && *word_count == WordCount::Words12;
-                if ui.large_selected_button(word_12_selected, i18n("12 word mnemonic")).clicked() {
+                // let word_12_selected = !*import_legacy && *word_count == WordCount::Words12;
+                // if ui.large_selected_button(word_12_selected, i18n("12 word mnemonic")).clicked() {
+                if ui.large_button(i18n("12 word mnemonic")).clicked() {
                     *word_count = WordCount::Words12;
                     *import_legacy = false;
+                    submit = true;
                 }
                 ui.label("");
 
-                if ui.large_selected_button(*word_count == WordCount::Words24, i18n("24 word mnemonic")).clicked() {
+                // if ui.large_selected_button(*word_count == WordCount::Words24, i18n("24 word mnemonic")).clicked() {
+                if ui.large_button(i18n("24 word mnemonic")).clicked() {
                     *word_count = WordCount::Words24;
                     *import_legacy = false;
+                    submit = true;
                 }
                 ui.label("");
                 ui.add_enabled_ui(!*import_legacy, |ui|{
@@ -152,19 +164,21 @@ impl WalletCreate {
                 ui.label(i18n("Select this option if your wallet was created"));
                 ui.label(i18n("using KDX or kaspanet.io web wallet"));
                 ui.label("");
-                if ui.large_selected_button(*import_legacy, format!("    {}    ", i18n("Legacy 12 word mnemonic"))).clicked() {
+                // if ui.large_selected_button(*import_legacy, format!("    {}    ", i18n("Legacy 12 word mnemonic"))).clicked() {
+                if ui.large_button_enabled(!*bip39_passphrase,format!("    {}    ", i18n("Legacy 12 word mnemonic"))).clicked() {
                     *word_count = WordCount::Words12;
                     *import_legacy = true;
                     *bip39_passphrase = false;
-                }
-                ui.label("");
-
-                ui.medium_separator();
-                ui.label("");
-                
-                if ui.large_button(i18n("Continue")).clicked() {
                     submit = true;
                 }
+                // ui.label("");
+
+                // ui.medium_separator();
+                // ui.label("");
+                
+                // if ui.large_button(i18n("Continue")).clicked() {
+                //     submit = true;
+                // }
             })
             .with_footer(|_this,_ui| {
             });
@@ -341,6 +355,7 @@ impl ModuleT for WalletCreate {
                         }
 
                         if submit {
+                            // this.state = State::WalletName { kind : KeyOperationKind::Create };
                             this.state = State::WalletName;
                             this.focus.next(Focus::WalletName);
                         }
@@ -382,10 +397,12 @@ impl ModuleT for WalletCreate {
                 );
                 if submit {
                     self.context.import_private_key = true;
+                    // self.state = State::WalletName { kind : KeyOperationKind::ImportKey };
                     self.state = State::WalletName;
                     self.focus.next(Focus::WalletName);
                 }
             }
+            // State::WalletName { kind } => {
             State::WalletName => {
 
                 let wallet_exists = Rc::new(RefCell::new(false));
@@ -393,6 +410,14 @@ impl ModuleT for WalletCreate {
                 Panel::new(self)
                     .with_caption(i18n("Wallet Name"))
                     .with_back(|this| {
+                        // match kind {
+                        //     KeyOperationKind::Create => {
+                        //         this.state = State::KeySelection;
+                        //     }
+                        //     KeyOperationKind::Import => {
+                        //         this.state = State::ImportSelection;
+                        //     }
+                        // }
                         this.state = State::KeySelection;
                     })
                     .with_close_enabled(false, |_|{

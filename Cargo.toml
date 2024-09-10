@@ -104,23 +104,23 @@ egui-notify = { git = "https://github.com/aspectron/egui-notify",  branch = "ome
 # kaspa-wrpc-server = "0.13.4"
 # kaspad = "0.13.4"
 
-# kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
-# kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
-# kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
-# kaspa-cli = { path = "../rusty-kaspa/cli" }
-# kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
-# kaspa-core = { path = "../rusty-kaspa/core" }
-# kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
-# kaspa-notify = { path = "../rusty-kaspa/notify" }
-# kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
-# kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
-# kaspa-utils = { path = "../rusty-kaspa/utils" }
-# kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
-# kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
-# kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
-# kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
-# kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
-# kaspad = { path = "../rusty-kaspa/kaspad" }
+kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
+kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
+kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
+kaspa-cli = { path = "../rusty-kaspa/cli" }
+kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
+kaspa-core = { path = "../rusty-kaspa/core" }
+kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
+kaspa-notify = { path = "../rusty-kaspa/notify" }
+kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
+kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
+kaspa-utils = { path = "../rusty-kaspa/utils" }
+kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
+kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
+kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
+kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
+kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
+kaspad = { path = "../rusty-kaspa/kaspad" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
@@ -139,23 +139,23 @@ egui-notify = { git = "https://github.com/aspectron/egui-notify",  branch = "ome
 # kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 
-kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
-kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
+# kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "15-rc4-updates" }
 
 # _________________________________________________________
 #  _ _ _ ____ ____ _  _ ____ _    ____ _ _ _    ____ ____ 
