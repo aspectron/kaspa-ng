@@ -1,5 +1,6 @@
 use crate::imports::*;
 use crate::runtime::services::metrics_monitor::MAX_METRICS_SAMPLES;
+// use separator::{separated_float, separated_int, separated_uint_with_output, Separatable};
 use egui_extras::{StripBuilder, Size};
 use kaspa_metrics_core::{Metric,MetricGroup, MetricsSnapshot};
 use chrono::DateTime;
@@ -313,7 +314,12 @@ impl Metrics {
                             .allow_drag([false, false])
                             .allow_scroll(false)
                             .y_axis_formatter(move |grid, _range|{
-                                metric.format(grid.value, true, true)
+                                match metric {
+                                    Metric::NetworkPastMedianTime => {
+                                        String::default()
+                                    }
+                                    metric => metric.format(grid.value, true, true)
+                                }
                             })
                             .x_axis_formatter(move |grid, _range| {
                                 DateTime::<chrono::Utc>::from_timestamp((grid.value / 1000.0) as i64, 0)
@@ -324,7 +330,6 @@ impl Metrics {
                             })
                             .x_grid_spacer(
                                 uniform_grid_spacer(move |input| {
-
                                     let (start_time,stop_time) = input.bounds;
                                     let range = stop_time - start_time;
                                     let base_step_size = range / graph_width as f64 * 64.;
@@ -418,3 +423,36 @@ fn format_duration_unit(value: u64, unit: &str) -> String {
         format!("{} {}", value, unit)
     }
 }
+
+
+// /// Format supplied value as a float with 2 decimal places.
+// fn format_as_float(f: f64, short: bool) -> String {
+//     if short {
+//         if f < 1000.0 {
+//             format_with_precision(f)
+//         } else if f < 1000000.0 {
+//             format_with_precision(f / 1000.0) + " K"
+//         } else if f < 1000000000.0 {
+//             format_with_precision(f / 1000000.0) + " M"
+//         } else if f < 1000000000000.0 {
+//             format_with_precision(f / 1000000000.0) + " G"
+//         } else if f < 1000000000000000.0 {
+//             format_with_precision(f / 1000000000000.0) + " T"
+//         } else if f < 1000000000000000000.0 {
+//             format_with_precision(f / 1000000000000000.0) + " P"
+//         } else {
+//             format_with_precision(f / 1000000000000000000.0) + " E"
+//         }
+//     } else {
+//         f.separated_string()
+//     }
+// }
+
+// /// Format supplied value as a float with 2 decimal places.
+// fn format_with_precision(f: f64) -> String {
+//     if f.fract() < 0.01 {
+//         separated_float!(format!("{}", f.trunc()))
+//     } else {
+//         separated_float!(format!("{:.2}", f))
+//     }
+// }

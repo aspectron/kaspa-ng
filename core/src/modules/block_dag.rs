@@ -294,22 +294,34 @@ impl ModuleT for BlockDag {
             runtime().block_dag_monitor_service().update_settings(self.settings.clone());
         }
 
-
         let mut reset_plot = false;
         let current_daa_score = core.state().current_daa_score().unwrap_or_default();
-        if self.last_daa_score != current_daa_score || current_daa_score==0 {
-           if !self.running || current_daa_score==0{
-                if current_daa_score > 0{
-                    self.running = true;
-                }else{
-                    self.running = false;
-                }
+        if self.last_daa_score != current_daa_score {
+
+            if !self.running {
+                self.running = true;
                 reset_plot = true;
                 self.daa_cursor = current_daa_score as f64 - 1.0;
             }
 
             self.last_daa_score = current_daa_score;
         }
+
+        // let mut reset_plot = false;
+        // let current_daa_score = core.state().current_daa_score().unwrap_or_default();
+        // if self.last_daa_score != current_daa_score || current_daa_score==0 {
+        //    if !self.running || current_daa_score==0{
+        //         if current_daa_score > 0{
+        //             self.running = true;
+        //         }else{
+        //             self.running = false;
+        //         }
+        //         reset_plot = true;
+        //         self.daa_cursor = current_daa_score as f64 - 1.0;
+        //     }
+
+        //     self.last_daa_score = current_daa_score;
+        // }
 
         let delta = 0.025;
         let daa_diff = current_daa_score as f64 - self.daa_cursor;
@@ -362,6 +374,8 @@ impl ModuleT for BlockDag {
         if reset_plot {
             plot = plot.auto_bounds([true, true].into());
             plot = plot.reset();
+        } else {
+            plot = plot.auto_bounds([false, false].into());
         }
 
         let mut graph_settled = true;

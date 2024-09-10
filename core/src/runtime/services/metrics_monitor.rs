@@ -54,6 +54,9 @@ impl MetricsService {
         for metric in Metric::into_iter() {
             let dest = metrics_data.get_mut(&metric).unwrap();
             if dest.is_empty() {
+                if snapshot.duration_millis < 0.0 {
+                    continue;
+                }
                 let y = snapshot.get(&metric);
                 let mut timestamp = timestamp - MAX_METRICS_SAMPLES as f64 * 1000.0;
                 for _ in 0..(MAX_METRICS_SAMPLES - 1) {
@@ -69,6 +72,11 @@ impl MetricsService {
             let y = snapshot.get(&metric);
             if y.is_finite() {
                 dest.push(PlotPoint { x: timestamp, y });
+            } else {
+                dest.push(PlotPoint {
+                    x: timestamp,
+                    y: 0.0,
+                });
             }
         }
 
