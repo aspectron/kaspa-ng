@@ -37,7 +37,7 @@ impl UILayoutExt for Ui {
         let mut child_rect = self.available_rect_before_wrap();
         child_rect.min.x += indent;
 
-        let mut child_ui = self.child_ui_with_id_source(child_rect, *self.layout(), id_source);
+        let mut child_ui = self.child_ui_with_id_source(child_rect, *self.layout(), id_source, None);
         let ret = add_contents(&mut child_ui);
 
         // let left_vline = self.visuals().indent_has_left_vline;
@@ -233,7 +233,8 @@ impl<Value: PartialEq> SelectionPanels<Value> {
     }
 
     pub fn render(self, ui: &mut Ui, current_value: &mut Value) -> Response {
-        let visuals = ui.visuals();
+        // TODO @28
+        let visuals = ui.visuals().clone();
         let sep_ratio = self.sep_ratio;
         let text_color = visuals.text_color();
         let bg_color = visuals.code_bg_color;
@@ -270,14 +271,16 @@ impl<Value: PartialEq> SelectionPanels<Value> {
                 let available_width = ui.available_width() - indent;
                 let title =
                     self.title
-                        .into_galley(ui, Some(true), available_width, TextStyle::Heading);
+                        .into_galley(ui, Some(TextWrapMode::Wrap), available_width, TextStyle::Heading);
                 let text_indent = (available_width - title.size().x) / 2.0;
                 let rect = ui.cursor().translate(Vec2::new(text_indent, 10.0));
                 ui.allocate_exact_size(
                     title.size() + Vec2::new(text_indent, 10.0),
                     Sense::focusable_noninteractive(),
                 );
-                title.paint_with_fallback_color(ui.painter(), rect.min, text_color);
+                // TODO @28
+                ui.painter().galley(rect.min, title, visuals.text_color());
+                // title.paint_with_fallback_color(ui.painter(), rect.min, text_color);
             }
 
             // ui.label(format!("before_wrap_width: {before_wrap_width}"));

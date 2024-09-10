@@ -113,11 +113,11 @@ enum AddressStatus {
 
 #[derive(PartialEq, Debug, Default)]
 pub enum FeeMode{
+    // None,
+    Low,
     #[default]
-    None,
-    LowPriority,
-    Economic,
     Normal,
+    High,
 }
 
 #[derive(Default)]

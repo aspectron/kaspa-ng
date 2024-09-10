@@ -59,6 +59,7 @@ pub struct Core {
     pub network_pressure: NetworkPressure,
     notifications: Notifications,
     pub storage: Storage,
+    pub feerate : Option<Arc<RpcFeeEstimate>>,
 }
 
 impl Core {
@@ -220,6 +221,7 @@ impl Core {
             network_pressure: NetworkPressure::default(),
             notifications: Notifications::default(),
             storage,
+            feerate : None,
             // daemon_storage_root: Mutex::new(daemon_storage_root),
         };
 
@@ -729,6 +731,9 @@ impl Core {
             Events::MempoolSize { mempool_size } => {
                 self.network_pressure
                     .update_mempool_size(mempool_size, &self.settings.node.network);
+            }
+            Events::Feerate { feerate } => {
+                self.feerate = feerate;
             }
             Events::Exit => {
                 cfg_if! {

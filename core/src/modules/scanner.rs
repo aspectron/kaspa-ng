@@ -282,6 +282,7 @@ impl ModuleT for Scanner {
                                     usize::MAX,
                                     64,
                                     transfer_funds,
+                                    None,
                                     &abortable,
                                     Some(Arc::new(move |index,utxo_count, balance, txid|{
                                         if let Some(_txid) = txid {

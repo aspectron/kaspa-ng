@@ -202,18 +202,47 @@ impl Overview {
                         //     format!("• {DISCORD_LOGO} {}",i18n("Discord")),
                         //     "https://discord.com/invite/kS3SK5F36R",
                         // );
+
+                        if core.settings.node.network == Network::Mainnet {
+                            self.render_fee_rate(core, ui);
+                        }
                     });
+
+                if core.settings.node.network == Network::Testnet10 {
+                    CollapsingHeader::new(i18n("Testnet 10"))
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            use egui_phosphor::light::{HAND_COINS,DATABASE};
+
+                            ui.hyperlink_to_tab(
+                                format!("• {DATABASE} {}",i18n("Explorer")),
+                                "https://explorer-tn10.kaspa.org/",
+                            );
+                            ui.hyperlink_to_tab(
+                                format!("• {HAND_COINS} {}",i18n("Faucet")),
+                                "https://faucet-testnet.kaspanet.io",
+                            );
+
+                            self.render_fee_rate(core, ui);
+                        });
+                }
 
                 if core.settings.node.network == Network::Testnet11 {
                     CollapsingHeader::new(i18n("Testnet 11"))
                         .default_open(true)
                         .show(ui, |ui| {
-                            use egui_phosphor::light::HAND_COINS;
+                            use egui_phosphor::light::{HAND_COINS,DATABASE};
 
                             ui.hyperlink_to_tab(
-                                format!("• {HAND_COINS} {}",i18n("Faucet")),
-                                "https://faucet-t11.kaspa.ws",
+                                format!("• {DATABASE} {}",i18n("Explorer")),
+                                "https://explorer-tn11.kaspa.org/",
                             );
+                            ui.hyperlink_to_tab(
+                                format!("• {HAND_COINS} {}",i18n("Faucet")),
+                                "https://faucet-t11.kaspanet.io",
+                            );
+
+                            self.render_fee_rate(core, ui);
                         });
                 }
 
@@ -363,6 +392,21 @@ impl Overview {
                             }
                         });
             });
+    }
+
+    fn render_fee_rate(&self, core: &Core, ui : &mut Ui) {
+        if let Some(fees) = core.feerate.as_ref() {
+            let low = fees.low_buckets.first().map(|frb|frb.feerate).unwrap_or_default();
+            let med = fees.normal_buckets.iter().next().map(|frb|frb.feerate).unwrap_or_default();
+            let high = fees.priority_bucket.feerate;
+            CollapsingHeader::new(i18n("Fee Rate Estimates"))
+                .default_open(true)
+                .show(ui, |ui| {
+                    ui.label(format!("Low: {:.2} SOMPI/g", low));
+                    ui.label(format!("Medium: {:.2} SOMPI/g", med));
+                    ui.label(format!("High: {:.2} SOMPI/g", high));
+                });
+        }
     }
 
     #[cfg(not(feature = "lean"))]

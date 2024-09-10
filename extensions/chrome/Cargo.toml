@@ -9,8 +9,8 @@ repository.workspace = true
 
 [features]
 browser-extension = ["kaspa-ng-core/browser-extension"]
-# default = []
-default = ["browser-extension"]
+default = []
+# default = ["browser-extension"]
 
 [lib]
 crate-type = ["cdylib", "lib"]

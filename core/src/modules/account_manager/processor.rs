@@ -56,6 +56,7 @@ impl<'context> Processor<'context> {
                             account_id,
                             destination: payment_output.into(),
                             priority_fee_sompi: Fees::SenderPays(priority_fees_sompi),
+                            fee_rate: None,
                             payload: None,
                         };
 
@@ -108,6 +109,7 @@ impl<'context> Processor<'context> {
                                     destination: payment_output.into(),
                                     wallet_secret,
                                     payment_secret,
+                                    fee_rate: None,
                                     priority_fee_sompi: Fees::SenderPays(priority_fees_sompi),
                                     payload: None,
                                 };
@@ -130,6 +132,7 @@ impl<'context> Processor<'context> {
                                     destination_account_id,
                                     wallet_secret,
                                     payment_secret,
+                                    fee_rate: None,
                                     priority_fee_sompi: Some(Fees::SenderPays(priority_fees_sompi)),
                                     transfer_amount_sompi,
                                 };
