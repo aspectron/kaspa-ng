@@ -4,6 +4,8 @@ pub struct Settings {
     #[allow(dead_code)]
     runtime: Runtime,
     settings : crate::settings::Settings,
+    wrpc_borsh_network_interface : NetworkInterfaceEditor,
+    wrpc_json_network_interface : NetworkInterfaceEditor,
     grpc_network_interface : NetworkInterfaceEditor,
     reset_settings : bool,
 }
@@ -13,6 +15,8 @@ impl Settings {
         Self { 
             runtime,
             settings : crate::settings::Settings::default(),
+            wrpc_borsh_network_interface : NetworkInterfaceEditor::default(),
+            wrpc_json_network_interface : NetworkInterfaceEditor::default(),
             grpc_network_interface : NetworkInterfaceEditor::default(),
             reset_settings : false,
         }
@@ -21,6 +25,8 @@ impl Settings {
     pub fn load(&mut self, settings : crate::settings::Settings) {
         self.settings = settings;
 
+        self.wrpc_borsh_network_interface = NetworkInterfaceEditor::from(&self.settings.node.wrpc_borsh_network_interface);
+        self.wrpc_json_network_interface = NetworkInterfaceEditor::from(&self.settings.node.wrpc_json_network_interface);
         self.grpc_network_interface = NetworkInterfaceEditor::from(&self.settings.node.grpc_network_interface);
     }
 
@@ -345,16 +351,24 @@ impl Settings {
                                     .show(ui, |ui| {
                                         ui.vertical(|ui|{
 
+                                            ui.checkbox(&mut self.settings.node.enable_wrpc_borsh, i18n("Enable Public wRPC Borsh"));
+
+                                            // ui.checkbox(&mut self.settings.node.enable_wrpc_json, i18n("Enable wRPC JSON"));
+                                            // if self.settings.node.enable_wrpc_json {
+                                            //     CollapsingHeader::new(i18n("wRPC JSON Network Interface & Port"))
+                                            //         .default_open(true)
+                                            //         .show(ui, |ui| {
+                                            //             self.wrpc_json_network_interface.ui(ui);
+                                            //         });
+                                            // }
+
                                             ui.checkbox(&mut self.settings.node.enable_grpc, i18n("Enable gRPC"));
                                             if self.settings.node.enable_grpc {
-
                                                 CollapsingHeader::new(i18n("gRPC Network Interface & Port"))
                                                     .default_open(true)
                                                     .show(ui, |ui| {
                                                         self.grpc_network_interface.ui(ui);
                                                     });
-                                                // - TODO
-                                                // ui.add(TextEdit::singleline(&mut self.settings.node.grpc_network_interface));
                                             }
                                         });
 

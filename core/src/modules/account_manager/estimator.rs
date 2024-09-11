@@ -119,7 +119,8 @@ impl<'context> Estimator<'context> {
                     let usd_rate = if core.settings.market_monitor {
                         core.market.as_ref().and_then(|market| {
                             market.price.as_ref().and_then(|price_list| {
-                                price_list.get("USD").map(|market_data| market_data.price)
+                                // println!("{:#?}", price_list);
+                                price_list.get("usd").map(|market_data| market_data.price)
                             })
                         })
                     } else { None };
@@ -175,18 +176,21 @@ impl<'context> Estimator<'context> {
                         for bucket in buckets.into_iter() {
                             if let Some((bucket, mode, label)) = bucket {
                                 let aggregate_mass = estimate.aggregate_mass;
-                                let number_of_generated_transactions = estimate.number_of_generated_transactions;
+                                // let number_of_generated_transactions = estimate.number_of_generated_transactions;
+                                let number_of_generated_stages = estimate.number_of_generated_stages;
                                 let feerate = bucket.feerate;
-                                let seconds = bucket.estimated_seconds * number_of_generated_transactions as f64;
+                                let seconds = bucket.estimated_seconds * number_of_generated_stages as f64;
                                 let network_type = network_type;
                                 // let total_micro_kas = feerate * aggregate_mass as f64 * 0.01;
-                                let total_kas = feerate * aggregate_mass as f64 * 1e8;
+                                let total_kas = feerate * aggregate_mass as f64 * 1e-8;
                                 let total_sompi = (feerate * aggregate_mass as f64) as u64;
                                 let total_usd = usd_rate.map(|rate| total_kas * rate);
+                                // println!("total_kas: {:?}, total_usd: {:?} usd_rate: {:?}", total_kas, total_usd, usd_rate);
                                 fee_selection = fee_selection.add_with_footer(mode, i18n(label), format_duration_estimate(seconds), move |ui| {
                                     // ui.label(format!("{} µKAS", feerate * aggregate_mass as f64 * 0.01));
                                     ui.label(format!("{}",sompi_to_kaspa_string_with_suffix(total_sompi, &network_type)));
                                     if let Some(usd) = total_usd {
+                                        let usd = format_currency(usd, 6);
                                         ui.label(RichText::new(format!("~{} USD", usd)).strong());
                                     }
                                     // ui.label(RichText::new("~0.00000215 USD").strong());

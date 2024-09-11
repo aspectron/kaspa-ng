@@ -353,6 +353,10 @@ pub struct NodeSettings {
     pub connection_config_kind: NodeConnectionConfigKind,
     pub rpc_kind: RpcKind,
     pub wrpc_url: String,
+    #[serde(default)]
+    pub enable_wrpc_borsh: bool,
+    #[serde(default)]
+    pub wrpc_borsh_network_interface: NetworkInterfaceConfig,
     pub wrpc_encoding: WrpcEncoding,
     pub enable_wrpc_json: bool,
     pub wrpc_json_network_interface: NetworkInterfaceConfig,
@@ -379,6 +383,8 @@ impl Default for NodeSettings {
             rpc_kind: RpcKind::Wrpc,
             wrpc_url: "127.0.0.1".to_string(),
             wrpc_encoding: WrpcEncoding::Borsh,
+            enable_wrpc_borsh: false,
+            wrpc_borsh_network_interface: NetworkInterfaceConfig::default(),
             enable_wrpc_json: false,
             wrpc_json_network_interface: NetworkInterfaceConfig::default(),
             enable_grpc: false,

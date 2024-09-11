@@ -3240,6 +3240,7 @@
       "Inbound": "Inbound",
       "Include QoS Priority Fees": "Include QoS Priority Fees",
       "Integrated Daemon": "Integrated Daemon",
+      "Invalid amount:": "Invalid amount:",
       "Invalid daemon arguments": "Invalid daemon arguments",
       "Invalid network type - expected: testnet-10 connected to: testnet-11": "Invalid network type - expected: testnet-10 connected to: testnet-11",
       "Invalid wRPC URL": "Invalid wRPC URL",

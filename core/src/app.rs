@@ -103,7 +103,7 @@ cfg_if! {
 
                 let cmd = Command::new("kaspa-ng")
 
-                    .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version()))
+                    .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa {})", kaspa_version()))
                     .arg(arg!(--version "Display software version"))
                     .arg(arg!(--disable "Disable node services when starting"))
                     .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon"))
