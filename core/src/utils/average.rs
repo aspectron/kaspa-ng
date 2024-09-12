@@ -4,21 +4,22 @@ const MAX_AVERAGE_SAMPLES: usize = 6;
 const AVERAGE_ALPHA_HIGH: f64 = 0.8;
 const AVERAGE_ALPHA_LOW: f64 = 0.5;
 
+#[derive(Default)]
 pub struct FeerateEstimate {
     pub low: FeerateBucketAverage,
     pub economic: FeerateBucketAverage,
     pub priority: FeerateBucketAverage,
 }
 
-impl Default for FeerateEstimate {
-    fn default() -> Self {
-        Self {
-            low: FeerateBucketAverage::default(),
-            economic: FeerateBucketAverage::default(),
-            priority: FeerateBucketAverage::default(),
-        }
-    }
-}
+// impl Default for FeerateEstimate {
+//     fn default() -> Self {
+//         Self {
+//             low: FeerateBucketAverage::default(),
+//             economic: FeerateBucketAverage::default(),
+//             priority: FeerateBucketAverage::default(),
+//         }
+//     }
+// }
 
 impl FeerateEstimate {
     pub fn new(estimate: &RpcFeeEstimate) -> Self {
@@ -127,7 +128,7 @@ impl<const SAMPLES: usize> FeerateBucketAverageN<SAMPLES> {
     }
 
     fn insert(&mut self, value: FeerateBucket) {
-        if self.samples.len() == 0 {
+        if self.samples.is_empty() {
             self.samples.push_back(value);
         } else {
             let delta = self.average;

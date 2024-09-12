@@ -339,15 +339,14 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             responce
         };
 
-        let response = ui
-            .indent_with_size("selection-panels", indent, Box::new(add_contents))
-            .response;
+        ui.indent_with_size("selection-panels", indent, Box::new(add_contents))
+            .response
         // response |= ui
         //     .vertical_centered(|ui| (self.build_footer)(ui, current_value))
         //     .response;
         // ui.label(" ");
         // ui.label(format!(" vertical: {vertical}"));
         // ui.label(format!("panels_width {}", panels_width));
-        response
+        // response
     }
 }

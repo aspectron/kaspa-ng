@@ -13,7 +13,7 @@ impl<'context> Processor<'context> {
     pub fn render(&mut self, core : &mut Core, ui: &mut Ui, rc : &RenderContext) {
 
         let RenderContext { account, network_type, .. } = rc;
-        let network_type = network_type.clone();
+        let network_type = *network_type;
 
         ui.add_space(8.);
         match self.context.transaction_kind.as_ref().unwrap() {
@@ -148,7 +148,7 @@ impl<'context> Processor<'context> {
         
                             spawn_with_result(&send_result, async move {
 
-                                let fee_rate = calculate_fee_rate(network_type.clone(), account_id, send_amount_sompi, priority_fee_sompi).await;
+                                let fee_rate = calculate_fee_rate(network_type, account_id, send_amount_sompi, priority_fee_sompi).await;
 
                                 let request = AccountsSendRequest {
                                     account_id,
@@ -174,7 +174,7 @@ impl<'context> Processor<'context> {
                             let transfer_amount_sompi = self.context.send_amount_sompi;
 
                             spawn_with_result(&send_result, async move {
-                                let fee_rate = calculate_fee_rate(network_type.clone(), source_account_id, transfer_amount_sompi, priority_fee_sompi).await;
+                                let fee_rate = calculate_fee_rate(network_type, source_account_id, transfer_amount_sompi, priority_fee_sompi).await;
 
                                 let request = AccountsTransferRequest {
                                     source_account_id,

@@ -112,8 +112,9 @@ enum AddressStatus {
     Invalid(String),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub enum FeeMode{
+    #[default]
     None,
     Low(FeerateBucket),
     // #[default]
@@ -132,24 +133,25 @@ impl FeeMode {
     }
 }
 
-impl Default for FeeMode {
-    fn default() -> Self {
-        // FeeMode::Economic(FeerateBucket::default())
-        FeeMode::None
-    }
-}
+// impl Default for FeeMode {
+//     fn default() -> Self {
+//         // FeeMode::Economic(FeerateBucket::default())
+//         FeeMode::None
+//     }
+// }
 
 impl Eq for FeeMode {}
 
 impl PartialEq for FeeMode {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (FeeMode::None, FeeMode::None) => true,
-            (FeeMode::Low(_), FeeMode::Low(_)) => true,
-            (FeeMode::Economic(_), FeeMode::Economic(_)) => true,
-            (FeeMode::Priority(_), FeeMode::Priority(_)) => true,
-            _ => false,
-        }
+        // match (self, other) {
+        //     (FeeMode::None, FeeMode::None) => true,
+        //     (FeeMode::Low(_), FeeMode::Low(_)) => true,
+        //     (FeeMode::Economic(_), FeeMode::Economic(_)) => true,
+        //     (FeeMode::Priority(_), FeeMode::Priority(_)) => true,
+        //     _ => false,
+        // }
+        matches!((self, other), (FeeMode::None, FeeMode::None) | (FeeMode::Low(_), FeeMode::Low(_)) | (FeeMode::Economic(_), FeeMode::Economic(_)) | (FeeMode::Priority(_), FeeMode::Priority(_)))
     }
 }
 
