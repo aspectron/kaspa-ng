@@ -32,11 +32,11 @@ pub fn format_address_string(address: impl Into<String>, range: Option<usize>) -
     } else {
         let start = range;
         let finish = payload.len() - range;
-        
+
         let left = &payload[0..start];
         // let center = style(&payload[start..finish]).dim();
         let right = &payload[finish..];
-        
+
         format!("{prefix}:{left}....{right}")
     }
 }

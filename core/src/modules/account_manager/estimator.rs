@@ -83,7 +83,7 @@ impl<'context> Estimator<'context> {
                 (false, GeneratorSummary::new(network_id))
             }
             EstimatorStatus::None => {
-                ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(&network_type), i18n("amount to send")));
+                ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(network_type), i18n("amount to send")));
                 (false, GeneratorSummary::new(network_id))
             }
         };
@@ -110,18 +110,17 @@ impl<'context> Estimator<'context> {
             120.0,
             150.0);
 
-        for mode in buckets.into_iter().filter_map(|v|v) {
+        for mode in buckets.into_iter().flatten() {
             let bucket = mode.bucket();
             let aggregate_mass = actual_estimate.aggregate_mass;
             let number_of_generated_stages = actual_estimate.number_of_generated_stages;
             let feerate = bucket.feerate;
             let seconds = bucket.seconds.max(1.0) * number_of_generated_stages as f64;
-            let network_type = network_type;
             let total_kas = feerate * aggregate_mass as f64 * 1e-8;
             let total_sompi = (feerate * aggregate_mass as f64) as u64;
             let total_usd = usd_rate.map(|rate| total_kas * rate);
             fee_selection = fee_selection.add_with_footer(mode, i18n(mode.to_string().as_str()), format_duration_estimate(seconds), move |ui| {
-                ui.label(RichText::new(format!("{}",sompi_to_kaspa_string_with_suffix(total_sompi, &network_type))).strong());
+                ui.label(RichText::new(sompi_to_kaspa_string_with_suffix(total_sompi, &network_type)).strong());
                 if let Some(usd) = total_usd {
                     let usd = format_currency(usd, 6);
                     ui.label(RichText::new(format!("~{} USD", usd)).strong());
@@ -248,12 +247,12 @@ fn format_duration_estimate(seconds: f64) -> String {
     let seconds = seconds as u64;
 
     if seconds == 1 {
-        format!("< {} second", seconds as u64)
+        format!("< {seconds} second")
     } else if seconds < 60 {
-        format!("< {} seconds", seconds as u64)
+        format!("< {seconds} seconds")
     } else if minutes == 1 {
-        format!("< {} minute", minutes)
+        format!("< {minutes} minute")
     } else {
-        format!("< {} minutes", minutes as u64)
+        format!("< {minutes} minutes")
     }
 }

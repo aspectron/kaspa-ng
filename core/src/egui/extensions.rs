@@ -363,7 +363,14 @@ impl LayoutJobBuilder {
     pub fn hyperlink(self, ui: &mut Ui, text: &str, url: &str, color: Color32) {
         self.hyperlink_with_clipboard_icon(ui, text, url, color, None)
     }
-    pub fn transaction_id(self, ui: &mut Ui, txid: &str, url: &str, color: Color32, range : Option<usize>) {
+    pub fn transaction_id(
+        self,
+        ui: &mut Ui,
+        txid: &str,
+        url: &str,
+        color: Color32,
+        range: Option<usize>,
+    ) {
         self.hyperlink_with_clipboard_icon(
             ui,
             &format_partial_string(txid, range),
@@ -372,7 +379,7 @@ impl LayoutJobBuilder {
             Some(txid.to_string()),
         )
     }
-    pub fn script(self, ui: &mut Ui, script: &str, color: Color32, range : Option<usize>) {
+    pub fn script(self, ui: &mut Ui, script: &str, color: Color32, range: Option<usize>) {
         let this = self.text(&format_partial_string(script, range), color);
         ui.horizontal(|ui| {
             Self::render_label(ui, this.job, this.heading);
@@ -385,7 +392,14 @@ impl LayoutJobBuilder {
             Self::clipboard_icon(ui, text.to_string());
         });
     }
-    pub fn address(self, ui: &mut Ui, address: &str, url: &str, color: Color32, range : Option<usize>) {
+    pub fn address(
+        self,
+        ui: &mut Ui,
+        address: &str,
+        url: &str,
+        color: Color32,
+        range: Option<usize>,
+    ) {
         self.hyperlink_with_clipboard_icon(
             ui,
             &format_address_string(address, range),
