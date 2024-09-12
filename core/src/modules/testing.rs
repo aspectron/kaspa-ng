@@ -108,12 +108,12 @@ impl ModuleT for Testing {
 
         let fee_selection = SelectionPanels::new(
             100.0,
-            130.0,
-            i18n("Miner Fee"),
-            |ui, value|{
-                ui.label("1 in / 2 outputs, ~1.2 Kg");
-                ui.label(format!("Fee Mode: {:?}", value));
-            })
+            130.0)
+            // i18n("Miner Fee"),
+            // |ui, value|{
+            //     ui.label("1 in / 2 outputs, ~1.2 Kg");
+            //     ui.label(format!("Fee Mode: {:?}", value));
+            // })
             //.panel_min_height(300.)
             //.vertical(true)
             //.add(FeeMode::LowPriority, i18n("Low-priority"), i18n("3 hours or more"))
@@ -167,11 +167,12 @@ impl ModuleT for Testing {
         let fee_selection = SelectionPanels::new(
             100.0,
             150.0,
-            i18n("Miner Fee"),
-            |ui, value|{
-                ui.label("1 in / 2 outputs, ~1.2 Kg");
-                ui.label(format!("Fee Mode: {:?}", value));
-            })
+            // i18n("Miner Fee"),
+            // |ui, value|{
+            //     ui.label("1 in / 2 outputs, ~1.2 Kg");
+            //     ui.label(format!("Fee Mode: {:?}", value));
+            // }
+        )
             //.panel_min_height(300.)
             //.vertical(true)
             //.add(FeeMode::LowPriority, i18n("Low-priority"), i18n("3 hours or more"))

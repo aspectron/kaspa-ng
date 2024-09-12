@@ -94,11 +94,12 @@ enum Focus {
     PaymentSecret,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub enum EstimatorStatus {
     #[default]
     None,
-    GeneratorSummary(GeneratorSummary),
+    // GeneratorSummary(GeneratorSummary),
+    GeneratorSummary { base_estimate : GeneratorSummary, actual_estimate : GeneratorSummary },
     Error(String),
 }
 
@@ -111,21 +112,54 @@ enum AddressStatus {
     Invalid(String),
 }
 
-#[derive(PartialEq, Debug, Default, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum FeeMode{
-    // None,
-    Low,
-    #[default]
-    Economic,
-    Priority,
+    None,
+    Low(FeerateBucket),
+    // #[default]
+    Economic(FeerateBucket),
+    Priority(FeerateBucket),
+}
+
+impl FeeMode {
+    pub fn bucket(&self) -> FeerateBucket {
+        match self {
+            FeeMode::Low(bucket) => *bucket,
+            FeeMode::Economic(bucket) => *bucket,
+            FeeMode::Priority(bucket) => *bucket,
+            FeeMode::None => FeerateBucket::default(),
+        }
+    }
+}
+
+impl Default for FeeMode {
+    fn default() -> Self {
+        // FeeMode::Economic(FeerateBucket::default())
+        FeeMode::None
+    }
+}
+
+impl Eq for FeeMode {}
+
+impl PartialEq for FeeMode {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (FeeMode::None, FeeMode::None) => true,
+            (FeeMode::Low(_), FeeMode::Low(_)) => true,
+            (FeeMode::Economic(_), FeeMode::Economic(_)) => true,
+            (FeeMode::Priority(_), FeeMode::Priority(_)) => true,
+            _ => false,
+        }
+    }
 }
 
 impl std::fmt::Display for FeeMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FeeMode::Low => write!(f, "Low"),
-            FeeMode::Economic => write!(f, "Economic"),
-            FeeMode::Priority => write!(f, "Priority"),
+            FeeMode::None => write!(f, "N/A"),
+            FeeMode::Low(_) => write!(f, "Low"),
+            FeeMode::Economic(_) => write!(f, "Economic"),
+            FeeMode::Priority(_) => write!(f, "Priority"),
         }
     }
 }
@@ -139,6 +173,7 @@ pub struct ManagerContext {
     enable_priority_fees : bool,
     priority_fees_text : String,
     priority_fees_sompi : u64,
+    // priority_fee_rate : f64,
     estimate : Arc<Mutex<EstimatorStatus>>,
     request_estimate : Option<bool>,
     address_status : AddressStatus,
@@ -175,6 +210,7 @@ impl Zeroize for ManagerContext {
         self.enable_priority_fees = false;
         self.priority_fees_text = String::default();
         self.priority_fees_sompi = 0;
+        // self.priority_fee_rate = 0.0;
         *self.estimate.lock().unwrap() = EstimatorStatus::None;
         self.address_status = AddressStatus::None;
         self.transaction_kind = None;

@@ -201,7 +201,6 @@ pub fn precision_from_symbol(symbol: &str) -> usize {
     }
 }
 
-
 // /// Format supplied value as a float with 2 decimal places.
 // fn format_as_float(f: f64, short: bool) -> String {
 //     if short {

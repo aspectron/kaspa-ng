@@ -5,9 +5,9 @@ const AVERAGE_ALPHA_HIGH: f64 = 0.8;
 const AVERAGE_ALPHA_LOW: f64 = 0.5;
 
 pub struct FeerateEstimate {
-    pub low : FeerateBucketAverage,
-    pub economic : FeerateBucketAverage,
-    pub priority : FeerateBucketAverage,
+    pub low: FeerateBucketAverage,
+    pub economic: FeerateBucketAverage,
+    pub priority: FeerateBucketAverage,
 }
 
 impl Default for FeerateEstimate {
@@ -21,7 +21,7 @@ impl Default for FeerateEstimate {
 }
 
 impl FeerateEstimate {
-    pub fn new(estimate : &RpcFeeEstimate) -> Self {
+    pub fn new(estimate: &RpcFeeEstimate) -> Self {
         let mut feerate = Self {
             low: FeerateBucketAverage::default(),
             economic: FeerateBucketAverage::default(),
@@ -32,25 +32,33 @@ impl FeerateEstimate {
     }
 
     pub fn insert(&mut self, estimate: &RpcFeeEstimate) {
-        self.low.insert(estimate.low_buckets.first().map(FeerateBucket::from).unwrap_or_default());
-        self.economic.insert(estimate.normal_buckets.first().map(FeerateBucket::from).unwrap_or_default());
+        self.low.insert(
+            estimate
+                .low_buckets
+                .first()
+                .map(FeerateBucket::from)
+                .unwrap_or_default(),
+        );
+        self.economic.insert(
+            estimate
+                .normal_buckets
+                .first()
+                .map(FeerateBucket::from)
+                .unwrap_or_default(),
+        );
         self.priority.insert(estimate.priority_bucket.into());
     }
-
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct FeerateBucket {
-    pub feerate : f64,
-    pub seconds : f64,
+    pub feerate: f64,
+    pub seconds: f64,
 }
 
 impl FeerateBucket {
     pub fn new(feerate: f64, seconds: f64) -> Self {
-        Self {
-            feerate,
-            seconds,
-        }
+        Self { feerate, seconds }
     }
 }
 
@@ -107,14 +115,12 @@ impl From<RpcFeerateBucket> for FeerateBucket {
 pub type FeerateBucketAverage = FeerateBucketAverageN<MAX_AVERAGE_SAMPLES>;
 
 #[derive(Default, Debug, Clone)]
-pub struct FeerateBucketAverageN<const SAMPLES: usize> 
-{
+pub struct FeerateBucketAverageN<const SAMPLES: usize> {
     pub samples: VecDeque<FeerateBucket>,
     pub average: FeerateBucket,
 }
 
-impl<const SAMPLES: usize> FeerateBucketAverageN<SAMPLES> 
-{
+impl<const SAMPLES: usize> FeerateBucketAverageN<SAMPLES> {
     pub fn clear(&mut self) {
         self.samples.clear();
         self.average = FeerateBucket::default();
@@ -127,12 +133,16 @@ impl<const SAMPLES: usize> FeerateBucketAverageN<SAMPLES>
             let delta = self.average;
 
             if value > self.value() {
-                let feerate = AVERAGE_ALPHA_HIGH * value.feerate + (1.0 - AVERAGE_ALPHA_HIGH) * delta.feerate;
-                let seconds = AVERAGE_ALPHA_HIGH * value.seconds + (1.0 - AVERAGE_ALPHA_HIGH) * delta.seconds;
+                let feerate =
+                    AVERAGE_ALPHA_HIGH * value.feerate + (1.0 - AVERAGE_ALPHA_HIGH) * delta.feerate;
+                let seconds =
+                    AVERAGE_ALPHA_HIGH * value.seconds + (1.0 - AVERAGE_ALPHA_HIGH) * delta.seconds;
                 self.samples.push_back(FeerateBucket::new(feerate, seconds));
             } else {
-                let feerate = AVERAGE_ALPHA_LOW * value.feerate + (1.0 - AVERAGE_ALPHA_LOW) * delta.feerate;
-                let seconds = AVERAGE_ALPHA_LOW * value.seconds + (1.0 - AVERAGE_ALPHA_LOW) * delta.seconds;
+                let feerate =
+                    AVERAGE_ALPHA_LOW * value.feerate + (1.0 - AVERAGE_ALPHA_LOW) * delta.feerate;
+                let seconds =
+                    AVERAGE_ALPHA_LOW * value.seconds + (1.0 - AVERAGE_ALPHA_LOW) * delta.seconds;
                 self.samples.push_back(FeerateBucket::new(feerate, seconds));
             }
         }
@@ -141,15 +151,17 @@ impl<const SAMPLES: usize> FeerateBucketAverageN<SAMPLES>
             self.samples.pop_front();
         }
         self.update();
-
     }
 
     pub fn update(&mut self) {
         let len = self.samples.len() as f64;
-        let sum = self.samples.iter().fold(FeerateBucket::default(), |a, b| a + *b);
+        let sum = self
+            .samples
+            .iter()
+            .fold(FeerateBucket::default(), |a, b| a + *b);
         self.average = FeerateBucket {
-            feerate : sum.feerate / len,
-            seconds : sum.seconds / len,
+            feerate: sum.feerate / len,
+            seconds: sum.seconds / len,
         };
     }
 
@@ -160,7 +172,6 @@ impl<const SAMPLES: usize> FeerateBucketAverageN<SAMPLES>
             FeerateBucket::default()
         }
     }
-
 }
 
 #[cfg(test)]
@@ -169,8 +180,6 @@ mod test {
 
     #[test]
     fn test_average() {
-
-
         let values = [
             248155.3514557079,
             215263.2471686213,
@@ -491,7 +500,7 @@ mod test {
 
         let mut average = FeerateBucketAverageN::<6>::default();
         for value in values.iter() {
-            average.insert(FeerateBucket::new(*value,1.0));
+            average.insert(FeerateBucket::new(*value, 1.0));
             println!("{} -> {:?}", value, average.value());
         }
     }

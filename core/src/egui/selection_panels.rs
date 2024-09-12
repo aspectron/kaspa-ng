@@ -37,7 +37,8 @@ impl UILayoutExt for Ui {
         let mut child_rect = self.available_rect_before_wrap();
         child_rect.min.x += indent;
 
-        let mut child_ui = self.child_ui_with_id_source(child_rect, *self.layout(), id_source, None);
+        let mut child_ui =
+            self.child_ui_with_id_source(child_rect, *self.layout(), id_source, None);
         let ret = add_contents(&mut child_ui);
 
         // let left_vline = self.visuals().indent_has_left_vline;
@@ -73,7 +74,7 @@ impl UILayoutExt for Ui {
 }
 
 type UiBuilderFn = Box<dyn FnOnce(&'_ mut Ui)>;
-type FooterUiBuilderFn<V> = Box<dyn FnOnce(&'_ mut Ui, &'_ mut V)>;
+// type FooterUiBuilderFn<V> = Box<dyn FnOnce(&'_ mut Ui, &'_ mut V)>;
 
 pub struct SelectionPanel<V> {
     pub title: WidgetText,
@@ -170,11 +171,11 @@ impl<Value: PartialEq> SelectionPanel<Value> {
 }
 
 pub struct SelectionPanels<V> {
-    pub title: WidgetText,
+    // pub title: WidgetText,
     pub panel_min_width: f32,
     pub panel_max_width: f32,
     pub panels: Vec<SelectionPanel<V>>,
-    pub build_footer: FooterUiBuilderFn<V>,
+    // pub build_footer: FooterUiBuilderFn<V>,
     pub panel_min_height: f32,
     pub vertical: bool,
     pub sep_ratio: f32,
@@ -184,14 +185,14 @@ impl<Value: PartialEq> SelectionPanels<Value> {
     pub fn new(
         panel_min_width: f32,
         panel_max_width: f32,
-        title: impl Into<WidgetText>,
-        build_footer: impl FnOnce(&mut Ui, &mut Value) + 'static,
+        // title: impl Into<WidgetText>,
+        // build_footer: impl FnOnce(&mut Ui, &mut Value) + 'static,
     ) -> Self {
         Self {
-            title: title.into(),
+            // title: title.into(),
             panel_min_width,
             panel_max_width,
-            build_footer: Box::new(build_footer),
+            // build_footer: Box::new(build_footer),
             panels: vec![],
             panel_min_height: 0.,
             vertical: false,
@@ -266,22 +267,22 @@ impl<Value: PartialEq> SelectionPanels<Value> {
 
         let add_contents = |ui: &mut Ui| {
             let mut responce = ui.label(" ");
-            //ui.visuals_mut().override_text_color = Some(Color32::WHITE);
-            {
-                let available_width = ui.available_width() - indent;
-                let title =
-                    self.title
-                        .into_galley(ui, Some(TextWrapMode::Wrap), available_width, TextStyle::Heading);
-                let text_indent = (available_width - title.size().x) / 2.0;
-                let rect = ui.cursor().translate(Vec2::new(text_indent, 10.0));
-                ui.allocate_exact_size(
-                    title.size() + Vec2::new(text_indent, 10.0),
-                    Sense::focusable_noninteractive(),
-                );
-                // TODO @28
-                ui.painter().galley(rect.min, title, visuals.text_color());
-                // title.paint_with_fallback_color(ui.painter(), rect.min, text_color);
-            }
+            // {
+            //     let available_width = ui.available_width() - indent;
+            //     let title = self.title.into_galley(
+            //         ui,
+            //         Some(TextWrapMode::Wrap),
+            //         available_width,
+            //         TextStyle::Heading,
+            //     );
+            //     let text_indent = (available_width - title.size().x) / 2.0;
+            //     let rect = ui.cursor().translate(Vec2::new(text_indent, 10.0));
+            //     ui.allocate_exact_size(
+            //         title.size() + Vec2::new(text_indent, 10.0),
+            //         Sense::focusable_noninteractive(),
+            //     );
+            //     ui.painter().galley(rect.min, title, visuals.text_color());
+            // }
 
             // ui.label(format!("before_wrap_width: {before_wrap_width}"));
             // ui.label(format!("panel_width: {panel_width}"));
@@ -340,13 +341,13 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             responce
         };
 
-        let mut response = ui
+        let response = ui
             .indent_with_size("selection-panels", indent, Box::new(add_contents))
             .response;
-        response |= ui
-            .vertical_centered(|ui| (self.build_footer)(ui, current_value))
-            .response;
-        ui.label(" ");
+        // response |= ui
+        //     .vertical_centered(|ui| (self.build_footer)(ui, current_value))
+        //     .response;
+        // ui.label(" ");
         // ui.label(format!(" vertical: {vertical}"));
         // ui.label(format!("panels_width {}", panels_width));
         response
