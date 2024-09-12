@@ -351,7 +351,7 @@ impl Settings {
                                     .show(ui, |ui| {
                                         ui.vertical(|ui|{
 
-                                            ui.checkbox(&mut self.settings.node.enable_wrpc_borsh, i18n("Enable Public wRPC Borsh"));
+                                            ui.checkbox(&mut self.settings.node.enable_wrpc_borsh, i18n("Public wRPC (Borsh)"));
 
                                             // ui.checkbox(&mut self.settings.node.enable_wrpc_json, i18n("Enable wRPC JSON"));
                                             // if self.settings.node.enable_wrpc_json {
