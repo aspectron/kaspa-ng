@@ -150,19 +150,24 @@ impl<Value: PartialEq> SelectionPanel<Value> {
         let _res = add_contents(&mut prepared.content_ui);
         *min_height = min_height.max(prepared.content_ui.min_rect().height());
         prepared.content_ui.set_min_height(*min_height);
-        let rect = prepared.content_ui.min_rect() + prepared.frame.inner_margin;
-        if !selected && ui.allocate_rect(rect, Sense::hover()).hovered() {
-            //prepared.frame = prepared.frame.stroke(hover_stroke);
-            prepared.frame = prepared.frame.fill(selected_bg).stroke(hover_stroke);
+        let mut response = prepared.allocate_space(ui).interact(Sense::click());
+
+        if !selected && response.hovered() {
+            prepared.frame = prepared.frame.stroke(hover_stroke);
         }
 
-        let res = prepared.end(ui);
+        if response.is_pointer_button_down_on() {
+            let visuals = ui.style().interact(&response);
+            prepared.frame = prepared.frame.fill(selected_bg).stroke(visuals.bg_stroke);
+        }
 
-        let mut response = res.interact(Sense::click());
+        prepared.paint(ui);
+
         if response.clicked() && *current_value != self.value {
             *current_value = self.value;
             response.mark_changed();
         }
+
         response
     }
 }
@@ -340,7 +345,7 @@ impl<Value: PartialEq> SelectionPanels<Value> {
         };
 
         ui.indent_with_size("selection-panels", indent, Box::new(add_contents))
-            .response
+            .inner
         // response |= ui
         //     .vertical_centered(|ui| (self.build_footer)(ui, current_value))
         //     .response;
