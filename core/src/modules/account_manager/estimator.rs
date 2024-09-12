@@ -137,7 +137,14 @@ impl<'context> Estimator<'context> {
             let priority_feerate = (bucket.feerate - 1.0).max(0.0);
             let total_fees_sompi = (priority_feerate * actual_estimate.aggregate_mass as f64) as u64;
             // runtime().toast(UserNotification::success(format!("selection: {:?}", self.context.fee_mode)).short());
-            self.context.priority_fees_text = format!("{:0.2}", sompi_to_kaspa(total_fees_sompi));
+            let total_fee_kaspa = sompi_to_kaspa(total_fees_sompi);
+            self.context.priority_fees_text = if total_fee_kaspa < 0.0001 {
+                format!("{}", total_fee_kaspa)
+            } else if total_fee_kaspa < 0.01 {
+                format!("{:0.6}", total_fee_kaspa)
+            } else {
+                format!("{:0.4}", sompi_to_kaspa(total_fees_sompi))
+            };
             self.context.fee_mode = FeeMode::None;
             request_estimate = true;
         }
@@ -193,6 +200,8 @@ impl<'context> Estimator<'context> {
             });
 
         });
+
+        ui.add_space(16.);
 
         self.update_user_args() 
             && request_estimate 
