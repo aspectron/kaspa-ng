@@ -5,7 +5,7 @@ pub use kaspa_consensus_core::network::{NetworkId, NetworkType};
 pub use kaspa_consensus_core::Hash as KaspaHash;
 pub use kaspa_metrics_core::MetricsSnapshot;
 pub use kaspa_rpc_core::api::rpc::RpcApi;
-pub use kaspa_rpc_core::RpcFeeEstimate;
+pub use kaspa_rpc_core::{RpcFeeEstimate,RpcFeerateBucket};
 pub use kaspa_utils::hex::{FromHex, ToHex};
 pub use kaspa_utils::{hashmap::GroupExtension, networking::ContextualNetAddress};
 pub use kaspa_wallet_core::prelude::{

@@ -225,11 +225,11 @@ pub fn precision_from_symbol(symbol: &str) -> usize {
 //     }
 // }
 
-// /// Format supplied value as a float with 2 decimal places.
-// fn format_with_precision(f: f64) -> String {
-//     if f.fract() < 0.01 {
-//         separated_float!(format!("{}", f.trunc()))
-//     } else {
-//         separated_float!(format!("{:.2}", f))
-//     }
-// }
+/// Format supplied value as a float with 2 decimal places.
+pub fn format_with_precision(f: f64) -> String {
+    if f.fract() < 0.01 {
+        separated_float!(format!("{}", f.trunc()))
+    } else {
+        separated_float!(format!("{:.2}", f))
+    }
+}

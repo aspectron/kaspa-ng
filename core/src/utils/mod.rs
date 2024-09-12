@@ -1,5 +1,7 @@
 use crate::imports::*;
 
+mod average;
+pub use average::*;
 mod qr;
 pub use qr::*;
 mod i18n;

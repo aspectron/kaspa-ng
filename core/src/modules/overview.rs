@@ -396,15 +396,15 @@ impl Overview {
 
     fn render_fee_rate(&self, core: &Core, ui : &mut Ui) {
         if let Some(fees) = core.feerate.as_ref() {
-            let low = fees.low_buckets.first().map(|frb|frb.feerate).unwrap_or_default();
-            let med = fees.normal_buckets.iter().next().map(|frb|frb.feerate).unwrap_or_default();
-            let high = fees.priority_bucket.feerate;
+            let low = fees.low.value().feerate;
+            let med = fees.economic.value().feerate;
+            let high = fees.priority.value().feerate;
             CollapsingHeader::new(i18n("Fee Rate Estimates"))
                 .default_open(true)
                 .show(ui, |ui| {
                     ui.label(format!("Low: {:.2} SOMPI/g", low));
-                    ui.label(format!("Medium: {:.2} SOMPI/g", med));
-                    ui.label(format!("High: {:.2} SOMPI/g", high));
+                    ui.label(format!("Economic: {:.2} SOMPI/g", med));
+                    ui.label(format!("Priority: {:.2} SOMPI/g", high));
                 });
         }
     }

@@ -56,54 +56,54 @@ impl<'context> Estimator<'context> {
         }
 
         // TODO - improve the logic
-        if core.network_pressure.is_high() {
-            ui.label(format!("{}: {}% {} {} {:0.3} {} {}",
-                i18n("The network is currently experiencing high load"),
-                core.network_pressure.capacity(), 
-                i18n("of its capacity."),
-                i18n("It is recommended that you add a priority fee of at least"),
-                0.001, 
-                kaspa_suffix(network_type),
-                i18n("to ensure faster transaction acceptance."),
-            ));
-        }
+        // if core.network_pressure.is_high() {
+        //     ui.label(format!("{}: {}% {} {} {:0.3} {} {}",
+        //         i18n("The network is currently experiencing high load"),
+        //         core.network_pressure.capacity(), 
+        //         i18n("of its capacity."),
+        //         i18n("It is recommended that you add a priority fee of at least"),
+        //         0.001, 
+        //         kaspa_suffix(network_type),
+        //         i18n("to ensure faster transaction acceptance."),
+        //     ));
+        // }
 
         ui.add_space(8.);
 
 
 
 
-        if ui
-            .checkbox(&mut self.context.enable_priority_fees,i18n("Include QoS Priority Fees"))
-            // .on_hover_text_at_pointer(i18n("Add priority fees to ensure faster confirmation.\nUseful only if the network is congested."))
-            .changed() {
-            if self.context.enable_priority_fees {
-                self.context.focus.next(Focus::Fees);
-            } else {
-                self.context.focus.next(Focus::Amount);
-            }
-        }
+        // if ui
+        //     .checkbox(&mut self.context.enable_priority_fees,i18n("Include QoS Priority Fees"))
+        //     // .on_hover_text_at_pointer(i18n("Add priority fees to ensure faster confirmation.\nUseful only if the network is congested."))
+        //     .changed() {
+        //     if self.context.enable_priority_fees {
+        //         self.context.focus.next(Focus::Fees);
+        //     } else {
+        //         self.context.focus.next(Focus::Amount);
+        //     }
+        // }
 
-        if self.context.enable_priority_fees {
-            TextEditor::new(
-                &mut self.context.priority_fees_text,
-                &mut self.context.focus,
-                Focus::Fees,
-                |ui, text| {
-                    ui.add_space(8.);
-                    ui.label(RichText::new("Enter priority fees").size(12.).raised());
-                    ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
-                        .vertical_align(Align::Center))
-                },
-            )
-            .change(|_| {
-                request_estimate = true;
-            })
-            .submit(|_,_|{
-                request_send = true;
-            })
-            .build(ui); 
-        }
+        // if self.context.enable_priority_fees {
+        //     TextEditor::new(
+        //         &mut self.context.priority_fees_text,
+        //         &mut self.context.focus,
+        //         Focus::Fees,
+        //         |ui, text| {
+        //             ui.add_space(8.);
+        //             ui.label(RichText::new("Enter priority fees").size(12.).raised());
+        //             ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
+        //                 .vertical_align(Align::Center))
+        //         },
+        //     )
+        //     .change(|_| {
+        //         request_estimate = true;
+        //     })
+        //     .submit(|_,_|{
+        //         request_send = true;
+        //     })
+        //     .build(ui); 
+        // }
 
         // ui.add_space(8.);
         ui.add_space(2.);
@@ -115,33 +115,20 @@ impl<'context> Estimator<'context> {
                 if core.settings.developer.enable{
                     let estimate = estimate.clone();
                     let network_type = *network_type;
+                    let network_pressure = core.network_pressure.capacity();
 
                     let usd_rate = if core.settings.market_monitor {
                         core.market.as_ref().and_then(|market| {
                             market.price.as_ref().and_then(|price_list| {
-                                // println!("{:#?}", price_list);
                                 price_list.get("usd").map(|market_data| market_data.price)
                             })
                         })
                     } else { None };
 
-                    // let usd_rate = if core.settings.market_monitor {
-                    //     if let Some(market) = core.market.as_ref() {
-                    //         if let Some(price_list) = market.price
-                    //     }
-                    // } else { None };
-
-                    // let (low, medium, high) = if let Some(fees) = core.feerate.as_ref() {
                     let buckets = if let Some(fees) = core.feerate.as_ref() {
-                        let low = fees.low_buckets.first().map(|frb| (frb.clone(), FeeMode::Low, "Low"));
-                        //.map(|frb|frb.feerate).unwrap_or_default();
-                        let medium = fees.normal_buckets.iter().next().map(|frb| (frb.clone(), FeeMode::Normal, "Normal"));
-                        //.map(|frb|frb.feerate).unwrap_or_default();
-                        let high = Some(fees.priority_bucket).map(|frb| (frb, FeeMode::High, "High"));
-                        [low,medium,high]
+                        [Some((fees.low.value(), FeeMode::Low)), Some((fees.economic.value(), FeeMode::Economic)), Some((fees.priority.value(),FeeMode::Priority))]
                     } else { [None, None, None] };
 
-                    //let child_ui = ui.child_ui(max_rect, Layout::top_down(Align::Center));
                     let mut fee_selection = SelectionPanels::new(
                         120.0,
                         150.0,
@@ -149,93 +136,43 @@ impl<'context> Estimator<'context> {
                         move |ui, _value| {
                             // ui.label("1 in / 2 outputs, ~1.2 Kg");
                             // ui.label(format!("Fee Mode: {:?}", value));
-                            ui.label(format!("{} {}  •  {} {}  •  {} {}g",
-                                i18n("Transactions:"), 
-                                estimate.number_of_generated_transactions, 
-                                i18n("UTXOs:"), 
-                                estimate.aggregated_utxos,
-                                i18n("Mass:"),
-                                estimate.aggregate_mass 
+                            ui.label(format!("{} {}  •  {} {}  •  {} {}g  •  {} ~{}%",
+                            i18n("Transactions:"), 
+                            estimate.number_of_generated_transactions, 
+                            i18n("UTXOs:"),
+                            estimate.aggregated_utxos,
+                            i18n("Mass:"),
+                            estimate.aggregate_mass,
+                            i18n("Network Load:"),
+                            network_pressure, 
                             ));
             
                             if let Some(final_transaction_amount) = estimate.final_transaction_amount {
                                 ui.label(format!("{} {}",i18n("Final Amount:"), sompi_to_kaspa_string_with_suffix(final_transaction_amount + estimate.aggregate_fees, &network_type)));
                             }
-                            // let fee_title = if self.context.priority_fees_sompi != 0 {
-                            //     i18n("Network and Priority Fees:")
-                            // } else {
-                            //     i18n("Network Fees:")
-                            // };
-                            // ui.label(format!("Fees: {}", sompi_to_kaspa_string_with_suffix(estimate.aggregate_fees, &network_type)));
+                    });
 
-                        });
-                        //.panel_min_height(300.)
-                        //.vertical(true)
-                        //.add(FeeMode::LowPriority, i18n("Low-priority"), i18n("3 hours or more"))
-
-                        for bucket in buckets.into_iter() {
-                            if let Some((bucket, mode, label)) = bucket {
-                                let aggregate_mass = estimate.aggregate_mass;
-                                // let number_of_generated_transactions = estimate.number_of_generated_transactions;
-                                let number_of_generated_stages = estimate.number_of_generated_stages;
-                                let feerate = bucket.feerate;
-                                let seconds = bucket.estimated_seconds * number_of_generated_stages as f64;
-                                let network_type = network_type;
-                                // let total_micro_kas = feerate * aggregate_mass as f64 * 0.01;
-                                let total_kas = feerate * aggregate_mass as f64 * 1e-8;
-                                let total_sompi = (feerate * aggregate_mass as f64) as u64;
-                                let total_usd = usd_rate.map(|rate| total_kas * rate);
-                                // println!("total_kas: {:?}, total_usd: {:?} usd_rate: {:?}", total_kas, total_usd, usd_rate);
-                                fee_selection = fee_selection.add_with_footer(mode, i18n(label), format_duration_estimate(seconds), move |ui| {
-                                    // ui.label(format!("{} µKAS", feerate * aggregate_mass as f64 * 0.01));
-                                    ui.label(format!("{}",sompi_to_kaspa_string_with_suffix(total_sompi, &network_type)));
-                                    if let Some(usd) = total_usd {
-                                        let usd = format_currency(usd, 6);
-                                        ui.label(RichText::new(format!("~{} USD", usd)).strong());
-                                    }
-                                    // ui.label(RichText::new("~0.00000215 USD").strong());
-                                    ui.label(format!("{:.2} SOMPI/g", feerate));
-                                });
+                    for (bucket,mode) in buckets.into_iter().filter_map(|v|v) {
+                        let aggregate_mass = estimate.aggregate_mass;
+                        let number_of_generated_stages = estimate.number_of_generated_stages;
+                        let feerate = bucket.feerate;
+                        let seconds = bucket.seconds.max(1.0) * number_of_generated_stages as f64;
+                        let network_type = network_type;
+                        let total_kas = feerate * aggregate_mass as f64 * 1e-8;
+                        let total_sompi = (feerate * aggregate_mass as f64) as u64;
+                        let total_usd = usd_rate.map(|rate| total_kas * rate);
+                        // println!("total_kas: {:?}, total_usd: {:?} usd_rate: {:?}", total_kas, total_usd, usd_rate);
+                        fee_selection = fee_selection.add_with_footer(mode, i18n(mode.to_string().as_str()), format_duration_estimate(seconds), move |ui| {
+                            // ui.label(format!("{} µKAS", feerate * aggregate_mass as f64 * 0.01));
+                            ui.label(format!("{}",sompi_to_kaspa_string_with_suffix(total_sompi, &network_type)));
+                            if let Some(usd) = total_usd {
+                                let usd = format_currency(usd, 6);
+                                ui.label(RichText::new(format!("~{} USD", usd)).strong());
                             }
-                        }
-
-                        // if let Some(low) = low {
-
-                        //     fee_selection = fee_selection.add_with_footer(FeeMode::LowPriority, i18n("Low-priority"), i18n("3 hours or more"), |ui|{
-                        //         ui.label("12.88716 µKAS");
-                        //         ui.label(RichText::new("~0.00000215 USD").strong());
-                        //         ui.label(format!("{} SOMPI/g", low.feerate));
-                        //     });
-                        // }
-
-                        // if let Some(medium) = medium {
-                            
-                        //     fee_selection = fee_selection.add_with_footer(FeeMode::Economic, i18n("Economic"), i18n("~2 hours"), |ui|{
-                        //         ui.label("15.83525 µKAS");
-                        //         ui.label(RichText::new("~0.00000264 USD").strong());
-                        //         ui.label(format!("{} SOMPI/g", medium.feerate));
-                        //         // ui.label("10 SOMPI/G");
-                        //     });
-                        // }
-
-                        // if let Some(high) = high {
-                        //     fee_selection = fee_selection.add_with_footer(FeeMode::Normal, i18n("Normal"), i18n("~30 minutes"), |ui|{
-                        //         ui.label("20.78334 µKAS");
-                        //         ui.label(RichText::new("~0.00000347 USD").strong());
-                        //         ui.label(format!("{} SOMPI/g", low.feerate));
-                        //         // ui.label("10 SOMPI/G");
-                        //     });
-                        // }
-                        // .add_with_footer(FeeMode::Economic, i18n("Economic"), i18n("~2 hours"), |ui|{
-                        //     ui.label("13.83525 µKAS");
-                        //     ui.label(RichText::new("~608.83 USD").strong());
-                        //     ui.label("10 SOMPI/G");
-                        // })
-                        // .add_with_footer(FeeMode::Normal, i18n("Normal"), i18n("~30 minutes"), |ui|{
-                        //     ui.label("14.78334 µKAS");
-                        //     ui.label(RichText::new("~650.56 USD").strong());
-                        //     ui.label("10 SOMPI/G");
-                        // });
+                            // ui.label(RichText::new("~0.00000215 USD").strong());
+                            ui.label(format!("{} SOMPI/g", format_with_precision(feerate)));
+                        });
+                    }
             
                     if fee_selection.render(ui, &mut self.context.fee_mode).clicked(){
                         log_info!("clicked: self.fee_mode: {:?}", self.context.fee_mode);
@@ -350,12 +287,12 @@ fn format_duration_estimate(seconds: f64) -> String {
     let seconds = seconds as u64;
 
     if seconds == 1 {
-        format!("~ {} second", seconds as u64)
+        format!("< {} second", seconds as u64)
     } else if seconds < 60 {
-        format!("~ {} seconds", seconds as u64)
+        format!("< {} seconds", seconds as u64)
     } else if minutes == 1 {
-        format!("~ {} minute", minutes)
+        format!("< {} minute", minutes)
     } else {
-        format!("~ {} minutes", minutes as u64)
+        format!("< {} minutes", minutes as u64)
     }
 }

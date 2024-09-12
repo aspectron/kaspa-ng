@@ -14,7 +14,7 @@ use workflow_i18n::*;
 use workflow_wasm::callback::CallbackMap;
 pub const TRANSACTION_PAGE_SIZE: u64 = 20;
 pub const MAINNET_EXPLORER: &str = "https://explorer.kaspa.org";
-pub const TESTNET10_EXPLORER: &str = "https://explorer-testnet.kaspa.ws";
+pub const TESTNET10_EXPLORER: &str = "https://explorer-tn10.kaspa.org";
 pub const TESTNET11_EXPLORER: &str = "https://explorer-tn11.kaspa.org";
 
 pub enum Exception {
@@ -59,7 +59,8 @@ pub struct Core {
     pub network_pressure: NetworkPressure,
     notifications: Notifications,
     pub storage: Storage,
-    pub feerate : Option<Arc<RpcFeeEstimate>>,
+    // pub feerate : Option<Arc<RpcFeeEstimate>>,
+    pub feerate : Option<FeerateEstimate>,
 }
 
 impl Core {
@@ -733,7 +734,15 @@ impl Core {
                     .update_mempool_size(mempool_size, &self.settings.node.network);
             }
             Events::Feerate { feerate } => {
-                self.feerate = feerate;
+                if let Some(feerate) = feerate {
+                    if let Some(average) = self.feerate.as_mut() {
+                        average.insert(feerate.as_ref());
+                    } else {
+                        self.feerate = Some(FeerateEstimate::new(feerate.as_ref()));
+                    }
+                } else {
+                    self.feerate = None;
+                }
             }
             Events::Exit => {
                 cfg_if! {

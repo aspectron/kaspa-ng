@@ -111,13 +111,23 @@ enum AddressStatus {
     Invalid(String),
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(PartialEq, Debug, Default, Clone, Copy)]
 pub enum FeeMode{
     // None,
     Low,
     #[default]
-    Normal,
-    High,
+    Economic,
+    Priority,
+}
+
+impl std::fmt::Display for FeeMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FeeMode::Low => write!(f, "Low"),
+            FeeMode::Economic => write!(f, "Economic"),
+            FeeMode::Priority => write!(f, "Priority"),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -288,7 +298,8 @@ impl AccountManager {
             if device.orientation() == Orientation::Portrait || Self::single_pane(&device){
                 self.section = AccountManagerSection::Overview;
             } else {
-                self.section = AccountManagerSection::Details;
+                // self.section = AccountManagerSection::Details;
+                self.section = AccountManagerSection::Transactions;
             }
 
             if notify {
