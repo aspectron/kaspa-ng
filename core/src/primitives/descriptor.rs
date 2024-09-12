@@ -68,6 +68,7 @@ impl RenderAccountDescriptor for AccountDescriptor {
                         &address.to_string(),
                         &format!("{explorer}/addresses/{address}"),
                         color,
+                        Some(6),
                     );
                 }
                 None => {
@@ -84,6 +85,7 @@ impl RenderAccountDescriptor for AccountDescriptor {
                         &address.to_string(),
                         &format!("{explorer}/addresses/{address}"),
                         color,
+                        Some(6),
                     );
                 }
                 None => {

@@ -27,14 +27,18 @@ pub fn format_address_string(address: impl Into<String>, range: Option<usize>) -
     let prefix = parts[0];
     let payload = parts[1];
     let range = range.unwrap_or(6);
-    let start = range;
-    let finish = payload.len() - range;
-
-    let left = &payload[0..start];
-    // let center = style(&payload[start..finish]).dim();
-    let right = &payload[finish..];
-
-    format!("{prefix}:{left}....{right}")
+    if range >= payload.len() / 2 {
+        address
+    } else {
+        let start = range;
+        let finish = payload.len() - range;
+        
+        let left = &payload[0..start];
+        // let center = style(&payload[start..finish]).dim();
+        let right = &payload[finish..];
+        
+        format!("{prefix}:{left}....{right}")
+    }
 }
 
 pub fn format_address(address: &Address, range: Option<usize>) -> String {

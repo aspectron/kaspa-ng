@@ -133,6 +133,11 @@ impl Transaction {
         largest: Option<u64>,
     ) {
         let width = ui.available_width() / ui.ctx().pixels_per_point();
+        let w_min = 250.0;
+        let w_span = 196.0;
+        let w_range = 32.0;
+        // println!("width: {} {} {}", width,((width - w_min) / w_span),(((width - w_min) / w_span) * w_range).max(16.0));
+        let padding_range = Some((((width - w_min) / w_span) * w_range).max(16.0) as usize);
 
         let Context { record, maturity } = &*self.context();
 
@@ -269,6 +274,7 @@ impl Transaction {
                             &transaction_id,
                             &format!("{explorer}/txs/{transaction_id}"),
                             default_color,
+                            padding_range,
                         );
 
                     ljb(&content)
@@ -294,6 +300,7 @@ impl Transaction {
                             &address,
                             &format!("{explorer}/addresses/{address}"),
                             default_color,
+                            padding_range,
                         );
 
                         if *is_coinbase {
@@ -310,6 +317,7 @@ impl Transaction {
                             ui,
                             &script_public_key.script_as_hex(),
                             default_color,
+                            padding_range,
                         );
 
                         // ljb(&content)
@@ -443,6 +451,7 @@ impl Transaction {
                             &transaction_id,
                             &format!("{explorer}/txs/{transaction_id}"),
                             default_color,
+                            padding_range,
                         );
 
                     ljb(&content)
@@ -505,7 +514,7 @@ impl Transaction {
                             .text(
                                 &format!(
                                     "  {sequence:>2}: {}:{index} SigOps: {sig_op_count}",
-                                    format_partial_string(&transaction_id, Some(6))
+                                    format_partial_string(&transaction_id, padding_range)
                                 ),
                                 default_color,
                             )
@@ -548,6 +557,7 @@ impl Transaction {
                                     &address,
                                     &format!("{explorer}/addresses/{address}"),
                                     default_color,
+                                    padding_range,
                                 );
                             }
                             Err(err) => {

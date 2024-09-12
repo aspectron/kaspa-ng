@@ -98,8 +98,7 @@ enum Focus {
 pub enum EstimatorStatus {
     #[default]
     None,
-    // GeneratorSummary(GeneratorSummary),
-    GeneratorSummary { base_estimate : GeneratorSummary, actual_estimate : GeneratorSummary },
+    GeneratorSummary(GeneratorSummary),
     Error(String),
 }
 
@@ -220,8 +219,6 @@ impl Zeroize for ManagerContext {
     }
 }
 
-// pub struct RenderContext<'render> {
-//     pub account : &'render Account,
 pub struct RenderContext {
     pub account : Account,
     pub context : Arc<account::AccountContext>,
@@ -229,28 +226,8 @@ pub struct RenderContext {
     pub current_daa_score : Option<u64>,
 }
 
-// impl<'render> RenderContext<'render> {
 impl RenderContext {
-    // pub fn new(account : &'render Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
-    // pub fn new(account : Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
-    // pub fn new(account : Account, core: &Core) -> Result<Self> {
     pub fn new(account : Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
-
-
-        // if let AccountManagerState::Overview { account } = &account_manager.state {
-        // let network_type = if let Some(network_id) = core.state().network_id() {
-        //     network_id.network_type()
-        // } else {
-        //     core.settings.node.network.into()
-        // };
-
-        // let current_daa_score = core.state().current_daa_score();
-
-        // Ok(RenderContext::new(account, network_type, current_daa_score)?)
-        // } else {
-        //     Err(Error::custom("Account is missing context"))
-        // }
-
 
         let context = if let Some(context) = account.context() {
             context
