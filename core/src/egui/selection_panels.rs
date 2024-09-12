@@ -155,12 +155,13 @@ impl<Value: PartialEq> SelectionPanel<Value> {
         // if !selected && response.hovered() {
         //     prepared.frame = prepared.frame.stroke(hover_stroke);
         // }
-        let mut stroke = None;
-        if response.is_pointer_button_down_on() {
-            let visuals = ui.style().interact(&response);
-            prepared.frame = prepared.frame.fill(selected_bg).stroke(visuals.bg_stroke);
-            stroke = Some(visuals.bg_stroke);
-        }
+        // let stroke = None;
+        //if response.is_pointer_button_down_on() {
+        let visuals = ui.style().interact(&response);
+        //prepared.frame = prepared.frame.fill(selected_bg);//.stroke(visuals.bg_stroke);
+        prepared.frame = prepared.frame.fill(visuals.weak_bg_fill);
+        //stroke = Some(visuals.bg_stroke);
+        //}
 
         prepared.paint(ui);
 
@@ -169,7 +170,7 @@ impl<Value: PartialEq> SelectionPanel<Value> {
             response.mark_changed();
         }
 
-        (response, stroke)
+        (response, None)
     }
 }
 
