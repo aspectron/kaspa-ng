@@ -129,10 +129,7 @@ impl<'context> Estimator<'context> {
             });
         }
 
-        // if fee_selection.render(ui, &mut self.context.fee_mode).clicked() {
-        let mode = self.context.fee_mode;
-        fee_selection.render(ui, &mut self.context.fee_mode);
-        if mode != self.context.fee_mode {
+        if fee_selection.render(ui, &mut self.context.fee_mode).clicked() {
             let bucket = self.context.fee_mode.bucket();
             let priority_feerate = (bucket.feerate - 1.0).max(0.0);
             let total_fees_sompi = (priority_feerate * actual_estimate.aggregate_mass as f64) as u64;
