@@ -50,7 +50,7 @@ impl<'context> Estimator<'context> {
             self.context.focus.next(Focus::Fees);
         }
 
-        ui.add_space(8.);
+        // ui.add_space(8.);
 
         TextEditor::new(
             &mut self.context.priority_fees_text,
