@@ -16,6 +16,7 @@ impl<'context> Estimator<'context> {
         use egui_phosphor::light::{CHECK, X};
 
         let RenderContext { network_type, .. } = rc;
+        let network_id = NetworkId::from(core.network());
 
         let mut request_send = false;
         let mut request_estimate = self.context.request_estimate.take().unwrap_or_default();
@@ -48,11 +49,11 @@ impl<'context> Estimator<'context> {
         .build(ui);
 
         if response.text_edit_submit(ui) {
-            if self.context.enable_priority_fees {
+            // if self.context.enable_priority_fees {
                 self.context.focus.next(Focus::Fees);
-            } else if self.update_user_args() {
-                request_send = true;
-            }
+            // } else if self.update_user_args() {
+            //     request_send = true;
+            // }
         }
 
         // TODO - improve the logic
@@ -72,6 +73,7 @@ impl<'context> Estimator<'context> {
 
 
 
+        // self.context.focus.next(Focus::Fees);
 
         // if ui
         //     .checkbox(&mut self.context.enable_priority_fees,i18n("Include QoS Priority Fees"))
@@ -85,103 +87,35 @@ impl<'context> Estimator<'context> {
         // }
 
         // if self.context.enable_priority_fees {
-        //     TextEditor::new(
-        //         &mut self.context.priority_fees_text,
-        //         &mut self.context.focus,
-        //         Focus::Fees,
-        //         |ui, text| {
-        //             ui.add_space(8.);
-        //             ui.label(RichText::new("Enter priority fees").size(12.).raised());
-        //             ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
-        //                 .vertical_align(Align::Center))
-        //         },
-        //     )
-        //     .change(|_| {
-        //         request_estimate = true;
-        //     })
-        //     .submit(|_,_|{
-        //         request_send = true;
-        //     })
-        //     .build(ui); 
+        TextEditor::new(
+            &mut self.context.priority_fees_text,
+            &mut self.context.focus,
+            Focus::Fees,
+            |ui, text| {
+                ui.add_space(8.);
+                ui.label(RichText::new("Enter priority fees").size(12.).raised());
+                ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
+                    .vertical_align(Align::Center))
+            },
+        )
+        .change(|_| {
+            request_estimate = true;
+        })
+        .submit(|_,_|{
+            request_send = true;
+        })
+        .build(ui); 
         // }
 
+
+
+        core.apply_default_style(ui);
+
         // ui.add_space(8.);
-        ui.add_space(2.);
-        let ready_to_send = match &*self.context.estimate.lock().unwrap() {
-            EstimatorStatus::GeneratorSummary(estimate) => {
-
-                core.apply_default_style(ui);
-
-                if core.settings.developer.enable{
-                    let estimate = estimate.clone();
-                    let network_type = *network_type;
-                    let network_pressure = core.network_pressure.capacity();
-
-                    let usd_rate = if core.settings.market_monitor {
-                        core.market.as_ref().and_then(|market| {
-                            market.price.as_ref().and_then(|price_list| {
-                                price_list.get("usd").map(|market_data| market_data.price)
-                            })
-                        })
-                    } else { None };
-
-                    let buckets = if let Some(fees) = core.feerate.as_ref() {
-                        [Some((fees.low.value(), FeeMode::Low)), Some((fees.economic.value(), FeeMode::Economic)), Some((fees.priority.value(),FeeMode::Priority))]
-                    } else { [None, None, None] };
-
-                    let mut fee_selection = SelectionPanels::new(
-                        120.0,
-                        150.0,
-                        i18n("Transaction Fees"),
-                        move |ui, _value| {
-                            // ui.label("1 in / 2 outputs, ~1.2 Kg");
-                            // ui.label(format!("Fee Mode: {:?}", value));
-                            ui.label(format!("{} {}  •  {} {}  •  {} {}g  •  {} ~{}%",
-                            i18n("Transactions:"), 
-                            estimate.number_of_generated_transactions, 
-                            i18n("UTXOs:"),
-                            estimate.aggregated_utxos,
-                            i18n("Mass:"),
-                            estimate.aggregate_mass,
-                            i18n("Network Load:"),
-                            network_pressure, 
-                            ));
-            
-                            if let Some(final_transaction_amount) = estimate.final_transaction_amount {
-                                ui.label(format!("{} {}",i18n("Final Amount:"), sompi_to_kaspa_string_with_suffix(final_transaction_amount + estimate.aggregate_fees, &network_type)));
-                            }
-                    });
-
-                    for (bucket,mode) in buckets.into_iter().filter_map(|v|v) {
-                        let aggregate_mass = estimate.aggregate_mass;
-                        let number_of_generated_stages = estimate.number_of_generated_stages;
-                        let feerate = bucket.feerate;
-                        let seconds = bucket.seconds.max(1.0) * number_of_generated_stages as f64;
-                        let network_type = network_type;
-                        let total_kas = feerate * aggregate_mass as f64 * 1e-8;
-                        let total_sompi = (feerate * aggregate_mass as f64) as u64;
-                        let total_usd = usd_rate.map(|rate| total_kas * rate);
-                        // println!("total_kas: {:?}, total_usd: {:?} usd_rate: {:?}", total_kas, total_usd, usd_rate);
-                        fee_selection = fee_selection.add_with_footer(mode, i18n(mode.to_string().as_str()), format_duration_estimate(seconds), move |ui| {
-                            // ui.label(format!("{} µKAS", feerate * aggregate_mass as f64 * 0.01));
-                            ui.label(format!("{}",sompi_to_kaspa_string_with_suffix(total_sompi, &network_type)));
-                            if let Some(usd) = total_usd {
-                                let usd = format_currency(usd, 6);
-                                ui.label(RichText::new(format!("~{} USD", usd)).strong());
-                            }
-                            // ui.label(RichText::new("~0.00000215 USD").strong());
-                            ui.label(format!("{} SOMPI/g", format_with_precision(feerate)));
-                        });
-                    }
-            
-                    if fee_selection.render(ui, &mut self.context.fee_mode).clicked(){
-                        log_info!("clicked: self.fee_mode: {:?}", self.context.fee_mode);
-                        runtime().toast(UserNotification::success(format!("selection: {:?}", self.context.fee_mode)).short())
-                    }
-                    ui.add_space(8.);
-                }
-
-                core.apply_mobile_style(ui);
+        // ui.add_space(2.);
+        let (ready_to_send, _base_estimate, actual_estimate) = match &*self.context.estimate.lock().unwrap() {
+        // let ready_to_send = match estimator_status {
+            EstimatorStatus::GeneratorSummary { base_estimate, actual_estimate } => {
 
 
                 // if let Some(final_transaction_amount) = estimate.final_transaction_amount {
@@ -195,18 +129,153 @@ impl<'context> Estimator<'context> {
                 // ui.label(format!("{} {}", fee_title, sompi_to_kaspa_string_with_suffix(estimate.aggregated_fees, network_type)));
                 // ui.label(format!("{} {} {} {}",i18n("Transactions:"), estimate.number_of_generated_transactions, i18n("UTXOs:"), estimate.aggregated_utxos));
                 
-                self.context.address_status == AddressStatus::Valid || (self.context.transaction_kind == Some(TransactionKind::Transfer) && self.context.transfer_to_account.is_some())
+                let ready_to_send = self.context.address_status == AddressStatus::Valid || (self.context.transaction_kind == Some(TransactionKind::Transfer) && self.context.transfer_to_account.is_some());
+                (ready_to_send, base_estimate.clone(), actual_estimate.clone())
             }
             EstimatorStatus::Error(error) => {
                 ui.label(RichText::new(error.to_string()).color(theme_color().error_color));
-                false
+                (false, GeneratorSummary::new(network_id), GeneratorSummary::new(network_id))
             }
             EstimatorStatus::None => {
-                ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(network_type), i18n("amount to send")));
-                false
+                ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(&network_type), i18n("amount to send")));
+                (false, GeneratorSummary::new(network_id), GeneratorSummary::new(network_id))
             }
         };
+        // ui.add_space(2.);
+
+
+        // let estimator_status = {
+        //     (*self.context.estimate.lock().unwrap()).clone()
+        // };
+
+        // let estimate = match &estimator_status {
+        //     EstimatorStatus::GeneratorSummary(estimate) => {
+        //         estimate.clone()
+        //     },
+        //     _ => {
+        //         GeneratorSummary::new(core.network().into())
+        //     }
+        // };
+
+        // if core.settings.developer.enable{
+        // let estimate = estimate.clone();
+        let network_type = *network_type;
+        let network_pressure = core.network_pressure.capacity();
+
+        let usd_rate = if core.settings.market_monitor {
+            core.market.as_ref().and_then(|market| {
+                market.price.as_ref().and_then(|price_list| {
+                    price_list.get("usd").map(|market_data| market_data.price)
+                })
+            })
+        } else { None };
+
+        let buckets = if let Some(fees) = core.feerate.as_ref() {
+            // [Some((fees.low.value(), FeeMode::Low(fees.economic.value()))), Some((fees.economic.value(), FeeMode::Economic(fees.economic.value()))), Some((fees.priority.value(),FeeMode::Priority(fees.economic.value())))]
+            [Some(FeeMode::Low(fees.low.value())), Some(FeeMode::Economic(fees.economic.value())), Some(FeeMode::Priority(fees.priority.value()))]
+        } else { [None, None, None] };
+
         ui.add_space(8.);
+        ui.heading("Priority Fee Estimator");
+
+        let mut fee_selection = SelectionPanels::new(
+            120.0,
+            150.0,
+        //     i18n("Priority Fee Estimator"),
+        //     move |ui, _value| {
+        //         // ui.label("1 in / 2 outputs, ~1.2 Kg");
+        //         // ui.label(format!("Fee Mode: {:?}", value));
+        //     //     ui.label(format!("{} {}  •  {} {}  •  {} {}g  •  {} ~{}%",
+        //     //         i18n("Transactions:"), 
+        //     //         actual_estimate.number_of_generated_transactions, 
+        //     //         i18n("UTXOs:"),
+        //     //         actual_estimate.aggregated_utxos,
+        //     //         i18n("Mass:"),
+        //     //         actual_estimate.aggregate_mass,
+        //     //         i18n("Network Load:"),
+        //     //         network_pressure, 
+        //     //     ));
+
+        //     // if let Some(final_transaction_amount) = actual_estimate.final_transaction_amount {
+        //     //     ui.label(RichText::new(format!("{} {}",i18n("Final Amount:"), sompi_to_kaspa_string_with_suffix(final_transaction_amount + actual_estimate.aggregate_fees, &network_type))).strong());
+        //     // }
+        // }
+        );
+
+        for mode in buckets.into_iter().filter_map(|v|v) {
+            let bucket = mode.bucket();
+            let aggregate_mass = actual_estimate.aggregate_mass;
+            let number_of_generated_stages = actual_estimate.number_of_generated_stages;
+            let feerate = bucket.feerate;
+            let seconds = bucket.seconds.max(1.0) * number_of_generated_stages as f64;
+            let network_type = network_type;
+            let total_kas = feerate * aggregate_mass as f64 * 1e-8;
+            let total_sompi = (feerate * aggregate_mass as f64) as u64;
+            let total_usd = usd_rate.map(|rate| total_kas * rate);
+            // println!("total_kas: {:?}, total_usd: {:?} usd_rate: {:?}", total_kas, total_usd, usd_rate);
+            fee_selection = fee_selection.add_with_footer(mode, i18n(mode.to_string().as_str()), format_duration_estimate(seconds), move |ui| {
+                // ui.label(format!("{} µKAS", feerate * aggregate_mass as f64 * 0.01));
+                ui.label(RichText::new(format!("{}",sompi_to_kaspa_string_with_suffix(total_sompi, &network_type))).strong());
+                if let Some(usd) = total_usd {
+                    let usd = format_currency(usd, 6);
+                    ui.label(RichText::new(format!("~{} USD", usd)).strong());
+                }
+                // ui.label(RichText::new("~0.00000215 USD").strong());
+                ui.label(format!("{} SOMPI/g", format_with_precision(feerate)));
+            });
+        }
+
+        // if fee_selection.render(ui, &mut self.context.fee_mode).clicked() {
+        let mode = self.context.fee_mode;
+        fee_selection.render(ui, &mut self.context.fee_mode);
+        if mode != self.context.fee_mode {
+            // println!("clicked: self.fee_mode: {:?}", self.context.fee_mode);
+            log_info!("clicked: self.fee_mode: {:?}", self.context.fee_mode);
+            runtime().toast(UserNotification::success(format!("selection: {:?}", self.context.fee_mode)).short());
+
+            // Calculate desired fee rate
+            let bucket = self.context.fee_mode.bucket();
+            println!("bucket: {:?}", bucket);
+            let priority_feerate = (bucket.feerate - 1.0).max(0.0);
+            println!("priority_feerate: {:?}", priority_feerate);
+            println!("estimate.aggregate_mass: {:?}", actual_estimate.aggregate_mass);
+            let total_fees_sompi = (priority_feerate * actual_estimate.aggregate_mass as f64) as u64;
+            println!("total_fees: {:?}", total_fees_sompi);
+            self.context.priority_fees_text = format!("{:0.2}", sompi_to_kaspa(total_fees_sompi));
+            self.context.fee_mode = FeeMode::None;
+            request_estimate = true;
+        }
+
+
+        ui.vertical_centered(|ui| {
+
+            ui.label(format!("{} {}  •  {} {}  •  {} {}g  •  {} ~{}%",
+                i18n("Transactions:"), 
+                actual_estimate.number_of_generated_transactions, 
+                i18n("UTXOs:"),
+                actual_estimate.aggregated_utxos,
+                i18n("Mass:"),
+                actual_estimate.aggregate_mass,
+                i18n("Network Load:"),
+                network_pressure, 
+            ));
+
+            ui.add_space(8.);
+
+            if let Some(final_transaction_amount) = actual_estimate.final_transaction_amount {
+                ui.heading(RichText::new(format!("{} {}",i18n("Final Amount:"), sompi_to_kaspa_string_with_suffix(final_transaction_amount + actual_estimate.aggregate_fees, &network_type))).strong());
+            }
+
+        });
+
+
+
+        ui.add_space(16.);
+        // }
+
+        core.apply_mobile_style(ui);
+
+
 
         if request_send {
             if ready_to_send {
@@ -261,9 +330,19 @@ impl<'context> Estimator<'context> {
 
         match try_kaspa_str_to_sompi(self.context.priority_fees_text.as_str()) {
             Ok(Some(sompi)) => {
+
+                // let fee_rate = ;
+
                 self.context.priority_fees_sompi = sompi;
+
+                // self.context.priority_fee_rate = if base_estimate.aggregate_mass == 0 {
+                //     0.0
+                // } else {
+                //     sompi as f64 / base_estimate.aggregate_mass as f64
+                // };
             }
             Ok(None) => {
+                // self.context.priority_fee_rate = 0.0;
                 self.context.priority_fees_sompi = 0;
             }
             Err(err) => {
