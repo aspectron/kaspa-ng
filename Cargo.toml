@@ -122,6 +122,23 @@ kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
 kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
 kaspad = { path = "../rusty-kaspa/kaspad" }
 
+# kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+# kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
@@ -138,24 +155,7 @@ kaspad = { path = "../rusty-kaspa/kaspad" }
 # kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-
-# kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
-# kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma-dev" }
+# kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
 
 # _________________________________________________________
 #  _ _ _ ____ ____ _  _ ____ _    ____ _ _ _    ____ ____ 
