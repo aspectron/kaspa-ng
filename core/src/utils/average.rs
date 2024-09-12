@@ -61,6 +61,13 @@ impl FeerateBucket {
     pub fn new(feerate: f64, seconds: f64) -> Self {
         Self { feerate, seconds }
     }
+
+    pub fn with_seconds(self, seconds: f64) -> Self {
+        Self {
+            feerate: self.feerate,
+            seconds,
+        }
+    }
 }
 
 impl std::cmp::PartialOrd for FeerateBucket {

@@ -17,6 +17,9 @@ impl<'context> Estimator<'context> {
 
         let RenderContext { network_type, .. } = rc;
         let network_id = NetworkId::from(core.network());
+        let network_type = *network_type;
+        let network_pressure = core.network_pressure.capacity();
+        let network_below_capacity = network_pressure < 90;
 
         let mut request_send = false;
         let mut request_estimate = self.context.request_estimate.take().unwrap_or_default();
@@ -36,7 +39,7 @@ impl<'context> Estimator<'context> {
             Focus::Amount,
             |ui, text| {
                 ui.add_space(8.);
-                ui.label(RichText::new(format!("{} {} {}", i18n("Enter"), kaspa_suffix(network_type), i18n("amount to send"))).size(12.).raised());
+                ui.label(RichText::new(format!("{} {} {}", i18n("Enter"), kaspa_suffix(&network_type), i18n("amount to send"))).size(12.).raised());
                 ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
                     .vertical_align(Align::Center))
             },
@@ -83,13 +86,11 @@ impl<'context> Estimator<'context> {
                 (false, GeneratorSummary::new(network_id))
             }
             EstimatorStatus::None => {
-                ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(network_type), i18n("amount to send")));
+                ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(&network_type), i18n("amount to send")));
                 (false, GeneratorSummary::new(network_id))
             }
         };
 
-        let network_type = *network_type;
-        let network_pressure = core.network_pressure.capacity();
 
         let usd_rate = if core.settings.market_monitor {
             core.market.as_ref().and_then(|market| {
@@ -99,8 +100,19 @@ impl<'context> Estimator<'context> {
             })
         } else { None };
 
+        let aggregate_mass = actual_estimate.aggregate_mass;
+        let number_of_generated_stages = actual_estimate.number_of_generated_stages;
+
         let buckets = if let Some(fees) = core.feerate.as_ref() {
-            [Some(FeeMode::Low(fees.low.value())), Some(FeeMode::Economic(fees.economic.value())), Some(FeeMode::Priority(fees.priority.value()))]
+            if network_below_capacity {
+                [
+                    Some(FeeMode::Low(FeerateBucket::new(1.0,5.0))), 
+                    Some(FeeMode::Economic(fees.low.value().with_seconds(3.0))), 
+                    Some(FeeMode::Priority(fees.economic.value().with_seconds(1.0)))
+                ]
+            } else {
+                [Some(FeeMode::Low(fees.low.value())), Some(FeeMode::Economic(fees.economic.value())), Some(FeeMode::Priority(fees.priority.value()))]
+            }
         } else { [None, None, None] };
 
         ui.add_space(8.);
@@ -112,9 +124,20 @@ impl<'context> Estimator<'context> {
 
         for mode in buckets.into_iter().flatten() {
             let bucket = mode.bucket();
-            let aggregate_mass = actual_estimate.aggregate_mass;
-            let number_of_generated_stages = actual_estimate.number_of_generated_stages;
-            let feerate = bucket.feerate;
+            let feerate = (bucket.feerate - 1.0).max(0.0);
+            // let feerate = bucket.feerate;
+
+            // let seconds = if network_below_capacity {
+            //     match &mode {
+            //         FeeMode::Low(_) => number_of_generated_stages as f64 * 5.,
+            //         FeeMode::Economic(_) => number_of_generated_stages as f64 * 3.,
+            //         FeeMode::Priority(_) => number_of_generated_stages as f64,
+            //         _ => 0.0,
+            //     }
+            //     // bucket.seconds.max(1.0) * number_of_generated_stages as f64
+            // } else {
+            //     bucket.seconds.max(1.0) * number_of_generated_stages as f64
+            // };
             let seconds = bucket.seconds.max(1.0) * number_of_generated_stages as f64;
             let total_kas = feerate * aggregate_mass as f64 * 1e-8;
             let total_sompi = (feerate * aggregate_mass as f64) as u64;
@@ -135,13 +158,7 @@ impl<'context> Estimator<'context> {
             let total_fees_sompi = (priority_feerate * actual_estimate.aggregate_mass as f64) as u64;
             // runtime().toast(UserNotification::success(format!("selection: {:?}", self.context.fee_mode)).short());
             let total_fee_kaspa = sompi_to_kaspa(total_fees_sompi);
-            self.context.priority_fees_text = if total_fee_kaspa < 0.0001 {
-                format!("{}", total_fee_kaspa)
-            } else if total_fee_kaspa < 0.01 {
-                format!("{:0.6}", total_fee_kaspa)
-            } else {
-                format!("{:0.4}", sompi_to_kaspa(total_fees_sompi))
-            };
+            self.context.priority_fees_text = format!("{}", total_fee_kaspa);
             self.context.fee_mode = FeeMode::None;
             request_estimate = true;
         }
