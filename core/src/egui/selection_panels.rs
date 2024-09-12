@@ -110,11 +110,11 @@ impl<Value: PartialEq> SelectionPanel<Value> {
         width: f32,
         min_height: &mut f32,
         current_value: &mut Value,
-    ) -> Response {
+    ) -> (Response, Option<Stroke>) {
         let selected = *current_value == self.value;
         let visuals = ui.visuals();
         let selected_bg = visuals.selection.bg_fill;
-        let hover_stroke = Stroke::new(1.0, visuals.text_color()); //visuals.window_stroke;
+        // let hover_stroke = Stroke::new(1.0, visuals.text_color()); //visuals.window_stroke;
         let frame = Frame::none()
             .stroke(Stroke::new(1.0, Color32::TRANSPARENT))
             .fill(if selected { selected_bg } else { bg_color });
@@ -152,13 +152,14 @@ impl<Value: PartialEq> SelectionPanel<Value> {
         prepared.content_ui.set_min_height(*min_height);
         let mut response = prepared.allocate_space(ui).interact(Sense::click());
 
-        if !selected && response.hovered() {
-            prepared.frame = prepared.frame.stroke(hover_stroke);
-        }
-
+        // if !selected && response.hovered() {
+        //     prepared.frame = prepared.frame.stroke(hover_stroke);
+        // }
+        let mut stroke = None;
         if response.is_pointer_button_down_on() {
             let visuals = ui.style().interact(&response);
             prepared.frame = prepared.frame.fill(selected_bg).stroke(visuals.bg_stroke);
+            stroke = Some(visuals.bg_stroke);
         }
 
         prepared.paint(ui);
@@ -168,7 +169,7 @@ impl<Value: PartialEq> SelectionPanel<Value> {
             response.mark_changed();
         }
 
-        response
+        (response, stroke)
     }
 }
 
@@ -268,7 +269,10 @@ impl<Value: PartialEq> SelectionPanels<Value> {
         let indent = (before_wrap_width - panels_width) / 2.0;
 
         let add_contents = |ui: &mut Ui| {
-            let mut responce = ui.label(" ");
+            let mut responce = ui.allocate_rect(
+                Rect::from_min_size(ui.cursor().min, [1.0, 1.0].into()),
+                Sense::click(),
+            );
 
             // {
             //     let available_width = ui.available_width() - indent;
@@ -290,9 +294,14 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             // ui.label(format!("before_wrap_width: {before_wrap_width}"));
             // ui.label(format!("panel_width: {panel_width}"));
             let _panels_res = ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing = Vec2::ZERO;
+                ui.spacing_mut().item_spacing = Vec2::new(1.0, 1.0);
                 let mut min_height = self.panel_min_height;
                 let mut first_row = true;
+                let mut row = 0;
+                let mut col = 0;
+                let mut pressed_cell = None;
+                let default_stroke = Stroke::new(1.0, text_color);
+
                 for (index, panel) in self.panels.into_iter().enumerate() {
                     let rect = ui.available_rect_before_wrap();
                     let mut row_first_item = index == 0;
@@ -300,17 +309,22 @@ impl<Value: PartialEq> SelectionPanels<Value> {
                         ui.end_row();
                         row_first_item = true;
                         first_row = false;
+                        row += 1;
+                        col = 0;
                     }
                     // left separator
                     if !row_first_item {
                         let Pos2 { x, y } = ui.cursor().min;
                         let height = min_height * sep_ratio;
                         let m = (min_height - height) / 2.0;
-                        ui.painter().vline(
-                            x,
-                            (y + m)..=(y + m + height),
-                            Stroke::new(1.0, text_color),
-                        );
+                        let stroke = pressed_cell.map_or(default_stroke, |(row_, col_, stroke)| {
+                            if row == row_ && col == col_ + 1 {
+                                stroke
+                            } else {
+                                default_stroke
+                            }
+                        });
+                        ui.painter().vline(x, (y + m)..=(y + m + height), stroke);
                     }
 
                     // top seperator
@@ -318,14 +332,24 @@ impl<Value: PartialEq> SelectionPanels<Value> {
                         let Pos2 { x, y } = ui.cursor().min;
                         let width = panel_width * sep_ratio;
                         let m = (panel_width - width) / 2.0;
-                        ui.painter().hline(
-                            (x + m)..=(x + m + width),
-                            y,
-                            Stroke::new(1.0, text_color),
-                        );
+                        let stroke = pressed_cell.map_or(default_stroke, |(row_, col_, stroke)| {
+                            if row == row_ + 1 && col == col_ {
+                                stroke
+                            } else {
+                                default_stroke
+                            }
+                        });
+                        ui.painter().hline((x + m)..=(x + m + width), y, stroke);
                     }
-                    responce |=
+                    let (res, stroke) =
                         panel.render(ui, bg_color, panel_width, &mut min_height, current_value);
+                    responce |= res;
+
+                    if let Some(stroke) = stroke {
+                        pressed_cell = Some((row, col, stroke));
+                    }
+
+                    col += 1;
                 }
             });
 
