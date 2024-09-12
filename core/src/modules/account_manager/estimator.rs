@@ -109,7 +109,7 @@ impl<'context> Estimator<'context> {
         let mut fee_selection = SelectionPanels::new(
             120.0,
             150.0);
-
+        let fee_mode = self.context.fee_mode;
         for mode in buckets.into_iter().flatten() {
             let bucket = mode.bucket();
             let aggregate_mass = actual_estimate.aggregate_mass;
@@ -119,7 +119,15 @@ impl<'context> Estimator<'context> {
             let total_kas = feerate * aggregate_mass as f64 * 1e-8;
             let total_sompi = (feerate * aggregate_mass as f64) as u64;
             let total_usd = usd_rate.map(|rate| total_kas * rate);
-            fee_selection = fee_selection.add_with_footer(mode, i18n(mode.to_string().as_str()), format_duration_estimate(seconds), move |ui| {
+            fee_selection = fee_selection.add_icon_less(mode, i18n(mode.to_string().as_str()), format_duration_estimate(seconds), move |ui| {
+                // icon
+                let icon = if mode == fee_mode {
+                    RichText::new(egui_phosphor::bold::CHECK).strong()
+                } else {
+                    RichText::new(egui_phosphor::bold::DOT_OUTLINE).strong()
+                };
+                ui.label(icon);
+                
                 ui.label(RichText::new(sompi_to_kaspa_string_with_suffix(total_sompi, &network_type)).strong());
                 if let Some(usd) = total_usd {
                     let usd = format_currency(usd, 6);

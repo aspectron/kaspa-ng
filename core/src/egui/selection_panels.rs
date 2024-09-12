@@ -82,6 +82,7 @@ pub struct SelectionPanel<V> {
     pub value: V,
     pub build_heading: Option<UiBuilderFn>,
     pub build_footer: Option<UiBuilderFn>,
+    pub icons: Option<(RichText, RichText)>,
 }
 
 impl<Value: PartialEq> SelectionPanel<Value> {
@@ -92,6 +93,10 @@ impl<Value: PartialEq> SelectionPanel<Value> {
             value,
             build_heading: None,
             build_footer: None,
+            icons: Some((
+                RichText::new(egui_phosphor::bold::CHECK).heading(),
+                RichText::new(egui_phosphor::bold::DOT_OUTLINE).heading(),
+            )),
         }
     }
     pub fn heading(mut self, build_heading: impl FnOnce(&mut Ui) + 'static) -> Self {
@@ -100,6 +105,10 @@ impl<Value: PartialEq> SelectionPanel<Value> {
     }
     pub fn footer(mut self, build_footer: impl FnOnce(&mut Ui) + 'static) -> Self {
         self.build_footer = Some(Box::new(build_footer));
+        self
+    }
+    pub fn icons(mut self, icons: Option<(impl Into<RichText>, impl Into<RichText>)>) -> Self {
+        self.icons = icons.map(|(a, b)| (a.into(), b.into()));
         self
     }
 
@@ -131,12 +140,10 @@ impl<Value: PartialEq> SelectionPanel<Value> {
                     if let Some(build) = self.build_heading {
                         (build)(ui);
                     }
-                    let icon = if selected {
-                        egui_phosphor::bold::CHECK
-                    } else {
-                        egui_phosphor::bold::DOT_OUTLINE
-                    };
-                    ui.label(RichText::new(icon).heading());
+                    if let Some((selected_icon, normal_icon)) = self.icons {
+                        let icon = if selected { selected_icon } else { normal_icon };
+                        ui.label(icon);
+                    }
                     if let Some(build) = self.build_footer {
                         //ui.visuals_mut().override_text_color = Some(Color32::WHITE);
                         (build)(ui);
@@ -221,6 +228,20 @@ impl<Value: PartialEq> SelectionPanels<Value> {
     ) -> Self {
         self.panels
             .push(SelectionPanel::new(value, title, sub).footer(build_footer));
+        self
+    }
+    pub fn add_icon_less(
+        mut self,
+        value: Value,
+        title: impl Into<WidgetText>,
+        sub: impl Into<WidgetText>,
+        build_footer: impl FnOnce(&mut Ui) + 'static,
+    ) -> Self {
+        self.panels.push(
+            SelectionPanel::new(value, title, sub)
+                .footer(build_footer)
+                .icons(None::<(RichText, RichText)>),
+        );
         self
     }
     pub fn panel_min_height(mut self, min_height: f32) -> Self {
