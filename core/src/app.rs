@@ -215,7 +215,7 @@ cfg_if! {
 
                     workflow_log::set_colors_enabled(true);
 
-                    println!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version());
+                    println!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa {})", kaspa_version());
 
                     // Log to stderr (if you run with `RUST_LOG=debug`).
                     env_logger::init();
