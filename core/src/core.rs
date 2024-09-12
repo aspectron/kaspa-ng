@@ -60,7 +60,7 @@ pub struct Core {
     notifications: Notifications,
     pub storage: Storage,
     // pub feerate : Option<Arc<RpcFeeEstimate>>,
-    pub feerate : Option<FeerateEstimate>,
+    pub feerate: Option<FeerateEstimate>,
 }
 
 impl Core {
@@ -222,7 +222,7 @@ impl Core {
             network_pressure: NetworkPressure::default(),
             notifications: Notifications::default(),
             storage,
-            feerate : None,
+            feerate: None,
             // daemon_storage_root: Mutex::new(daemon_storage_root),
         };
 

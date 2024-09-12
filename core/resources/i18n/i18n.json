@@ -3189,6 +3189,7 @@
       "ECDSA": "ECDSA",
       "Economic": "Economic",
       "Enable Market Monitor": "Enable Market Monitor",
+      "Enable Public wRPC Borsh": "Enable Public wRPC Borsh",
       "Enable UPnP": "Enable UPnP",
       "Enable custom daemon arguments": "Enable custom daemon arguments",
       "Enable experimental features": "Enable experimental features",

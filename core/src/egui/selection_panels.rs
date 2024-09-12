@@ -37,7 +37,8 @@ impl UILayoutExt for Ui {
         let mut child_rect = self.available_rect_before_wrap();
         child_rect.min.x += indent;
 
-        let mut child_ui = self.child_ui_with_id_source(child_rect, *self.layout(), id_source, None);
+        let mut child_ui =
+            self.child_ui_with_id_source(child_rect, *self.layout(), id_source, None);
         let ret = add_contents(&mut child_ui);
 
         // let left_vline = self.visuals().indent_has_left_vline;
@@ -149,10 +150,7 @@ impl<Value: PartialEq> SelectionPanel<Value> {
         let _res = add_contents(&mut prepared.content_ui);
         *min_height = min_height.max(prepared.content_ui.min_rect().height());
         prepared.content_ui.set_min_height(*min_height);
-        let rect = prepared
-            .frame
-            .inner_margin
-            .expand_rect(prepared.content_ui.min_rect());
+        let rect = prepared.content_ui.min_rect() + prepared.frame.inner_margin;
         if !selected && ui.allocate_rect(rect, Sense::hover()).hovered() {
             //prepared.frame = prepared.frame.stroke(hover_stroke);
             prepared.frame = prepared.frame.fill(selected_bg).stroke(hover_stroke);
@@ -269,9 +267,12 @@ impl<Value: PartialEq> SelectionPanels<Value> {
             //ui.visuals_mut().override_text_color = Some(Color32::WHITE);
             {
                 let available_width = ui.available_width() - indent;
-                let title =
-                    self.title
-                        .into_galley(ui, Some(TextWrapMode::Wrap), available_width, TextStyle::Heading);
+                let title = self.title.into_galley(
+                    ui,
+                    Some(TextWrapMode::Wrap),
+                    available_width,
+                    TextStyle::Heading,
+                );
                 let text_indent = (available_width - title.size().x) / 2.0;
                 let rect = ui.cursor().translate(Vec2::new(text_indent, 10.0));
                 ui.allocate_exact_size(
