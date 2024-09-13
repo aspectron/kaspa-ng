@@ -19,7 +19,7 @@ impl<'context> Estimator<'context> {
         let network_id = NetworkId::from(core.network());
         let network_type = *network_type;
         let network_pressure = core.network_pressure.capacity();
-        let network_below_capacity = network_pressure < 90;
+        let network_below_capacity = core.network_pressure.below_capacity();
 
         let mut request_send = false;
         let mut request_estimate = self.context.request_estimate.take().unwrap_or_default();
@@ -32,6 +32,23 @@ impl<'context> Estimator<'context> {
                 Transfer::new(self.context).render(core, ui, rc);
             }
         }
+
+        let (ready_to_send, actual_estimate, error) = match &*self.context.estimate.lock().unwrap() {
+            EstimatorStatus::GeneratorSummary(actual_estimate) => {                
+                let ready_to_send = self.context.address_status == AddressStatus::Valid || (self.context.transaction_kind == Some(TransactionKind::Transfer) && self.context.transfer_to_account.is_some());
+                (ready_to_send, actual_estimate.clone(), None)
+            }
+            EstimatorStatus::Error(error) => {
+                // ui.label(RichText::new(error.to_string()).color(theme_color().error_color));
+                (false, GeneratorSummary::new(network_id),Some(RichText::new(error.to_string()).color(theme_color().error_color)))
+            }
+            EstimatorStatus::None => {
+                // ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(&network_type), i18n("amount to send")));
+                let err = i18n_args("Please enter {suffix} amount to send", &[("suffix", kaspa_suffix(&network_type))]);
+                (false, GeneratorSummary::new(network_id),Some(RichText::new(err).color(theme_color().error_color)))
+            }
+        };
+
 
         let response = TextEditor::new(
             &mut self.context.send_amount_text,
@@ -61,7 +78,7 @@ impl<'context> Estimator<'context> {
             Focus::Fees,
             |ui, text| {
                 ui.add_space(8.);
-                ui.label(RichText::new("Enter priority fees").size(12.).raised());
+                ui.label(RichText::new(i18n("Enter priority fees")).size(12.).raised());
                 ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
                     .vertical_align(Align::Center))
             },
@@ -76,20 +93,20 @@ impl<'context> Estimator<'context> {
 
         core.apply_default_style(ui);
 
-        let (ready_to_send, actual_estimate) = match &*self.context.estimate.lock().unwrap() {
-            EstimatorStatus::GeneratorSummary(actual_estimate) => {                
-                let ready_to_send = self.context.address_status == AddressStatus::Valid || (self.context.transaction_kind == Some(TransactionKind::Transfer) && self.context.transfer_to_account.is_some());
-                (ready_to_send, actual_estimate.clone())
-            }
-            EstimatorStatus::Error(error) => {
-                ui.label(RichText::new(error.to_string()).color(theme_color().error_color));
-                (false, GeneratorSummary::new(network_id))
-            }
-            EstimatorStatus::None => {
-                ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(&network_type), i18n("amount to send")));
-                (false, GeneratorSummary::new(network_id))
-            }
-        };
+        // let (ready_to_send, actual_estimate) = match &*self.context.estimate.lock().unwrap() {
+        //     EstimatorStatus::GeneratorSummary(actual_estimate) => {                
+        //         let ready_to_send = self.context.address_status == AddressStatus::Valid || (self.context.transaction_kind == Some(TransactionKind::Transfer) && self.context.transfer_to_account.is_some());
+        //         (ready_to_send, actual_estimate.clone())
+        //     }
+        //     EstimatorStatus::Error(error) => {
+        //         ui.label(RichText::new(error.to_string()).color(theme_color().error_color));
+        //         (false, GeneratorSummary::new(network_id))
+        //     }
+        //     EstimatorStatus::None => {
+        //         ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(&network_type), i18n("amount to send")));
+        //         (false, GeneratorSummary::new(network_id))
+        //     }
+        // };
 
 
         let usd_rate = if core.settings.market_monitor {
@@ -116,7 +133,9 @@ impl<'context> Estimator<'context> {
         } else { [None, None, None] };
 
         ui.add_space(8.);
-        ui.heading("Priority Fee Estimator");
+        ui.heading(i18n("Priority Fee Estimator"));
+
+        let is_send_amount_zero = self.context.send_amount_sompi == 0;
 
         let mut fee_selection = SelectionPanels::new(
             120.0,
@@ -124,25 +143,13 @@ impl<'context> Estimator<'context> {
         let fee_mode = self.context.fee_mode;
         for mode in buckets.into_iter().flatten() {
             let bucket = mode.bucket();
-            // let feerate = (bucket.feerate - 1.0).max(0.0);
             let feerate = bucket.feerate;
-
-            // let seconds = if network_below_capacity {
-            //     match &mode {
-            //         FeeMode::Low(_) => number_of_generated_stages as f64 * 5.,
-            //         FeeMode::Economic(_) => number_of_generated_stages as f64 * 3.,
-            //         FeeMode::Priority(_) => number_of_generated_stages as f64,
-            //         _ => 0.0,
-            //     }
-            //     // bucket.seconds.max(1.0) * number_of_generated_stages as f64
-            // } else {
-            //     bucket.seconds.max(1.0) * number_of_generated_stages as f64
-            // };
             let seconds = bucket.seconds.max(1.0) * number_of_generated_stages as f64;
+            let seconds = if is_send_amount_zero || error.is_some() { "---".to_string() } else { format_duration_estimate_i18n(seconds) };
             let total_kas = feerate * aggregate_mass as f64 * 1e-8;
             let total_sompi = (feerate * aggregate_mass as f64) as u64;
             let total_usd = usd_rate.map(|rate| total_kas * rate);
-            fee_selection = fee_selection.add_icon_less(mode, i18n(mode.to_string().as_str()), format_duration_estimate(seconds), move |ui| {
+            fee_selection = fee_selection.add_icon_less(mode, i18n(mode.to_string().as_str()), seconds, move |ui| {
                 // icon
                 let icon = if mode == fee_mode {
                     RichText::new(egui_phosphor::bold::CHECK).strong()
@@ -176,26 +183,35 @@ impl<'context> Estimator<'context> {
 
         ui.vertical_centered(|ui| {
 
-            ui.label(format!("{} {}  •  {} {}  •  {} {}g  •  {} ~{}%",
-                i18n("Transactions:"), 
-                actual_estimate.number_of_generated_transactions, 
-                i18n("UTXOs:"),
-                actual_estimate.aggregated_utxos,
-                i18n("Mass:"),
-                actual_estimate.aggregate_mass,
-                i18n("Network Load:"),
-                network_pressure, 
+            ui.label(format!("{}  •  {}  •  {}  •  {}",
+                i18n_args("Transactions: {number}",&[("number", actual_estimate.number_of_generated_transactions.to_string())]), 
+                i18n_args("UTXOs: {number}", &[("number", actual_estimate.aggregated_utxos.to_string())]),
+                i18n_args("Mass: {number}g", &[("number", actual_estimate.aggregate_mass.to_string())]),
+                i18n_args("Network Pressure: ~{number}%", &[("number", network_pressure.to_string())]),
             ));
 
             ui.add_space(8.);
 
             if let Some(final_transaction_amount) = actual_estimate.final_transaction_amount {
-                ui.heading(RichText::new(format!("{} {}",i18n("Final Amount:"), sompi_to_kaspa_string_with_suffix(final_transaction_amount + actual_estimate.aggregate_fees, &network_type))).strong());
+                ui.heading(RichText::new(
+                    i18n_args("Final Amount: {amount}", 
+                        &[("amount",sompi_to_kaspa_string_with_suffix(final_transaction_amount + actual_estimate.aggregate_fees, &network_type))]
+                    )).strong());
             }
 
         });
 
-        ui.add_space(16.);
+        if let Some(error) = error {
+            ui.label(error);
+            ui.add_space(16.);
+        } else if !network_below_capacity && self.context.priority_fees_sompi == 0 && self.context.send_amount_sompi != 0 {
+            ui.add_space(16.);
+            ui.label(RichText::new(i18n("The network is currently congested.")));
+            ui.label(RichText::new(i18n("Sending funds without priority fees will result in long transaction wait times.")));
+            ui.add_space(16.);
+        } else {
+            ui.add_space(16.);
+        }
 
         core.apply_mobile_style(ui);
 
@@ -275,17 +291,17 @@ impl<'context> Estimator<'context> {
 }
 
 
-fn format_duration_estimate(seconds: f64) -> String {
+fn format_duration_estimate_i18n(seconds: f64) -> String {
     let minutes = (seconds / 60.0) as u64;
     let seconds = seconds as u64;
 
     if seconds == 1 {
-        format!("< {seconds} second")
+        i18n_args("< {seconds} second", &[("seconds", seconds.to_string())])
     } else if seconds < 60 {
-        format!("< {seconds} seconds")
+        i18n_args("< {seconds} seconds", &[("seconds", seconds.to_string())])
     } else if minutes == 1 {
-        format!("< {minutes} minute")
+        i18n_args("< {minutes} minute", &[("minutes", minutes.to_string())])
     } else {
-        format!("< {minutes} minutes")
+        i18n_args("< {minutes} minutes", &[("minutes", minutes.to_string())])
     }
 }
