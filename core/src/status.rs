@@ -344,8 +344,10 @@ impl<'core> Status<'core> {
                     }
 
                     ui.label(
+                        // "\u{E610}"
                         RichText::new(icon)
                             .size(status_icon_size)
+                            .family(FontFamily::Name("phosphor".into()))
                             .color(theme_color().icon_connected_color),
                     );
                 } else {

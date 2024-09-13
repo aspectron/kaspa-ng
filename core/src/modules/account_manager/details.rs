@@ -37,7 +37,7 @@ impl Details {
                         .wallet()
                         .accounts_create_new_address(account_id, address_kind)
                         .await
-                        .map_err(|err|Error::custom(format!("Failed to create new address\n{err}")))?;
+                        .map_err(|err|Error::custom(i18n_args("Failed to create new address: {err}",&[("err",err.to_string())])))?;
 
                     runtime().request_repaint();
 

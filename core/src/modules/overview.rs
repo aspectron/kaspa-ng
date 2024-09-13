@@ -407,7 +407,7 @@ impl Overview {
                     CollapsingHeader::new(i18n("Donations"))
                         .default_open(true)
                         .show(ui, |ui| {
-                            if ui.link(i18n("Supporting Kaspa NG development")).clicked() {
+                            if ui.link(i18n("Please support Kaspa NG development")).clicked() {
                                 core.select::<modules::Donations>();
                             }
                         });
@@ -426,15 +426,20 @@ impl Overview {
     fn render_fee_rate(&self, core: &Core, ui : &mut Ui) {
 
         if let Some(fees) = core.feerate.as_ref() {
-            let low = fees.low.value().feerate;
-            let med = fees.economic.value().feerate;
-            let high = fees.priority.value().feerate;
+            let (low,med,high) = if core.network_pressure.below_capacity() {
+                (1.0,1.0,1.0)
+            } else {
+                (fees.low.value().feerate, fees.economic.value().feerate, fees.priority.value().feerate)
+            };
+            let low_kas = sompi_to_kaspa_string_with_suffix((low * BASIC_TRANSACTION_MASS as f64) as u64, &core.settings.node.network.into());
+            let med_kas = sompi_to_kaspa_string_with_suffix((med * BASIC_TRANSACTION_MASS as f64) as u64, &core.settings.node.network.into());
+            let high_kas = sompi_to_kaspa_string_with_suffix((high * BASIC_TRANSACTION_MASS as f64) as u64, &core.settings.node.network.into());
             CollapsingHeader::new(i18n("Fee Market"))
                 .default_open(true)
                 .show(ui, |ui| {
-                    ui.label(format!("Low: {:.2} SOMPI/g", low));
-                    ui.label(format!("Economic: {:.2} SOMPI/g", med));
-                    ui.label(format!("Priority: {:.2} SOMPI/g", high));
+                    ui.label(format!("Low: {} SOMPI/g; ~{}/tx", format_with_precision(low), low_kas));
+                    ui.label(format!("Economic: {} SOMPI/g; ~{}/tx", format_with_precision(med),med_kas));
+                    ui.label(format!("Priority: {} SOMPI/g; ~{}/tx", format_with_precision(high),high_kas));
                 });
         }
     }

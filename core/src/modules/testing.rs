@@ -84,6 +84,8 @@ impl ModuleT for Testing {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
+       ui.label(RichText::new("\u{E610}").size(32.).family(FontFamily::Name("phosphor".into())));
+        ui.label(RichText::new("\u{E611}").size(32.));
 
         if ui.large_button("notify regular").clicked() {
             runtime().notify(UserNotification::info("This is a regular notification").short());

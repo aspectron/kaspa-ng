@@ -194,6 +194,10 @@ impl WalletCreate {
     pub fn import_mnemonic<F:core::marker::Copy + Eq + PartialEq + core::fmt::Debug, M>(context: &mut M, mnemonic_phrase: &mut String, word_count: &WordCount, focus_manager: &mut FocusManager<F>, focus_value: F, ui: &mut Ui, back_callback: impl FnOnce(&mut M))->bool{
         let mnemonic_is_ok = Rc::new(RefCell::new(false));
         let proceed = Rc::new(RefCell::new(false));
+        let needed = match word_count {
+            WordCount::Words12 => 12,
+            WordCount::Words24 => 24,
+        } as usize;
         Panel::new(context)
             .with_caption(i18n("Mnemonic Import"))
             .with_back(back_callback)
@@ -201,14 +205,7 @@ impl WalletCreate {
             })
             .with_header(|_this,ui| {
                 ui.add_space(64.);
-                match word_count {
-                    WordCount::Words12 => {
-                        ui.label(i18n("Please enter mnemonic comprised of 12 words"));
-                    }
-                    WordCount::Words24 => {
-                        ui.label(i18n("Please enter mnemonic comprised of 24 words"));
-                    }
-                }
+                ui.label(i18n_args("Please enter mnemonic comprised of {number} words", &[("number", needed.to_string())]));
             })
             .with_body(|_this,ui| {
                 let mut submit = false;
@@ -234,19 +231,20 @@ impl WalletCreate {
                 .build(ui);
 
                 let phrase = mnemonic_phrase.as_str().split_ascii_whitespace().filter(|s| s.is_not_empty()).collect::<Vec<&str>>();
-                let needed = match word_count {
-                    WordCount::Words12 => 12,
-                    WordCount::Words24 => 24,
-                } as usize;
                 // TODO - use comparison chain
                 #[allow(clippy::comparison_chain)]
                 if phrase.len() < needed {
                     ui.label("");
-                    ui.label(format!("{} {} {}", i18n("Please enter additional"), needed - phrase.len(), i18n("words")));
+                    // ui.label(format!("{} {} {}", i18n("Please enter additional"), needed - phrase.len(), i18n("words")));
+                    ui.label(i18n_args("Please enter additional {amount} words", &[("amount", (needed - phrase.len()).to_string())]));
                     ui.label("");
                 } else if phrase.len() > needed {
                     ui.label("");
-                    ui.colored_label(error_color(), format!("{} '{}' {}", i18n("Too many words in the"), phrase.len() - needed, i18n("word mnemonic")));
+                    // ui.colored_label(error_color(), format!("{} '{}' {}", i18n("Too many words in the"), phrase.len() - needed, i18n("word mnemonic")));
+                    ui.colored_label(error_color(), i18n_args("Too many words ({words}) in the {amount} word mnemonic", &[
+                        ("words",phrase.len().to_string()),
+                        ("amount",(phrase.len() - needed).to_string())
+                    ]));
                     ui.label("");
                 } else {
                     let mut phrase = phrase.join(" ");
@@ -260,7 +258,10 @@ impl WalletCreate {
                         Err(err) => {
                             phrase.zeroize();
                             ui.label("");
-                            ui.label(RichText::new(format!("Error processing mnemonic; {err}")).color(error_color()));
+                            ui.label(RichText::new(i18n_args("Error processing mnemonic: {err}",&[("err",err.to_string())])).color(error_color()));
+                            if matches!(err,kaspa_bip32::Error::Bip39) {
+                                ui.label(RichText::new(i18n("Your mnemonic phrase is invalid")).color(error_color()));
+                            }
                             ui.label("");
                         }
                     }

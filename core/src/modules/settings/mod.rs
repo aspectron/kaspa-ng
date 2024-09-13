@@ -74,7 +74,7 @@ impl Settings {
 
                             if let Err(err) = KaspaRpcClient::parse_url(settings.wrpc_url.clone(), settings.wrpc_encoding, settings.network.into()) {
                                 ui.label(
-                                    RichText::new(format!("{err}"))
+                                    RichText::new(err.to_string())
                                         .color(theme_color().warning_color),
                                 );
                                 node_settings_error = Some(i18n("Invalid wRPC URL"));

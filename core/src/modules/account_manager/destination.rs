@@ -20,7 +20,7 @@ impl<'context> Destination<'context> {
             Focus::Address,
             |ui, text| {
                 ui.add_space(8.);
-                ui.label(RichText::new("Enter destination address").size(12.).raised());
+                ui.label(RichText::new(i18n("Enter destination address")).size(12.).raised());
                 ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
                     .vertical_align(Align::Center))
             },
@@ -50,10 +50,10 @@ impl<'context> Destination<'context> {
             AddressStatus::Valid => {},
             AddressStatus::None => {},
             AddressStatus::NetworkMismatch(address_network_type) => {
-                ui.label(format!("This address if for the different\nnetwork ({address_network_type})"));
+                ui.label(i18n_args("This address if for the different network ({address_network_type})", &[("address_network_type", address_network_type.to_string())]));
             },
             AddressStatus::Invalid(err) => {
-                ui.label(format!("Please enter a valid address\n{err}"));
+                ui.label(i18n_args("Please enter a valid address: {err}", &[("err", err)]));
             }
         }
 
