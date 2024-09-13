@@ -35,6 +35,7 @@ use qr::*;
 use secret::*;
 use transactions::*;
 use transfer::*;
+#[allow(unused_imports)]
 use utxo::*;
 
 
@@ -52,7 +53,7 @@ pub enum AccountManagerSection {
     Overview,
     Transactions,
     Details,
-    UtxoManager
+    // UtxoManager
 }
 
 // #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
@@ -507,12 +508,12 @@ impl AccountManager {
                             self.section = AccountManagerSection::Details;
                         }
 
-                        if core.device().desktop() {
-                            ui.separator();
-                            if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
-                                self.section = AccountManagerSection::UtxoManager;
-                            }
-                        }
+                        // if core.device().desktop() {
+                        //     ui.separator();
+                        //     if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                        //         self.section = AccountManagerSection::UtxoManager;
+                        //     }
+                        // }
 
                     });
 
@@ -536,12 +537,12 @@ impl AccountManager {
                     ui.separator();
                     ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
 
-                    if core.device().desktop() {
-                        ui.separator();
-                        if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
-                            self.section = AccountManagerSection::UtxoManager;
-                        }
-                    }
+                    // if core.device().desktop() {
+                    //     ui.separator();
+                    //     if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                    //         self.section = AccountManagerSection::UtxoManager;
+                    //     }
+                    // }
 
                     ui.separator();
                     if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
@@ -596,9 +597,9 @@ impl AccountManager {
                     AccountManagerSection::Details => {
                         Details::new().render(core,ui,rc);
                     }
-                    AccountManagerSection::UtxoManager => {
-                        UtxoManager::new().render(core,ui,rc);
-                    }
+                    // AccountManagerSection::UtxoManager => {
+                    //     UtxoManager::new().render(core,ui,rc);
+                    // }
                 }
             });
 
@@ -617,9 +618,9 @@ impl AccountManager {
             AccountManagerSection::Details => {
                 Details::new().render(core,ui,rc);
             }
-            AccountManagerSection::UtxoManager => {
-                UtxoManager::new().render(core,ui,rc);
-            }
+            // AccountManagerSection::UtxoManager => {
+            //     UtxoManager::new().render(core,ui,rc);
+            // }
         }
 
     }
