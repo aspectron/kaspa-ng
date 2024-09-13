@@ -44,6 +44,7 @@ cfg_if! {
         pub enum KaspadServiceEvents {
             StartInternalInProc { config: Config, network : Network },
             StartInternalAsDaemon { config: Config, network : Network },
+            StartInternalAsPassiveSync { config: Config, network : Network },
             StartExternalAsDaemon { path: PathBuf, config: Config, network : Network },
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
             Stdout { line : String },
@@ -513,6 +514,29 @@ impl KaspaService {
                 self.update_storage();
             }
             #[cfg(not(target_arch = "wasm32"))]
+            KaspadServiceEvents::StartInternalAsPassiveSync { config, network } => {
+                self.stop_all_services().await?;
+
+                self.handle_network_change(network).await?;
+
+                let kaspad = Arc::new(daemon::Daemon::new(None, &self.service_events));
+                self.retain(kaspad.clone());
+                kaspad.clone().start(config).await.unwrap();
+
+                let rpc_config = RpcConfig::Wrpc {
+                    url: None,
+                    encoding: WrpcEncoding::Borsh,
+                    resolver_urls: None,
+                };
+
+                let rpc = Self::create_rpc_client(&rpc_config, network)
+                    .expect("Kaspad Service - unable to create wRPC client");
+                self.start_all_services(Some(rpc), network).await?;
+                self.connect_rpc_client().await?;
+
+                self.update_storage();
+            }
+            #[cfg(not(target_arch = "wasm32"))]
             KaspadServiceEvents::StartExternalAsDaemon {
                 path,
                 config,
@@ -862,6 +886,9 @@ impl KaspadServiceEvents {
                     }
                     KaspadNodeKind::IntegratedAsDaemon => {
                         Ok(KaspadServiceEvents::StartInternalAsDaemon { config : Config::from(node_settings.clone()), network : node_settings.network })
+                    }
+                    KaspadNodeKind::IntegratedAsPassiveSync => {
+                        Ok(KaspadServiceEvents::StartInternalAsPassiveSync { config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::ExternalAsDaemon => {
                         let path = node_settings.kaspad_daemon_binary.clone();

@@ -17,14 +17,16 @@ cfg_if! {
             IntegratedInProc,
             #[default]
             IntegratedAsDaemon,
+            IntegratedAsPassiveSync,
             ExternalAsDaemon,
         }
 
-        const KASPAD_NODE_KINDS: [KaspadNodeKind; 5] = [
+        const KASPAD_NODE_KINDS: [KaspadNodeKind; 6] = [
             KaspadNodeKind::Disable,
             KaspadNodeKind::Remote,
             KaspadNodeKind::IntegratedInProc,
             KaspadNodeKind::IntegratedAsDaemon,
+            KaspadNodeKind::IntegratedAsPassiveSync,
             KaspadNodeKind::ExternalAsDaemon,
         ];
 
@@ -35,6 +37,7 @@ cfg_if! {
                     KaspadNodeKind::Remote => write!(f, "{}", i18n("Remote")),
                     KaspadNodeKind::IntegratedInProc => write!(f, "{}", i18n("Integrated Node")),
                     KaspadNodeKind::IntegratedAsDaemon => write!(f, "{}", i18n("Integrated Daemon")),
+                    KaspadNodeKind::IntegratedAsPassiveSync => write!(f, "{}", i18n("Passive Sync")),
                     KaspadNodeKind::ExternalAsDaemon => write!(f, "{}", i18n("External Daemon")),
                 }
             }
@@ -78,6 +81,8 @@ impl KaspadNodeKind {
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedAsDaemon => i18n("The node is spawned as a child daemon process (recommended)."),
             #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::IntegratedAsPassiveSync => i18n("The node synchronizes in the background while Kaspa-NG is connected to a public node. Once the node is synchronized, you can switch to the 'Integrated Daemon' mode."),
+            #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::ExternalAsDaemon => i18n("A binary at another location is spawned a child process (experimental, for development purposes only)."),
         }
     }
@@ -91,6 +96,8 @@ impl KaspadNodeKind {
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedAsDaemon => true,
             #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::IntegratedAsPassiveSync => true,
+            #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::ExternalAsDaemon => true,
         }
     }
@@ -103,6 +110,8 @@ impl KaspadNodeKind {
             KaspadNodeKind::IntegratedInProc => true,
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedAsDaemon => true,
+            #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::IntegratedAsPassiveSync => true,
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::ExternalAsDaemon => true,
         }

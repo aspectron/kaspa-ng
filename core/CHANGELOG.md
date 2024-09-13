@@ -6,10 +6,11 @@
 - Add `Settings > ... > Local p2p Node .. > Public wRPC (Borsh)` to allow for external wRPC connections.
 - New Priority Fee estimation algorithm based on the network load (Send panel).
 - Add support for legacy wallets created with [KDX](https://kdx.app) and Web Wallet at [https://wallet.kaspanet.io](https://wallet.kaspanet.io).
-- Ability to choose a custom PNN (Public Node Network) node is no longer available.
+- Ability to choose from a list of available public nodes is no longer available (public nodes are load-balanced).
 - Kaspa NG has been updated to EGUI 0.28.0, which includes various improvements and bug fixes.
 - Display addresses in the transaction history panel.
 - Transaction history elements are now clickable leading to the Kaspa Explorer.
+- Add experimental `Passive Sync` mode that allows connecting to a public node while synchronizing local node in the background.
 
 # 0.2.7
 
