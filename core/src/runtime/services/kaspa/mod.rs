@@ -500,7 +500,7 @@ impl KaspaService {
                 kaspad.clone().start(config).await.unwrap();
 
                 let rpc_config = RpcConfig::Wrpc {
-                    url: None,
+                    url: Some("127.0.0.1".to_string()),
                     encoding: WrpcEncoding::Borsh,
                     resolver_urls: None,
                 };
