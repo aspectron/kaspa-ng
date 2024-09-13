@@ -604,6 +604,8 @@ impl KaspaService {
             CoreWalletEvents::DaaScoreChange { .. } => {}
             CoreWalletEvents::Connect { .. } => {
                 self.connect_all_services().await?;
+
+                // self.wallet().
             }
             CoreWalletEvents::Disconnect { .. } => {
                 self.disconnect_all_services().await?;

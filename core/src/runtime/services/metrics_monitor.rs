@@ -2,6 +2,7 @@ use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 use kaspa_metrics_core::{Metric, Metrics, MetricsSnapshot};
+use kaspa_rpc_core::GetSystemInfoResponse;
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 
@@ -14,6 +15,7 @@ pub struct MetricsService {
     pub metrics: Arc<Metrics>,
     pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
     pub samples_since_connection: Arc<AtomicUsize>,
+    pub rpc_api: Mutex<Option<Arc<dyn RpcApi>>>,
 }
 
 impl MetricsService {
@@ -29,7 +31,12 @@ impl MetricsService {
             metrics,
             metrics_data: Mutex::new(metrics_data),
             samples_since_connection: Arc::new(AtomicUsize::new(0)),
+            rpc_api: Mutex::new(None),
         }
+    }
+
+    pub fn rpc_api(&self) -> Option<Arc<dyn RpcApi>> {
+        self.rpc_api.lock().unwrap().clone()
     }
 
     pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
@@ -111,6 +118,8 @@ impl Service for MetricsService {
     }
 
     async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
+        self.rpc_api.lock().unwrap().replace(rpc_api.clone());
+
         let this = self.clone();
         self.metrics
             .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
@@ -126,6 +135,8 @@ impl Service for MetricsService {
         Ok(())
     }
     async fn detach_rpc(self: Arc<Self>) -> Result<()> {
+        self.rpc_api.lock().unwrap().take();
+
         self.metrics.unregister_sink();
         self.metrics.stop_task().await?;
         self.metrics.bind_rpc(None);
@@ -135,6 +146,34 @@ impl Service for MetricsService {
 
     async fn connect_rpc(self: Arc<Self>) -> Result<()> {
         self.samples_since_connection.store(0, Ordering::SeqCst);
+
+        if let Some(rpc_api) = self.rpc_api() {
+            if let Ok(system_info) = rpc_api.get_system_info().await {
+                let GetSystemInfoResponse {
+                    version, system_id, ..
+                } = system_info;
+
+                let system_id = system_id
+                    .map(|id| format!(" - {}", id[0..8].to_vec().to_hex()))
+                    .unwrap_or_else(|| "".to_string());
+
+                self.application_events
+                    .sender
+                    .try_send(crate::events::Events::NodeInfo {
+                        node_info: Some(Box::new(format!("{}{}", version, system_id))),
+                    })
+                    .unwrap();
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn disconnect_rpc(self: Arc<Self>) -> Result<()> {
+        self.application_events
+            .sender
+            .try_send(crate::events::Events::NodeInfo { node_info: None })
+            .unwrap();
         Ok(())
     }
 

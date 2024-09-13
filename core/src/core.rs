@@ -61,6 +61,7 @@ pub struct Core {
     pub storage: Storage,
     // pub feerate : Option<Arc<RpcFeeEstimate>>,
     pub feerate: Option<FeerateEstimate>,
+    pub node_info: Option<Box<String>>,
 }
 
 impl Core {
@@ -223,6 +224,7 @@ impl Core {
             notifications: Notifications::default(),
             storage,
             feerate: None,
+            node_info: None,
             // daemon_storage_root: Mutex::new(daemon_storage_root),
         };
 
@@ -782,6 +784,9 @@ impl Core {
                 } else {
                     self.notifications.push(notification);
                 }
+            }
+            Events::NodeInfo { node_info } => {
+                self.node_info = node_info;
             }
             Events::Close { .. } => {}
             Events::UnlockSuccess => {}

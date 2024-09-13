@@ -45,6 +45,9 @@ pub enum Events {
     Notify {
         user_notification: UserNotification,
     },
+    NodeInfo {
+        node_info: Option<Box<String>>,
+    },
     Close,
     Exit,
 }
