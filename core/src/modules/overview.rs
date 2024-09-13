@@ -49,22 +49,23 @@ impl ModuleT for Overview {
                 if #[cfg(not(feature = "lean"))] {
 
                     let width = ui.available_width();
-
+                    
                     SidePanel::left("overview_left")
-                    .exact_width(width*0.5)
-                    .resizable(false)
-                    .show_separator_line(true)
-                    .show_inside(ui, |ui| {
-                        egui::ScrollArea::vertical()
-                        .id_source("overview_metrics")
-                        .auto_shrink([false; 2])
-                        .show(ui, |ui| {
-                            self.render_stats(core,ui);
+                        .exact_width(width*0.5)
+                        .resizable(false)
+                        .show_separator_line(true)
+                        .show_inside(ui, |ui| {
+                            egui::ScrollArea::vertical()
+                            .id_source("overview_metrics")
+                            .auto_shrink([false; 2])
+                            .show(ui, |ui| {
+                                self.render_stats(core,ui);
+                            });
                         });
-                    });
                     
                     SidePanel::right("overview_right")
                         .exact_width(width*0.5)
+                        .frame(Frame::default().fill(Color32::TRANSPARENT))
                         .resizable(false)
                         .show_separator_line(false)
                         .show_inside(ui, |ui| {
@@ -437,9 +438,9 @@ impl Overview {
             CollapsingHeader::new(i18n("Fee Market"))
                 .default_open(true)
                 .show(ui, |ui| {
-                    ui.label(format!("Low: {} SOMPI/g; ~{}/tx", format_with_precision(low), low_kas));
-                    ui.label(format!("Economic: {} SOMPI/g; ~{}/tx", format_with_precision(med),med_kas));
-                    ui.label(format!("Priority: {} SOMPI/g; ~{}/tx", format_with_precision(high),high_kas));
+                    ui.label(format!("Low: {} SOMPI/g;  ~{}/tx", format_with_precision(low), low_kas));
+                    ui.label(format!("Economic: {} SOMPI/g;  ~{}/tx", format_with_precision(med),med_kas));
+                    ui.label(format!("Priority: {} SOMPI/g;  ~{}/tx", format_with_precision(high),high_kas));
                 });
         }
     }
@@ -451,10 +452,13 @@ impl Overview {
 
         if let Some(snapshot) = core.metrics() {
             let view_width = ui.available_width();
+
             if view_width < 200. {
                 return;
             }
-            let graph_columns = ((view_width-48.) / 128.) as usize;
+            const GRAPH_WIDTH: f32 = 128.+6.+8.;
+            const GRAPH_VIEW_MARGIN: f32 = 48.;
+            let graph_columns = ((view_width-GRAPH_VIEW_MARGIN) / GRAPH_WIDTH) as usize;
 
             let mut draw = true;
             while draw {
