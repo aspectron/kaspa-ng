@@ -625,9 +625,9 @@ impl Core {
 
                         sender
                             .try_send(Events::Notify {
-                                user_notification: UserNotification::success(format!(
-                                    "Capture saved to\n{}",
-                                    path.to_string_lossy()
+                                user_notification: UserNotification::success(i18n_args(
+                                    "Capture saved to {path}",
+                                    &[("path", path.to_string_lossy())],
                                 ))
                                 .as_toast(),
                             })
