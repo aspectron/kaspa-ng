@@ -621,6 +621,21 @@ impl Settings {
                     });    
             });
 
+        CollapsingHeader::new(i18n("Network Fee Estimator"))
+            .default_open(false)
+            .show(ui, |ui| {
+                ui.vertical(|ui|{
+                    EstimatorMode::iter().for_each(|kind| {
+                        ui.radio_value(&mut self.settings.estimator.mode, *kind, i18n(kind.describe()));
+                    });
+                    
+                    if self.settings.estimator.mode != core.settings.estimator.mode {
+                        core.settings.estimator.mode = self.settings.estimator.mode;
+                        core.store_settings();
+                    }
+                });
+            });
+            
         #[cfg(not(target_arch = "wasm32"))]
         core.storage.clone().render_settings(core, ui);
 

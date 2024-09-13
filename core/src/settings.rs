@@ -574,6 +574,36 @@ impl DeveloperSettings {
     }
 }
 
+#[derive(Describe, Default, Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum EstimatorMode {
+    #[describe("Fee Market Only")]
+    FeeMarketOnly,
+    #[default]
+    #[describe("Fee Market & Network Pressure")]
+    NetworkPressure,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct EstimatorSettings {
+    pub mode: EstimatorMode,
+}
+
+impl Default for EstimatorSettings {
+    fn default() -> Self {
+        Self {
+            mode: EstimatorMode::NetworkPressure,
+        }
+    }
+}
+
+impl EstimatorSettings {
+    pub fn track_network_load(&self) -> EstimatorMode {
+        self.mode
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
@@ -583,6 +613,8 @@ pub struct Settings {
     pub version: String,
     pub update: String,
     pub developer: DeveloperSettings,
+    #[serde(default)]
+    pub estimator: EstimatorSettings,
     pub node: NodeSettings,
     pub user_interface: UserInterfaceSettings,
     pub language_code: String,
@@ -602,6 +634,7 @@ impl Default for Settings {
             version: "0.0.0".to_string(),
             update: crate::app::VERSION.to_string(),
             developer: DeveloperSettings::default(),
+            estimator: EstimatorSettings::default(),
             node: NodeSettings::default(),
             user_interface: UserInterfaceSettings::default(),
             language_code: "en".to_string(),

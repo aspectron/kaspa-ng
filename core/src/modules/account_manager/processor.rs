@@ -215,6 +215,7 @@ async fn calculate_fee_rate(network_type : NetworkType, account_id : AccountId, 
     if base_mass == 0 {
         1.0
     } else {
-        (priority_fee_sompi as f64 / base_mass as f64) + 1.0
+        // (priority_fee_sompi as f64 / base_mass as f64) + 1.0
+        priority_fee_sompi as f64 / base_mass as f64
     }
 }

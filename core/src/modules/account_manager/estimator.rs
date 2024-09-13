@@ -104,7 +104,7 @@ impl<'context> Estimator<'context> {
         let number_of_generated_stages = actual_estimate.number_of_generated_stages;
 
         let buckets = if let Some(fees) = core.feerate.as_ref() {
-            if network_below_capacity {
+            if network_below_capacity && core.settings.estimator.mode == EstimatorMode::NetworkPressure {
                 [
                     Some(FeeMode::Low(FeerateBucket::new(1.0,5.0))), 
                     Some(FeeMode::Economic(fees.low.value().with_seconds(3.0))), 
@@ -124,8 +124,8 @@ impl<'context> Estimator<'context> {
         let fee_mode = self.context.fee_mode;
         for mode in buckets.into_iter().flatten() {
             let bucket = mode.bucket();
-            let feerate = (bucket.feerate - 1.0).max(0.0);
-            // let feerate = bucket.feerate;
+            // let feerate = (bucket.feerate - 1.0).max(0.0);
+            let feerate = bucket.feerate;
 
             // let seconds = if network_below_capacity {
             //     match &mode {
@@ -162,8 +162,10 @@ impl<'context> Estimator<'context> {
 
         if fee_selection.render(ui, &mut self.context.fee_mode).clicked() {
             let bucket = self.context.fee_mode.bucket();
-            let priority_feerate = (bucket.feerate - 1.0).max(0.0);
-            let total_fees_sompi = (priority_feerate * actual_estimate.aggregate_mass as f64) as u64;
+            // let priority_feerate = (bucket.feerate - 1.0).max(0.0);
+            // let priority_feerate = bucket.feerate;
+            // let total_fees_sompi = (priority_feerate * actual_estimate.aggregate_mass as f64) as u64;
+            let total_fees_sompi = (bucket.feerate * actual_estimate.aggregate_mass as f64) as u64;
             // runtime().toast(UserNotification::success(format!("selection: {:?}", self.context.fee_mode)).short());
             let total_fee_kaspa = sompi_to_kaspa(total_fees_sompi);
             self.context.priority_fees_text = format!("{}", total_fee_kaspa);
