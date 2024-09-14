@@ -37,6 +37,7 @@ kaspa-utils.workspace = true
 kaspa-wallet-core.workspace = true
 kaspa-wallet-keys.workspace = true
 kaspa-wrpc-client.workspace = true
+kaspa-txscript.workspace = true
 
 workflow-core.workspace = true
 workflow-i18n.workspace = true
@@ -91,7 +92,8 @@ eframe = { workspace = true, default-features = false, features = [
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
-egui-phosphor = { workspace = true, features = ["thin","light","regular","bold"] }
+egui-phosphor = { workspace = true, features = ["light"] }
+# egui-phosphor = { workspace = true, features = ["thin","light","regular","bold"] }
 egui-notify.workspace = true
 
 [dependencies.web-sys]

@@ -35,6 +35,7 @@ use qr::*;
 use secret::*;
 use transactions::*;
 use transfer::*;
+#[allow(unused_imports)]
 use utxo::*;
 
 
@@ -52,7 +53,7 @@ pub enum AccountManagerSection {
     Overview,
     Transactions,
     Details,
-    UtxoManager
+    // UtxoManager
 }
 
 // #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
@@ -94,7 +95,7 @@ enum Focus {
     PaymentSecret,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub enum EstimatorStatus {
     #[default]
     None,
@@ -111,6 +112,60 @@ enum AddressStatus {
     Invalid(String),
 }
 
+#[derive(Default, Debug, Clone, Copy)]
+pub enum FeeMode{
+    #[default]
+    None,
+    Low(FeerateBucket),
+    // #[default]
+    Economic(FeerateBucket),
+    Priority(FeerateBucket),
+}
+
+impl FeeMode {
+    pub fn bucket(&self) -> FeerateBucket {
+        match self {
+            FeeMode::Low(bucket) => *bucket,
+            FeeMode::Economic(bucket) => *bucket,
+            FeeMode::Priority(bucket) => *bucket,
+            FeeMode::None => FeerateBucket::default(),
+        }
+    }
+}
+
+// impl Default for FeeMode {
+//     fn default() -> Self {
+//         // FeeMode::Economic(FeerateBucket::default())
+//         FeeMode::None
+//     }
+// }
+
+impl Eq for FeeMode {}
+
+impl PartialEq for FeeMode {
+    fn eq(&self, other: &Self) -> bool {
+        // match (self, other) {
+        //     (FeeMode::None, FeeMode::None) => true,
+        //     (FeeMode::Low(_), FeeMode::Low(_)) => true,
+        //     (FeeMode::Economic(_), FeeMode::Economic(_)) => true,
+        //     (FeeMode::Priority(_), FeeMode::Priority(_)) => true,
+        //     _ => false,
+        // }
+        matches!((self, other), (FeeMode::None, FeeMode::None) | (FeeMode::Low(_), FeeMode::Low(_)) | (FeeMode::Economic(_), FeeMode::Economic(_)) | (FeeMode::Priority(_), FeeMode::Priority(_)))
+    }
+}
+
+impl std::fmt::Display for FeeMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FeeMode::None => write!(f, "N/A"),
+            FeeMode::Low(_) => write!(f, "Low"),
+            FeeMode::Economic(_) => write!(f, "Economic"),
+            FeeMode::Priority(_) => write!(f, "Priority"),
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct ManagerContext {
     transfer_to_account : Option<Account>,
@@ -120,6 +175,7 @@ pub struct ManagerContext {
     enable_priority_fees : bool,
     priority_fees_text : String,
     priority_fees_sompi : u64,
+    // priority_fee_rate : f64,
     estimate : Arc<Mutex<EstimatorStatus>>,
     request_estimate : Option<bool>,
     address_status : AddressStatus,
@@ -129,6 +185,7 @@ pub struct ManagerContext {
     wallet_secret : String,
     payment_secret : String,
     loading : bool,
+    fee_mode : FeeMode
 }
 
 impl ManagerContext {
@@ -155,6 +212,7 @@ impl Zeroize for ManagerContext {
         self.enable_priority_fees = false;
         self.priority_fees_text = String::default();
         self.priority_fees_sompi = 0;
+        // self.priority_fee_rate = 0.0;
         *self.estimate.lock().unwrap() = EstimatorStatus::None;
         self.address_status = AddressStatus::None;
         self.transaction_kind = None;
@@ -164,8 +222,6 @@ impl Zeroize for ManagerContext {
     }
 }
 
-// pub struct RenderContext<'render> {
-//     pub account : &'render Account,
 pub struct RenderContext {
     pub account : Account,
     pub context : Arc<account::AccountContext>,
@@ -173,28 +229,8 @@ pub struct RenderContext {
     pub current_daa_score : Option<u64>,
 }
 
-// impl<'render> RenderContext<'render> {
 impl RenderContext {
-    // pub fn new(account : &'render Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
-    // pub fn new(account : Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
-    // pub fn new(account : Account, core: &Core) -> Result<Self> {
     pub fn new(account : Account, network_type : NetworkType, current_daa_score : Option<u64>) -> Result<Self> {
-
-
-        // if let AccountManagerState::Overview { account } = &account_manager.state {
-        // let network_type = if let Some(network_id) = core.state().network_id() {
-        //     network_id.network_type()
-        // } else {
-        //     core.settings.node.network.into()
-        // };
-
-        // let current_daa_score = core.state().current_daa_score();
-
-        // Ok(RenderContext::new(account, network_type, current_daa_score)?)
-        // } else {
-        //     Err(Error::custom("Account is missing context"))
-        // }
-
 
         let context = if let Some(context) = account.context() {
             context
@@ -275,9 +311,10 @@ impl AccountManager {
                 account: account.clone(),
             };
             
-            if device.orientation() == Orientation::Portrait {
+            if device.orientation() == Orientation::Portrait || Self::single_pane(&device){
                 self.section = AccountManagerSection::Overview;
             } else {
+                // self.section = AccountManagerSection::Details;
                 self.section = AccountManagerSection::Transactions;
             }
 
@@ -413,7 +450,7 @@ impl AccountManager {
                 if core.device().mobile() {
 
                     self.render_singular_layout(core,ui,&rc, self.section);
-                } else if core.device().single_pane() {
+                } else if core.device().single_pane() || Self::single_pane(core.device()) {
 
                     self.render_menu(core,ui,&rc);
 
@@ -428,6 +465,10 @@ impl AccountManager {
         }
 
         Ok(())
+    }
+
+    fn single_pane(device: &Device)->bool{
+        device.screen_size.x < 800.
     }
 
     pub fn account(&self) -> Option<Account> {
@@ -467,12 +508,12 @@ impl AccountManager {
                             self.section = AccountManagerSection::Details;
                         }
 
-                        if core.device().desktop() {
-                            ui.separator();
-                            if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
-                                self.section = AccountManagerSection::UtxoManager;
-                            }
-                        }
+                        // if core.device().desktop() {
+                        //     ui.separator();
+                        //     if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                        //         self.section = AccountManagerSection::UtxoManager;
+                        //     }
+                        // }
 
                     });
 
@@ -496,12 +537,12 @@ impl AccountManager {
                     ui.separator();
                     ToolsMenu::new().render(core,ui,self, rc, screen_rect_height * 0.8);
 
-                    if core.device().desktop() {
-                        ui.separator();
-                        if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
-                            self.section = AccountManagerSection::UtxoManager;
-                        }
-                    }
+                    // if core.device().desktop() {
+                    //     ui.separator();
+                    //     if ui.add(Label::new(i18n("UTXOs")).sense(Sense::click())).clicked() {
+                    //         self.section = AccountManagerSection::UtxoManager;
+                    //     }
+                    // }
 
                     ui.separator();
                     if ui.add(Label::new(i18n("Details")).sense(Sense::click())).clicked() {
@@ -556,9 +597,9 @@ impl AccountManager {
                     AccountManagerSection::Details => {
                         Details::new().render(core,ui,rc);
                     }
-                    AccountManagerSection::UtxoManager => {
-                        UtxoManager::new().render(core,ui,rc);
-                    }
+                    // AccountManagerSection::UtxoManager => {
+                    //     UtxoManager::new().render(core,ui,rc);
+                    // }
                 }
             });
 
@@ -577,9 +618,9 @@ impl AccountManager {
             AccountManagerSection::Details => {
                 Details::new().render(core,ui,rc);
             }
-            AccountManagerSection::UtxoManager => {
-                UtxoManager::new().render(core,ui,rc);
-            }
+            // AccountManagerSection::UtxoManager => {
+            //     UtxoManager::new().render(core,ui,rc);
+            // }
         }
 
     }

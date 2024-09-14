@@ -270,11 +270,10 @@ impl ModuleT for Scanner {
                     let wallet_secret = Secret::from(self.context.wallet_secret.as_str());
                     let transfer_funds = self.context.transfer_funds;
                     self.context.wallet_secret.zeroize();
-
                     spawn(async move {
-
-                        if let Some(account) = wallet.get_account_by_id(&account.id()).await? {
-
+                        let binding = wallet.guard();
+                        let guard = binding.lock().await;
+                        if let Some(account) = wallet.get_account_by_id(&account.id(),&guard).await? {
                             account.as_derivation_capable()?
                                 .derivation_scan(
                                     wallet_secret,
@@ -283,6 +282,7 @@ impl ModuleT for Scanner {
                                     usize::MAX,
                                     64,
                                     transfer_funds,
+                                    None,
                                     &abortable,
                                     Some(Arc::new(move |index,utxo_count, balance, txid|{
                                         if let Some(_txid) = txid {

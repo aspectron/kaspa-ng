@@ -43,7 +43,7 @@ impl BorshCodec for ClientSender {
         Ok(self
             .send_message(
                 Target::Wallet,
-                WalletMessage::new(op, data).try_to_vec().unwrap(),
+                borsh::to_vec(&WalletMessage::new(op, data)).unwrap(),
             )
             .await?)
     }
@@ -51,6 +51,7 @@ impl BorshCodec for ClientSender {
 
 #[repr(u8)]
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[borsh(use_discriminant = true)]
 enum ServerMessageKind {
     Success = 0,
     Error = 1,
@@ -130,7 +131,7 @@ pub fn req_to_jsv(target: Target, src: &[u8]) -> JsValue {
         data: src.to_vec(),
     };
 
-    let data = request.try_to_vec().unwrap();
+    let data = borsh::to_vec(&request).unwrap();
 
     JsValue::from(data.to_hex())
 }
@@ -161,7 +162,7 @@ pub fn resp_to_jsv(target: Target, response: Result<Vec<u8>>) -> JsValue {
                 data: src,
             };
 
-            let data = response.try_to_vec().unwrap();
+            let data = borsh::to_vec(&response).unwrap();
 
             JsValue::from(data.to_hex())
         }
@@ -172,7 +173,7 @@ pub fn resp_to_jsv(target: Target, response: Result<Vec<u8>>) -> JsValue {
                 data: error.to_string().as_bytes().to_vec(),
             };
 
-            let data = response.try_to_vec().unwrap();
+            let data = borsh::to_vec(&response).unwrap();
             JsValue::from(data.to_hex())
         }
     }
@@ -212,7 +213,7 @@ pub fn notify_to_jsv(target: Target, src: &[u8]) -> JsValue {
         data: src.to_vec(),
     };
 
-    let data = notify.try_to_vec().unwrap();
+    let data = borsh::to_vec(&notify).unwrap();
     JsValue::from(data.to_hex())
 }
 

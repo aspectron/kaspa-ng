@@ -17,11 +17,29 @@ impl RegisterStaticFont for FontDefinitions {
     }
 }
 
+use egui_phosphor::Variant;
+pub fn add_to_fonts(fonts: &mut egui::FontDefinitions, variant: Variant) {
+    fonts
+        .font_data
+        .insert("phosphor".into(), variant.font_data());
+
+    if let Some(font_keys) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
+        // font_keys.insert(0, "phosphor".into());
+        font_keys.push("phosphor".into());
+    }
+
+    fonts
+        .families
+        .entry(egui::FontFamily::Name("phosphor".into()))
+        .or_default()
+        .insert(0, "phosphor".to_owned());
+}
+
 pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
     let mut fonts = FontDefinitions::default();
-    egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Bold);
-    egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
-    egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
+    // add_to_fonts(&mut fonts, egui_phosphor::Variant::Bold);
+    // add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+    add_to_fonts(&mut fonts, egui_phosphor::Variant::Light);
 
     // ---
 

@@ -7,6 +7,7 @@ use kaspa_wallet_core::events::Events as CoreWalletEvents;
 use kaspa_wallet_core::rpc::{
     ConnectOptions, ConnectStrategy, NotificationMode, Rpc, RpcCtl, WrpcEncoding,
 };
+use kaspa_wrpc_client::Resolver;
 use workflow_core::runtime;
 
 const ENABLE_PREEMPTIVE_DISCONNECT: bool = true;
@@ -43,6 +44,7 @@ cfg_if! {
         pub enum KaspadServiceEvents {
             StartInternalInProc { config: Config, network : Network },
             StartInternalAsDaemon { config: Config, network : Network },
+            StartInternalAsPassiveSync { config: Config, network : Network },
             StartExternalAsDaemon { path: PathBuf, config: Config, network : Network },
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
             Stdout { line : String },
@@ -157,18 +159,35 @@ impl KaspaService {
 
     pub fn create_rpc_client(config: &RpcConfig, network: Network) -> Result<Rpc> {
         match config {
-            RpcConfig::Wrpc { url, encoding } => {
-                // log_warn!("create_rpc_client - RPC URL: {:?}", url);
+            RpcConfig::Wrpc {
+                url,
+                encoding,
+                resolver_urls,
+            } => {
+                let resolver_or_none = match url {
+                    Some(_) => None,
+                    None => {
+                        if resolver_urls.is_none() {
+                            Some(Resolver::default())
+                        } else {
+                            Some(Resolver::new(resolver_urls.clone(), false))
+                        }
+                    }
+                };
+
                 let url = url.clone().unwrap_or_else(|| "127.0.0.1".to_string());
                 let url =
                     KaspaRpcClient::parse_url(url, *encoding, NetworkId::from(network).into())?;
 
                 let wrpc_client = Arc::new(KaspaRpcClient::new_with_args(
                     *encoding,
-                    Some(url.as_str()),
-                    // TODO: introduce resolver for public node resolution
-                    None,
-                    None,
+                    if resolver_or_none.is_some() {
+                        None
+                    } else {
+                        Some(url.as_str())
+                    },
+                    resolver_or_none,
+                    Some(NetworkId::from(network)),
                     None,
                 )?);
                 let rpc_ctl = wrpc_client.ctl().clone();
@@ -366,6 +385,9 @@ impl KaspaService {
                 .connect_call(ConnectRequest {
                     url: None,
                     network_id: network.into(),
+                    retry_on_error: true,
+                    block_async_connect: false,
+                    require_sync: false,
                 })
                 .await?;
 
@@ -479,8 +501,32 @@ impl KaspaService {
                 kaspad.clone().start(config).await.unwrap();
 
                 let rpc_config = RpcConfig::Wrpc {
+                    url: Some("127.0.0.1".to_string()),
+                    encoding: WrpcEncoding::Borsh,
+                    resolver_urls: None,
+                };
+
+                let rpc = Self::create_rpc_client(&rpc_config, network)
+                    .expect("Kaspad Service - unable to create wRPC client");
+                self.start_all_services(Some(rpc), network).await?;
+                self.connect_rpc_client().await?;
+
+                self.update_storage();
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            KaspadServiceEvents::StartInternalAsPassiveSync { config, network } => {
+                self.stop_all_services().await?;
+
+                self.handle_network_change(network).await?;
+
+                let kaspad = Arc::new(daemon::Daemon::new(None, &self.service_events));
+                self.retain(kaspad.clone());
+                kaspad.clone().start(config).await.unwrap();
+
+                let rpc_config = RpcConfig::Wrpc {
                     url: None,
                     encoding: WrpcEncoding::Borsh,
+                    resolver_urls: None,
                 };
 
                 let rpc = Self::create_rpc_client(&rpc_config, network)
@@ -508,6 +554,7 @@ impl KaspaService {
                 let rpc_config = RpcConfig::Wrpc {
                     url: None,
                     encoding: WrpcEncoding::Borsh,
+                    resolver_urls: None,
                 };
 
                 let rpc = Self::create_rpc_client(&rpc_config, network)
@@ -581,6 +628,8 @@ impl KaspaService {
             CoreWalletEvents::DaaScoreChange { .. } => {}
             CoreWalletEvents::Connect { .. } => {
                 self.connect_all_services().await?;
+
+                // self.wallet().
             }
             CoreWalletEvents::Disconnect { .. } => {
                 self.disconnect_all_services().await?;
@@ -733,7 +782,7 @@ impl Service for KaspaService {
                 // new instance - setup new context
                 let context = Context {};
                 self.wallet()
-                    .retain_context("kaspa-ng", Some(context.try_to_vec()?))
+                    .retain_context("kaspa-ng", Some(borsh::to_vec(&context)?))
                     .await?;
             }
         } else {
@@ -837,6 +886,9 @@ impl KaspadServiceEvents {
                     }
                     KaspadNodeKind::IntegratedAsDaemon => {
                         Ok(KaspadServiceEvents::StartInternalAsDaemon { config : Config::from(node_settings.clone()), network : node_settings.network })
+                    }
+                    KaspadNodeKind::IntegratedAsPassiveSync => {
+                        Ok(KaspadServiceEvents::StartInternalAsPassiveSync { config : Config::from(node_settings.clone()), network : node_settings.network })
                     }
                     KaspadNodeKind::ExternalAsDaemon => {
                         let path = node_settings.kaspad_daemon_binary.clone();

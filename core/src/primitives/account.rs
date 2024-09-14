@@ -47,6 +47,7 @@ struct Inner {
     context: Mutex<Option<Arc<AccountContext>>>,
     transactions: Mutex<TransactionCollection>,
     total_transaction_count: AtomicU64,
+    transaction_start: AtomicU64,
     is_loading: AtomicBool,
     network: Mutex<Network>,
 }
@@ -62,6 +63,7 @@ impl Inner {
             context: Mutex::new(context),
             transactions: Mutex::new(TransactionCollection::default()),
             total_transaction_count: AtomicU64::new(0),
+            transaction_start: AtomicU64::new(0),
             is_loading: AtomicBool::new(true),
             network: Mutex::new(network),
         }
@@ -164,6 +166,10 @@ impl Account {
         *self.inner.network.lock().unwrap() = network;
     }
 
+    pub fn network(&self) -> Network {
+        *self.inner.network.lock().unwrap()
+    }
+
     pub fn set_loading(&self, is_loading: bool) {
         self.inner.is_loading.store(is_loading, Ordering::SeqCst);
     }
@@ -182,15 +188,29 @@ impl Account {
         self.inner.total_transaction_count.load(Ordering::SeqCst)
     }
 
+    pub fn set_transaction_start(&self, start: u64) {
+        self.inner.transaction_start.store(start, Ordering::SeqCst);
+    }
+
+    pub fn transaction_start(&self) -> u64 {
+        self.inner.transaction_start.load(Ordering::SeqCst)
+    }
+
     pub fn load_transactions(
         &self,
         mut transactions: Vec<Arc<TransactionRecord>>,
         total: u64,
     ) -> Result<()> {
-        // TODO - pagination
         self.transactions().clear();
 
-        transactions.sort_by(|a, b| b.block_daa_score.cmp(&a.block_daa_score));
+        transactions.sort_by(|a, b| {
+            if let Some(b_ts) = b.unixtime_msec {
+                if let Some(a_ts) = a.unixtime_msec {
+                    return b_ts.cmp(&a_ts);
+                }
+            }
+            b.block_daa_score.cmp(&a.block_daa_score)
+        });
 
         self.set_transaction_count(total);
         self.transactions()

@@ -203,7 +203,10 @@ impl<'panel, Context> Panel<'panel, Context> {
                     if let Some(handler) = self.handler {
                         let text = self.handler_text.as_deref();
                         if ui
-                            .large_button_enabled(self.handler_enabled, text.unwrap_or("Continue"))
+                            .large_button_enabled(
+                                self.handler_enabled,
+                                text.unwrap_or(i18n("Continue")),
+                            )
                             .clicked()
                         {
                             handler(self.this);

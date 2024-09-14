@@ -9,8 +9,8 @@ members = [
 default-members = ["app"]
 
 [workspace.package]
-rust-version = "1.78.0"
-version = "0.2.6"
+rust-version = "1.81.0"
+version = "0.3.0"
 authors = ["ASPECTRON Inc.","Kaspa Developers"]
 license = "PROPRIETARY"
 edition = "2021"
@@ -18,9 +18,9 @@ repository = "https://github.com/aspectron/kaspa-ng"
 
 [workspace.dependencies]
 
-kaspa-ng = { version = "0.2.3", path = "app/" }
-kaspa-ng-core = { version = "0.2.3", path = "core/" }
-kaspa-ng-macros = { version = "0.2.3", path = "macros/" }
+kaspa-ng = { version = "0.3.0", path = "app/", default-features = false }
+kaspa-ng-core = { version = "0.3.0", path = "core/", default-features = false }
+kaspa-ng-macros = { version = "0.3.0", path = "macros/", default-features = false }
 
 # ___________________
 #  ____ ____ _  _ _ 
@@ -28,19 +28,51 @@ kaspa-ng-macros = { version = "0.2.3", path = "macros/" }
 #  |___ |__] |__| | 
 # ___________________
 
-egui = "=0.24.0"
-epaint = "=0.24.0"
-egui_plot = "=0.24.0"
-egui_extras = { version = "=0.24.0", features = ["svg","image"] }
-eframe = { version = "=0.24.0", default-features = false, features = [
+# egui = "=0.28.1"
+# epaint = "=0.28.1"
+# egui_plot = "=0.28.1"
+# egui_extras = { version = "=0.28.1", features = ["svg","image"] }
+# eframe = { version = "=0.28.1",  default-features = false, features = [
+#     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+#     "default_fonts", # Embed the default egui fonts.
+#     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+#     "persistence",   # Enable restoring app state when restarting the app.
+# ] }
+
+# egui-phosphor = { git = "https://github.com/aspectron/egui-phosphor", branch = "gamma",  version = "=0.6.0", features = ["thin","light","regular","bold"] }
+# egui-notify = { git = "https://github.com/aspectron/egui-notify", branch = "gamma"}
+
+
+# egui =  { path="../egui/crates/egui", version="=0.28.1"}
+# epaint =  { path="../egui/crates/epaint"}
+# # epaint = "=0.28.1"
+# egui_plot = "=0.28.1"
+# # egui_plot = { path="../egui/crates/egui_plot"}
+# egui_extras = { path="../egui/crates/egui_extras", features = ["svg","image", "serde"] }
+# eframe = { path="../egui/crates/eframe", default-features = false, features = [
+#     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+#     "default_fonts", # Embed the default egui fonts.
+#     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+#     "persistence",   # Enable restoring app state when restarting the app.
+# ] }
+# egui-phosphor = { path = "../egui-phosphor", version = "=0.6.0", features = ["thin","light","regular","bold"] }
+# egui-notify = { path = "../egui-notify" }
+# egui-toast = { path = "../egui-toast" }
+
+egui = { git = "https://github.com/aspectron/egui", branch = "gamma"}
+epaint =  { git = "https://github.com/aspectron/egui", branch = "gamma"}
+
+egui_plot = { git = "https://github.com/aspectron/egui_plot", branch = "gamma"}
+egui_extras = { git = "https://github.com/aspectron/egui", branch = "gamma", features = ["svg","image", "serde"] }
+eframe = { git = "https://github.com/aspectron/egui", branch = "gamma",  default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
-egui-phosphor = { version = "=0.3.1", features = ["thin","light","regular","bold"] }
-egui-notify = "=0.11.0"
-# egui-toast = "0.9.0"
+egui-phosphor = { git = "https://github.com/aspectron/egui-phosphor", branch = "gamma",  version = "=0.6.0", features = ["thin","light","regular","bold"] }
+egui-notify = { git = "https://github.com/aspectron/egui-notify",  branch = "gamma"}
+# egui-toast = { git = "https://github.com/aspectron/egui-toast", branch = "omega" }
 
 # egui = { path = "../egui/crates/egui" }
 # egui_extras = { path = "../egui/crates/egui_extras", features = ["svg", "image"] }
@@ -91,7 +123,26 @@ egui-notify = "=0.11.0"
 # kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
 # kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
 # kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
+# kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
 # kaspad = { path = "../rusty-kaspa/kaspad" }
+
+kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
+kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
@@ -109,23 +160,7 @@ egui-notify = "=0.11.0"
 # kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
-
-kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
-kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integrations" }
+# kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "gamma" }
 
 # _________________________________________________________
 #  _ _ _ ____ ____ _  _ ____ _    ____ _ _ _    ____ ____ 
@@ -133,14 +168,14 @@ kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "integ
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-workflow-core = "0.12.0"
-workflow-i18n = "0.12.0"
-workflow-chrome = "0.12.0"
-workflow-dom = "0.12.0"
-workflow-http = "0.12.0"
-workflow-log = "0.12.0"
-workflow-store = "0.12.0"
-workflow-wasm = "0.12.0"
+workflow-core = "0.18.0"
+workflow-i18n = "0.18.0"
+workflow-chrome = "0.18.0"
+workflow-dom = "0.18.0"
+workflow-http = "0.18.0"
+workflow-log = "0.18.0"
+workflow-store = "0.18.0"
+workflow-wasm = "0.18.0"
 
 # workflow-core = { path = "../workflow-rs/core" }
 # workflow-i18n = { path = "../workflow-rs/i18n" }
@@ -166,7 +201,7 @@ workflow-wasm = "0.12.0"
 
 ahash = "0.8.6"
 async-trait = "0.1.73"
-borsh = { version = "0.9.1", features = ["rc"] } # please keep this fixed
+borsh = { version = "1.5.1", features = ["derive", "rc"] }
 cfg-if = "1.0.0"
 chrome-sys = "0.2.0"
 # chrome-sys = {path = "../chrome-sys"}
@@ -184,14 +219,14 @@ futures-util = { version = "0.3.29", default-features = false, features = ["allo
 image = { version = "0.24.7", default-features = false, features = ["png"] }
 js-sys = "0.3.64"
 log = "0.4.20"
-nix = "0.28.0"
+nix = { version = "0.28.0", features = ["signal"]}
 num_cpus = "1.15.0"
 open = "5.0.1"
 pad = "0.1.6"
 passwords = "3.1.16"
 qrcode = "0.12.0"
 rand = "0.8.5"
-rfd = "0.12.1"
+rfd = "0.14.1"
 ritehash = "0.2.0"
 rlimit = "0.10.1"
 separator = "0.4.1"
@@ -207,7 +242,7 @@ toml = "0.8.12"
 walkdir = "2.4.0"
 wasm-bindgen = "0.2.92"
 wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3.64", features = ['Window'] }
+web-sys = { version = "0.3.70", features = ['Window'] }
 xxhash-rust = { version = "0.8.7", features = ["xxh3"] }
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 

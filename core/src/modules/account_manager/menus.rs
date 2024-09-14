@@ -213,13 +213,12 @@ impl AccountMenu {
                     ui.add_space(8.);
                     if ui.add_sized(theme_style().large_button_size,CompositeButton::opt_image_and_text(
                         Some(Composite::icon(LIST)),
-                        Some(i18n("Create New Account").into()),
+                        Some(i18n("Add Account").into()),
                         None,
                     )).clicked() {
                         *close = true;
                         core.select::<modules::AccountCreate>();
                     }
-
                 });
 
         })

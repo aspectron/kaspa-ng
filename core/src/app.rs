@@ -1,7 +1,6 @@
 use crate::events::ApplicationEventsChannel;
 use crate::interop::Adaptor;
 use crate::result::Result;
-use crate::servers::parse_default_servers;
 use cfg_if::cfg_if;
 use kaspa_ng_core::runtime;
 use kaspa_ng_core::settings::Settings;
@@ -104,7 +103,7 @@ cfg_if! {
 
                 let cmd = Command::new("kaspa-ng")
 
-                    .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version()))
+                    .about(format!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa {})", kaspa_version()))
                     .arg(arg!(--version "Display software version"))
                     .arg(arg!(--disable "Disable node services when starting"))
                     .arg(arg!(--daemon "Run as Rusty Kaspa p2p daemon"))
@@ -216,14 +215,12 @@ cfg_if! {
 
                     workflow_log::set_colors_enabled(true);
 
-                    println!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa v{})", kaspa_wallet_core::version());
+                    println!("kaspa-ng v{VERSION}-{GIT_DESCRIBE} (rusty-kaspa {})", kaspa_version());
 
                     // Log to stderr (if you run with `RUST_LOG=debug`).
                     env_logger::init();
 
                     set_log_level(LevelFilter::Info);
-
-                    parse_default_servers();
 
                     let mut settings = if reset_settings {
                         println!("Resetting kaspa-ng settings on user request...");
@@ -257,14 +254,14 @@ cfg_if! {
                     let runtime: Arc<Mutex<Option<runtime::Runtime>>> = Arc::new(Mutex::new(None));
                     let delegate = runtime.clone();
 
-                    let window_frame = true;
+                    let window_frame = !settings.user_interface.disable_frame;
 
                     let mut viewport = egui::ViewportBuilder::default()
                         .with_resizable(true)
                         .with_title(i18n("Kaspa NG"))
                         .with_min_inner_size([400.0,320.0])
                         .with_inner_size([1000.0,600.0])
-                        .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, FitTo::Size(256,256)));
+                        .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, Some(SizeHint::Size(256,256))));
 
                     if window_frame {
                         viewport = viewport
@@ -275,6 +272,7 @@ cfg_if! {
                     let native_options = eframe::NativeOptions {
                         persist_window : true,
                         viewport,
+                        follow_system_theme: false,
                         ..Default::default()
                     };
 
@@ -289,7 +287,7 @@ cfg_if! {
                             runtime::signals::Signals::bind(&runtime);
                             runtime.start();
 
-                            Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, window_frame))
+                            Ok(Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, window_frame)))
                         }),
                     )?;
 
@@ -305,6 +303,7 @@ cfg_if! {
 
         // use crate::result::Result;
         // use crate::adaptor::Adaptor;
+        // use wasm_bindgen::JsCast;
 
         // pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, adaptor: Option<Arc<Adaptor>>) -> Result<()> {
         pub async fn kaspa_ng_main(application_context : ApplicationContext) -> Result<()> {
@@ -327,11 +326,12 @@ cfg_if! {
 
             // Redirect `log` message to `console.log` and friends:
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();
-            let web_options = eframe::WebOptions::default();
+            let web_options = eframe::WebOptions{
+                follow_system_theme: false,
+                ..eframe::WebOptions::default()
+            };
 
             kaspa_core::log::set_log_level(kaspa_core::log::LevelFilter::Info);
-
-            parse_default_servers();
 
             let settings = Settings::load().await.unwrap_or_else(|err| {
                 log_error!("Unable to load settings: {err}");
@@ -342,7 +342,6 @@ cfg_if! {
                 .with_static_json_data(I18N_EMBEDDED)
                 .try_init()?;
 
-            // wasm_bindgen_futures::spawn_local(async {
             use workflow_log::*;
             log_info!("Welcome to Kaspa NG! Have a great day!");
 
@@ -352,6 +351,7 @@ cfg_if! {
 
             eframe::WebRunner::new()
                 .start(
+                    // will be used in >0.28.1 -> document().get_element_by_id("kaspa-ng").expect("<canvas id=\"kaspa-ng\"> not found.").dyn_into::<web_sys::HtmlCanvasElement>().unwrap(),
                     "kaspa-ng",
                     web_options,
                     Box::new(move |cc| {
@@ -371,14 +371,13 @@ cfg_if! {
 
 
 
-                        Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, false))
+                        Ok(Box::new(kaspa_ng_core::Core::new(cc, runtime, settings, false)))
                     }),
                 )
                 .await
                 .expect("failed to start eframe");
 
-                // log_info!("shutting down...");
-            // });
+                //log_info!("shutting down...");
 
             Ok(())
         }
