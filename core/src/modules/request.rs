@@ -152,14 +152,14 @@ impl ModuleT for Request {
         let close = Rc::new(RefCell::new(false));
 
         Panel::new(self)
-            .with_caption("Payment Request")
+            .with_caption(i18n("Payment Request"))
             .with_back_enabled(core.has_stack(), |_|{
                 *close.borrow_mut() = true;
             })
             .with_header(|this, ui| {
                 if let Some(account) = this.account.as_ref() {
                     ui.label("");
-                    ui.label(format!("Payment request to account: {}",account.name_or_id()));
+                    ui.label(i18n_args("Payment request to account: {account}", &[("account", account.name_or_id())]));
                 }
                 // ui.label(text);
             })

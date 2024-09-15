@@ -22,10 +22,10 @@ impl Details {
             let mut address_kind : Option<NewAddressKind> = None;
             
             ui.horizontal(|ui|{
-                if ui.medium_button("Generate New Receive Address").clicked() {
+                if ui.medium_button(i18n("Generate New Receive Address")).clicked() {
                     address_kind = Some(NewAddressKind::Receive);
                 }
-                if ui.medium_button("Generate New Change Address").clicked() {
+                if ui.medium_button(i18n("Generate New Change Address")).clicked() {
                     address_kind = Some(NewAddressKind::Change);
                 }
             });
