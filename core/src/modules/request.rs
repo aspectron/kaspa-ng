@@ -197,7 +197,7 @@ impl ModuleT for Request {
                         },
                         Err(_err) => {
                             this.amount_sompi = None;
-                            this.error = Some(i18n("Please enter a valid about of KAS").to_string());
+                            this.error = Some(i18n("Please enter a valid amount of KAS").to_string());
                         },
                     }
                 }
