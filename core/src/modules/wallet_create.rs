@@ -235,12 +235,10 @@ impl WalletCreate {
                 #[allow(clippy::comparison_chain)]
                 if phrase.len() < needed {
                     ui.label("");
-                    // ui.label(format!("{} {} {}", i18n("Please enter additional"), needed - phrase.len(), i18n("words")));
                     ui.label(i18n_args("Please enter additional {amount} words", &[("amount", (needed - phrase.len()).to_string())]));
                     ui.label("");
                 } else if phrase.len() > needed {
                     ui.label("");
-                    // ui.colored_label(error_color(), format!("{} '{}' {}", i18n("Too many words in the"), phrase.len() - needed, i18n("word mnemonic")));
                     ui.colored_label(error_color(), i18n_args("Too many words ({words}) in the {amount} word mnemonic", &[
                         ("words",phrase.len().to_string()),
                         ("amount",(phrase.len() - needed).to_string())
