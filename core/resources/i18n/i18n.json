@@ -2943,6 +2943,7 @@
       "The network is currently congested.": "Das Netzwerk ist momentan überlastet.",
       "The node is currently syncing with the Kaspa p2p network.": "Der Knoten synchronisiert sich mit dem Kaspa p2p-Netzwerk.",
       "The node is currently syncing with the Kaspa p2p network. Account balances may be out of date.": "Der Knoten synchronisiert sich momentan mit dem Kaspa p2p Netzwerk. Die Kontostände können daher nicht aktuell sein.",
+      "The node is currently syncing with the Kaspa p2p network. Please wait for the node to sync.": "Der Knoten synchronisiert sich im Moment mit dem Kaspa p2p Netzwerk. Bitte warten Sie, bis der Knoten synchronisiert ist.",
       "The node is spawned as a child daemon process (recommended).": "Der Knoten wurde als Kind-Prozess gestartet (empfohlen).",
       "The node runs as a part of the Kaspa-NG application process. This reduces communication overhead (experimental).": "Der Knoten läuft als Teil des Kaspa NG Applikationsprozesses. Das reduziert den Kommunikationsaufwand (experimentell).",
       "The node synchronizes in the background while Kaspa-NG is connected to a public node.": "Der Knoten synchronisiert im Hintergrund während Kaspa NG zu einem öffentlichen Knoten verbunden ist.",
