@@ -17,6 +17,8 @@ impl From<Arglist> for Vec<String> {
         for arg in arglist.args.into_iter() {
             args.insert(arg);
         }
-        args.into_iter().collect()
+        let mut list = args.into_iter().collect::<Vec<_>>();
+        list.sort();
+        list
     }
 }

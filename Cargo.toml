@@ -28,16 +28,20 @@ kaspa-ng-macros = { version = "0.3.0", path = "macros/", default-features = fals
 #  |___ |__] |__| | 
 # ___________________
 
-# egui = "=0.24.0"
-# epaint = "=0.24.0"
-
-# egui_extras = { version = "=0.24.0", features = ["svg","image"] }
-# eframe = { version = "=0.24.0", default-features = false, features = [
+# egui = "=0.28.1"
+# epaint = "=0.28.1"
+# egui_plot = "=0.28.1"
+# egui_extras = { version = "=0.28.1", features = ["svg","image"] }
+# eframe = { version = "=0.28.1",  default-features = false, features = [
 #     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
 #     "default_fonts", # Embed the default egui fonts.
 #     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
 #     "persistence",   # Enable restoring app state when restarting the app.
 # ] }
+
+# egui-phosphor = { git = "https://github.com/aspectron/egui-phosphor", branch = "gamma",  version = "=0.6.0", features = ["thin","light","regular","bold"] }
+# egui-notify = { git = "https://github.com/aspectron/egui-notify", branch = "gamma"}
+
 
 # egui =  { path="../egui/crates/egui", version="=0.28.1"}
 # epaint =  { path="../egui/crates/epaint"}
@@ -55,19 +59,19 @@ kaspa-ng-macros = { version = "0.3.0", path = "macros/", default-features = fals
 # egui-notify = { path = "../egui-notify" }
 # egui-toast = { path = "../egui-toast" }
 
-egui = { git = "https://github.com/aspectron/egui", branch = "omega"}
-epaint =  { git = "https://github.com/aspectron/egui", branch = "omega"}
+egui = { git = "https://github.com/aspectron/egui", branch = "gamma"}
+epaint =  { git = "https://github.com/aspectron/egui", branch = "gamma"}
 
-egui_plot = { git = "https://github.com/aspectron/egui_plot", branch = "omega"}
-egui_extras = { git = "https://github.com/aspectron/egui", branch = "omega", features = ["svg","image", "serde"] }
-eframe = { git = "https://github.com/aspectron/egui", branch = "omega",  default-features = false, features = [
+egui_plot = { git = "https://github.com/aspectron/egui_plot", branch = "gamma"}
+egui_extras = { git = "https://github.com/aspectron/egui", branch = "gamma", features = ["svg","image", "serde"] }
+eframe = { git = "https://github.com/aspectron/egui", branch = "gamma",  default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
-egui-phosphor = { git = "https://github.com/aspectron/egui-phosphor", branch = "omega",  version = "=0.6.0", features = ["thin","light","regular","bold"] }
-egui-notify = { git = "https://github.com/aspectron/egui-notify",  branch = "omega"}
+egui-phosphor = { git = "https://github.com/aspectron/egui-phosphor", branch = "gamma",  version = "=0.6.0", features = ["thin","light","regular","bold"] }
+egui-notify = { git = "https://github.com/aspectron/egui-notify",  branch = "gamma"}
 # egui-toast = { git = "https://github.com/aspectron/egui-toast", branch = "omega" }
 
 # egui = { path = "../egui/crates/egui" }
@@ -238,7 +242,7 @@ toml = "0.8.12"
 walkdir = "2.4.0"
 wasm-bindgen = "0.2.92"
 wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3.64", features = ['Window'] }
+web-sys = { version = "0.3.70", features = ['Window'] }
 xxhash-rust = { version = "0.8.7", features = ["xxh3"] }
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 

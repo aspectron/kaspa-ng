@@ -530,13 +530,21 @@ pub struct UserInterfaceSettings {
 
 impl Default for UserInterfaceSettings {
     fn default() -> Self {
+        // cfg_if! {
+        //     if #[cfg(target_os = "windows")] {
+        //         let disable_frame = true;
+        //     } else {
+        //         let disable_frame = false;
+        //     }
+        // }
+
         Self {
             theme_color: "Dark".to_string(),
             theme_style: "Rounded".to_string(),
             scale: 1.0,
             metrics: MetricsSettings::default(),
             balance_padding: true,
-            disable_frame: false,
+            disable_frame: true,
         }
     }
 }
