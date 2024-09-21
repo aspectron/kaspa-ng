@@ -441,9 +441,9 @@ impl Overview {
                 //  ui.label(format!("Low: {} SOMPI/g;  ~{}/tx", format_with_precision(low), low_kas));
                 //  ui.label(format!("Economic: {} SOMPI/g;  ~{}/tx", format_with_precision(med),med_kas));
                 //  ui.label(format!("Priority: {} SOMPI/g;  ~{}/tx", format_with_precision(high),high_kas));
-                    ui.label(i18n_args("Low: {low} SOMPI/g;  ~{lowKas}/tx", &[("low", format_with_precision(low)), ("lowKas", low_kas)]));
-                    ui.label(i18n_args("Economic: {med} SOMPI/g;  ~{medKas}/tx", &[("med", format_with_precision(med)), ("medKas", med_kas)]));
-                    ui.label(i18n_args("Priority: {high} SOMPI/g;  ~{highKas}/tx", &[("high", format_with_precision(high)), ("highKas", high_kas)]));
+                    ui.label(i18n_args("Low: {low} SOMPI/g;  ~{low_kas}/tx", &[("low", format_with_precision(low)), ("low_kas", low_kas)]));
+                    ui.label(i18n_args("Economic: {med} SOMPI/g;  ~{med_kas}/tx", &[("med", format_with_precision(med)), ("med_kas", med_kas)]));
+                    ui.label(i18n_args("Priority: {high} SOMPI/g;  ~{high_kas}/tx", &[("high", format_with_precision(high)), ("high_kas", high_kas)]));
                 });
         }
     }
