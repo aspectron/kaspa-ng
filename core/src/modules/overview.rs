@@ -349,16 +349,15 @@ impl Overview {
                         // if ui.add(Label::new(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version())).sense(Sense::click())).clicked() {
                         //     core.select::<modules::Changelog>();
                         // }
-                        ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
-                        ui.label(format!("rustc {}-{} {}  llvm {}", 
+                        // ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
+                        ui.label(i18n_args("Timestamp: {timestamp}", &[("timestamp", crate::app::BUILD_TIMESTAMP)]));
+                        ui.label(format!("rustc {}-{} {}  llvm {}",
                             crate::app::RUSTC_SEMVER,
                             crate::app::RUSTC_COMMIT_HASH.chars().take(8).collect::<String>(),
                             crate::app::RUSTC_CHANNEL,
                             crate::app::RUSTC_LLVM_VERSION,
                         ));
-                        ui.label(format!("architecture {}", 
-                            crate::app::CARGO_TARGET_TRIPLE
-                        ));
+                        ui.label(i18n_args("Architecture {arch}", &[("arch", crate::app::CARGO_TARGET_TRIPLE)]));
                     });
 
                 if let Some(system) = runtime().system() {
@@ -420,7 +419,8 @@ impl Overview {
         CollapsingHeader::new(i18n("Statistics"))
             .default_open(true)
             .show(ui, |ui| {
-                ui.label(format!("Network Pressure: ~{}%", core.network_pressure.capacity()));
+             // ui.label(format!("Network Pressure: ~{}%", core.network_pressure.capacity()));
+                ui.label(i18n_args("Network Pressure: ~{number}%", &[("number", core.network_pressure.capacity().to_string())]));
             });
     }
 
@@ -438,9 +438,12 @@ impl Overview {
             CollapsingHeader::new(i18n("Fee Market"))
                 .default_open(true)
                 .show(ui, |ui| {
-                    ui.label(format!("Low: {} SOMPI/g;  ~{}/tx", format_with_precision(low), low_kas));
-                    ui.label(format!("Economic: {} SOMPI/g;  ~{}/tx", format_with_precision(med),med_kas));
-                    ui.label(format!("Priority: {} SOMPI/g;  ~{}/tx", format_with_precision(high),high_kas));
+                //  ui.label(format!("Low: {} SOMPI/g;  ~{}/tx", format_with_precision(low), low_kas));
+                //  ui.label(format!("Economic: {} SOMPI/g;  ~{}/tx", format_with_precision(med),med_kas));
+                //  ui.label(format!("Priority: {} SOMPI/g;  ~{}/tx", format_with_precision(high),high_kas));
+                    ui.label(i18n_args("Low: {low} SOMPI/g;  ~{low_kas}/tx", &[("low", format_with_precision(low)), ("low_kas", low_kas)]));
+                    ui.label(i18n_args("Economic: {med} SOMPI/g;  ~{med_kas}/tx", &[("med", format_with_precision(med)), ("med_kas", med_kas)]));
+                    ui.label(i18n_args("Priority: {high} SOMPI/g;  ~{high_kas}/tx", &[("high", format_with_precision(high)), ("high_kas", high_kas)]));
                 });
         }
     }

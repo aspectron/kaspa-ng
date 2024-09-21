@@ -30,8 +30,8 @@ pub enum ExportKind {
 impl ExportKind {
     pub fn info(&self) -> (&'static str,&'static str) {
         match self {
-            Self::Mnemonic => ("Private Key Mnemonic","Private key mnemonic stored in this wallet"),
-            Self::Transportable => ("Transportable", "Encrypted hex encoded data easily importable into another instance of KaspaNG"),
+            Self::Mnemonic => (i18n("Private Key Mnemonic"),i18n("Private key mnemonic stored in this wallet")),
+            Self::Transportable => (i18n("Transportable"), i18n("Encrypted hex encoded data easily importable into another instance of Kaspa-NG")),
         }
     }
 }
@@ -114,7 +114,7 @@ impl ModuleT for Export {
                         })
                         .with_header(|_ctx,ui| {
                             ui.add_space(64.);
-                            ui.label("Please select export type");
+                            ui.label(i18n("Please select export type"));
                         })
                         .with_body(|this,ui| {
 
@@ -190,7 +190,7 @@ impl ModuleT for Export {
                     let requires_bip39_passphrase = self.context.prv_key_data_info.as_ref().unwrap().requires_bip39_passphrase();
 
                     Panel::new(self)
-                        .with_caption("Unlock Wallet")
+                        .with_caption(i18n("Unlock Wallet"))
                         .with_back(|this| {
                             this.state = State::Select;
                         })
