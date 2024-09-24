@@ -70,7 +70,30 @@ cfg_if! {
             Disable { network : Network },
             Exit,
         }
+    }
+}
 
+cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+        #[cfg(target_arch = "wasm32")]
+        use wasm_bindgen::prelude::*;
+        use web_sys::window;
+
+        #[wasm_bindgen]
+        pub fn get_wrpc_url() -> Option<String> {
+            window()
+                .and_then(|win| win.location().href().ok())
+                .and_then(|url| {
+                    let url = url::Url::parse(&url).ok()?;
+                    url.query_pairs().find_map(|(key, value)| {
+                        if key == "wrpc" {
+                            Some(value.to_string())
+                        } else {
+                            None
+                        }
+                    })
+                })
+        }
     }
 }
 
@@ -579,8 +602,27 @@ impl KaspaService {
                 } else {
                     self.stop_all_services().await?;
 
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let url = "".to_string();
+                    #[cfg(target_arch = "wasm32")]
+                    let url = get_wrpc_url().unwrap_or_else(|| "".to_string());
+                    let network = match url.as_str() {
+                        u if u.contains("testnet-10") => Network::Testnet10,
+                        u if u.contains("testnet-11") => Network::Testnet11,
+                        _ => network,
+                    };
+
                     self.handle_network_change(network).await?;
 
+                    let rpc_config = if url.is_empty() {
+                        rpc_config.clone()
+                    } else {
+                        RpcConfig::Wrpc {
+                            url: url.into(),
+                            encoding: WrpcEncoding::Borsh,
+                            resolver_urls: None,
+                        }
+                    };
                     let rpc = Self::create_rpc_client(&rpc_config, network)
                         .expect("Kaspad Service - unable to create wRPC client");
                     self.start_all_services(Some(rpc), network).await?;
