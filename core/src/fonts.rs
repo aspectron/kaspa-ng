@@ -87,6 +87,14 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
 
     // ---
 
+    fonts.add_static(
+        FontFamily::Proportional,
+        "bn",
+        include_bytes!(
+            "../resources/fonts/NotoSansBengali/NotoSansBengali-VariableFont_wdth_wght.ttf"
+        ),
+    );
+
     if runtime::is_native() || runtime::is_chrome_extension() {
         fonts.add_static(
             FontFamily::Proportional,
