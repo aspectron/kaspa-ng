@@ -158,7 +158,7 @@ impl Welcome {
                         if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))).clicked() {
                             let mut settings = self.settings.clone();
                             settings.initialized = true;
-                            settings.store_sync().expect("Unable to store settings");
+                            settings.store_sync().expect(i18n("Unable to store settings"));
                             self.runtime.kaspa_service().update_services(&self.settings.node, None);
                             core.settings = settings.clone();
                             core.get_mut::<modules::Settings>().load(settings);
@@ -232,7 +232,7 @@ impl Welcome {
             let mut settings = self.settings.clone();
             settings.initialized = true;
 
-            settings.store_sync().expect("Unable to store settings");
+            settings.store_sync().expect(i18n("Unable to store settings"));
             core.settings = settings.clone();
             self.runtime.kaspa_service().update_services(&settings.node, None);
 

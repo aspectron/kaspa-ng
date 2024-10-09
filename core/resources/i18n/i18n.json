@@ -3995,6 +3995,7 @@
       "UTXOs:": "UTXOs:",
       "UTXOs: {number}": "UTXOs: {number}",
       "Unable to change node settings until the problem is resolved": "Unable to change node settings until the problem is resolved",
+      "Unable to store settings": "Unable to store settings",
       "Unlock": "Unlock",
       "Unlock Wallet": "Unlock Wallet",
       "Unlocking": "Unlocking",
