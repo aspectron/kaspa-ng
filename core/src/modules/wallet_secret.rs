@@ -131,7 +131,7 @@ impl ModuleT for WalletSecret {
                 // let mut back = false;
 
                 Panel::new(self)
-                    .with_caption("Change Wallet Secret")
+                    .with_caption(i18n("Change Wallet Secret"))
                     .with_back(|_this| {
                         *back.borrow_mut() = true;
                     })
