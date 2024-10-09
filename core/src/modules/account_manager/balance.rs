@@ -53,21 +53,21 @@ impl<'context> BalancePane<'context> {
             }
             
             if balance.pending != 0 {
-                ui.label(format!(
-                    "Pending: {}",
-                    sompi_to_kaspa_string_with_suffix(
+                ui.label(i18n_args(
+                    "Pending: {amount}",
+                    &[("amount", &sompi_to_kaspa_string_with_suffix(
                         balance.pending,
                         network_type
-                    )
+                    ))]
                 ));
             }
             if balance.outgoing != 0 {
-                ui.label(format!(
-                    "Sending: {}",
-                    sompi_to_kaspa_string_with_suffix(
+                ui.label(i18n_args(
+                    "Sending: {amount}",
+                    &[("amount", &sompi_to_kaspa_string_with_suffix(
                         balance.outgoing,
                         network_type
-                    )
+                    ))]
                 ));
             }
 
