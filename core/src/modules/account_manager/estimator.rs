@@ -43,7 +43,6 @@ impl<'context> Estimator<'context> {
                 (false, GeneratorSummary::new(network_id),Some(RichText::new(error.to_string()).color(theme_color().error_color)))
             }
             EstimatorStatus::None => {
-                // ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(&network_type), i18n("amount to send")));
                 let err = i18n_args("Please enter {suffix} amount to send", &[("suffix", kaspa_suffix(&network_type))]);
                 (false, GeneratorSummary::new(network_id),Some(RichText::new(err).color(theme_color().error_color)))
             }
@@ -56,7 +55,7 @@ impl<'context> Estimator<'context> {
             Focus::Amount,
             |ui, text| {
                 ui.add_space(8.);
-                ui.label(RichText::new(format!("{} {} {}", i18n("Enter"), kaspa_suffix(&network_type), i18n("amount to send"))).size(12.).raised());
+                ui.label(RichText::new(i18n_args("Enter {suffix} amount to send", &[("suffix", kaspa_suffix(&network_type))])).size(12.).raised());
                 ui.add_sized(Overview::editor_size(ui), TextEdit::singleline(text)
                     .vertical_align(Align::Center))
             },
@@ -103,7 +102,7 @@ impl<'context> Estimator<'context> {
         //         (false, GeneratorSummary::new(network_id))
         //     }
         //     EstimatorStatus::None => {
-        //         ui.label(format!("{} {} {}", i18n("Please enter"), kaspa_suffix(&network_type), i18n("amount to send")));
+        //         ui.label(i18n_args("Please enter {suffix} amount to send", &[("suffix", kaspa_suffix(&network_type))]));
         //         (false, GeneratorSummary::new(network_id))
         //     }
         // };

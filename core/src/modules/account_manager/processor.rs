@@ -18,7 +18,7 @@ impl<'context> Processor<'context> {
         ui.add_space(8.);
         match self.context.transaction_kind.as_ref().unwrap() {
             TransactionKind::Send => {
-                ui.label("Sending funds");
+                ui.label(i18n("Sending funds"));
                 ui.add_space(8.);
             }
             TransactionKind::Transfer => {

@@ -59,12 +59,12 @@ impl ModuleT for Import {
                 State::Words => {
 
                     Panel::new(self)
-                        .with_caption("Mnemonic Import")
+                        .with_caption(i18n("Mnemonic Import"))
                         .with_close_enabled(false, |_|{
                         })
                         .with_header(|this,ui| {
                             // ui.add_space(64.);
-                            ui.label("Importing word N/N");
+                            ui.label(i18n("Importing word N/N"));
 
                             ui.horizontal(|ui|{
                             // ui.vertical_centered_justified(|ui|{
@@ -115,9 +115,9 @@ impl ModuleT for Import {
 
                 }
                 State::Select => {
-                    ui.heading("Select Wallet");
+                    ui.heading(i18n("Select Wallet"));
                     ui.label(" ");
-                    ui.label("Select a wallet to unlock");
+                    ui.label(i18n("Select a wallet to unlock"));
                     ui.label(" ");
                     // ui.add_space(32.);
 
@@ -138,23 +138,20 @@ impl ModuleT for Import {
                         });
                 }
                 State::Unlock(message) => {
-                    ui.heading("Unlock Wallet");
+                    ui.heading(i18n("Unlock Wallet"));
 
                     egui::ScrollArea::vertical()
                         .id_source("unlock-wallet")
                         .show(ui, |ui| {
                             ui.label(" ");
-                            ui.label(format!(
-                                "Opening wallet: \"{}\"",
-                                self.selected_wallet.as_ref().unwrap()
-                            ));
+                            ui.label(i18n_args("Opening wallet: {wallet}", &[("wallet", self.selected_wallet.as_ref().unwrap())]));
                             ui.label(" ");
 
                             if let Some(message) = message {
                                 ui.label(" ");
 
                                 ui.label(
-                                    RichText::new("Error unlocking wallet")
+                                    RichText::new(i18n("Error unlocking wallet"))
                                         .color(egui::Color32::from_rgb(255, 120, 120)),
                                 );
                                 ui.label(
@@ -165,18 +162,18 @@ impl ModuleT for Import {
                                 ui.label(" ");
                             }
 
-                            ui.label("Enter your password to unlock your wallet");
+                            ui.label(i18n("Enter your password to unlock your wallet"));
                             ui.label(" ");
 
                             ui.add_sized(
                                 size,
                                 TextEdit::singleline(&mut self.wallet_secret)
-                                    .hint_text("Enter Password...")
+                                    .hint_text(i18n("Enter Password..."))
                                     .password(true)
                                     .vertical_align(Align::Center),
                             );
 
-                            if ui.add_sized(size, egui::Button::new("Unlock")).clicked() {
+                            if ui.add_sized(size, egui::Button::new(i18n("Unlock"))).clicked() {
                                 let wallet_secret = Secret::new(
                                     self.wallet_secret.as_bytes().to_vec()
                                 );
@@ -198,7 +195,7 @@ impl ModuleT for Import {
                             ui.label(" ");
 
                             if ui
-                                .add_sized(size, egui::Button::new("Select a different wallet"))
+                                .add_sized(size, egui::Button::new(i18n("Select a different wallet")))
                                 .clicked()
                             {
                                 self.state = State::Select;
@@ -206,10 +203,10 @@ impl ModuleT for Import {
                         });
                 }
                 State::Unlocking => {
-                    ui.heading("Unlocking");
+                    ui.heading(i18n("Unlocking"));
                     // ui.separator();
                     ui.label(" ");
-                    ui.label("Unlocking wallet, please wait...");
+                    ui.label(i18n("Unlocking wallet, please wait..."));
                     ui.label(" ");
                     ui.add_space(64.);
                     ui.add(egui::Spinner::new().size(92.));

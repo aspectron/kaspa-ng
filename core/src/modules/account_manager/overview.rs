@@ -70,20 +70,20 @@ impl<'manager> Overview<'manager> {
 
                                     let mut layout = CenterLayoutBuilder::new();
                                     
-                                    layout = layout.add(Button::new(format!("{} Send", ARROW_CIRCLE_UP)).min_size(theme_style().medium_button_size()), |(this, _):&mut (&mut Overview<'_>, &mut Core)| {
+                                    layout = layout.add(Button::new(i18n_args("{arrowCircleUpIcon} Send", &[("arrowCircleUpIcon", ARROW_CIRCLE_UP)])).min_size(theme_style().medium_button_size()), |(this, _):&mut (&mut Overview<'_>, &mut Core)| {
                                         this.context.action = Action::Estimating;
                                         this.context.transaction_kind = Some(TransactionKind::Send);
                                         this.context.focus.next(Focus::Address);
                                     });
 
                                     if core.account_collection().as_ref().map(|collection|collection.len()).unwrap_or(0) > 1 {
-                                        layout = layout.add(Button::new(format!("{} Transfer", ARROWS_DOWN_UP)).min_size(theme_style().medium_button_size()), |(this,_)| {
+                                        layout = layout.add(Button::new(i18n_args("{arrowsDownUpIcon} Transfer", &[("arrowsDownUpIcon", ARROWS_DOWN_UP)])).min_size(theme_style().medium_button_size()), |(this,_)| {
                                             this.context.action = Action::Estimating;
                                             this.context.transaction_kind = Some(TransactionKind::Transfer);
                                             this.context.focus.next(Focus::Amount);
                                         });
                                     }
-                                    layout = layout.add(Button::new(format!("{} Request", QR_CODE)).min_size(theme_style().medium_button_size()), |(_,core)| {
+                                    layout = layout.add(Button::new(i18n_args("{qrCodeIcon} Request", &[("qrCodeIcon", QR_CODE)])).min_size(theme_style().medium_button_size()), |(_,core)| {
                                         core.get_mut::<modules::Request>().select(&rc.account);
                                         core.select::<modules::Request>();
                         
