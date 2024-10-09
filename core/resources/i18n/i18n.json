@@ -3598,6 +3598,7 @@
       "Allow clipboard copy": "Allow clipboard copy",
       "Allow custom arguments for the Rusty Kaspa daemon": "Allow custom arguments for the Rusty Kaspa daemon",
       "Allows you to take screenshots from within the application": "Allows you to take screenshots from within the application",
+      "An error has occurred while submitting transaction:": "An error has occurred while submitting transaction:",
       "Application must be restarted for this setting to take effect.": "Application must be restarted for this setting to take effect.",
       "Apply": "Apply",
       "Architecture {arch}": "Architecture {arch}",
