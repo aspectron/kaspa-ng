@@ -102,7 +102,7 @@ impl ModuleT for Scanner {
                 let back = Rc::new(RefCell::new(false));
 
                 Panel::new(self)
-                    .with_caption("Scanner")
+                    .with_caption(i18n("Scanner"))
                     .with_back(|_this| {
                         *back.borrow_mut() = true;
                     })
@@ -295,7 +295,7 @@ impl ModuleT for Scanner {
                                 ).await?;
 
                         } else {
-                            *status.lock().unwrap() = Status::error("Account not found");
+                            *status.lock().unwrap() = Status::error(i18n("Account not found"));
                         }
 
                         Ok(())
@@ -328,10 +328,13 @@ impl ModuleT for Scanner {
                                 ui.label(message);
                             }
                             Status::Processing { index, utxo_count, balance } => {
-                                ui.label(format!("Scanning address derivation {}...", index.separated_string()));
-                                ui.label(format!("Located {} UTXOs", utxo_count.separated_string()));
+                                //ui.label(format!("Scanning address derivation {}...", index.separated_string()));
+                                //ui.label(format!("Located {} UTXOs", utxo_count.separated_string()));
+                                ui.label(i18n_args("Scanning address derivation {index}...", &[("index", &index.separated_string())]));
+                                ui.label(i18n_args("Located {utxo_count} UTXOs", &[("utxo_count", &utxo_count.separated_string())]));
+
                                 ui.add_space(16.);
-                                ui.label(RichText::new("BALANCE").size(12.).raised());
+                                ui.label(RichText::new(i18n("BALANCE")).size(12.).raised());
                                 ui.label(
                                     s2kws_layout_job(core.balance_padding(), *balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
                                 );
@@ -368,10 +371,12 @@ impl ModuleT for Scanner {
                     .with_body(|this,ui| {
 
                         if let Status::Processing { index,utxo_count, balance } = &*this.context.status.lock().unwrap() {
-                            ui.label(format!("Total addresses scanned: {}", index.separated_string()));
-                            ui.label(format!("Located {} UTXOs", utxo_count.separated_string()));
+                            //ui.label(format!("Total addresses scanned: {}", index.separated_string()));
+                            //ui.label(format!("Located {} UTXOs", utxo_count.separated_string()));
+                            ui.label(i18n_args("Total addresses scanned: {index}", &[("index", &index.separated_string())]));
+                            ui.label(i18n_args("Located {utxo_count} UTXOs", &[("utxo_count", &utxo_count.separated_string())]));
                             ui.add_space(16.);
-                            ui.label(RichText::new("BALANCE").size(12.).raised());
+                            ui.label(RichText::new(i18n("BALANCE")).size(12.).raised());
                             ui.label(
                                 s2kws_layout_job(balance_padding, *balance, &network_type, theme_color().balance_color,FontId::proportional(28.))
                             );
