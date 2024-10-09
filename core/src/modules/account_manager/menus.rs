@@ -241,7 +241,7 @@ impl ToolsMenu {
     }
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, _account_manager : &mut AccountManager, _rc : &RenderContext, max_height: f32) {
 
-        PopupPanel::new(PopupPanel::id(ui,"tools_popup"),|ui|{ ui.add(Label::new(i18n("Tools ⏷")).sense(Sense::click())) }, |ui, _| {
+        PopupPanel::new(PopupPanel::id(ui,"tools_popup"),|ui|{ ui.add(Label::new(format!("{} ⏷", i18n("Tools"))).sense(Sense::click())) }, |ui, _| {
 
             egui::ScrollArea::vertical()
                 .id_source("tools_popup_scroll")
