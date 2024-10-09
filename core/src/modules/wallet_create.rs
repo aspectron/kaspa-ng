@@ -519,7 +519,7 @@ impl ModuleT for WalletCreate {
 
                     })
                     .with_footer(|this,ui| {
-                        let text = if this.context.account_name.is_not_empty() { i18n("Continue") } else { "Skip" };
+                        let text = if this.context.account_name.is_not_empty() { i18n("Continue") } else { i18n("Skip") };
                         if ui.large_button(i18n(text)).clicked() {
                             this.state = State::PhishingHint;
                             this.focus.next(Focus::PhishingHint);
