@@ -23,7 +23,7 @@ impl WalletMenu {
         let wallet_name = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
             wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str()).to_string()
         } else {
-            ui.label("Missing wallet descriptor");
+            ui.label(i18n("Missing wallet descriptor"));
             return;
         };
 
@@ -41,7 +41,7 @@ impl WalletMenu {
         let wallet_filename = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
             wallet_descriptor.filename.clone()
         } else {
-            ui.label("Missing wallet descriptor");
+            ui.label(i18n("Missing wallet descriptor"));
             return;
         };
 
