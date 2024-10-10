@@ -45,7 +45,7 @@ impl<'manager> Overview<'manager> {
                             ui.vertical_centered(|ui|{
 
                                 ui.add_space(16.);
-                                ui.label(RichText::new("An error has occurred while submitting transaction:"));
+                                ui.label(RichText::new(i18n("An error has occurred while submitting transaction:")));
                                 ui.add_space(16.);
                                 ui.separator();
                                 ui.add_space(8.);
