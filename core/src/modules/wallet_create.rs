@@ -1167,7 +1167,7 @@ impl ModuleT for WalletCreate {
                                     prv_key_data_id,
                                     args.account_name.is_not_empty().then_some(args.account_name.clone()),
                                 );
-                                account_descriptors.push(wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?);
+                                account_descriptors.push(wallet.clone().accounts_import(wallet_secret.clone(), account_create_args).await?);
                             }
                         }else{
                             for account_index in 0..number_of_accounts {
@@ -1177,7 +1177,7 @@ impl ModuleT for WalletCreate {
                                     args.account_name.is_not_empty().then_some(args.account_name.clone()),
                                     Some(account_index as u64),
                                 );
-                                account_descriptors.push(wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?);
+                                account_descriptors.push(wallet.clone().accounts_import(wallet_secret.clone(), account_create_args).await?);
                             }
                         }
 

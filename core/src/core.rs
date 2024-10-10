@@ -812,16 +812,16 @@ impl Core {
                         match metrics {
                             MetricsUpdate::WalletMetrics {
                                 mempool_size,
-                                node_peers: peers,
-                                network_tps: tps,
+                                // node_peers: peers,
+                                // network_tps: tps,
                             } => {
                                 self.sender().try_send(Events::MempoolSize {
                                     mempool_size: mempool_size as usize,
                                 })?;
 
-                                self.state.node_peers = Some(peers as usize);
+                                // self.state.node_peers = None;
                                 self.state.node_mempool_size = Some(mempool_size as usize);
-                                self.state.network_tps = Some(tps);
+                                // self.state.network_tps = None;
                             }
                         }
                     }
@@ -1115,7 +1115,7 @@ impl Core {
                             if let Some(account) = account_collection.get(&id.into()) {
                                 account.update_balance(balance)?;
                             } else {
-                                log_error!("unable to find account {}", id);
+                                log_error!("unable to find account {} while updating balance.", id);
                             }
                         } else {
                             log_error!(
@@ -1298,6 +1298,15 @@ impl Core {
         });
 
         if let Some(first) = accounts.first() {
+            self.load_account_transactions_with_range(first, 0..TRANSACTION_PAGE_SIZE)
+                .map_err(|err| {
+                    log_error!(
+                        "error loading transactions for account {}: {}",
+                        first.id(),
+                        err
+                    );
+                })
+                .ok();
             let device = self.device().clone();
             let wallet = self.wallet();
             self.get_mut::<modules::AccountManager>().select(
