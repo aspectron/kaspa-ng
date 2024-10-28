@@ -4017,6 +4017,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "toml",
+ "url",
  "vergen",
  "walkdir",
  "wasm-bindgen",

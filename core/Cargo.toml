@@ -95,6 +95,7 @@ eframe = { workspace = true, default-features = false, features = [
 egui-phosphor = { workspace = true, features = ["light"] }
 # egui-phosphor = { workspace = true, features = ["thin","light","regular","bold"] }
 egui-notify.workspace = true
+url = "2.2"
 
 [dependencies.web-sys]
 workspace = true
