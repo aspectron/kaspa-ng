@@ -1,4 +1,4 @@
-use crate::{imports::*, servers::random_public_server};
+use crate::imports::*;
 use kaspa_metrics_core::Metric;
 use kaspa_utils::networking::ContextualNetAddress;
 use kaspa_wallet_core::storage::local::storage::Storage;
@@ -17,14 +17,16 @@ cfg_if! {
             IntegratedInProc,
             #[default]
             IntegratedAsDaemon,
+            IntegratedAsPassiveSync,
             ExternalAsDaemon,
         }
 
-        const KASPAD_NODE_KINDS: [KaspadNodeKind; 5] = [
+        const KASPAD_NODE_KINDS: [KaspadNodeKind; 6] = [
             KaspadNodeKind::Disable,
             KaspadNodeKind::Remote,
             KaspadNodeKind::IntegratedInProc,
             KaspadNodeKind::IntegratedAsDaemon,
+            KaspadNodeKind::IntegratedAsPassiveSync,
             KaspadNodeKind::ExternalAsDaemon,
         ];
 
@@ -35,6 +37,7 @@ cfg_if! {
                     KaspadNodeKind::Remote => write!(f, "{}", i18n("Remote")),
                     KaspadNodeKind::IntegratedInProc => write!(f, "{}", i18n("Integrated Node")),
                     KaspadNodeKind::IntegratedAsDaemon => write!(f, "{}", i18n("Integrated Daemon")),
+                    KaspadNodeKind::IntegratedAsPassiveSync => write!(f, "{}", i18n("Passive Sync")),
                     KaspadNodeKind::ExternalAsDaemon => write!(f, "{}", i18n("External Daemon")),
                 }
             }
@@ -78,6 +81,8 @@ impl KaspadNodeKind {
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedAsDaemon => i18n("The node is spawned as a child daemon process (recommended)."),
             #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::IntegratedAsPassiveSync => i18n("The node synchronizes in the background while Kaspa-NG is connected to a public node. Once the node is synchronized, you can switch to the 'Integrated Daemon' mode."),
+            #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::ExternalAsDaemon => i18n("A binary at another location is spawned a child process (experimental, for development purposes only)."),
         }
     }
@@ -90,6 +95,8 @@ impl KaspadNodeKind {
             KaspadNodeKind::IntegratedInProc => true,
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedAsDaemon => true,
+            #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::IntegratedAsPassiveSync => true,
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::ExternalAsDaemon => true,
         }
@@ -104,6 +111,8 @@ impl KaspadNodeKind {
             #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::IntegratedAsDaemon => true,
             #[cfg(not(target_arch = "wasm32"))]
+            KaspadNodeKind::IntegratedAsPassiveSync => true,
+            #[cfg(not(target_arch = "wasm32"))]
             KaspadNodeKind::ExternalAsDaemon => true,
         }
     }
@@ -112,7 +121,6 @@ impl KaspadNodeKind {
 #[derive(Default)]
 pub struct RpcOptions {
     pub blacklist_servers: Vec<String>,
-    pub force_server: Option<Server>,
 }
 
 impl RpcOptions {
@@ -122,11 +130,6 @@ impl RpcOptions {
 
     pub fn blacklist(mut self, server: String) -> Self {
         self.blacklist_servers.push(server);
-        self
-    }
-
-    pub fn force(mut self, server: Server) -> Self {
-        self.force_server = Some(server);
         self
     }
 }
@@ -144,6 +147,7 @@ pub enum RpcConfig {
     Wrpc {
         url: Option<String>,
         encoding: WrpcEncoding,
+        resolver_urls: Option<Vec<Arc<String>>>,
     },
     Grpc {
         url: Option<NetworkInterfaceConfig>,
@@ -163,6 +167,7 @@ impl Default for RpcConfig {
         RpcConfig::Wrpc {
             url: Some(url.to_string()),
             encoding: WrpcEncoding::Borsh,
+            resolver_urls: None,
         }
     }
 }
@@ -238,7 +243,7 @@ impl NodeConnectionConfigKind {
     pub fn iter() -> impl Iterator<Item = &'static NodeConnectionConfigKind> {
         [
             NodeConnectionConfigKind::PublicServerRandom,
-            NodeConnectionConfigKind::PublicServerCustom,
+            // NodeConnectionConfigKind::PublicServerCustom,
             NodeConnectionConfigKind::Custom,
             // NodeConnectionConfigKind::Local,
         ]
@@ -355,9 +360,12 @@ impl NodeMemoryScale {
 #[serde(rename_all = "kebab-case")]
 pub struct NodeSettings {
     pub connection_config_kind: NodeConnectionConfigKind,
-    pub public_servers: HashMap<Network, Server>,
     pub rpc_kind: RpcKind,
     pub wrpc_url: String,
+    #[serde(default)]
+    pub enable_wrpc_borsh: bool,
+    #[serde(default)]
+    pub wrpc_borsh_network_interface: NetworkInterfaceConfig,
     pub wrpc_encoding: WrpcEncoding,
     pub enable_wrpc_json: bool,
     pub wrpc_json_network_interface: NetworkInterfaceConfig,
@@ -381,10 +389,11 @@ impl Default for NodeSettings {
     fn default() -> Self {
         Self {
             connection_config_kind: NodeConnectionConfigKind::default(),
-            public_servers: HashMap::default(),
             rpc_kind: RpcKind::Wrpc,
             wrpc_url: "127.0.0.1".to_string(),
             wrpc_encoding: WrpcEncoding::Borsh,
+            enable_wrpc_borsh: false,
+            wrpc_borsh_network_interface: NetworkInterfaceConfig::default(),
             enable_wrpc_json: false,
             wrpc_json_network_interface: NetworkInterfaceConfig::default(),
             enable_grpc: false,
@@ -414,7 +423,6 @@ impl NodeSettings {
                 } else if self.memory_scale != other.memory_scale {
                     Some(true)
                 } else if self.connection_config_kind != other.connection_config_kind
-                    || (other.connection_config_kind == NodeConnectionConfigKind::PublicServerCustom && !self.public_servers.compare(&other.public_servers))
                 {
                     Some(true)
                 } else if self.kaspad_daemon_storage_folder_enable != other.kaspad_daemon_storage_folder_enable
@@ -447,9 +455,7 @@ impl NodeSettings {
                     Some(true)
                 } else if self.node_kind != other.node_kind {
                     Some(true)
-                } else if self.connection_config_kind != other.connection_config_kind
-                || (other.connection_config_kind == NodeConnectionConfigKind::PublicServerCustom && !self.public_servers.compare(&other.public_servers))
-                {
+                } else if self.connection_config_kind != other.connection_config_kind {
                     Some(true)
                 } else if self.rpc_kind != other.rpc_kind
                     || self.wrpc_url != other.wrpc_url
@@ -466,37 +472,24 @@ impl NodeSettings {
 }
 
 impl RpcConfig {
-    pub fn from_node_settings(settings: &NodeSettings, options: Option<RpcOptions>) -> Self {
+    pub fn from_node_settings(settings: &NodeSettings, _options: Option<RpcOptions>) -> Self {
         match settings.connection_config_kind {
             NodeConnectionConfigKind::Custom => match settings.rpc_kind {
                 RpcKind::Wrpc => RpcConfig::Wrpc {
                     url: Some(settings.wrpc_url.clone()),
                     encoding: settings.wrpc_encoding,
+                    resolver_urls: None,
                 },
                 RpcKind::Grpc => RpcConfig::Grpc {
                     url: Some(settings.grpc_network_interface.clone()),
                 },
             },
-            NodeConnectionConfigKind::PublicServerCustom => {
-                if let Some(public_server) = settings.public_servers.get(&settings.network) {
-                    RpcConfig::Wrpc {
-                        url: Some(public_server.address()),
-                        encoding: public_server.wrpc_encoding(),
-                    }
-                } else {
-                    RpcConfig::default()
-                }
-            }
-            NodeConnectionConfigKind::PublicServerRandom => {
-                if let Some(public_server) = random_public_server(&settings.network, options) {
-                    RpcConfig::Wrpc {
-                        url: Some(public_server.address()),
-                        encoding: public_server.wrpc_encoding(),
-                    }
-                } else {
-                    RpcConfig::default()
-                }
-            }
+            NodeConnectionConfigKind::PublicServerCustom
+            | NodeConnectionConfigKind::PublicServerRandom => RpcConfig::Wrpc {
+                url: None,
+                encoding: settings.wrpc_encoding,
+                resolver_urls: None,
+            },
         }
     }
 }
@@ -531,16 +524,27 @@ pub struct UserInterfaceSettings {
     pub scale: f32,
     pub metrics: MetricsSettings,
     pub balance_padding: bool,
+    #[serde(default)]
+    pub disable_frame: bool,
 }
 
 impl Default for UserInterfaceSettings {
     fn default() -> Self {
+        // cfg_if! {
+        //     if #[cfg(target_os = "windows")] {
+        //         let disable_frame = true;
+        //     } else {
+        //         let disable_frame = false;
+        //     }
+        // }
+
         Self {
             theme_color: "Dark".to_string(),
             theme_style: "Rounded".to_string(),
             scale: 1.0,
             metrics: MetricsSettings::default(),
             balance_padding: true,
+            disable_frame: true,
         }
     }
 }
@@ -587,6 +591,36 @@ impl DeveloperSettings {
     }
 }
 
+#[derive(Describe, Default, Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum EstimatorMode {
+    #[describe("Fee Market Only")]
+    FeeMarketOnly,
+    #[default]
+    #[describe("Fee Market & Network Pressure")]
+    NetworkPressure,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct EstimatorSettings {
+    pub mode: EstimatorMode,
+}
+
+impl Default for EstimatorSettings {
+    fn default() -> Self {
+        Self {
+            mode: EstimatorMode::NetworkPressure,
+        }
+    }
+}
+
+impl EstimatorSettings {
+    pub fn track_network_load(&self) -> EstimatorMode {
+        self.mode
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Settings {
@@ -596,11 +630,15 @@ pub struct Settings {
     pub version: String,
     pub update: String,
     pub developer: DeveloperSettings,
+    #[serde(default)]
+    pub estimator: EstimatorSettings,
     pub node: NodeSettings,
     pub user_interface: UserInterfaceSettings,
     pub language_code: String,
     pub update_monitor: bool,
     pub market_monitor: bool,
+    // #[serde(default)]
+    // pub disable_frame: bool,
 }
 
 impl Default for Settings {
@@ -613,11 +651,13 @@ impl Default for Settings {
             version: "0.0.0".to_string(),
             update: crate::app::VERSION.to_string(),
             developer: DeveloperSettings::default(),
+            estimator: EstimatorSettings::default(),
             node: NodeSettings::default(),
             user_interface: UserInterfaceSettings::default(),
             language_code: "en".to_string(),
             update_monitor: true,
             market_monitor: true,
+            // disable_frame: false,
         }
     }
 }
@@ -658,10 +698,18 @@ impl Settings {
         let storage = storage()?;
         if storage.exists().await.unwrap_or(false) {
             match read_json::<Self>(storage.filename()).await {
-                Ok(settings) => {
+                Ok(mut settings) => {
                     if settings.revision != SETTINGS_REVISION {
                         Ok(Self::default())
                     } else {
+                        if matches!(
+                            settings.node.connection_config_kind,
+                            NodeConnectionConfigKind::PublicServerCustom
+                        ) {
+                            settings.node.connection_config_kind =
+                                NodeConnectionConfigKind::PublicServerRandom;
+                        }
+
                         Ok(settings)
                     }
                 }

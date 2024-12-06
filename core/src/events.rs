@@ -24,6 +24,9 @@ pub enum Events {
     MempoolSize {
         mempool_size: usize,
     },
+    Feerate {
+        feerate: Option<Arc<RpcFeeEstimate>>,
+    },
     Error(Box<String>),
     WalletList {
         wallet_list: Arc<Vec<WalletDescriptor>>,
@@ -41,6 +44,9 @@ pub enum Events {
     },
     Notify {
         user_notification: UserNotification,
+    },
+    NodeInfo {
+        node_info: Option<Box<String>>,
     },
     Close,
     Exit,

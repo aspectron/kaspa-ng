@@ -1,5 +1,7 @@
 use crate::imports::*;
 
+mod average;
+pub use average::*;
 mod qr;
 pub use qr::*;
 mod i18n;
@@ -23,6 +25,8 @@ mod secret;
 pub use secret::*;
 mod mnemonic;
 pub use mnemonic::*;
+mod wallet;
+pub use wallet::*;
 
 pub fn is_mobile() -> bool {
     use workflow_core::runtime::{is_android, is_ios};

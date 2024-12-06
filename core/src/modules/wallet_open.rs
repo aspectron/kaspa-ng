@@ -160,12 +160,12 @@ impl ModuleT for WalletOpen {
                         self.wallet_secret.zeroize();
                         let wallet = self.runtime.wallet().clone();
                         let wallet_descriptor_delegate = wallet_descriptor.clone();
+                        self.state = State::Unlocking { wallet_descriptor };
                         spawn_with_result(&unlock_result, async move {
+                            sleep(Duration::from_secs(1)).await;
                             wallet.wallet_open(wallet_secret, Some(wallet_descriptor_delegate.filename), true, true).await?;
                             Ok(())
                         });
-
-                        self.state = State::Unlocking { wallet_descriptor };
                     }
 
             }

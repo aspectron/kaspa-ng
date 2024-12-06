@@ -16,16 +16,16 @@ impl Details {
 
             let descriptor = account.descriptor();
 
-            descriptor.render(ui);
+            descriptor.render(ui, account.network());
             ui.add_space(8.);
 
             let mut address_kind : Option<NewAddressKind> = None;
             
             ui.horizontal(|ui|{
-                if ui.medium_button("Generate New Receive Address").clicked() {
+                if ui.medium_button(i18n("Generate New Receive Address")).clicked() {
                     address_kind = Some(NewAddressKind::Receive);
                 }
-                if ui.medium_button("Generate New Change Address").clicked() {
+                if ui.medium_button(i18n("Generate New Change Address")).clicked() {
                     address_kind = Some(NewAddressKind::Change);
                 }
             });
@@ -37,7 +37,7 @@ impl Details {
                         .wallet()
                         .accounts_create_new_address(account_id, address_kind)
                         .await
-                        .map_err(|err|Error::custom(format!("Failed to create new address\n{err}")))?;
+                        .map_err(|err|Error::custom(i18n_args("Failed to create new address: {err}",&[("err",err.to_string())])))?;
 
                     runtime().request_repaint();
 

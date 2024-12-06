@@ -158,7 +158,7 @@ impl ModuleT for PrivateKeyCreate {
                             // ui.label("A wallet is stored in a file on your computer. You can create multiple wallet.");
                         })
                         .with_footer(|_this,ui| {
-                            // if ui.add_sized(theme().large_button_size, egui::Button::new("Continue")).clicked() {
+                            // if ui.add_sized(theme().large_button_size, egui::Button::new(i18n("Continue"))).clicked() {
                             if ui.large_button(i18n("Continue")).clicked() {
                                 // this.state = State::WalletName;
                             }
@@ -403,7 +403,7 @@ impl ModuleT for PrivateKeyCreate {
 
                     // })
                     // .with_footer(|this,ui| {
-                    //     if ui.add_sized(size, egui::Button::new("Continue")).clicked() {
+                    //     if ui.add_sized(size, egui::Button::new(i18n("Continue"))).clicked() {
                     //         this.state = State::ConfirmMnemonic(mnemonic);
                     //     }
                     // })

@@ -1,4 +1,5 @@
 use crate::imports::*;
+// use separator::{separated_float, separated_int, separated_uint_with_output, Separatable};
 
 pub fn format_duration(millis: u64) -> String {
     let seconds = millis / 1000;
@@ -26,14 +27,18 @@ pub fn format_address_string(address: impl Into<String>, range: Option<usize>) -
     let prefix = parts[0];
     let payload = parts[1];
     let range = range.unwrap_or(6);
-    let start = range;
-    let finish = payload.len() - range;
+    if range >= payload.len() / 2 {
+        address
+    } else {
+        let start = range;
+        let finish = payload.len() - range;
 
-    let left = &payload[0..start];
-    // let center = style(&payload[start..finish]).dim();
-    let right = &payload[finish..];
+        let left = &payload[0..start];
+        // let center = style(&payload[start..finish]).dim();
+        let right = &payload[finish..];
 
-    format!("{prefix}:{left}....{right}")
+        format!("{prefix}:{left}....{right}")
+    }
 }
 
 pub fn format_address(address: &Address, range: Option<usize>) -> String {
@@ -197,5 +202,37 @@ pub fn precision_from_symbol(symbol: &str) -> usize {
         "btc" => 8,
         // "usd" => 2,
         _ => 6,
+    }
+}
+
+// /// Format supplied value as a float with 2 decimal places.
+// fn format_as_float(f: f64, short: bool) -> String {
+//     if short {
+//         if f < 1000.0 {
+//             format_with_precision(f)
+//         } else if f < 1000000.0 {
+//             format_with_precision(f / 1000.0) + " K"
+//         } else if f < 1000000000.0 {
+//             format_with_precision(f / 1000000.0) + " M"
+//         } else if f < 1000000000000.0 {
+//             format_with_precision(f / 1000000000.0) + " G"
+//         } else if f < 1000000000000000.0 {
+//             format_with_precision(f / 1000000000000.0) + " T"
+//         } else if f < 1000000000000000000.0 {
+//             format_with_precision(f / 1000000000000000.0) + " P"
+//         } else {
+//             format_with_precision(f / 1000000000000000000.0) + " E"
+//         }
+//     } else {
+//         f.separated_string()
+//     }
+// }
+
+/// Format supplied value as a float with 2 decimal places.
+pub fn format_with_precision(f: f64) -> String {
+    if f.fract() < 0.01 {
+        separated_float!(format!("{}", f.trunc()))
+    } else {
+        separated_float!(format!("{:.2}", f))
     }
 }

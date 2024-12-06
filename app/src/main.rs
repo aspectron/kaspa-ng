@@ -13,7 +13,7 @@ cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
         fn main() {
-            
+
             #[cfg(feature = "console")] {
                 std::env::set_var("RUST_BACKTRACE", "full");
             }
@@ -27,13 +27,13 @@ cfg_if! {
             };
 
             #[allow(clippy::expect_used, clippy::diverging_sub_expression)]
-            let result = {
+            //{
                 tokio::runtime::Builder::new_multi_thread()
                     .enable_all()
                     .build()
                     .expect("Failed building the Runtime")
-                    .block_on(body)
-            };
+                    .block_on(body);
+            //};
 
             #[cfg(feature = "console")]
             {
@@ -42,7 +42,7 @@ cfg_if! {
                 std::io::stdin().read_line(&mut input).expect("Failed to read line");
             }
 
-            result
+
         }
 
     } else {

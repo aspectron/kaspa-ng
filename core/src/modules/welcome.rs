@@ -94,7 +94,7 @@ impl Welcome {
                             egui::ComboBox::from_id_source("language_selector")
                                 .selected_text(language)
                                 .show_ui(ui, |ui| {
-                                    ui.style_mut().wrap = Some(false);
+                                    ui.style_mut().wrap_mode = Some(TextWrapMode::Extend);
                                     ui.set_min_width(60.0);
                                     dictionary.enabled_languages().into_iter().for_each(|(code,lang)| {
                                         ui.selectable_value(&mut self.settings.language_code, code.to_string(), lang);
@@ -108,7 +108,7 @@ impl Welcome {
                             egui::ComboBox::from_id_source("theme_color_selector")
                                 .selected_text(theme_color.as_str())
                                 .show_ui(ui, |ui| {
-                                    ui.style_mut().wrap = Some(false);
+                                    ui.style_mut().wrap_mode = Some(TextWrapMode::Extend);
                                     ui.set_min_width(60.0);
                                     theme_colors().keys().for_each(|name| {
                                         ui.selectable_value(&mut theme_color, name.to_string(), name);
@@ -127,7 +127,7 @@ impl Welcome {
                             egui::ComboBox::from_id_source("theme_style_selector")
                                 .selected_text(theme_style.as_str())
                                 .show_ui(ui, |ui| {
-                                    ui.style_mut().wrap = Some(false);
+                                    ui.style_mut().wrap_mode = Some(TextWrapMode::Extend);
                                     ui.set_min_width(60.0);
                                     theme_styles().keys().for_each(|name| {
                                         ui.selectable_value(&mut theme_style, name.to_string(), name);
@@ -158,7 +158,8 @@ impl Welcome {
                         if ui.medium_button(format!("{} {}", egui_phosphor::light::CHECK, i18n("Apply"))).clicked() {
                             let mut settings = self.settings.clone();
                             settings.initialized = true;
-                            settings.store_sync().expect("Unable to store settings");
+                            let message = i18n("Unable to store settings");
+                            settings.store_sync().expect(message);
                             self.runtime.kaspa_service().update_services(&self.settings.node, None);
                             core.settings = settings.clone();
                             core.get_mut::<modules::Settings>().load(settings);
@@ -231,8 +232,8 @@ impl Welcome {
         if proceed {
             let mut settings = self.settings.clone();
             settings.initialized = true;
-
-            settings.store_sync().expect("Unable to store settings");
+            let message = i18n("Unable to store settings");
+            settings.store_sync().expect(message);
             core.settings = settings.clone();
             self.runtime.kaspa_service().update_services(&settings.node, None);
 

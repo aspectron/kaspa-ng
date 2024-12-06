@@ -1,10 +1,11 @@
 use crate::imports::*;
-use crate::servers::render_public_server_selector;
 
 pub struct Settings {
     #[allow(dead_code)]
     runtime: Runtime,
     settings : crate::settings::Settings,
+    wrpc_borsh_network_interface : NetworkInterfaceEditor,
+    wrpc_json_network_interface : NetworkInterfaceEditor,
     grpc_network_interface : NetworkInterfaceEditor,
     reset_settings : bool,
 }
@@ -14,6 +15,8 @@ impl Settings {
         Self { 
             runtime,
             settings : crate::settings::Settings::default(),
+            wrpc_borsh_network_interface : NetworkInterfaceEditor::default(),
+            wrpc_json_network_interface : NetworkInterfaceEditor::default(),
             grpc_network_interface : NetworkInterfaceEditor::default(),
             reset_settings : false,
         }
@@ -22,6 +25,8 @@ impl Settings {
     pub fn load(&mut self, settings : crate::settings::Settings) {
         self.settings = settings;
 
+        self.wrpc_borsh_network_interface = NetworkInterfaceEditor::from(&self.settings.node.wrpc_borsh_network_interface);
+        self.wrpc_json_network_interface = NetworkInterfaceEditor::from(&self.settings.node.wrpc_json_network_interface);
         self.grpc_network_interface = NetworkInterfaceEditor::from(&self.settings.node.grpc_network_interface);
     }
 
@@ -29,7 +34,7 @@ impl Settings {
         self.settings.node.network = network;
     }
 
-    pub fn render_remote_settings(core: &mut Core, ui: &mut Ui, settings : &mut NodeSettings) -> Option<&'static str> {
+    pub fn render_remote_settings(_core: &mut Core, ui: &mut Ui, settings : &mut NodeSettings) -> Option<&'static str> {
 
         let mut node_settings_error = None;
 
@@ -69,7 +74,7 @@ impl Settings {
 
                             if let Err(err) = KaspaRpcClient::parse_url(settings.wrpc_url.clone(), settings.wrpc_encoding, settings.network.into()) {
                                 ui.label(
-                                    RichText::new(format!("{err}"))
+                                    RichText::new(err.to_string())
                                         .color(theme_color().warning_color),
                                 );
                                 node_settings_error = Some(i18n("Invalid wRPC URL"));
@@ -90,13 +95,6 @@ impl Settings {
 
                 },
                 NodeConnectionConfigKind::PublicServerCustom => {
-                    CollapsingHeader::new(i18n("Public Node"))
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            if let Some(error) = render_public_server_selector(core, ui, settings) {
-                                node_settings_error = Some(error);
-                            }
-                        });
                 },
                 NodeConnectionConfigKind::PublicServerRandom => {
                     ui.label(i18n("A random node will be selected on startup"));
@@ -353,16 +351,24 @@ impl Settings {
                                     .show(ui, |ui| {
                                         ui.vertical(|ui|{
 
+                                            ui.checkbox(&mut self.settings.node.enable_wrpc_borsh, i18n("Public wRPC (Borsh)"));
+
+                                            // ui.checkbox(&mut self.settings.node.enable_wrpc_json, i18n("Enable wRPC JSON"));
+                                            // if self.settings.node.enable_wrpc_json {
+                                            //     CollapsingHeader::new(i18n("wRPC JSON Network Interface & Port"))
+                                            //         .default_open(true)
+                                            //         .show(ui, |ui| {
+                                            //             self.wrpc_json_network_interface.ui(ui);
+                                            //         });
+                                            // }
+
                                             ui.checkbox(&mut self.settings.node.enable_grpc, i18n("Enable gRPC"));
                                             if self.settings.node.enable_grpc {
-
                                                 CollapsingHeader::new(i18n("gRPC Network Interface & Port"))
                                                     .default_open(true)
                                                     .show(ui, |ui| {
                                                         self.grpc_network_interface.ui(ui);
                                                     });
-                                                // - TODO
-                                                // ui.add(TextEdit::singleline(&mut self.settings.node.grpc_network_interface));
                                             }
                                         });
 
@@ -446,89 +452,136 @@ impl Settings {
 
 
         CollapsingHeader::new(i18n("User Interface"))
-            .default_open(true)
+            .default_open(false)
             .show(ui, |ui| {
 
-                ui.label(i18n("Theme Color"));
-                ui.vertical(|ui| {
-                    ui.horizontal(|ui| {
-                        let current_theme_color_name = theme_color().name();
-                        ui.menu_button(
-                            format!("{} ⏷", current_theme_color_name),
-                            |ui| {
-                                theme_colors().keys().for_each(|name| {
-                                    if name.as_str() != current_theme_color_name
-                                        && ui.button(name).clicked()
-                                    {
-                                        apply_theme_color_by_name(
-                                            ui.ctx(),
-                                            name,
-                                        );
-                                        core
-                                            .settings
-                                            .user_interface
-                                            .theme_color = name.to_string();
-                                        // core.store_settings();
-                                        ui.close_menu();
-                                    }
-                                });
-                            },
-                        );
-                    });
-                    ui.add_space(1.);
-                });
-
-                ui.label(i18n("Theme Style"));
-                ui.horizontal(|ui| {
-                    let current_theme_style_name = theme_style().name();
-                    ui.menu_button(
-                        format!("{} ⏷", current_theme_style_name),
-                        |ui| {
-                            theme_styles().keys().for_each(|name| {
-                                if name.as_str() != current_theme_style_name
-                                    && ui.button(name).clicked()
-                                {
-                                    apply_theme_style_by_name(ui.ctx(), name);
-                                    core
-                                        .settings
-                                        .user_interface
-                                        .theme_style = name.to_string();
-                                    // core.store_settings();
-                                    ui.close_menu();
-                                }
+                CollapsingHeader::new(i18n("Theme Color"))
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        ui.vertical(|ui| {
+                            ui.horizontal(|ui| {
+                                let current_theme_color_name = theme_color().name();
+                                ui.menu_button(
+                                    format!("{} ⏷", current_theme_color_name),
+                                    |ui| {
+                                        theme_colors().keys().for_each(|name| {
+                                            if name.as_str() != current_theme_color_name
+                                                && ui.button(name).clicked()
+                                            {
+                                                apply_theme_color_by_name(
+                                                    ui.ctx(),
+                                                    name,
+                                                );
+                                                core
+                                                    .settings
+                                                    .user_interface
+                                                    .theme_color = name.to_string();
+                                                // core.store_settings();
+                                                ui.close_menu();
+                                            }
+                                        });
+                                    },
+                                );
                             });
-                        },
-                    );
-                });
+                        });
 
-                if workflow_core::runtime::is_native() {
-                    ui.label(i18n("Zoom"));
-                    ui.horizontal(|ui| {
-                        let zoom_factor = ui.ctx().zoom_factor();
-                        if ui
-                            .add_sized(
-                                Vec2::splat(24.),
-                                Button::new(RichText::new("-").size(18.)),
-                            )
-                            .clicked()
-                        {
-                            ui.ctx().set_zoom_factor(zoom_factor - 0.1);
-                        }
-                        ui.label(format!("{:.0}%", zoom_factor * 100.0));
-                        if ui
-                            .add_sized(
-                                Vec2::splat(24.),
-                                Button::new(RichText::new("+").size(18.)),
-                            )
-                            .clicked()
-                        {
-                            ui.ctx().set_zoom_factor(zoom_factor + 0.1);
-                        }
+                        ui.add_space(1.);
                     });
-                }
 
+                    CollapsingHeader::new(i18n("Theme Style"))
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                let current_theme_style_name = theme_style().name();
+                                ui.menu_button(
+                                    format!("{} ⏷", current_theme_style_name),
+                                    |ui| {
+                                        theme_styles().keys().for_each(|name| {
+                                            if name.as_str() != current_theme_style_name
+                                                && ui.button(name).clicked()
+                                            {
+                                                apply_theme_style_by_name(ui.ctx(), name);
+                                                core
+                                                    .settings
+                                                    .user_interface
+                                                    .theme_style = name.to_string();
+                                                // core.store_settings();
+                                                ui.close_menu();
+                                            }
+                                        });
+                                    },
+                                );
+                            });
+                            ui.add_space(1.);
+                        });
+
+                        if workflow_core::runtime::is_native() {
+                            CollapsingHeader::new(i18n("Zoom"))
+                                .default_open(true)
+                                .show(ui, |ui| {
+                                    ui.horizontal(|ui| {
+                                        let zoom_factor = ui.ctx().zoom_factor();
+                                        if ui
+                                            .add_sized(
+                                                Vec2::splat(24.),
+                                                Button::new(RichText::new("-").size(18.)),
+                                            )
+                                            .clicked()
+                                        {
+                                            ui.ctx().set_zoom_factor(zoom_factor - 0.1);
+                                        }
+                                        ui.label(format!("{:.0}%", zoom_factor * 100.0));
+                                        if ui
+                                            .add_sized(
+                                                Vec2::splat(24.),
+                                                Button::new(RichText::new("+").size(18.)),
+                                            )
+                                            .clicked()
+                                        {
+                                            ui.ctx().set_zoom_factor(zoom_factor + 0.1);
+                                        }
+                                    });
+
+                                    ui.add_space(1.);
+                                });
+                        }
+
+                        if workflow_core::runtime::is_native() {
+
+                            CollapsingHeader::new(i18n("Options"))
+                                .default_open(true)
+                                .show(ui, |ui| {
+
+                                    ui.checkbox(&mut self.settings.user_interface.disable_frame, i18n("Disable Window Frame"));
+                                    if self.settings.user_interface.disable_frame != core.settings.user_interface.disable_frame {
+                                        ui.vertical(|ui| {
+                                            ui.add_space(4.);
+                                            ui.label(RichText::new(i18n("Application must be restarted for this setting to take effect.")).color(theme_color().warning_color));
+                                            ui.label(RichText::new(i18n("Please select 'Apply' and restart the application.")).color(theme_color().warning_color));
+                                            ui.add_space(4.);
+                                        });
+                                    }
+
+                                    ui.add_space(1.);
+                                });
+
+                            if self.settings.user_interface.disable_frame != core.settings.user_interface.disable_frame {
+                                ui.add_space(16.);
+                                if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
+                                    match response {
+                                        Confirm::Ack => {
+                                            core.settings.user_interface.disable_frame = self.settings.user_interface.disable_frame;
+                                            core.settings.store_sync().unwrap();
+                                        },
+                                        Confirm::Nack => {
+                                            self.settings.user_interface.disable_frame = core.settings.user_interface.disable_frame;
+                                        }
+                                    }
+                                }
+                                ui.separator();
+                            }
+                        }
             });
-
 
     }
 
@@ -568,6 +621,21 @@ impl Settings {
                     });    
             });
 
+        CollapsingHeader::new(i18n("Network Fee Estimator"))
+            .default_open(false)
+            .show(ui, |ui| {
+                ui.vertical(|ui|{
+                    EstimatorMode::iter().for_each(|kind| {
+                        ui.radio_value(&mut self.settings.estimator.mode, *kind, i18n(kind.describe()));
+                    });
+                    
+                    if self.settings.estimator.mode != core.settings.estimator.mode {
+                        core.settings.estimator.mode = self.settings.estimator.mode;
+                        core.store_settings();
+                    }
+                });
+            });
+            
         #[cfg(not(target_arch = "wasm32"))]
         core.storage.clone().render_settings(core, ui);
 
@@ -606,7 +674,7 @@ impl Settings {
                         
                         ui.checkbox(
                             &mut self.settings.developer.disable_password_restrictions, 
-                            i18n("Disable password score restrictions")
+                            i18n("Disable password safety rules")
                         ).on_hover_text_at_pointer(
                             i18n("Removes security restrictions, allows for single-letter passwords")
                         );

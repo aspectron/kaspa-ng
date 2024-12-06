@@ -30,8 +30,8 @@ pub enum ExportKind {
 impl ExportKind {
     pub fn info(&self) -> (&'static str,&'static str) {
         match self {
-            Self::Mnemonic => ("Private Key Mnemonic","Private key mnemonic stored in this wallet"),
-            Self::Transportable => ("Transportable", "Encrypted hex encoded data easily importable into another instance of KaspaNG"),
+            Self::Mnemonic => (i18n("Private Key Mnemonic"),i18n("Private key mnemonic stored in this wallet")),
+            Self::Transportable => (i18n("Transportable"), i18n("Encrypted hex encoded data easily importable into another instance of Kaspa-NG")),
         }
     }
 }
@@ -114,12 +114,12 @@ impl ModuleT for Export {
                         })
                         .with_header(|_ctx,ui| {
                             ui.add_space(64.);
-                            ui.label("Please select export type");
+                            ui.label(i18n("Please select export type"));
                         })
                         .with_body(|this,ui| {
 
                             ui.vertical_centered(|ui| {
-                                for kind in ExportKind::list() {
+                                for kind in ExportKind::into_iter() {
                                     if kind == ExportKind::Transportable {
                                         continue;
                                     }
@@ -130,7 +130,7 @@ impl ModuleT for Export {
 
                         })
                         .with_footer(|_this,ui| {
-                            if ui.large_button("Continue").clicked() {
+                            if ui.large_button(i18n("Continue")).clicked() {
                                 submit = true;
                             }
                         })
@@ -190,7 +190,7 @@ impl ModuleT for Export {
                     let requires_bip39_passphrase = self.context.prv_key_data_info.as_ref().unwrap().requires_bip39_passphrase();
 
                     Panel::new(self)
-                        .with_caption("Unlock Wallet")
+                        .with_caption(i18n("Unlock Wallet"))
                         .with_back(|this| {
                             this.state = State::Select;
                         })
@@ -243,7 +243,7 @@ impl ModuleT for Export {
                         })
                         .with_footer(|this,ui| {
                             let ok = this.context.wallet_secret.is_not_empty() && (!requires_bip39_passphrase || this.context.payment_secret.is_not_empty());
-                            if ui.large_button_enabled(ok, "Continue").clicked() {
+                            if ui.large_button_enabled(ok, i18n("Continue")).clicked() {
                                 *submit.borrow_mut() = true;
                             }
                         })
@@ -350,7 +350,7 @@ impl ModuleT for Export {
                                     
                         })
                         .with_footer(|this,ui| {
-                            if ui.large_button("Continue").clicked() {
+                            if ui.large_button(i18n("Continue")).clicked() {
                                 this.context.zeroize();
                                 this.state = State::Select;
                                 core.select::<modules::AccountManager>();

@@ -49,22 +49,23 @@ impl ModuleT for Overview {
                 if #[cfg(not(feature = "lean"))] {
 
                     let width = ui.available_width();
-
+                    
                     SidePanel::left("overview_left")
-                    .exact_width(width*0.5)
-                    .resizable(false)
-                    .show_separator_line(true)
-                    .show_inside(ui, |ui| {
-                        egui::ScrollArea::vertical()
-                        .id_source("overview_metrics")
-                        .auto_shrink([false; 2])
-                        .show(ui, |ui| {
-                            self.render_stats(core,ui);
+                        .exact_width(width*0.5)
+                        .resizable(false)
+                        .show_separator_line(true)
+                        .show_inside(ui, |ui| {
+                            egui::ScrollArea::vertical()
+                            .id_source("overview_metrics")
+                            .auto_shrink([false; 2])
+                            .show(ui, |ui| {
+                                self.render_stats(core,ui);
+                            });
                         });
-                    });
                     
                     SidePanel::right("overview_right")
                         .exact_width(width*0.5)
+                        .frame(Frame::default().fill(Color32::TRANSPARENT))
                         .resizable(false)
                         .show_separator_line(false)
                         .show_inside(ui, |ui| {
@@ -84,16 +85,22 @@ impl Overview {
     #[cfg(not(feature = "lean"))]
     fn render_stats(&mut self, core: &mut Core, ui : &mut Ui) {
 
-        CollapsingHeader::new(i18n("Kaspa p2p Node"))
-        .default_open(true)
-        .show(ui, |ui| {
+        let node_info = if let Some(node_info) = &core.node_info {
+            format!(" - {}", node_info)
+        } else {
+            "".to_string()
+        };
 
-            if core.state().is_connected() {
-                self.render_graphs(core,ui);
-            } else {
-                ui.label(i18n("Not connected"));
-            }
-        });
+        CollapsingHeader::new(format!("{}{}",i18n("Kaspa p2p Node"), node_info))
+            .default_open(true)
+            .show(ui, |ui| {
+
+                if core.state().is_connected() {
+                    self.render_graphs(core,ui);
+                } else {
+                    ui.label(i18n("Not connected"));
+                }
+            });
 
         ui.add_space(48.);
     }
@@ -182,39 +189,82 @@ impl Overview {
                             format!("• {CLOUD} {}",i18n("Kaspa NG online")),
                             "https://kaspa-ng.org"
                         );
-                    });                    
-
-                CollapsingHeader::new(i18n("Mainnet"))
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        #[allow(unused_imports)]
-                        use egui_phosphor::light::{YOUTUBE_LOGO,DISCORD_LOGO,TELEGRAM_LOGO,REDDIT_LOGO,CHART_SCATTER,NEWSPAPER_CLIPPING,DATABASE};
-
-                        ui.hyperlink_to_tab(
-                            format!("• {DATABASE} {}",i18n("Explorer")),
-                            "https://explorer.kaspa.org/",
-                        );
-                        ui.hyperlink_to_tab(
-                            format!("• {CHART_SCATTER} {}",i18n("Statistics")),
-                            "https://kas.fyi",
-                        );
-                        // ui.hyperlink_to_tab(
-                        //     format!("• {DISCORD_LOGO} {}",i18n("Discord")),
-                        //     "https://discord.com/invite/kS3SK5F36R",
-                        // );
                     });
 
-                if core.settings.node.network == Network::Testnet11 {
-                    CollapsingHeader::new(i18n("Testnet 11"))
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            use egui_phosphor::light::HAND_COINS;
-
-                            ui.hyperlink_to_tab(
-                                format!("• {HAND_COINS} {}",i18n("Faucet")),
-                                "https://faucet-t11.kaspa.ws",
-                            );
-                        });
+                match core.settings.node.network {
+                    Network::Mainnet => {
+                        CollapsingHeader::new(i18n("Mainnet"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                CollapsingHeader::new(i18n("Resources"))
+                                    .default_open(true)
+                                    .show(ui, |ui| {
+                                        #[allow(unused_imports)]
+                                        use egui_phosphor::light::{YOUTUBE_LOGO,DISCORD_LOGO,TELEGRAM_LOGO,REDDIT_LOGO,CHART_SCATTER,NEWSPAPER_CLIPPING,DATABASE};
+                
+                                        ui.hyperlink_to_tab(
+                                            format!("• {DATABASE} {}",i18n("Explorer")),
+                                            "https://explorer.kaspa.org/",
+                                        );
+                                        ui.hyperlink_to_tab(
+                                            format!("• {CHART_SCATTER} {}",i18n("Statistics")),
+                                            "https://kas.fyi",
+                                        );
+                                        // ui.hyperlink_to_tab(
+                                        //     format!("• {DISCORD_LOGO} {}",i18n("Discord")),
+                                        //     "https://discord.com/invite/kS3SK5F36R",
+                                        // );
+                
+                                    });
+                                self.render_network_info(core, ui);
+                                self.render_fee_rate(core, ui);
+                            });
+                    }
+                    Network::Testnet10 => {
+                        CollapsingHeader::new(i18n("Testnet 10"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                CollapsingHeader::new(i18n("Resources"))
+                                    .default_open(true)
+                                    .show(ui, |ui| {
+                                        use egui_phosphor::light::{HAND_COINS,DATABASE};
+                
+                                        ui.hyperlink_to_tab(
+                                            format!("• {DATABASE} {}",i18n("Explorer")),
+                                            "https://explorer-tn10.kaspa.org/",
+                                        );
+                                        ui.hyperlink_to_tab(
+                                            format!("• {HAND_COINS} {}",i18n("Faucet")),
+                                            "https://faucet-testnet.kaspanet.io",
+                                        );
+                
+                                    });
+                                self.render_network_info(core, ui);
+                                self.render_fee_rate(core, ui);
+                            });
+                    }
+                    Network::Testnet11 => {
+                        CollapsingHeader::new(i18n("Testnet 11"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                CollapsingHeader::new(i18n("Resources"))
+                                    .default_open(true)
+                                    .show(ui, |ui| {
+                                        use egui_phosphor::light::{HAND_COINS,DATABASE};
+                
+                                        ui.hyperlink_to_tab(
+                                            format!("• {DATABASE} {}",i18n("Explorer")),
+                                            "https://explorer-tn11.kaspa.org/",
+                                        );
+                                        ui.hyperlink_to_tab(
+                                            format!("• {HAND_COINS} {}",i18n("Faucet")),
+                                            "https://faucet-t11.kaspanet.io",
+                                        );
+                                    });
+                                self.render_network_info(core, ui);
+                                self.render_fee_rate(core, ui);
+                            });
+                    }
                 }
 
                 CollapsingHeader::new(i18n("Developer Resources"))
@@ -295,20 +345,19 @@ impl Overview {
                 CollapsingHeader::new(i18n("Build"))
                     .default_open(true)
                     .show(ui, |ui| {
-                        ui.add(Label::new(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version())));
+                        ui.add(Label::new(format!("Kaspa NG v{}-{} + Rusty Kaspa {}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_version())));
                         // if ui.add(Label::new(format!("Kaspa NG v{}-{} + Rusty Kaspa v{}", env!("CARGO_PKG_VERSION"),crate::app::GIT_DESCRIBE, kaspa_wallet_core::version())).sense(Sense::click())).clicked() {
                         //     core.select::<modules::Changelog>();
                         // }
-                        ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
-                        ui.label(format!("rustc {}-{} {}  llvm {}", 
+                        // ui.label(format!("Timestamp: {}", crate::app::BUILD_TIMESTAMP));
+                        ui.label(i18n_args("Timestamp: {timestamp}", &[("timestamp", crate::app::BUILD_TIMESTAMP)]));
+                        ui.label(format!("rustc {}-{} {}  llvm {}",
                             crate::app::RUSTC_SEMVER,
                             crate::app::RUSTC_COMMIT_HASH.chars().take(8).collect::<String>(),
                             crate::app::RUSTC_CHANNEL,
                             crate::app::RUSTC_LLVM_VERSION,
                         ));
-                        ui.label(format!("architecture {}", 
-                            crate::app::CARGO_TARGET_TRIPLE
-                        ));
+                        ui.label(i18n_args("Architecture {arch}", &[("arch", crate::app::CARGO_TARGET_TRIPLE)]));
                     });
 
                 if let Some(system) = runtime().system() {
@@ -358,11 +407,45 @@ impl Overview {
                     CollapsingHeader::new(i18n("Donations"))
                         .default_open(true)
                         .show(ui, |ui| {
-                            if ui.link(i18n("Supporting Kaspa NG development")).clicked() {
+                            if ui.link(i18n("Please support Kaspa NG development")).clicked() {
                                 core.select::<modules::Donations>();
                             }
                         });
             });
+    }
+
+    fn render_network_info(&self, core: &Core, ui : &mut Ui) {
+
+        CollapsingHeader::new(i18n("Statistics"))
+            .default_open(true)
+            .show(ui, |ui| {
+             // ui.label(format!("Network Pressure: ~{}%", core.network_pressure.capacity()));
+                ui.label(i18n_args("Network Pressure: ~{number}%", &[("number", core.network_pressure.capacity().to_string())]));
+            });
+    }
+
+    fn render_fee_rate(&self, core: &Core, ui : &mut Ui) {
+
+        if let Some(fees) = core.feerate.as_ref() {
+            let (low,med,high) = if core.network_pressure.below_capacity() {
+                (1.0,1.0,1.0)
+            } else {
+                (fees.low.value().feerate, fees.economic.value().feerate, fees.priority.value().feerate)
+            };
+            let low_kas = sompi_to_kaspa_string_with_suffix((low * BASIC_TRANSACTION_MASS as f64) as u64, &core.settings.node.network.into());
+            let med_kas = sompi_to_kaspa_string_with_suffix((med * BASIC_TRANSACTION_MASS as f64) as u64, &core.settings.node.network.into());
+            let high_kas = sompi_to_kaspa_string_with_suffix((high * BASIC_TRANSACTION_MASS as f64) as u64, &core.settings.node.network.into());
+            CollapsingHeader::new(i18n("Fee Market"))
+                .default_open(true)
+                .show(ui, |ui| {
+                //  ui.label(format!("Low: {} SOMPI/g;  ~{}/tx", format_with_precision(low), low_kas));
+                //  ui.label(format!("Economic: {} SOMPI/g;  ~{}/tx", format_with_precision(med),med_kas));
+                //  ui.label(format!("Priority: {} SOMPI/g;  ~{}/tx", format_with_precision(high),high_kas));
+                    ui.label(i18n_args("Low: {low} SOMPI/g;  ~{low_kas}/tx", &[("low", format_with_precision(low)), ("low_kas", low_kas)]));
+                    ui.label(i18n_args("Economic: {med} SOMPI/g;  ~{med_kas}/tx", &[("med", format_with_precision(med)), ("med_kas", med_kas)]));
+                    ui.label(i18n_args("Priority: {high} SOMPI/g;  ~{high_kas}/tx", &[("high", format_with_precision(high)), ("high_kas", high_kas)]));
+                });
+        }
     }
 
     #[cfg(not(feature = "lean"))]
@@ -372,10 +455,13 @@ impl Overview {
 
         if let Some(snapshot) = core.metrics() {
             let view_width = ui.available_width();
+
             if view_width < 200. {
                 return;
             }
-            let graph_columns = ((view_width-48.) / 128.) as usize;
+            const GRAPH_WIDTH: f32 = 128.+6.+8.;
+            const GRAPH_VIEW_MARGIN: f32 = 48.;
+            let graph_columns = ((view_width-GRAPH_VIEW_MARGIN) / GRAPH_WIDTH) as usize;
 
             let mut draw = true;
             while draw {
@@ -408,9 +494,25 @@ impl Overview {
             if available_samples < duration {
                 duration = available_samples;
             }
-            let samples = if data.len() < duration { data.len() } else { duration };
-            data[data.len()-samples..].to_vec()
+            let len = data.len();
+            let samples = len.min(duration);
+            data[len-samples..].to_vec()
+            // let mut data = data[len-samples..].to_vec();
+            // if data.len() == 1{
+            //     let mut last_clone = data[0].clone();
+            //     if last_clone.y > 100000000000.0{
+            //         last_clone.x += 0.1;
+            //         last_clone.y += 100.0;
+            //         data.push(last_clone);
+            //     }
+            // }
+            // data
         };
+
+        //skip rendering
+        if graph_data.len() < 2 {
+            return;
+        }
 
         
         ui.vertical(|ui|{
@@ -430,8 +532,7 @@ impl Overview {
                     .legend(Legend::default())
                     .width(128.)
                     .height(32.)
-                    .auto_bounds_x()
-                    .auto_bounds_y()
+                    .auto_bounds([true, true].into())
                     .set_margin_fraction(vec2(0.0,0.0) )
                     .show_axes(false)
                     .show_grid(false)
@@ -459,7 +560,7 @@ impl Overview {
 
                 let text = format!("{} {}", i18n(metric.title().1).to_uppercase(), metric.format(value, true, true));
                 let rich_text_top = RichText::new(&text).size(10.).color(theme_color().raised_text_color);
-                let label_top = Label::new(rich_text_top).wrap(false);
+                let label_top = Label::new(rich_text_top).extend();
                 let mut rect_top = plot_result.response.rect;
                 rect_top.set_bottom(rect_top.top() + 12.);
 
@@ -468,7 +569,7 @@ impl Overview {
                     vec2(1.0,1.0),vec2(1.0,-1.0),vec2(-1.0,1.0),vec2(-1.0,-1.0),
                 ].iter().for_each(|offset| {
                     let rich_text_back = RichText::new(&text).size(10.).color(theme_color().raised_text_shadow);
-                    let label_back = Label::new(rich_text_back).wrap(false);
+                    let label_back = Label::new(rich_text_back).extend();
                     let mut rect_back = rect_top;
                     rect_back.set_center(rect_back.center()+*offset);
                     ui.put(rect_back, label_back);

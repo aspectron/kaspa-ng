@@ -88,13 +88,13 @@ impl BlockDag {
         let settings = BlockDagGraphSettings::new(preset.spread);
         runtime.block_dag_monitor_service().update_settings(settings.clone());
 
-        Self { 
-            runtime, 
-            daa_cursor : 0.0, 
-            last_daa_score : 0, 
-            running : false, 
-            plot_bounds : PlotBounds::NOTHING, 
-            bezier : true, 
+        Self {
+            runtime,
+            daa_cursor : 0.0,
+            last_daa_score : 0,
+            running : false,
+            plot_bounds : PlotBounds::NOTHING,
+            bezier : true,
             daa_offset : preset.daa_offset,
             daa_range : preset.daa_range,
             block_scale : preset.block_scale,
@@ -171,7 +171,7 @@ impl ModuleT for BlockDag {
             ui.heading(i18n("Block DAG"));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                PopupPanel::new(PopupPanel::id(ui,"block_dag_settings"),|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
+                PopupPanel::new(PopupPanel::id(ui,"block_dag_settings"),|ui|{ ui.add(Label::new(format!("{} ⏷", i18n("Settings"))).sense(Sense::click())) }, |ui, _| {
 
                     CollapsingHeader::new(i18n("Dimensions"))
                         .open(Some(true))
@@ -294,7 +294,6 @@ impl ModuleT for BlockDag {
             runtime().block_dag_monitor_service().update_settings(self.settings.clone());
         }
 
-
         let mut reset_plot = false;
         let current_daa_score = core.state().current_daa_score().unwrap_or_default();
         if self.last_daa_score != current_daa_score {
@@ -307,6 +306,22 @@ impl ModuleT for BlockDag {
 
             self.last_daa_score = current_daa_score;
         }
+
+        // let mut reset_plot = false;
+        // let current_daa_score = core.state().current_daa_score().unwrap_or_default();
+        // if self.last_daa_score != current_daa_score || current_daa_score==0 {
+        //    if !self.running || current_daa_score==0{
+        //         if current_daa_score > 0{
+        //             self.running = true;
+        //         }else{
+        //             self.running = false;
+        //         }
+        //         reset_plot = true;
+        //         self.daa_cursor = current_daa_score as f64 - 1.0;
+        //     }
+
+        //     self.last_daa_score = current_daa_score;
+        // }
 
         let delta = 0.025;
         let daa_diff = current_daa_score as f64 - self.daa_cursor;
@@ -329,14 +344,14 @@ impl ModuleT for BlockDag {
             .include_y(15.)
             .include_y(-15.)
             .data_aspect(0.2)
-            .y_axis_width(0)
+            .y_axis_min_width(0.0)
             .show_axes([self.settings.show_daa, false])
             .show_grid(self.settings.show_grid)
             .allow_drag([true, true])
             .allow_scroll(true)
             .allow_double_click_reset(true)
-            .x_axis_formatter(move |x, _size, _range| {
-                format!("{} DAA", x.trunc().separated_string())
+            .x_axis_formatter(move |x, _range| {
+                format!("{} DAA", x.value.trunc().separated_string())
             })
             .x_grid_spacer(
                 uniform_grid_spacer(move |input| {
@@ -357,8 +372,10 @@ impl ModuleT for BlockDag {
 
         // kick it into gear when starting up
         if reset_plot {
-            plot = plot.auto_bounds_x().auto_bounds_y();
+            plot = plot.auto_bounds([true, true].into());
             plot = plot.reset();
+        } else {
+            plot = plot.auto_bounds([false, false].into());
         }
 
         let mut graph_settled = true;

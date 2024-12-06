@@ -1,8 +1,9 @@
 use crate::imports::*;
+use kaspa_addresses::Prefix as AddressPrefix;
 use kaspa_consensus_core::config::params::Params;
 use kaspa_wallet_core::utxo::NetworkParams;
 
-const BASIC_TRANSACTION_MASS: u64 = 1281;
+pub const BASIC_TRANSACTION_MASS: u64 = 2036;
 
 #[derive(
     Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash,
@@ -70,6 +71,18 @@ impl From<Network> for NetworkId {
     }
 }
 
+impl From<&Network> for AddressPrefix {
+    fn from(network: &Network) -> Self {
+        NetworkType::from(network).into()
+    }
+}
+
+impl From<Network> for AddressPrefix {
+    fn from(network: Network) -> Self {
+        NetworkType::from(network).into()
+    }
+}
+
 impl From<&Network> for NetworkId {
     fn from(network: &Network) -> Self {
         match network {
@@ -108,15 +121,15 @@ impl From<&Network> for Params {
     }
 }
 
-impl From<Network> for NetworkParams {
+impl From<Network> for &'static NetworkParams {
     fn from(network: Network) -> Self {
-        NetworkId::from(network).into()
+        NetworkParams::from(NetworkId::from(network))
     }
 }
 
-impl From<&Network> for NetworkParams {
+impl From<&Network> for &'static NetworkParams {
     fn from(network: &Network) -> Self {
-        NetworkId::from(network).into()
+        NetworkParams::from(NetworkId::from(network))
     }
 }
 
@@ -154,6 +167,7 @@ const NETWORK_PRESSURE_ALPHA_HIGH: f32 = 0.8;
 const NETWORK_PRESSURE_ALPHA_LOW: f32 = 0.5;
 const NETWORK_PRESSURE_THRESHOLD_HIGH: f32 = 0.4;
 const NETWORK_PRESSURE_THRESHOLD_LOW: f32 = 0.2;
+const NETWORK_CAPACITY_THRESHOLD: usize = 90;
 
 #[derive(Default, Debug, Clone)]
 pub struct NetworkPressure {
@@ -209,5 +223,13 @@ impl NetworkPressure {
 
     pub fn capacity(&self) -> usize {
         (self.pressure * 100.0).min(100.0) as usize
+    }
+
+    pub fn above_capacity(&self) -> bool {
+        self.capacity() > NETWORK_CAPACITY_THRESHOLD
+    }
+
+    pub fn below_capacity(&self) -> bool {
+        self.capacity() <= NETWORK_CAPACITY_THRESHOLD
     }
 }

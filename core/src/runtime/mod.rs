@@ -35,6 +35,7 @@ pub struct Inner {
 
     kaspa: Arc<KaspaService>,
     peer_monitor_service: Arc<PeerMonitorService>,
+    feerate_monitor_service: Arc<FeerateMonitorService>,
     update_monitor_service: Arc<UpdateMonitorService>,
     market_monitor_service: Arc<MarketMonitorService>,
 
@@ -75,6 +76,10 @@ impl Runtime {
             application_events.clone(),
             settings,
         ));
+        let feerate_monitor_service = Arc::new(FeerateMonitorService::new(
+            application_events.clone(),
+            settings,
+        ));
         let market_monitor_service = Arc::new(MarketMonitorService::new(
             application_events.clone(),
             settings,
@@ -104,6 +109,7 @@ impl Runtime {
             repaint_service.clone(),
             kaspa.clone(),
             peer_monitor_service.clone(),
+            feerate_monitor_service.clone(),
             market_monitor_service.clone(),
             update_monitor_service.clone(),
             // #[cfg(not(feature = "lean"))]
@@ -118,6 +124,7 @@ impl Runtime {
                 application_events,
                 repaint_service,
                 kaspa,
+                feerate_monitor_service,
                 peer_monitor_service,
                 market_monitor_service,
                 update_monitor_service,
@@ -225,6 +232,10 @@ impl Runtime {
     /// Returns the reference to the kaspa service.
     pub fn kaspa_service(&self) -> &Arc<KaspaService> {
         &self.inner.kaspa
+    }
+
+    pub fn feerate_monitor_service(&self) -> &Arc<FeerateMonitorService> {
+        &self.inner.feerate_monitor_service
     }
 
     pub fn peer_monitor_service(&self) -> &Arc<PeerMonitorService> {

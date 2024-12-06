@@ -9,6 +9,9 @@ pub use kaspa::KaspaService;
 pub mod peer_monitor;
 pub use peer_monitor::PeerMonitorService;
 
+pub mod feerate_monitor;
+pub use feerate_monitor::FeerateMonitorService;
+
 pub mod market_monitor;
 pub use market_monitor::MarketMonitorService;
 

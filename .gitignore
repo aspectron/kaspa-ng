@@ -11,5 +11,7 @@ datadir
 /discard
 analyzer-target
 .vscode/launch.json
-/kaspa-ng.log
 kaspa-ng*
+/.idea
+*.log
+kaspa-ng.log

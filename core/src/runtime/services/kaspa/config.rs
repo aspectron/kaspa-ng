@@ -25,6 +25,9 @@ fn user_agent() -> String {
 pub struct Config {
     network: Network,
     enable_upnp: bool,
+    enable_wrpc_borsh: bool,
+    #[allow(dead_code)]
+    enable_wrpc_json: bool,
     enable_grpc: bool,
     grpc_network_interface: NetworkInterfaceConfig,
     kaspad_daemon_args_enable: bool,
@@ -39,6 +42,8 @@ impl From<NodeSettings> for Config {
         Self {
             network: node_settings.network,
             enable_upnp: node_settings.enable_upnp,
+            enable_wrpc_borsh: node_settings.enable_wrpc_borsh,
+            enable_wrpc_json: node_settings.enable_wrpc_json,
             enable_grpc: node_settings.enable_grpc,
             grpc_network_interface: node_settings.grpc_network_interface,
             kaspad_daemon_args_enable: node_settings.kaspad_daemon_args_enable,
@@ -125,7 +130,11 @@ cfg_if! {
                     args.push("--nogrpc");
                 }
 
-                args.push("--rpclisten-borsh=default");
+                if config.enable_wrpc_borsh {
+                    args.push("--rpclisten-borsh=0.0.0.0");
+                } else {
+                    args.push("--rpclisten-borsh=127.0.0.1");
+                }
 
                 args.push(format!("--uacomment={}", user_agent_comment()));
 

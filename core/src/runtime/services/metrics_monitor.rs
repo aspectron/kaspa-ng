@@ -2,6 +2,7 @@ use crate::imports::*;
 use crate::runtime::Service;
 pub use futures::{future::FutureExt, select, Future};
 use kaspa_metrics_core::{Metric, Metrics, MetricsSnapshot};
+use kaspa_rpc_core::GetSystemInfoResponse;
 #[allow(unused_imports)]
 use kaspa_wallet_core::rpc::{NotificationMode, Rpc, RpcCtl, WrpcEncoding};
 
@@ -14,13 +15,13 @@ pub struct MetricsService {
     pub metrics: Arc<Metrics>,
     pub metrics_data: Mutex<HashMap<Metric, Vec<PlotPoint>>>,
     pub samples_since_connection: Arc<AtomicUsize>,
+    pub rpc_api: Mutex<Option<Arc<dyn RpcApi>>>,
 }
 
 impl MetricsService {
     pub fn new(application_events: ApplicationEventsChannel, _settings: &Settings) -> Self {
         let metrics = Arc::new(Metrics::default());
-        let metrics_data = Metric::list()
-            .into_iter()
+        let metrics_data = Metric::into_iter()
             .map(|metric| (metric, Vec::new()))
             .collect::<HashMap<Metric, Vec<_>>>();
 
@@ -30,7 +31,12 @@ impl MetricsService {
             metrics,
             metrics_data: Mutex::new(metrics_data),
             samples_since_connection: Arc::new(AtomicUsize::new(0)),
+            rpc_api: Mutex::new(None),
         }
+    }
+
+    pub fn rpc_api(&self) -> Option<Arc<dyn RpcApi>> {
+        self.rpc_api.lock().unwrap().clone()
     }
 
     pub fn metrics_data(&self) -> MutexGuard<'_, HashMap<Metric, Vec<PlotPoint>>> {
@@ -43,7 +49,7 @@ impl MetricsService {
 
     pub fn reset_metrics_data(&self) -> Result<()> {
         let mut metrics_data = self.metrics_data.lock().unwrap();
-        for metric in Metric::list().into_iter() {
+        for metric in Metric::into_iter() {
             metrics_data.insert(metric, Vec::with_capacity(MAX_METRICS_SAMPLES));
         }
         Ok(())
@@ -52,9 +58,12 @@ impl MetricsService {
     pub fn ingest_metrics_snapshot(&self, snapshot: Box<MetricsSnapshot>) -> Result<()> {
         let timestamp = snapshot.unixtime_millis;
         let mut metrics_data = self.metrics_data.lock().unwrap();
-        for metric in Metric::list().into_iter() {
+        for metric in Metric::into_iter() {
             let dest = metrics_data.get_mut(&metric).unwrap();
             if dest.is_empty() {
+                if snapshot.duration_millis < 0.0 {
+                    continue;
+                }
                 let y = snapshot.get(&metric);
                 let mut timestamp = timestamp - MAX_METRICS_SAMPLES as f64 * 1000.0;
                 for _ in 0..(MAX_METRICS_SAMPLES - 1) {
@@ -66,10 +75,16 @@ impl MetricsService {
             if dest.len() > MAX_METRICS_SAMPLES {
                 dest.drain(0..dest.len() - MAX_METRICS_SAMPLES);
             }
-            dest.push(PlotPoint {
-                x: timestamp,
-                y: snapshot.get(&metric),
-            });
+
+            let y = snapshot.get(&metric);
+            if y.is_finite() {
+                dest.push(PlotPoint { x: timestamp, y });
+            } else {
+                dest.push(PlotPoint {
+                    x: timestamp,
+                    y: 0.0,
+                });
+            }
         }
 
         if snapshot.node_cpu_cores > 0.0 {
@@ -103,6 +118,8 @@ impl Service for MetricsService {
     }
 
     async fn attach_rpc(self: Arc<Self>, rpc_api: &Arc<dyn RpcApi>) -> Result<()> {
+        self.rpc_api.lock().unwrap().replace(rpc_api.clone());
+
         let this = self.clone();
         self.metrics
             .register_sink(Arc::new(Box::new(move |snapshot: MetricsSnapshot| {
@@ -118,6 +135,8 @@ impl Service for MetricsService {
         Ok(())
     }
     async fn detach_rpc(self: Arc<Self>) -> Result<()> {
+        self.rpc_api.lock().unwrap().take();
+
         self.metrics.unregister_sink();
         self.metrics.stop_task().await?;
         self.metrics.bind_rpc(None);
@@ -127,6 +146,34 @@ impl Service for MetricsService {
 
     async fn connect_rpc(self: Arc<Self>) -> Result<()> {
         self.samples_since_connection.store(0, Ordering::SeqCst);
+
+        if let Some(rpc_api) = self.rpc_api() {
+            if let Ok(system_info) = rpc_api.get_system_info().await {
+                let GetSystemInfoResponse {
+                    version, system_id, ..
+                } = system_info;
+
+                let system_id = system_id
+                    .map(|id| format!(" - {}", id[0..8].to_vec().to_hex()))
+                    .unwrap_or_else(|| "".to_string());
+
+                self.application_events
+                    .sender
+                    .try_send(crate::events::Events::NodeInfo {
+                        node_info: Some(Box::new(format!("{}{}", version, system_id))),
+                    })
+                    .unwrap();
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn disconnect_rpc(self: Arc<Self>) -> Result<()> {
+        self.application_events
+            .sender
+            .try_send(crate::events::Events::NodeInfo { node_info: None })
+            .unwrap();
         Ok(())
     }
 

@@ -1,5 +1,26 @@
 # Changelog
 
+# 0.3.0
+
+- Rusty Kaspa 0.15.1 
+- Add `Settings > ... > Local p2p Node .. > Public wRPC (Borsh)` to allow for external wRPC connections.
+- A new priority fee estimation algorithm based on the network load (Send panel).
+- Add support for legacy wallets created with [KDX](https://kdx.app) and Web Wallet at [https://wallet.kaspanet.io](https://wallet.kaspanet.io).
+- The ability to choose from a list of available public nodes is no longer available (public nodes are load-balanced).
+- Kaspa NG has been updated to EGUI 0.28.0, which includes various improvements and bug fixes.
+- Display addresses in the transaction history panel.
+- Transaction history elements are now clickable leading to the Kaspa Explorer.
+- Add experimental `Passive Sync` mode that allows connecting to a public node while synchronizing the local node in the background.
+
+# 0.2.7
+
+- Pagination in transaction history panel
+- Resolve an issue with some transactions not being displayed in the correct sort order.
+- Refactor public node connectivity (now using Rusty Kaspa public node resolver).
+- Add `Settings > User Interface > Options > Disable Window Frame` options that allows the user to disable custom window frame. Custom window frame currently affects ability to resize KaspaNG window on the Windows operating system.
+
+NOTE: This release includes the underlying changes to the wRPC Borsh protocol that breaks compatibility with older versions of Kaspa nodes (all versions before `0.14.2`). This change is necessary to support future features and improvements.
+
 # 0.2.6
 
 - Fix an issue in WASM32 (browser) where after the wallet is loaded, even though the balance is displayed correctly, attempt to send a transaction would result in the "Insufficient funds" error.

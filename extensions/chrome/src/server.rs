@@ -50,7 +50,7 @@ pub struct Server {
 unsafe impl Send for Server {}
 unsafe impl Sync for Server {}
 
-#[derive(Debug, Describe)]
+#[derive(Debug, Describe, Clone)]
 enum ExtensionActions {
     InjectPageScript,
     Connect,
@@ -431,7 +431,7 @@ impl Server {
                                         *self.waiting_response.lock().unwrap() =
                                             Some((a.sender_id, id));
                                     }
-                                    a.try_to_vec().unwrap()
+                                    borsh::to_vec(&a).unwrap()
                                 });
 
                         let res = resp_to_jsv(Target::Adaptor, Ok(pending_request));
@@ -460,7 +460,7 @@ impl Server {
                         });
                     }
                     ServerAction::CloseWindow => {
-                        let req = Request::CloseWindow.try_to_vec().unwrap();
+                        let req = borsh::to_vec(&Request::CloseWindow).unwrap();
                         spawn_local(async move {
                             // log_info!("[SERVER] sending CloseWindow notification");
                             if let Err(err) =
@@ -508,7 +508,7 @@ impl EventHandler for ServerEventHandler {
     async fn handle_event(&self, event: &Events) {
         // log_info!("EVENT HANDLER - POSTING NOTIFICATION! {event:?}");
 
-        let data = event.try_to_vec().unwrap();
+        let data = borsh::to_vec(&event).unwrap();
         spawn_local(async move {
             let data = notify_to_jsv(Target::Wallet, &data);
             // log_info!("EVENT HANDLER - SENDING MESSAGE!");

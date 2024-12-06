@@ -13,13 +13,12 @@ impl Arglist {
 
 impl From<Arglist> for Vec<String> {
     fn from(arglist: Arglist) -> Self {
-        let mut unique_elements = AHashSet::new();
-        let mut list = vec![];
+        let mut args = AHashSet::new();
         for arg in arglist.args.into_iter() {
-            if unique_elements.insert(arg.clone()) {
-                list.push(arg);
-            }
+            args.insert(arg);
         }
+        let mut list = args.into_iter().collect::<Vec<_>>();
+        list.sort();
         list
     }
 }

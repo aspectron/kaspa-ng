@@ -8,12 +8,12 @@ pub use style::*;
 use crate::imports::*;
 
 #[derive(Clone)]
-pub struct Theme {
+pub struct AppTheme {
     pub color: ThemeColor,
     pub style: ThemeStyle,
 }
 
-impl Theme {
+impl AppTheme {
     pub fn new(color: ThemeColor, style: ThemeStyle) -> Self {
         Self { color, style }
     }
@@ -29,7 +29,7 @@ impl Theme {
     }
 }
 
-impl Default for Theme {
+impl Default for AppTheme {
     fn default() -> Self {
         Self {
             color: ThemeColor::dark(),
@@ -38,8 +38,8 @@ impl Default for Theme {
     }
 }
 
-impl From<&Theme> for Visuals {
-    fn from(theme: &Theme) -> Self {
+impl From<&AppTheme> for Visuals {
+    fn from(theme: &AppTheme) -> Self {
         let mut visuals = if theme.color.dark_mode {
             Visuals::dark()
         } else {
@@ -62,16 +62,16 @@ impl From<&Theme> for Visuals {
     }
 }
 
-impl AsRef<Theme> for Theme {
+impl AsRef<AppTheme> for AppTheme {
     fn as_ref(&self) -> &Self {
         self
     }
 }
 
-static mut THEME: Option<Theme> = None;
+static mut THEME: Option<AppTheme> = None;
 #[inline(always)]
-pub fn theme() -> &'static Theme {
-    unsafe { THEME.get_or_insert_with(Theme::default) }
+pub fn theme() -> &'static AppTheme {
+    unsafe { THEME.get_or_insert_with(AppTheme::default) }
 }
 
 #[inline(always)]
@@ -107,7 +107,7 @@ pub fn apply_theme_by_name(
             ThemeStyle::default()
         });
 
-    apply_theme(ctx, Theme::new(theme_color, theme_style));
+    apply_theme(ctx, AppTheme::new(theme_color, theme_style));
 }
 
 pub fn apply_theme_color_by_name(ctx: &Context, theme_color_name: impl Into<String>) {
@@ -120,7 +120,7 @@ pub fn apply_theme_color_by_name(ctx: &Context, theme_color_name: impl Into<Stri
             ThemeColor::default()
         });
 
-    apply_theme(ctx, Theme::new(theme_color, theme_style().clone()));
+    apply_theme(ctx, AppTheme::new(theme_color, theme_style().clone()));
 }
 
 pub fn apply_theme_style_by_name(ctx: &Context, theme_style_name: impl Into<String>) {
@@ -133,10 +133,10 @@ pub fn apply_theme_style_by_name(ctx: &Context, theme_style_name: impl Into<Stri
             ThemeStyle::default()
         });
 
-    apply_theme(ctx, Theme::new(theme_color().clone(), theme_style));
+    apply_theme(ctx, AppTheme::new(theme_color().clone(), theme_style));
 }
 
-pub fn apply_theme(ctx: &Context, theme: Theme) {
+pub fn apply_theme(ctx: &Context, theme: AppTheme) {
     unsafe {
         THEME = Some(theme.clone());
     }

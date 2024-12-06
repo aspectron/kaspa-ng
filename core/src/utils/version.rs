@@ -1,6 +1,10 @@
 use crate::imports::*;
 use workflow_http::Request;
 
+pub fn kaspa_version() -> String {
+    kaspa_utils::git::version()
+}
+
 #[derive(Debug, Clone)]
 pub struct Asset {
     pub name: String,

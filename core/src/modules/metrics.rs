@@ -95,18 +95,18 @@ impl ModuleT for Metrics {
                                 }
 
                                 if ui.button(i18n("None")).clicked() {
-                                    core.settings.user_interface.metrics.disabled = Metric::list().into_iter().collect::<AHashSet<_>>();
+                                    core.settings.user_interface.metrics.disabled = Metric::into_iter().collect::<AHashSet<_>>();
                                 }
                                 
                                 if ui.button(i18n("Key Perf.")).clicked() {
-                                    core.settings.user_interface.metrics.disabled = Metric::list().into_iter().filter(|metric|!metric.is_key_performance_metric()).collect::<AHashSet<_>>();
+                                    core.settings.user_interface.metrics.disabled = Metric::into_iter().filter(|metric|!metric.is_key_performance_metric()).collect::<AHashSet<_>>();
                                 }
 
                             });
 
                             ui.separator();
 
-                            for group in MetricGroup::list() {
+                            for group in MetricGroup::iter() {
                                 CollapsingHeader::new(i18n(group.title()))
                                     .default_open(true)
                                     .show(ui, |ui| {
@@ -215,7 +215,7 @@ impl ModuleT for Metrics {
                     };
 
 
-                        let mut metric_iter = Metric::list().into_iter().filter(|metric| !core.settings.user_interface.metrics.disabled.contains(metric));
+                        let mut metric_iter = Metric::iter().filter(|metric| !core.settings.user_interface.metrics.disabled.contains(metric));
                         let mut draw = true;
                         while draw {
                             ui.horizontal(|ui| {
@@ -223,7 +223,7 @@ impl ModuleT for Metrics {
                                     if let Some(metric) = metric_iter.next() {
                                         let range_from = core.settings.user_interface.metrics.graph_range_from;
                                         let range_to = core.settings.user_interface.metrics.graph_range_to;
-                                        self.render_metric(ui,metric,metrics,range_from..range_to,graph_width,graph_height);
+                                        self.render_metric(ui, *metric, metrics,range_from..range_to,graph_width,graph_height);
                                     } else {
                                         draw = false;
                                     }
@@ -304,20 +304,24 @@ impl Metrics {
                             .legend(Legend::default())
                             .width(graph_width)
                             .height(graph_height)
-                            .auto_bounds_x()
-                            .auto_bounds_y()
+                            .auto_bounds([true, true].into())
                             .set_margin_fraction(vec2(0.0,0.0) )
-                            .y_axis_width(4)
+                            .y_axis_min_width(4.0 * 12.0)
                             .show_axes(true)
                             .show_grid(true)
                             // .allow_drag([true, false])
                             .allow_drag([false, false])
                             .allow_scroll(false)
-                            .y_axis_formatter(move |y,_size,_range|{
-                                metric.format(y, true, true)
+                            .y_axis_formatter(move |grid, _range|{
+                                match metric {
+                                    Metric::NetworkPastMedianTime => {
+                                        String::default()
+                                    }
+                                    metric => metric.format(grid.value, true, true)
+                                }
                             })
-                            .x_axis_formatter(move |x, _size, _range| {
-                                DateTime::<chrono::Utc>::from_timestamp((x / 1000.0) as i64, 0)
+                            .x_axis_formatter(move |grid, _range| {
+                                DateTime::<chrono::Utc>::from_timestamp((grid.value / 1000.0) as i64, 0)
                                     .expect("could not parse timestamp")
                                     .with_timezone(&chrono::Local)
                                     .format("%H:%M:%S")
@@ -325,7 +329,6 @@ impl Metrics {
                             })
                             .x_grid_spacer(
                                 uniform_grid_spacer(move |input| {
-
                                     let (start_time,stop_time) = input.bounds;
                                     let range = stop_time - start_time;
                                     let base_step_size = range / graph_width as f64 * 64.;
@@ -419,3 +422,4 @@ fn format_duration_unit(value: u64, unit: &str) -> String {
         format!("{} {}", value, unit)
     }
 }
+
