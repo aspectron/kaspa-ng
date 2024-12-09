@@ -3,18 +3,17 @@ use kaspa_metrics_core::MetricGroup;
 mod color;
 pub use color::*;
 mod style;
-pub use style::*;
-
 use crate::imports::*;
+pub use style::*;
 
 #[derive(Clone)]
 pub struct AppTheme {
-    pub color: ThemeColor,
-    pub style: ThemeStyle,
+    pub color: Arc<ThemeColor>,
+    pub style: Arc<ThemeStyle>,
 }
 
 impl AppTheme {
-    pub fn new(color: ThemeColor, style: ThemeStyle) -> Self {
+    pub fn new(color: Arc<ThemeColor>, style: Arc<ThemeStyle>) -> Self {
         Self { color, style }
     }
 
@@ -32,8 +31,8 @@ impl AppTheme {
 impl Default for AppTheme {
     fn default() -> Self {
         Self {
-            color: ThemeColor::dark(),
-            style: ThemeStyle::rounded(),
+            color: Arc::new(ThemeColor::dark()),
+            style: Arc::new(ThemeStyle::rounded()),
         }
     }
 }
@@ -68,20 +67,24 @@ impl AsRef<AppTheme> for AppTheme {
     }
 }
 
-static mut THEME: Option<AppTheme> = None;
+static THEME: Mutex<Option<Arc<AppTheme>>> = Mutex::new(None);
+
 #[inline(always)]
-pub fn theme() -> &'static AppTheme {
-    unsafe { THEME.get_or_insert_with(AppTheme::default) }
+pub fn theme() -> Arc<AppTheme> {
+    let mut theme_lock = THEME.lock().unwrap();
+    theme_lock
+        .get_or_insert_with(|| Arc::new(AppTheme::default()))
+        .clone()
 }
 
 #[inline(always)]
-pub fn theme_color() -> &'static ThemeColor {
-    &theme().color
+pub fn theme_color() -> Arc<ThemeColor> {
+    Arc::clone(&theme().color)
 }
 
 #[inline(always)]
-pub fn theme_style() -> &'static ThemeStyle {
-    &theme().style
+pub fn theme_style() -> Arc<ThemeStyle> {
+    Arc::clone(&theme().style)
 }
 
 pub fn apply_theme_by_name(
@@ -107,7 +110,7 @@ pub fn apply_theme_by_name(
             ThemeStyle::default()
         });
 
-    apply_theme(ctx, AppTheme::new(theme_color, theme_style));
+    apply_theme(ctx, AppTheme::new(theme_color.into(), theme_style.into()));
 }
 
 pub fn apply_theme_color_by_name(ctx: &Context, theme_color_name: impl Into<String>) {
@@ -120,7 +123,10 @@ pub fn apply_theme_color_by_name(ctx: &Context, theme_color_name: impl Into<Stri
             ThemeColor::default()
         });
 
-    apply_theme(ctx, AppTheme::new(theme_color, theme_style().clone()));
+    apply_theme(
+        ctx,
+        AppTheme::new(theme_color.into(), theme_style().clone()),
+    );
 }
 
 pub fn apply_theme_style_by_name(ctx: &Context, theme_style_name: impl Into<String>) {
@@ -133,13 +139,14 @@ pub fn apply_theme_style_by_name(ctx: &Context, theme_style_name: impl Into<Stri
             ThemeStyle::default()
         });
 
-    apply_theme(ctx, AppTheme::new(theme_color().clone(), theme_style));
+    apply_theme(
+        ctx,
+        AppTheme::new(theme_color().clone(), theme_style.into()),
+    );
 }
 
 pub fn apply_theme(ctx: &Context, theme: AppTheme) {
-    unsafe {
-        THEME = Some(theme.clone());
-    }
+    let _ = THEME.lock().unwrap().insert(Arc::new(theme.clone()));
     ctx.set_visuals(theme.as_ref().into());
     runtime()
         .application_events()

@@ -117,9 +117,10 @@ impl<'panel, Context> Panel<'panel, Context> {
     }
 
     pub fn render(self, ui: &mut Ui) {
-        let icon_size = theme_style().panel_icon_size();
+        let theme_style = theme_style();
+        let icon_size = theme_style.panel_icon_size();
         let icon_padding = (icon_size.outer - icon_size.inner) / 2.0;
-        let panel_margin_size = theme_style().panel_margin_size();
+        let panel_margin_size = theme_style.panel_margin_size();
         let panel_width = ui.available_width();
         let inner_panel_width = panel_width - panel_margin_size * 2.;
 
@@ -190,7 +191,7 @@ impl<'panel, Context> Panel<'panel, Context> {
                                 });
                             }
 
-                            let padding = ui.available_height() - theme_style().panel_footer_height;
+                            let padding = ui.available_height() - theme_style.panel_footer_height;
                             if padding > 0. {
                                 ui.add_space(padding);
                             }
