@@ -64,7 +64,7 @@ impl Request {
             Entry::Vacant(entry) => {
                 let uri = format!("bytes://{hash}.svg");
                 // let bits = qrcode::types::Mode::Alphanumeric.data_bits_count(request_uri.len());
-                let qr = render_qrcode_with_version(request_uri.as_str(), 192, 192, qrcode::Version::Normal(10));
+                let qr = render_qrcode_with_version(request_uri, 192, 192, qrcode::Version::Normal(10));
                 entry.insert((uri, qr.as_bytes().to_vec().into()))
             },
         };
