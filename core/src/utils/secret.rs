@@ -8,23 +8,23 @@ pub fn secret_score(password: impl AsRef<str>) -> f64 {
 
 pub fn secret_score_to_text(score: f64) -> String {
     if (0.0..=20.0).contains(&score) {
-        return String::from(i18n("Very dangerous (may be cracked within few seconds)"));
+        String::from(i18n("Very dangerous (may be cracked within few seconds)"))
     } else if score > 20.0 && score <= 40.0 {
-        return String::from(i18n("Dangerous"));
+        String::from(i18n("Dangerous"))
     } else if score > 40.0 && score <= 60.0 {
-        return String::from(i18n("Very weak"));
+        String::from(i18n("Very weak"))
     } else if score > 60.0 && score <= 80.0 {
-        return String::from(i18n("Weak"));
+        String::from(i18n("Weak"))
     } else if score > 80.0 && score <= 90.0 {
-        return String::from(i18n("Good"));
+        String::from(i18n("Good"))
     } else if score > 90.0 && score <= 95.0 {
-        return String::from(i18n("Strong"));
+        String::from(i18n("Strong"))
     } else if score > 95.0 && score <= 99.0 {
-        return String::from(i18n("Very strong"));
+        String::from(i18n("Very strong"))
     } else if score > 99.0 && score <= 100.0 {
-        return String::from(i18n("Invulnerable"));
+        String::from(i18n("Invulnerable"))
     } else {
-        return String::from("Value is outside the defined range");
+        String::from("Value is outside the defined range")
     }
 }
 

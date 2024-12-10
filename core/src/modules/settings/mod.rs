@@ -460,7 +460,8 @@ impl Settings {
                     .show(ui, |ui| {
                         ui.vertical(|ui| {
                             ui.horizontal(|ui| {
-                                let current_theme_color_name = theme_color().name();
+                                let theme_color = theme_color();
+                                let current_theme_color_name = theme_color.name();
                                 ui.menu_button(
                                     format!("{} ⏷", current_theme_color_name),
                                     |ui| {
@@ -492,7 +493,8 @@ impl Settings {
                         .default_open(true)
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
-                                let current_theme_style_name = theme_style().name();
+                                let theme_style = theme_style();
+                                let current_theme_style_name = theme_style.name();
                                 ui.menu_button(
                                     format!("{} ⏷", current_theme_style_name),
                                     |ui| {

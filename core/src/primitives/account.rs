@@ -150,8 +150,6 @@ impl Account {
     }
 
     pub fn update(&self, descriptor: AccountDescriptor) {
-        println!("$$$$$ UPDATING ACCOUNT: {:?}", descriptor);
-
         *self.inner.context.lock().unwrap() = AccountContext::new(&descriptor);
         *self.inner.descriptor.lock().unwrap() = descriptor;
     }

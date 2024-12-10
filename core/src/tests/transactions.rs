@@ -1,6 +1,5 @@
 use crate::imports::*;
 use kaspa_wallet_core::tx::mass::MassCalculator;
-use kaspa_wallet_core::utxo::NetworkParams;
 
 #[test]
 fn test_generic_transaction_mass() {
@@ -61,7 +60,7 @@ fn test_generic_transaction_mass() {
     );
 
     for network in Network::iter() {
-        let calc = MassCalculator::new(&network.into(), NetworkParams::from(network.into()));
+        let calc = MassCalculator::new(&network.into());
         let mass = calc.calc_compute_mass_for_unsigned_consensus_transaction(&tx, 1);
         println!("compute transaction mass for {} is {}", network, mass);
     }

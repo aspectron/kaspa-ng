@@ -89,17 +89,20 @@ impl ThemeStyle {
     }
 }
 
-static mut THEME_STYLE_LIST: Option<HashMap<String, ThemeStyle>> = None;
-pub fn theme_styles() -> &'static HashMap<String, ThemeStyle> {
-    unsafe {
-        THEME_STYLE_LIST.get_or_insert_with(|| {
+static THEME_STYLE_LIST: Mutex<Option<Arc<HashMap<String, ThemeStyle>>>> = Mutex::new(None);
+
+#[inline(always)]
+pub fn theme_styles() -> Arc<HashMap<String, ThemeStyle>> {
+    let mut theme_styles_lock = THEME_STYLE_LIST.lock().unwrap();
+    theme_styles_lock
+        .get_or_insert_with(|| {
             let mut themes = HashMap::new();
             [ThemeStyle::rounded(), ThemeStyle::sharp()]
                 .into_iter()
                 .for_each(|theme| {
                     themes.insert(theme.name.clone(), theme.clone());
                 });
-            themes
+            Arc::new(themes)
         })
-    }
+        .clone()
 }

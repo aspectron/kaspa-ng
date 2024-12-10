@@ -69,6 +69,7 @@ struct Context {
     payment_secret_confirm: String,
     payment_secret_show : bool,
     payment_secret_score: Option<f64>,
+    payment_secret_submitted: bool,
     mnemonic_presenter_context : MnemonicPresenterContext,
     import_private_key : bool,
     import_private_key_file: bool,
@@ -99,6 +100,7 @@ impl Zeroize for Context {
         self.decrypt_wallet_secret.zeroize();
         self.import_legacy.zeroize();
         self.import_advanced.zeroize();
+        self.payment_secret_submitted = false;
     }
 }
 
@@ -699,6 +701,7 @@ impl ModuleT for WalletCreate {
             State::PaymentSecret => {
 
                 let mut proceed = self.context.import_legacy || (self.context.import_private_key && !self.context.import_with_bip39_passphrase);
+                let mut continue_or_skip = false;
                 if !self.context.import_legacy {
                     Panel::new(self)
                         .with_caption(i18n("Payment & Recovery Password"))
@@ -725,8 +728,8 @@ impl ModuleT for WalletCreate {
                             let mut change = false;
         
         
-                            if !this.context.import_with_bip39_passphrase {
-                                ui.checkbox(&mut this.context.enable_payment_secret, i18n("Enable optional BIP39 passphrase"));
+                            if !this.context.import_with_bip39_passphrase && ui.checkbox(&mut this.context.enable_payment_secret, i18n("Enable optional BIP39 passphrase")).changed() {
+                                 this.context.payment_secret_submitted = false;
                             }
 
                             if this.context.enable_payment_secret || this.context.import_with_bip39_passphrase {
@@ -779,6 +782,7 @@ impl ModuleT for WalletCreate {
                                 ui.label("");
 
                                 if change {
+                                    this.context.payment_secret_submitted = false;
                                     let payment_secret = this
                                         .context
                                         .payment_secret
@@ -787,7 +791,7 @@ impl ModuleT for WalletCreate {
                                         .or(this.context
                                             .payment_secret_confirm
                                             .is_not_empty()
-                                            .then_some(this.context.wallet_secret_confirm.clone())
+                                            .then_some(this.context.payment_secret_confirm.clone())
                                         );
                                     this.context.payment_secret_score = payment_secret.map(secret_score);
                                 }
@@ -798,15 +802,15 @@ impl ModuleT for WalletCreate {
                                     if score < 80.0 {
                                         ui.label("");
                                         ui.label(RichText::new(i18n("Passphrase is too weak")).color(warning_color()));
-                                        // if !core.settings.developer.password_restrictions_disabled() {
-                                        //     // submit = false;
-                                        //     ui.label(RichText::new(i18n("Please create a stronger passphrase")).color(egui::Color32::from_rgb(255, 120, 120)));
-                                        // }
+                                        if !core.settings.developer.password_restrictions_disabled() {
+                                            submit = false;
+                                            //ui.label(RichText::new(i18n("Please create a stronger passphrase")).color(egui::Color32::from_rgb(255, 120, 120)));
+                                        }
                                     }
                                 }
                                 ui.label("");
 
-                                if this.context.payment_secret_confirm.is_not_empty() && this.context.payment_secret != this.context.payment_secret_confirm {
+                                if this.context.payment_secret.is_not_empty() && this.context.payment_secret != this.context.payment_secret_confirm {
                                     ui.label(" ");
                                     ui.label(RichText::new(i18n("Passphrases do not match")).color(egui::Color32::from_rgb(255, 120, 120)));
                                     ui.label(" ");
@@ -816,28 +820,38 @@ impl ModuleT for WalletCreate {
                                 }
 
                                 if submit {
-                                    this.state = State::CreateWalletConfirm;
-                                    this.focus.clear();
+                                    if this.context.payment_secret.is_empty() {
+                                        this.context.payment_secret_submitted = true;
+                                    } else if this.context.import_with_bip39_passphrase {
+                                        proceed = true;
+                                    } else {
+                                        this.state = State::CreateWalletConfirm;
+                                        this.focus.clear();
+                                    }
+                                }
+                                if this.context.payment_secret_submitted {
+                                    ui.label(RichText::new(i18n("Please provide BIP39 passphrase.")).color(egui::Color32::from_rgb(255, 120, 120)));
                                 }
                             }
                         })
                         .with_footer(|this,ui| {
 
-                            if this.context.enable_payment_secret {
+                            if this.context.enable_payment_secret || this.context.import_with_bip39_passphrase {
                                 let is_weak = !core.settings.developer.password_restrictions_disabled() && this.context.payment_secret_score.unwrap_or_default() < 80.0;
-                                let enabled = this.context.wallet_secret == this.context.wallet_secret_confirm && this.context.wallet_secret.is_not_empty();
+                                let enabled = this.context.payment_secret == this.context.payment_secret_confirm && this.context.payment_secret.is_not_empty();
                                 if ui.large_button_enabled(enabled && !is_weak, i18n("Continue")).clicked() {
-                                    proceed = true;
+                                    continue_or_skip = true;
                                 }
                             } else if ui.large_button_enabled(true, i18n("Skip")).clicked() {
-                                proceed = true;
+                                this.context.payment_secret.zeroize();
+                                continue_or_skip = true;
                             }
 
                         })
                         .render(ui);
                 }
 
-                if proceed {
+                if proceed || continue_or_skip{
                     if self.context.import_private_key_file {
                         self.state = State::ImportWallet;
                         self.focus.clear();
@@ -1167,7 +1181,7 @@ impl ModuleT for WalletCreate {
                                     prv_key_data_id,
                                     args.account_name.is_not_empty().then_some(args.account_name.clone()),
                                 );
-                                account_descriptors.push(wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?);
+                                account_descriptors.push(wallet.clone().accounts_import(wallet_secret.clone(), account_create_args).await?);
                             }
                         }else{
                             for account_index in 0..number_of_accounts {
@@ -1177,7 +1191,8 @@ impl ModuleT for WalletCreate {
                                     args.account_name.is_not_empty().then_some(args.account_name.clone()),
                                     Some(account_index as u64),
                                 );
-                                account_descriptors.push(wallet.clone().accounts_create(wallet_secret.clone(), account_create_args).await?);
+                                // log_info!("account_create_args: {:?}", account_create_args);
+                                account_descriptors.push(wallet.clone().accounts_import(wallet_secret.clone(), account_create_args).await?);
                             }
                         }
 

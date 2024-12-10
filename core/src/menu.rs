@@ -531,7 +531,8 @@ impl<'core> Menu<'core> {
                         ui.label(i18n("Theme Color"));
                         ui.vertical(|ui| {
                             ui.horizontal(|ui| {
-                                let current_theme_color_name = theme_color().name();
+                                let theme_color = theme_color();
+                                let current_theme_color_name = theme_color.name();
                                 ui.menu_button(format!("{} ⏷", current_theme_color_name), |ui| {
                                     theme_colors().keys().for_each(|name| {
                                         if name.as_str() != current_theme_color_name
@@ -552,7 +553,8 @@ impl<'core> Menu<'core> {
 
                         ui.label(i18n("Theme Style"));
                         ui.horizontal(|ui| {
-                            let current_theme_style_name = theme_style().name();
+                            let theme_style = theme_style();
+                            let current_theme_style_name = theme_style.name();
                             ui.menu_button(format!("{} ⏷", current_theme_style_name), |ui| {
                                 theme_styles().keys().for_each(|name| {
                                     if name.as_str() != current_theme_style_name

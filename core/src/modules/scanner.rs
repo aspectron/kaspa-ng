@@ -284,6 +284,7 @@ impl ModuleT for Scanner {
                                     transfer_funds,
                                     None,
                                     &abortable,
+                                    true,
                                     Some(Arc::new(move |index,utxo_count, balance, txid|{
                                         if let Some(_txid) = txid {
                                             // println!("txid: {}", txid);
