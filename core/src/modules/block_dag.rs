@@ -171,7 +171,7 @@ impl ModuleT for BlockDag {
             ui.heading(i18n("Block DAG"));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                PopupPanel::new(PopupPanel::id(ui,"block_dag_settings"),|ui|{ ui.add(Label::new("Settings ⏷").sense(Sense::click())) }, |ui, _| {
+                PopupPanel::new(PopupPanel::id(ui,"block_dag_settings"),|ui|{ ui.add(Label::new(format!("{} ⏷", i18n("Settings"))).sense(Sense::click())) }, |ui, _| {
 
                     CollapsingHeader::new(i18n("Dimensions"))
                         .open(Some(true))

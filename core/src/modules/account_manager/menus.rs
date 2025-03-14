@@ -23,7 +23,7 @@ impl WalletMenu {
         let wallet_name = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
             wallet_descriptor.title.as_deref().unwrap_or(wallet_descriptor.filename.as_str()).to_string()
         } else {
-            ui.label("Missing wallet descriptor");
+            ui.label(i18n("Missing wallet descriptor"));
             return;
         };
 
@@ -41,7 +41,7 @@ impl WalletMenu {
         let wallet_filename = if let Some(wallet_descriptor) = core.wallet_descriptor.as_ref() {
             wallet_descriptor.filename.clone()
         } else {
-            ui.label("Missing wallet descriptor");
+            ui.label(i18n("Missing wallet descriptor"));
             return;
         };
 
@@ -241,7 +241,7 @@ impl ToolsMenu {
     }
     pub fn render(&mut self, core: &mut Core, ui : &mut Ui, _account_manager : &mut AccountManager, _rc : &RenderContext, max_height: f32) {
 
-        PopupPanel::new(PopupPanel::id(ui,"tools_popup"),|ui|{ ui.add(Label::new(i18n("Tools ⏷")).sense(Sense::click())) }, |ui, _| {
+        PopupPanel::new(PopupPanel::id(ui,"tools_popup"),|ui|{ ui.add(Label::new(format!("{} ⏷", i18n("Tools"))).sense(Sense::click())) }, |ui, _| {
 
             egui::ScrollArea::vertical()
                 .id_source("tools_popup_scroll")
