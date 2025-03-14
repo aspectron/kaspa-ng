@@ -304,7 +304,7 @@ impl Overview {
                     });
 
                 if let Some(release) = core.release.as_ref() {
-                    let is_greater = is_version_greater(crate::app::VERSION.as_str(), release.version.as_str()).ok().unwrap_or(false);
+                    let is_greater = is_version_greater(crate::app::VERSION, release.version.as_str()).ok().unwrap_or(false);
                     if is_wasm() || !is_greater {
                         CollapsingHeader::new(i18n("Redistributables"))
                             .id_source("redistributables")

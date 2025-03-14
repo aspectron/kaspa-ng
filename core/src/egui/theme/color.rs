@@ -220,17 +220,20 @@ impl ThemeColor {
     }
 }
 
-static mut THEME_COLOR_LIST: Option<HashMap<String, ThemeColor>> = None;
-pub fn theme_colors() -> &'static HashMap<String, ThemeColor> {
-    unsafe {
-        THEME_COLOR_LIST.get_or_insert_with(|| {
+static THEME_COLOR_LIST: Mutex<Option<Arc<HashMap<String, ThemeColor>>>> = Mutex::new(None);
+
+#[inline(always)]
+pub fn theme_colors() -> Arc<HashMap<String, ThemeColor>> {
+    let mut colors_lock = THEME_COLOR_LIST.lock().unwrap();
+    colors_lock
+        .get_or_insert_with(|| {
             let mut themes = HashMap::new();
             [ThemeColor::dark(), ThemeColor::light()]
                 .into_iter()
                 .for_each(|theme| {
                     themes.insert(theme.name.clone(), theme.clone());
                 });
-            themes
+            Arc::new(themes)
         })
-    }
+        .clone()
 }

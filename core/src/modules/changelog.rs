@@ -41,7 +41,7 @@ impl ModuleT for Changelog {
                 .auto_shrink([false; 2])
                 .max_height(max_height)
                 .show(ui, |ui| {
-                    easy_mark(ui, self.changelog.as_str());
+                    easy_mark(ui, self.changelog);
                 });
 
             ui.vertical_centered(|ui|{

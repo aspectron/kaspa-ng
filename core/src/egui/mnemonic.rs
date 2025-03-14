@@ -91,7 +91,7 @@ impl<'render> MnemonicPresenter<'render> {
                                 .show(ui, |ui| {
                                     let frame_width = ui.available_width();
                                     let num_cols = (frame_width / width_per_col).max(1.0) as usize;
-                                    let num_rows = (words.len() + (num_cols - 1)) / num_cols;
+                                    let num_rows = words.len().div_ceil(num_cols);
 
                                     ui.set_max_height(num_rows as f32 * 32.);
 
