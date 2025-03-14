@@ -4036,6 +4036,7 @@
       "Your private key mnemonic is:": "Your private key mnemonic is:",
       "Your wallet has been created and is ready to use.": "Your wallet has been created and is ready to use.",
       "Zoom": "Zoom",
+      "amount to send": "amount to send",
       "bye!": "bye!",
       "gRPC Network Interface & Port": "gRPC Network Interface & Port",
       "gRPC Rx": "gRPC Rx",
