@@ -1,5 +1,5 @@
 use crate::imports::*;
-use kaspa_wallet_core::{wallet::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs}, encryption::EncryptionKind, api::{AccountsDiscoveryRequest, AccountsDiscoveryKind}};
+use kaspa_wallet_core::{api::{AccountsDiscoveryKind, AccountsDiscoveryRequest}, encryption::EncryptionKind, storage::keydata::PrvKeyDataVariantKind, wallet::{AccountCreateArgs, PrvKeyDataCreateArgs, WalletCreateArgs}};
 use slug::slugify;
 use kaspa_bip32::{WordCount, Mnemonic, Language};
 use crate::utils::{secret_score, secret_score_to_text};
@@ -1170,6 +1170,7 @@ impl ModuleT for WalletCreate {
                             None,
                             payment_secret.clone(),
                             mnemonic,
+                            PrvKeyDataVariantKind::Mnemonic,
                         );
 
                         let prv_key_data_id = wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?;
@@ -1272,6 +1273,7 @@ impl ModuleT for WalletCreate {
                             None,
                             payment_secret.clone(),
                             Secret::from(mnemonic_phrase_string.clone()),
+                            PrvKeyDataVariantKind::Mnemonic,
                         );
 
                         let prv_key_data_id = wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?;
