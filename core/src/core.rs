@@ -799,8 +799,8 @@ impl Core {
             Events::Wallet { event } => {
                 // println!("event: {:?}", event);
                 match *event {
-                    CoreWallet::WalletList { .. } => {},
-                    CoreWallet::FeeRate { .. } => {},
+                    CoreWallet::WalletList { .. } => {}
+                    CoreWallet::FeeRate { .. } => {}
                     CoreWallet::WalletPing => {
                         // log_info!("received wallet ping event...");
                         // crate::runtime::runtime().notify(UserNotification::info("Wallet ping"));
