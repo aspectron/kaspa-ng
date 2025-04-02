@@ -3466,7 +3466,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-addresses"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "borsh",
  "js-sys",
@@ -3480,7 +3481,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-addressmanager"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "borsh",
  "igd-next",
@@ -3501,14 +3503,16 @@ dependencies = [
 
 [[package]]
 name = "kaspa-alloc"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "mimalloc",
 ]
 
 [[package]]
 name = "kaspa-bip32"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "borsh",
  "bs58",
@@ -3534,7 +3538,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-cli"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3581,7 +3586,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-connectionmanager"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "duration-string",
  "futures-util",
@@ -3598,7 +3604,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "arc-swap",
  "async-channel 2.3.1",
@@ -3638,7 +3645,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus-client"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "ahash",
  "cfg-if 1.0.0",
@@ -3666,7 +3674,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus-core"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "arc-swap",
  "async-trait",
@@ -3701,7 +3710,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus-notify"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "cfg-if 1.0.0",
@@ -3720,7 +3730,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus-wasm"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "cfg-if 1.0.0",
  "faster-hex",
@@ -3744,7 +3755,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensusmanager"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "duration-string",
  "futures",
@@ -3763,7 +3775,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-core"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "anyhow",
  "cfg-if 1.0.0",
@@ -3782,7 +3795,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-daemon"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3804,7 +3818,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-database"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "bincode",
  "enum-primitive-derive",
@@ -3826,7 +3841,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-grpc-client"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "async-stream",
@@ -3858,7 +3874,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-grpc-core"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "async-stream",
@@ -3888,7 +3905,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-grpc-server"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "async-stream",
@@ -3923,7 +3941,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-hashes"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "blake2b_simd",
  "borsh",
@@ -3941,7 +3960,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-index-core"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "async-trait",
@@ -3960,7 +3980,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-index-processor"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "async-trait",
@@ -3985,7 +4006,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-math"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "borsh",
  "faster-hex",
@@ -4004,14 +4026,16 @@ dependencies = [
 
 [[package]]
 name = "kaspa-merkle"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "kaspa-hashes",
 ]
 
 [[package]]
 name = "kaspa-metrics-core"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-trait",
  "borsh",
@@ -4027,7 +4051,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-mining"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "futures-util",
  "itertools 0.13.0",
@@ -4052,7 +4077,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-mining-errors"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "kaspa-consensus-core",
  "thiserror 1.0.69",
@@ -4060,7 +4086,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-muhash"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "kaspa-hashes",
  "kaspa-math",
@@ -4070,7 +4097,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng"
-version = "0.3.0"
+version = "1.0.0"
 dependencies = [
  "cfg-if 1.0.0",
  "kaspa-alloc",
@@ -4082,7 +4109,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-chrome"
-version = "0.3.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "borsh",
@@ -4105,7 +4132,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-core"
-version = "0.3.0"
+version = "1.0.0"
 dependencies = [
  "ahash",
  "async-trait",
@@ -4186,7 +4213,7 @@ dependencies = [
 
 [[package]]
 name = "kaspa-ng-macros"
-version = "0.3.0"
+version = "1.0.0"
 dependencies = [
  "convert_case 0.6.0",
  "parse-variants",
@@ -4200,7 +4227,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-notify"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "async-trait",
@@ -4231,7 +4259,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-p2p-flows"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4249,6 +4278,7 @@ dependencies = [
  "kaspa-muhash",
  "kaspa-notify",
  "kaspa-p2p-lib",
+ "kaspa-p2p-mining",
  "kaspa-utils",
  "kaspa-utils-tower",
  "log",
@@ -4262,7 +4292,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-p2p-lib"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "borsh",
  "ctrlc",
@@ -4291,8 +4322,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "kaspa-p2p-mining"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
+dependencies = [
+ "kaspa-consensus-core",
+ "kaspa-consensusmanager",
+ "kaspa-core",
+ "kaspa-hashes",
+ "kaspa-math",
+ "kaspa-mining-errors",
+ "kaspa-p2p-lib",
+ "kaspa-utils",
+ "kaspa-utils-tower",
+ "log",
+ "tokio",
+]
+
+[[package]]
 name = "kaspa-perf-monitor"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "kaspa-core",
  "log",
@@ -4304,7 +4354,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-pow"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "js-sys",
  "kaspa-consensus-client",
@@ -4319,7 +4370,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-rpc-core"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "async-trait",
@@ -4360,7 +4412,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-rpc-macros"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-error",
@@ -4372,7 +4425,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-rpc-service"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-trait",
  "kaspa-addresses",
@@ -4387,6 +4441,7 @@ dependencies = [
  "kaspa-notify",
  "kaspa-p2p-flows",
  "kaspa-p2p-lib",
+ "kaspa-p2p-mining",
  "kaspa-perf-monitor",
  "kaspa-rpc-core",
  "kaspa-txscript",
@@ -4401,7 +4456,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-txscript"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "blake2b_simd",
  "borsh",
@@ -4431,7 +4487,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-txscript-errors"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "secp256k1",
  "thiserror 1.0.69",
@@ -4439,7 +4496,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-utils"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "arc-swap",
  "async-channel 2.3.1",
@@ -4468,7 +4526,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-utils-tower"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "bytes",
  "cfg-if 1.0.0",
@@ -4484,7 +4543,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-utxoindex"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "futures",
  "kaspa-consensus-core",
@@ -4503,7 +4563,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wallet-core"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "aes",
  "ahash",
@@ -4581,7 +4642,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wallet-keys"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-trait",
  "borsh",
@@ -4613,7 +4675,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wallet-macros"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "convert_case 0.5.0",
  "proc-macro-error",
@@ -4626,7 +4689,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wallet-pskt"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "bincode",
  "derive_builder",
@@ -4654,7 +4718,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wasm-core"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "faster-hex",
  "hexplay",
@@ -4665,7 +4730,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wrpc-client"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-std",
  "async-trait",
@@ -4701,7 +4767,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wrpc-server"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-trait",
  "borsh",
@@ -4729,7 +4796,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wrpc-wasm"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "ahash",
  "async-std",
@@ -4759,7 +4827,8 @@ dependencies = [
 
 [[package]]
 name = "kaspad"
-version = "0.17.1"
+version = "1.0.0"
+source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#8b9beba7382c503c88003f1183e90c87c253bc64"
 dependencies = [
  "async-channel 2.3.1",
  "cfg-if 1.0.0",
@@ -4782,6 +4851,8 @@ dependencies = [
  "kaspa-mining",
  "kaspa-notify",
  "kaspa-p2p-flows",
+ "kaspa-p2p-lib",
+ "kaspa-p2p-mining",
  "kaspa-perf-monitor",
  "kaspa-rpc-core",
  "kaspa-rpc-service",

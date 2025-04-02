@@ -54,7 +54,6 @@ impl Welcome {
                                     // ui.colored_label(theme_color().warning_color, i18n("Please note that this is a beta release. Until this message is removed, please avoid using the wallet with mainnet funds."));
                                 }
                                 Network::Testnet10 => { }
-                                Network::Testnet11 => { }
                             }
                         });
                 

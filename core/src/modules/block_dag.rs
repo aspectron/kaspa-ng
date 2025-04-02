@@ -56,8 +56,7 @@ impl From<Network> for Preset {
     fn from(network: Network) -> Self {
         match network {
             Network::Mainnet => PRESETS[0].clone(),
-            Network::Testnet10 => PRESETS[0].clone(),
-            Network::Testnet11 => PRESETS[3].clone(),
+            Network::Testnet10 => PRESETS[3].clone(),
         }
     }
 }

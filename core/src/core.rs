@@ -15,7 +15,6 @@ use workflow_wasm::callback::CallbackMap;
 pub const TRANSACTION_PAGE_SIZE: u64 = 20;
 pub const MAINNET_EXPLORER: &str = "https://explorer.kaspa.org";
 pub const TESTNET10_EXPLORER: &str = "https://explorer-tn10.kaspa.org";
-pub const TESTNET11_EXPLORER: &str = "https://explorer-tn11.kaspa.org";
 
 pub enum Exception {
     #[allow(dead_code)]

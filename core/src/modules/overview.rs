@@ -243,28 +243,28 @@ impl Overview {
                                 self.render_fee_rate(core, ui);
                             });
                     }
-                    Network::Testnet11 => {
-                        CollapsingHeader::new(i18n("Testnet 11"))
-                            .default_open(true)
-                            .show(ui, |ui| {
-                                CollapsingHeader::new(i18n("Resources"))
-                                    .default_open(true)
-                                    .show(ui, |ui| {
-                                        use egui_phosphor::light::{HAND_COINS,DATABASE};
+                    // Network::Testnet11 => {
+                    //     CollapsingHeader::new(i18n("Testnet 11"))
+                    //         .default_open(true)
+                    //         .show(ui, |ui| {
+                    //             CollapsingHeader::new(i18n("Resources"))
+                    //                 .default_open(true)
+                    //                 .show(ui, |ui| {
+                    //                     use egui_phosphor::light::{HAND_COINS,DATABASE};
                 
-                                        ui.hyperlink_to_tab(
-                                            format!("• {DATABASE} {}",i18n("Explorer")),
-                                            "https://explorer-tn11.kaspa.org/",
-                                        );
-                                        ui.hyperlink_to_tab(
-                                            format!("• {HAND_COINS} {}",i18n("Faucet")),
-                                            "https://faucet-t11.kaspanet.io",
-                                        );
-                                    });
-                                self.render_network_info(core, ui);
-                                self.render_fee_rate(core, ui);
-                            });
-                    }
+                    //                     ui.hyperlink_to_tab(
+                    //                         format!("• {DATABASE} {}",i18n("Explorer")),
+                    //                         "https://explorer-tn11.kaspa.org/",
+                    //                     );
+                    //                     ui.hyperlink_to_tab(
+                    //                         format!("• {HAND_COINS} {}",i18n("Faucet")),
+                    //                         "https://faucet-t11.kaspanet.io",
+                    //                     );
+                    //                 });
+                    //             self.render_network_info(core, ui);
+                    //             self.render_fee_rate(core, ui);
+                    //         });
+                    // }
                 }
 
                 CollapsingHeader::new(i18n("Developer Resources"))

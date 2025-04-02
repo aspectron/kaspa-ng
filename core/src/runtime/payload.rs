@@ -90,12 +90,12 @@ where
         }
     }
 
-    pub fn inner_clone(&self) -> Option<T>
-    where
-        T: Clone,
-    {
-        self.inner.payload.lock().unwrap().clone().take()
-    }
+    // pub fn inner_clone(&self) -> Option<T>
+    // where
+    //     T: Clone,
+    // {
+    //     self.inner.payload.lock().unwrap().clone().take()
+    // }
 }
 
 fn registry() -> &'static Mutex<HashMap<String, Box<dyn Any + Sync + Send>>> {
