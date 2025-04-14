@@ -220,9 +220,8 @@ impl Welcome {
                     ui.add_space(8.);
                 });
 
-                ui.add_space(32.0);
-                
-                ui.colored_label(theme_color().alert_color, RichText::new("β").size(64.0));
+                // ui.add_space(32.0);
+                // ui.colored_label(theme_color().alert_color, RichText::new("β").size(64.0));
                 // ui.add_space(8.0);
                 // ui.colored_label(theme_color().alert_color, "Please note - this is a beta release - Kaspa NG is still in early development and is not yet ready for production use.");
             })
