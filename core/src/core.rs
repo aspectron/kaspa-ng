@@ -787,7 +787,7 @@ impl Core {
             Events::NodeInfo { node_info } => {
                 self.node_info = node_info;
             }
-            Events::Close { .. } => {}
+            Events::Close => {}
             Events::UnlockSuccess => {}
             Events::UnlockFailure { .. } => {}
             Events::PrvKeyDataInfo {
