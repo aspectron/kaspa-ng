@@ -15,7 +15,6 @@ use workflow_wasm::callback::CallbackMap;
 pub const TRANSACTION_PAGE_SIZE: u64 = 20;
 pub const MAINNET_EXPLORER: &str = "https://explorer.kaspa.org";
 pub const TESTNET10_EXPLORER: &str = "https://explorer-tn10.kaspa.org";
-pub const TESTNET11_EXPLORER: &str = "https://explorer-tn11.kaspa.org";
 
 pub enum Exception {
     #[allow(dead_code)]
@@ -788,7 +787,7 @@ impl Core {
             Events::NodeInfo { node_info } => {
                 self.node_info = node_info;
             }
-            Events::Close { .. } => {}
+            Events::Close => {}
             Events::UnlockSuccess => {}
             Events::UnlockFailure { .. } => {}
             Events::PrvKeyDataInfo {
@@ -799,6 +798,8 @@ impl Core {
             Events::Wallet { event } => {
                 // println!("event: {:?}", event);
                 match *event {
+                    CoreWallet::WalletList { .. } => {}
+                    CoreWallet::FeeRate { .. } => {}
                     CoreWallet::WalletPing => {
                         // log_info!("received wallet ping event...");
                         // crate::runtime::runtime().notify(UserNotification::info("Wallet ping"));

@@ -1,3 +1,4 @@
+use kaspa_wallet_core::storage::keydata::PrvKeyDataVariantKind;
 use modules::wallet_create::WalletCreate;
 
 use crate::imports::*;
@@ -458,6 +459,7 @@ impl ModuleT for AccountCreate {
                                 key_data_name,
                                 payment_secret.clone(),
                                 mnemonic,
+                                PrvKeyDataVariantKind::Mnemonic,
                             );
                             wallet.clone().prv_key_data_create(wallet_secret.clone(), prv_key_data_args).await?
                         }else{

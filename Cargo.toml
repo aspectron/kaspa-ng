@@ -10,7 +10,7 @@ default-members = ["app"]
 
 [workspace.package]
 rust-version = "1.81.0"
-version = "0.3.0"
+version = "1.0.0"
 authors = ["ASPECTRON Inc.","Kaspa Developers"]
 license = "PROPRIETARY"
 edition = "2021"
@@ -18,9 +18,9 @@ repository = "https://github.com/aspectron/kaspa-ng"
 
 [workspace.dependencies]
 
-kaspa-ng = { version = "0.3.0", path = "app/", default-features = false }
-kaspa-ng-core = { version = "0.3.0", path = "core/", default-features = false }
-kaspa-ng-macros = { version = "0.3.0", path = "macros/", default-features = false }
+kaspa-ng = { version = "1.0.0", path = "app/", default-features = false }
+kaspa-ng-core = { version = "1.0.0", path = "core/", default-features = false }
+kaspa-ng-macros = { version = "1.0.0", path = "macros/", default-features = false }
 
 # ___________________
 #  ____ ____ _  _ _ 

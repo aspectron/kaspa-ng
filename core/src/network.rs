@@ -14,8 +14,6 @@ pub enum Network {
     Mainnet,
     #[serde(alias = "testnet-10")]
     Testnet10,
-    #[serde(alias = "testnet-11")]
-    Testnet11,
 }
 
 impl std::fmt::Display for Network {
@@ -23,7 +21,6 @@ impl std::fmt::Display for Network {
         match self {
             Network::Mainnet => write!(f, "mainnet"),
             Network::Testnet10 => write!(f, "testnet-10"),
-            Network::Testnet11 => write!(f, "testnet-11"),
         }
     }
 }
@@ -35,7 +32,6 @@ impl FromStr for Network {
         match s {
             "mainnet" => Ok(Network::Mainnet),
             "testnet-10" => Ok(Network::Testnet10),
-            "testnet-11" => Ok(Network::Testnet11),
             _ => Err(Error::InvalidNetwork(s.to_string())),
         }
     }
@@ -46,7 +42,6 @@ impl From<Network> for NetworkType {
         match network {
             Network::Mainnet => NetworkType::Mainnet,
             Network::Testnet10 => NetworkType::Testnet,
-            Network::Testnet11 => NetworkType::Testnet,
         }
     }
 }
@@ -56,7 +51,6 @@ impl From<&Network> for NetworkType {
         match network {
             Network::Mainnet => NetworkType::Mainnet,
             Network::Testnet10 => NetworkType::Testnet,
-            Network::Testnet11 => NetworkType::Testnet,
         }
     }
 }
@@ -66,7 +60,6 @@ impl From<Network> for NetworkId {
         match network {
             Network::Mainnet => NetworkId::new(network.into()),
             Network::Testnet10 => NetworkId::with_suffix(network.into(), 10),
-            Network::Testnet11 => NetworkId::with_suffix(network.into(), 11),
         }
     }
 }
@@ -88,7 +81,6 @@ impl From<&Network> for NetworkId {
         match network {
             Network::Mainnet => NetworkId::new(network.into()),
             Network::Testnet10 => NetworkId::with_suffix(network.into(), 10),
-            Network::Testnet11 => NetworkId::with_suffix(network.into(), 11),
         }
     }
 }
@@ -99,7 +91,6 @@ impl From<NetworkId> for Network {
             NetworkType::Mainnet => Network::Mainnet,
             NetworkType::Testnet => match value.suffix {
                 Some(10) => Network::Testnet10,
-                Some(11) => Network::Testnet11,
                 Some(x) => unreachable!("Testnet suffix {} is not supported", x),
                 None => panic!("Testnet suffix not provided"),
             },
@@ -133,7 +124,7 @@ impl From<&Network> for &'static NetworkParams {
     }
 }
 
-const NETWORKS: [Network; 3] = [Network::Mainnet, Network::Testnet10, Network::Testnet11];
+const NETWORKS: [Network; 2] = [Network::Mainnet, Network::Testnet10];
 
 impl Network {
     pub fn iter() -> impl Iterator<Item = &'static Network> {
@@ -144,21 +135,20 @@ impl Network {
         match self {
             Network::Mainnet => i18n("Mainnet"),
             Network::Testnet10 => i18n("Testnet 10"),
-            Network::Testnet11 => i18n("Testnet 11"),
         }
     }
 
     pub fn describe(&self) -> &str {
         match self {
             Network::Mainnet => i18n("Main Kaspa network"),
-            Network::Testnet10 => i18n("1 BPS test network"),
-            Network::Testnet11 => i18n("10 BPS test network"),
+            Network::Testnet10 => i18n("10 BPS test network"),
         }
     }
 
     pub fn tps(&self) -> u64 {
         let params = Params::from(*self);
-        params.max_block_mass / BASIC_TRANSACTION_MASS * params.bps()
+        // TODO: use DAA score to determine the correct BPS value
+        params.max_block_mass / BASIC_TRANSACTION_MASS * params.bps().after()
     }
 }
 

@@ -94,7 +94,7 @@ impl SyncStatus {
                 caption: i18n("Syncing...").to_string(),
                 ..Default::default()
             },
-            SyncState::Synced { .. } => SyncStatus {
+            SyncState::Synced => SyncStatus {
                 caption: i18n("Ready...").to_string(),
                 synced: true,
                 ..Default::default()

@@ -1,5 +1,12 @@
 # Changelog
 
+# 1.0.0
+
+- Rusty Kaspa 1.0.0 (Crescendo support)
+- Remove legacy testnet-11 support.
+- Update testnet-10 to 10 BPS (visualizer & load estimation).
+- Fix occasional issues detecting previously used addresses when importing legacy wallets.
+
 # 0.3.0
 
 - Rusty Kaspa 0.15.1 
