@@ -1,5 +1,9 @@
 # Changelog
 
+# 1.0.1
+
+- Resolve issues that came up during `1.0.0` pre-release testing.
+
 # 1.0.0
 
 - Rusty Kaspa 1.0.0 (Crescendo support)
