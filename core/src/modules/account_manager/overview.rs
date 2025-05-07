@@ -22,7 +22,7 @@ impl<'manager> Overview<'manager> {
         ui.add_space(8.);
 
         egui::ScrollArea::vertical()
-            .id_source("overview_metrics")
+            .id_salt("overview_metrics")
             .auto_shrink([false; 2])
             .show(ui, |ui| {
 

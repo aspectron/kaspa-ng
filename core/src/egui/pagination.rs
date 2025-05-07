@@ -227,7 +227,7 @@ fn add_num_btn(ui: &mut Ui, active: bool, text: impl Into<WidgetText>, min_size:
     ui.add_enabled(
         !active,
         Button::new(text)
-            .rounding(ui.visuals().widgets.hovered.rounding)
+            .corner_radius(ui.visuals().widgets.hovered.corner_radius)
             .selected(active)
             .min_size(min_size),
     )

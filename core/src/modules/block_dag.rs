@@ -181,33 +181,33 @@ impl ModuleT for BlockDag {
                             ui.space();
                             ui.add(
                                 Slider::new(&mut self.daa_range, 1.0..=self.settings.graph_length_daa as f64)
-                                    .clamp_to_range(true)
+                                    .clamping(SliderClamping::Always)
                                     .logarithmic(true)
                                     .text(i18n("DAA Range"))
                             );
                             ui.space();
                             ui.add(
                                 Slider::new(&mut self.daa_offset, 1.0..=50.0)
-                                    .clamp_to_range(true)
+                                    .clamping(SliderClamping::Always)
                                     .text(i18n("DAA Offset"))
                                     // .step_by(1.0)
                             );
                             ui.space();
                             ui.add(
                                 Slider::new(&mut self.settings.y_dist, 1.0..=100.0)
-                                    .clamp_to_range(true)
+                                    .clamping(SliderClamping::Always)
                                     .text(i18n("Spread"))
                             );
                             ui.space();
                             ui.add(
                                 Slider::new(&mut self.settings.noise, 0.0..=10.0)
-                                    .clamp_to_range(true)
+                                    .clamping(SliderClamping::Always)
                                     .text(i18n("Noise"))
                             );
                             ui.space();
                             ui.add(
                                 Slider::new(&mut self.block_scale, 0.1..=2.5)
-                                    .clamp_to_range(true)
+                                    .clamping(SliderClamping::Always)
                                     .logarithmic(true)
                                     .text(i18n("Block Scale"))
                             );
@@ -223,14 +223,14 @@ impl ModuleT for BlockDag {
                             
                             ui.add(
                                 Slider::new(&mut self.parent_levels, 1..=50)
-                                    .clamp_to_range(true)
+                                    .clamping(SliderClamping::Always)
                                     .text(i18n("Levels"))
                                     .step_by(1.0)
                             );
                             ui.space();
                             ui.add(
                                 Slider::new(&mut self.parent_threshold, 200..=1000)
-                                    .clamp_to_range(true)
+                                    .clamping(SliderClamping::Always)
                                     .logarithmic(true)
                                     .text(i18n("Threshold"))
                             );
@@ -371,10 +371,10 @@ impl ModuleT for BlockDag {
 
         // kick it into gear when starting up
         if reset_plot {
-            plot = plot.auto_bounds([true, true].into());
+            plot = plot.auto_bounds([true, true]);
             plot = plot.reset();
         } else {
-            plot = plot.auto_bounds([false, false].into());
+            plot = plot.auto_bounds([false, false]);
         }
 
         let mut graph_settled = true;
@@ -437,16 +437,16 @@ impl ModuleT for BlockDag {
                             ].into_iter().map(|pt|pt.into()).collect::<Vec<_>>()
                         };
                         if self.settings.show_vspc && level == 0 && *current_vspc && parent_vspc {
-                            lines_vspc.push(Line::new(PlotPoints::Owned(points)).color(theme_color.block_dag_vspc_connect_color).style(LineStyle::Solid).width(3.0));
+                            lines_vspc.push(Line::new("", PlotPoints::Owned(points)).color(theme_color.block_dag_vspc_connect_color).style(LineStyle::Solid).width(3.0));
                         } else {
-                            lines_parent.push(Line::new(PlotPoints::Owned(points)).color(theme_color.block_dag_parent_connect_color).style(LineStyle::Solid));
+                            lines_parent.push(Line::new("", PlotPoints::Owned(points)).color(theme_color.block_dag_parent_connect_color).style(LineStyle::Solid));
                         }
                     }
                 }
             }
 
             let d = 1.5 * self.block_scale;
-            let points: PlotPoints = [
+            let points: PlotPoints<'_> = [
                 [x+d*0.2, y+d],
                 [x-d*0.2, y+d],
                 [x-d*0.2, y-d],
@@ -459,7 +459,7 @@ impl ModuleT for BlockDag {
                 theme_color.block_dag_block_fill_color
             };
 
-            Polygon::new(points)
+            Polygon::new("polygon1", points)
                 .name(block.header.hash.to_string())
                 .fill_color(fill_color)
                 .stroke(Stroke::new(1.0, theme_color.block_dag_block_stroke_color))
@@ -474,7 +474,7 @@ impl ModuleT for BlockDag {
         //         [x, 0.0 - y_dist],
         //         [x, 0.0 + y_dist],
         //     ].to_vec().into();
-        //     Line::new(points).color(theme_color.block_dag_separator_color).style(LineStyle::Dotted { spacing: 0.75 })
+        //     Line::new("", points).color(theme_color.block_dag_separator_color).style(LineStyle::Dotted { spacing: 0.75 })
         // }).collect::<Vec<_>>();
 
         let plot_response = plot.show(ui, |plot_ui| {

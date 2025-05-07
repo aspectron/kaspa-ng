@@ -82,12 +82,12 @@ impl<'render> MnemonicPresenter<'render> {
                     strip.empty();
                     strip.cell(|ui| {
                         ui.vertical(|ui| {
-                            Frame::none()
+                            Frame::new()
                                 .stroke(Stroke::new(1.0, Color32::from_black_alpha(48)))
                                 .fill(Color32::from_black_alpha(32))
                                 .inner_margin(16.)
                                 .outer_margin(0.)
-                                .rounding(8.)
+                                .corner_radius(8.)
                                 .show(ui, |ui| {
                                     let frame_width = ui.available_width();
                                     let num_cols = (frame_width / width_per_col).max(1.0) as usize;
@@ -123,7 +123,8 @@ impl<'render> MnemonicPresenter<'render> {
                 ui.label("");
 
                 if ui.medium_button(format!("{CLIPBOARD_TEXT} Copy to clipboard")).clicked() {
-                    ui.output_mut(|o| o.copied_text = self.phrase.to_string());
+                    //ui.output_mut(|o| o.copied_text = self.phrase.to_string());
+                    ui.ctx().copy_text(self.phrase.to_string());
                     runtime().notify_clipboard(i18n("Copied to clipboard"));
                 }
             }
@@ -131,17 +132,17 @@ impl<'render> MnemonicPresenter<'render> {
     }
 
     fn render_word(ui: &mut Ui, word: &str, seq: usize, font_size: f32) {
-        Frame::none()
+        Frame::new()
             .stroke(Stroke::new(1.0, Color32::DARK_GRAY))
             .fill(Color32::from_black_alpha(32))
             .inner_margin(Margin {
-                left: 4.,
-                right: 4.,
-                top: 10.,
-                bottom: 10.,
+                left: 4,
+                right: 4,
+                top: 10,
+                bottom: 10,
             })
             .outer_margin(4.)
-            .rounding(8.)
+            .corner_radius(8.)
             .show(ui, |ui| {
                 ui.label(
                     RichText::new(format!("{seq:>2}."))

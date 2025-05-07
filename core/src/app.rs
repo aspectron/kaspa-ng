@@ -272,7 +272,7 @@ cfg_if! {
                     let native_options = eframe::NativeOptions {
                         persist_window : true,
                         viewport,
-                        follow_system_theme: false,
+                        //follow_system_theme: false,
                         ..Default::default()
                     };
 
@@ -327,7 +327,7 @@ cfg_if! {
             // Redirect `log` message to `console.log` and friends:
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();
             let web_options = eframe::WebOptions{
-                follow_system_theme: false,
+                //follow_system_theme: false,
                 ..eframe::WebOptions::default()
             };
 

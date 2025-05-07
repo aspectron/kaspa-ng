@@ -45,11 +45,11 @@ impl From<&AppTheme> for Visuals {
             Visuals::light()
         };
 
-        visuals.widgets.active.rounding = theme.style.widget_rounding;
-        visuals.widgets.inactive.rounding = theme.style.widget_rounding;
-        visuals.widgets.hovered.rounding = theme.style.widget_rounding;
-        visuals.widgets.noninteractive.rounding = theme.style.widget_rounding;
-        visuals.widgets.open.rounding = theme.style.widget_rounding;
+        visuals.widgets.active.corner_radius = theme.style.widget_rounding;
+        visuals.widgets.inactive.corner_radius = theme.style.widget_rounding;
+        visuals.widgets.hovered.corner_radius = theme.style.widget_rounding;
+        visuals.widgets.noninteractive.corner_radius = theme.style.widget_rounding;
+        visuals.widgets.open.corner_radius = theme.style.widget_rounding;
 
         visuals.hyperlink_color = theme.color.hyperlink_color;
         visuals.selection.bg_fill = theme.color.selection_background_color;

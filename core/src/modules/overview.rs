@@ -56,7 +56,7 @@ impl ModuleT for Overview {
                         .show_separator_line(true)
                         .show_inside(ui, |ui| {
                             egui::ScrollArea::vertical()
-                            .id_source("overview_metrics")
+                            .id_salt("overview_metrics")
                             .auto_shrink([false; 2])
                             .show(ui, |ui| {
                                 self.render_stats(core,ui);
@@ -125,7 +125,7 @@ impl Overview {
         }
 
         egui::ScrollArea::vertical()
-            .id_source("overview_metrics")
+            .id_salt("overview_metrics")
             .auto_shrink([false; 2])
             .show(ui, |ui| {
 
@@ -307,7 +307,7 @@ impl Overview {
                     let is_greater = is_version_greater(crate::app::VERSION, release.version.as_str()).ok().unwrap_or(false);
                     if is_wasm() || !is_greater {
                         CollapsingHeader::new(i18n("Redistributables"))
-                            .id_source("redistributables")
+                            .id_salt("redistributables")
                             .default_open(true)
                             .show(ui, |ui| {
                                 release.assets.iter().for_each(|asset| {
@@ -319,7 +319,7 @@ impl Overview {
                             });
                     } else {
                         CollapsingHeader::new(RichText::new(format!("{} {}",i18n("Update Available to version"), release.version)).color(theme_color().warning_color).strong())
-                            .id_source("redistributables-update")
+                            .id_salt("redistributables-update")
                             .default_open(true)
                             .show(ui, |ui| {
 
@@ -517,14 +517,14 @@ impl Overview {
         
         ui.vertical(|ui|{
             let frame = 
-            Frame::none()
+            Frame::new()
                 // .fill(Color32::from_rgb(240,240,240))
                 .stroke(Stroke::new(1.0, theme_color().graph_frame_color))
                 // .inner_margin(4.)
-                .inner_margin(Margin { left: 3., right: 3., top: 4., bottom: 4. })
+                .inner_margin(Margin { left: 3, right: 3, top: 4, bottom: 4 })
                 .outer_margin(8.)
-                // .rounding(8.)
-                .rounding(6.);
+                // .corner_radius(8.)
+                .corner_radius(6.);
 
             frame.show(ui, |ui| {
 
@@ -532,7 +532,7 @@ impl Overview {
                     .legend(Legend::default())
                     .width(128.)
                     .height(32.)
-                    .auto_bounds([true, true].into())
+                    .auto_bounds([true, true])
                     .set_margin_fraction(vec2(0.0,0.0) )
                     .show_axes(false)
                     .show_grid(false)
@@ -548,7 +548,7 @@ impl Overview {
                 }
 
                 // let color = graph_color.gamma_multiply(0.5);
-                let line = Line::new(PlotPoints::Owned(graph_data))
+                let line = Line::new("", PlotPoints::Owned(graph_data))
                     // .color(color)
                     .color(graph_color)
                     .style(LineStyle::Solid)

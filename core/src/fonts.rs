@@ -8,7 +8,7 @@ trait RegisterStaticFont {
 impl RegisterStaticFont for FontDefinitions {
     fn add_static(&mut self, family: FontFamily, name: &str, bytes: &'static [u8]) {
         self.font_data
-            .insert(name.to_owned(), FontData::from_static(bytes));
+            .insert(name.to_owned(), FontData::from_static(bytes).into());
 
         self.families
             .entry(family)
@@ -21,7 +21,7 @@ use egui_phosphor::Variant;
 pub fn add_to_fonts(fonts: &mut egui::FontDefinitions, variant: Variant) {
     fonts
         .font_data
-        .insert("phosphor".into(), variant.font_data());
+        .insert("phosphor".into(), variant.font_data().into());
 
     if let Some(font_keys) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
         // font_keys.insert(0, "phosphor".into());
@@ -51,17 +51,17 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
 
     fonts.font_data.insert(
         "ubuntu_mono".to_owned(),
-        egui::FontData::from_static(include_bytes!(
+        std::sync::Arc::new(egui::FontData::from_static(include_bytes!(
             "../resources/fonts/UbuntuMono/UbuntuMono-Regular.ttf"
-        )),
+        ))),
     );
     // ---
 
     fonts.font_data.insert(
         "noto_sans_mono_light".to_owned(),
-        FontData::from_static(include_bytes!(
+        std::sync::Arc::new(FontData::from_static(include_bytes!(
             "../resources/fonts/NotoSans/NotoSansMono-Light.ttf"
-        )),
+        ))),
     );
 
     fonts

@@ -28,7 +28,7 @@ impl ModuleT for Logs {
 
         #[cfg(not(target_arch = "wasm32"))]
         egui::ScrollArea::vertical()
-            .id_source("node_logs")
+            .id_salt("node_logs")
             .auto_shrink([false; 2])
             .stick_to_bottom(true)
             .show(ui, |ui| {
@@ -49,7 +49,8 @@ impl ModuleT for Logs {
             .on_hover_text_at_pointer(i18n("Copy logs to clipboard"))
             .clicked() {
                 let logs = self.runtime.kaspa_service().logs().iter().map(|log| log.to_string()).collect::<Vec<String>>().join("\n");
-                ui.output_mut(|o| o.copied_text = logs);
+                //ui.output_mut(|o| o.copied_text = logs);
+                ui.ctx().copy_text(logs);
                 runtime().notify_clipboard(i18n("Copied to clipboard"));
             }
     }

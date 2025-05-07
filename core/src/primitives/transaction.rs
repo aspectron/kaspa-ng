@@ -254,7 +254,7 @@ impl Transaction {
                 // }, |ui| {
 
                 let mut collapsing_header = CollapsingHeader::new(job)
-                    .id_source(&record_identifier)
+                    .id_salt(&record_identifier)
                     .icon(paint_header_icon)
                     .default_open(false);
 
@@ -434,7 +434,7 @@ impl Transaction {
 
                 // })
                 let mut collapsing_header = CollapsingHeader::new(job)
-                    .id_source(&record_identifier)
+                    .id_salt(&record_identifier)
                     .icon(paint_header_icon)
                     .default_open(false);
                 if !maturity.unwrap_or(true) {
@@ -588,7 +588,7 @@ impl Transaction {
                 );
 
                 let mut collapsing_header = CollapsingHeader::new(job)
-                    .id_source(&record_identifier)
+                    .id_salt(&record_identifier)
                     .icon(paint_header_icon)
                     .default_open(false);
 

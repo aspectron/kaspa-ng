@@ -44,7 +44,7 @@ pub trait UiExtension {
     fn confirm_medium_apply_cancel(&mut self, align: Align) -> Option<Confirm>;
     fn confirm_medium_cancel(&mut self, align: Align) -> Option<Confirm>;
     fn sized_separator(&mut self, size: Vec2) -> Response;
-    fn widgets_rounding(&self) -> Rounding;
+    fn widgets_rounding(&self) -> CornerRadius;
     fn small_separator(&mut self) {
         self.add_separator(self.create_separator(None, 0.5, None));
     }
@@ -108,15 +108,15 @@ impl UiExtension for Ui {
         self.add(separator);
     }
 
-    fn widgets_rounding(&self) -> Rounding {
-        self.visuals().widgets.hovered.rounding
+    fn widgets_rounding(&self) -> CornerRadius {
+        self.visuals().widgets.hovered.corner_radius
     }
 
     fn medium_button_enabled(&mut self, enabled: bool, text: impl Into<WidgetText>) -> Response {
         self.add_enabled(
             enabled,
             Button::new(text)
-                .rounding(self.widgets_rounding())
+                .corner_radius(self.widgets_rounding())
                 .min_size(theme_style().medium_button_size()),
         )
     }
@@ -125,7 +125,7 @@ impl UiExtension for Ui {
         self.add_enabled(
             enabled,
             Button::new(text)
-                .rounding(self.widgets_rounding())
+                .corner_radius(self.widgets_rounding())
                 .min_size(theme_style().large_button_size()),
         )
     }
@@ -139,7 +139,7 @@ impl UiExtension for Ui {
         self.add_enabled(
             enabled,
             Button::new(text)
-                .rounding(self.widgets_rounding())
+                .corner_radius(self.widgets_rounding())
                 .selected(selected)
                 .min_size(theme_style().large_button_size()),
         )
@@ -414,7 +414,8 @@ impl LayoutJobBuilder {
             .add(Label::new(egui_phosphor::light::CLIPBOARD_TEXT).sense(Sense::click()))
             .clicked()
         {
-            ui.output_mut(|o| o.copied_text = text);
+            //ui.output_mut(|o| o.copied_text = text);
+            ui.ctx().copy_text(text);
             runtime().notify_clipboard(i18n("Copied to clipboard"));
         }
     }

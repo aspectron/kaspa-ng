@@ -90,7 +90,7 @@ impl Welcome {
                             let language_code = core.settings.language_code.clone();
                             let dictionary = i18n::dictionary();
                             let language = dictionary.language_title(language_code.as_str()).unwrap();//.unwrap();
-                            egui::ComboBox::from_id_source("language_selector")
+                            egui::ComboBox::from_id_salt("language_selector")
                                 .selected_text(language)
                                 .show_ui(ui, |ui| {
                                     ui.style_mut().wrap_mode = Some(TextWrapMode::Extend);
@@ -104,7 +104,7 @@ impl Welcome {
                             ui.label(i18n("Theme Color:"));
 
                             let mut theme_color = self.settings.user_interface.theme_color.clone();
-                            egui::ComboBox::from_id_source("theme_color_selector")
+                            egui::ComboBox::from_id_salt("theme_color_selector")
                                 .selected_text(theme_color.as_str())
                                 .show_ui(ui, |ui| {
                                     ui.style_mut().wrap_mode = Some(TextWrapMode::Extend);
@@ -123,7 +123,7 @@ impl Welcome {
                             ui.label(i18n("Theme Style:"));
 
                             let mut theme_style = self.settings.user_interface.theme_style.clone();
-                            egui::ComboBox::from_id_source("theme_style_selector")
+                            egui::ComboBox::from_id_salt("theme_style_selector")
                                 .selected_text(theme_style.as_str())
                                 .show_ui(ui, |ui| {
                                     ui.style_mut().wrap_mode = Some(TextWrapMode::Extend);

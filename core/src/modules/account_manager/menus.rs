@@ -49,7 +49,7 @@ impl WalletMenu {
         PopupPanel::new(PopupPanel::id(ui,"wallet_selector_popup"),widget, |ui, _| {
 
             ScrollArea::vertical()
-                .id_source("wallet_selector_popup_scroll")
+                .id_salt("wallet_selector_popup_scroll")
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 
@@ -155,7 +155,7 @@ impl AccountMenu {
         PopupPanel::new(PopupPanel::id(ui,"account_selector_popup"),widget, |ui, close| {
 
             egui::ScrollArea::vertical()
-                .id_source("account_selector_popup_scroll")
+                .id_salt("account_selector_popup_scroll")
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 
@@ -244,7 +244,7 @@ impl ToolsMenu {
         PopupPanel::new(PopupPanel::id(ui,"tools_popup"),|ui|{ ui.add(Label::new(format!("{} ⏷", i18n("Tools"))).sense(Sense::click())) }, |ui, _| {
 
             egui::ScrollArea::vertical()
-                .id_source("tools_popup_scroll")
+                .id_salt("tools_popup_scroll")
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 

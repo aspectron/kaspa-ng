@@ -60,7 +60,7 @@ pub struct CompositeIcon {
     sense: Sense,
     small: bool,
     frame: Option<bool>,
-    rounding: Option<Rounding>,
+    rounding: Option<CornerRadius>,
     padding: Option<Vec2>,
     selected: bool,
     with_frame: bool,
@@ -146,7 +146,7 @@ impl CompositeIcon {
     }
 
     /// Set the rounding of the button.
-    pub fn rounding(mut self, rounding: impl Into<Rounding>) -> Self {
+    pub fn rounding(mut self, rounding: impl Into<CornerRadius>) -> Self {
         self.rounding = Some(rounding.into());
         self
     }
@@ -381,7 +381,7 @@ impl Widget for CompositeIcon {
                 let selection = ui.visuals().selection;
                 (
                     Vec2::ZERO,
-                    Rounding::ZERO,
+                    CornerRadius::ZERO,
                     selection.bg_fill,
                     selection.stroke,
                 )
@@ -389,7 +389,7 @@ impl Widget for CompositeIcon {
                 let expansion = Vec2::splat(visuals.expansion);
                 (
                     expansion,
-                    visuals.rounding,
+                    visuals.corner_radius,
                     visuals.weak_bg_fill,
                     visuals.bg_stroke,
                 )
@@ -406,6 +406,7 @@ impl Widget for CompositeIcon {
                     frame_rounding,
                     frame_fill,
                     frame_stroke,
+                    StrokeKind::Outside
                 );
             }
 
@@ -461,7 +462,7 @@ impl Widget for CompositeIcon {
         }
 
         if let Some(cursor) = ui.visuals().interact_cursor {
-            if response.hovered {
+            if response.hovered() {
                 ui.ctx().set_cursor_icon(cursor);
             }
         }

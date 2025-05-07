@@ -587,7 +587,7 @@ impl Core {
             } else {
                 egui::TopBottomPanel::bottom("bottom_panel")
                     // TODO - review margins
-                    .frame(Frame::default().rounding(4.).inner_margin(3.))
+                    .frame(Frame::default().corner_radius(4.).inner_margin(3.))
                     .show_inside(ui, |ui| {
                         Status::new(self).render(ui);
                         egui::warn_if_debug_build(ui);
