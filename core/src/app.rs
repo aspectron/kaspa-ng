@@ -303,7 +303,7 @@ cfg_if! {
 
         // use crate::result::Result;
         // use crate::adaptor::Adaptor;
-        // use wasm_bindgen::JsCast;
+        use wasm_bindgen::JsCast;
 
         // pub async fn kaspa_ng_main(wallet_api : Option<Arc<dyn WalletApi>>, application_events : Option<ApplicationEventsChannel>, adaptor: Option<Arc<Adaptor>>) -> Result<()> {
         pub async fn kaspa_ng_main(application_context : ApplicationContext) -> Result<()> {
@@ -351,8 +351,7 @@ cfg_if! {
 
             eframe::WebRunner::new()
                 .start(
-                    // will be used in >0.28.1 -> document().get_element_by_id("kaspa-ng").expect("<canvas id=\"kaspa-ng\"> not found.").dyn_into::<web_sys::HtmlCanvasElement>().unwrap(),
-                    "kaspa-ng",
+                    document().get_element_by_id("kaspa-ng").expect("<canvas id=\"kaspa-ng\"> not found.").dyn_into::<web_sys::HtmlCanvasElement>().unwrap(),
                     web_options,
                     Box::new(move |cc| {
 
