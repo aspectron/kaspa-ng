@@ -10,7 +10,7 @@ default-members = ["app"]
 
 [workspace.package]
 rust-version = "1.81.0"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["ASPECTRON Inc.","Kaspa Developers"]
 license = "PROPRIETARY"
 edition = "2021"
