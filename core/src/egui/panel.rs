@@ -178,9 +178,9 @@ impl<'panel, Context> Panel<'panel, Context> {
 
                     ui.add_space(24.);
 
-                    egui::ScrollArea::vertical()
-                        .auto_shrink([false, true])
-                        .show(ui, |ui| {
+                    // egui::ScrollArea::vertical()
+                    //     .auto_shrink([false, true])
+                    //     .show(ui, |ui| {
                             ui.set_width(ui.available_width());
 
                             if let Some(body) = self.body {
@@ -195,7 +195,7 @@ impl<'panel, Context> Panel<'panel, Context> {
                             if padding > 0. {
                                 ui.add_space(padding);
                             }
-                        });
+                        //});
 
                     if let Some(footer) = self.footer {
                         footer(self.this, ui);
