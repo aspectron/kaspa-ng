@@ -391,7 +391,7 @@ impl Widget for CompositeButton<'_> {
                 frame_rounding,
                 frame_fill,
                 frame_stroke,
-                StrokeKind::Outside
+                StrokeKind::Outside,
             );
 
             let mut cursor_x = rect.min.x + button_padding.x;

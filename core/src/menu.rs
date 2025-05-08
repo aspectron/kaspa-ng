@@ -615,7 +615,9 @@ impl<'core> Menu<'core> {
                             if response.clicked() {
                                 *_close_popup = true;
                                 ui.ctx()
-                                    .send_viewport_cmd(egui::ViewportCommand::Screenshot(UserData { data: None }));
+                                    .send_viewport_cmd(egui::ViewportCommand::Screenshot(
+                                        UserData { data: None },
+                                    ));
                             }
                         });
                     }

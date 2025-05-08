@@ -71,7 +71,7 @@ pub fn window_frame(
             // .shrink(4.0);
             // .shrink2(vec2(8.0,4.0));
             //let mut content_ui = ui.child_ui(content_rect, *ui.layout(), None);
-            let mut content_ui =  ui.new_child(
+            let mut content_ui = ui.new_child(
                 UiBuilder::new()
                     .max_rect(content_rect)
                     .layout(*ui.layout())
@@ -93,7 +93,7 @@ pub fn window_frame(
         CentralPanel::default().frame(panel_frame).show(ctx, |ui| {
             let app_rect = ui.max_rect();
             //let mut content_ui = ui.child_ui(app_rect, *ui.layout(), None);
-            let mut content_ui =  ui.new_child(
+            let mut content_ui = ui.new_child(
                 UiBuilder::new()
                     .max_rect(app_rect)
                     .layout(*ui.layout())
@@ -144,7 +144,6 @@ fn title_bar_ui(
         ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
     }
 
-    
     // ui.allocate_ui_at_rect(title_bar_rect, |ui| {
     //     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
     //         ui.spacing_mut().item_spacing.x = 0.0;
@@ -162,7 +161,6 @@ fn title_bar_ui(
             close_maximize_minimize(ui, is_fullscreen, is_maximized);
         });
     });
-
 }
 
 /// Show some close/maximize/minimize buttons for the native window.

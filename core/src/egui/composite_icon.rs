@@ -406,7 +406,7 @@ impl Widget for CompositeIcon {
                     frame_rounding,
                     frame_fill,
                     frame_stroke,
-                    StrokeKind::Outside
+                    StrokeKind::Outside,
                 );
             }
 
