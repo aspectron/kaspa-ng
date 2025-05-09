@@ -499,7 +499,7 @@ impl AccountManager {
 
                     ui.horizontal(|ui| {
 
-                        if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
+                        if ui.add(Label::new(i18n(if core.device().desktop(){"Transactions"}else{"TXs"})).sense(Sense::click())).clicked() {
                             self.section = AccountManagerSection::Transactions;
                         }
 
@@ -549,7 +549,7 @@ impl AccountManager {
                         self.section = AccountManagerSection::Details;
                     }
                     ui.separator();
-                    if ui.add(Label::new(i18n("Transactions")).sense(Sense::click())).clicked() {
+                    if ui.add(Label::new(i18n( if core.device().desktop(){"Transactions"}else{"TXs"})).sense(Sense::click())).clicked() {
                         self.section = AccountManagerSection::Transactions;
                     }
 

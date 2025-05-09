@@ -27,7 +27,13 @@ impl WalletMenu {
             return;
         };
 
-        self.render_selector(core,ui,max_height,|ui|{ ui.add(Label::new(format!("{} {} ⏷", i18n("Wallet:"), wallet_name)).sense(Sense::click())) });
+        let label = if core.device().desktop(){
+            format!("{} {} ⏷", i18n("Wallet:"), wallet_name)
+        }else{
+            format!("{} ⏷", wallet_name)
+        };
+
+        self.render_selector(core,ui,max_height,|ui|{ ui.add(Label::new(label).sense(Sense::click())) });
     }
     
     pub fn render_selector(
@@ -134,7 +140,13 @@ impl AccountMenu {
         // rc : &RenderContext, 
     ) {
 
-        self.render_selector(core,ui,max_height,account_manager,rc,|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), rc.account.name_or_id())).sense(Sense::click())) });
+        let label = if core.device().desktop(){
+            format!("{} {} ⏷",i18n("Account:"), rc.account.name_or_id())
+        }else{
+            format!("{} ⏷", rc.account.name_or_id())
+        };
+
+        self.render_selector(core,ui,max_height,account_manager,rc,|ui|{ ui.add(Label::new(label).sense(Sense::click())) });
         
     }
 
