@@ -185,10 +185,10 @@ impl<'core> Status<'core> {
         }
     }
 
-    fn render_separator(&mut self, ui: &mut egui::Ui){
-        if self.device().desktop(){
+    fn render_separator(&mut self, ui: &mut egui::Ui) {
+        if self.device().desktop() {
             ui.separator();
-        }else{
+        } else {
             Separator::default().spacing(1.0).ui(ui);
         }
     }
@@ -196,7 +196,7 @@ impl<'core> Status<'core> {
         let status_area_width = ui.available_width() - 24.;
         let status_icon_size = theme_style().status_icon_size;
         let module = self.module().clone();
-        let left_padding = if self.device().desktop() {8.0}else{5.0};
+        let left_padding = if self.device().desktop() { 8.0 } else { 5.0 };
 
         match state {
             ConnectionStatus::Disconnected => {

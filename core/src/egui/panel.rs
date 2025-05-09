@@ -181,21 +181,21 @@ impl<'panel, Context> Panel<'panel, Context> {
                     // egui::ScrollArea::vertical()
                     //     .auto_shrink([false, true])
                     //     .show(ui, |ui| {
-                            ui.set_width(ui.available_width());
+                    ui.set_width(ui.available_width());
 
-                            if let Some(body) = self.body {
-                                ui.vertical_centered(|ui| {
-                                    ui.set_width(inner_panel_width);
+                    if let Some(body) = self.body {
+                        ui.vertical_centered(|ui| {
+                            ui.set_width(inner_panel_width);
 
-                                    body(self.this, ui);
-                                });
-                            }
+                            body(self.this, ui);
+                        });
+                    }
 
-                            let padding = ui.available_height() - theme_style.panel_footer_height;
-                            if padding > 0. {
-                                ui.add_space(padding);
-                            }
-                        //});
+                    let padding = ui.available_height() - theme_style.panel_footer_height;
+                    if padding > 0. {
+                        ui.add_space(padding);
+                    }
+                    //});
 
                     if let Some(footer) = self.footer {
                         footer(self.this, ui);
