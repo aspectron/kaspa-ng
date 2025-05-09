@@ -185,11 +185,18 @@ impl<'core> Status<'core> {
         }
     }
 
+    fn render_separator(&mut self, ui: &mut egui::Ui){
+        if self.device().desktop(){
+            ui.separator();
+        }else{
+            Separator::default().spacing(1.0).ui(ui);
+        }
+    }
     fn render_connected_state(&mut self, ui: &mut egui::Ui, state: ConnectionStatus) {
         let status_area_width = ui.available_width() - 24.;
         let status_icon_size = theme_style().status_icon_size;
         let module = self.module().clone();
-        let left_padding = 8.0;
+        let left_padding = if self.device().desktop() {8.0}else{5.0};
 
         match state {
             ConnectionStatus::Disconnected => {
@@ -353,16 +360,16 @@ impl<'core> Status<'core> {
                 } else {
                     ui.add(egui::Spinner::new());
                 }
-                ui.separator();
+                self.render_separator(ui);
                 self.render_connection_selector(ui);
-                ui.separator();
+                self.render_separator(ui);
                 self.render_network_selector(ui);
 
                 if !self.device().mobile() {
-                    ui.separator();
+                    self.render_separator(ui);
                     self.render_peers(ui, peers);
                     if let Some(current_daa_score) = current_daa_score {
-                        ui.separator();
+                        self.render_separator(ui);
                         ui.label(format!("DAA {}", current_daa_score.separated_string()));
                     }
                 }
