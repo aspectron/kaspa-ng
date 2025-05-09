@@ -74,10 +74,10 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
 
     #[cfg(target_os = "linux")]
     if let Ok(font) = std::fs::read("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc") {
-        fonts
-            .font_data
-            .insert("noto-sans-cjk".to_owned(), std::sync::Arc::new(egui::FontData::from_owned(font)));
-
+        fonts.font_data.insert(
+            "noto-sans-cjk".to_owned(),
+            std::sync::Arc::new(egui::FontData::from_owned(font)),
+        );
         fonts
             .families
             .entry(egui::FontFamily::Proportional)
