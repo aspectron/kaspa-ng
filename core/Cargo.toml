@@ -85,10 +85,21 @@ epaint.workspace = true
 egui_plot.workspace = true
 egui_extras.workspace = true
 chrono.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
 eframe = { workspace = true, default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
     # "wgpu",          # Use the glow rendering backend. Alternative: "wgpu".
+    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+    "persistence",   # Enable restoring app state when restarting the app.
+    "wayland"
+] }
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+eframe = { workspace = true,  default-features = false, features = [
+    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+    "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
