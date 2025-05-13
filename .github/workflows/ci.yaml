@@ -33,7 +33,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run cargo check
         run: cargo check --tests --workspace --benches
@@ -82,7 +82,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run cargo build
         run: cargo build --bin kaspa-ng --release --workspace --all --tests --benches
@@ -125,7 +125,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
@@ -195,7 +195,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       # - name: Run cargo check for wasm32 target
       #   run: cargo clippy --target wasm32-unknown-unknown
@@ -224,7 +224,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest, windows-latest, macos-13, macos-latest ]
     name: Building, ${{ matrix.os }}
     steps:
 
@@ -263,7 +263,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build on Windows
         if: runner.os == 'Windows'
@@ -274,31 +274,48 @@ jobs:
           cp target/release/kaspa-ng.exe kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng.exe
           cargo build --bin kaspa-ng --profile console --features console
           cp target/release/kaspa-ng.exe kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-console.exe
-          archive="kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip"
-          powershell "Compress-Archive kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/* \"${archive}\""
 
       - name: Upload Windows build to GitHub 
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip
-          path: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64
+          path: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/
 
-      - name: Build on MacOS
-        if: runner.os == 'macOS'
+      - name: Build on MacOS (arm64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'ARM64'
         run: |
           mkdir kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64 || true
           cargo build --bin kaspa-ng --release
-          cp target/release/kaspa-ng kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/
-          archive="kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip"
-          zip -r "${archive}" ./kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/*
 
-      - name: Upload MacOS build to GitHub 
-        if: runner.os == 'macOS'
+      - name: Upload MacOS (arm64) build to GitHub
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'ARM64'
         uses: actions/upload-artifact@v4
-        with: 
-          name: kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip
-          path: kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64/kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64.zip
+        with:
+          name: kaspa-ng-${{ env.SHORT_SHA }}-macos-arm64
+          path: target/release/kaspa-ng
+
+      - name: Build on MacOS (x64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'x64'
+        run: |
+          source $HOME/.cargo/env
+          mkdir kaspa-ng-${{ env.SHORT_SHA }}-macos-x64 || true
+          cargo build --bin kaspa-ng --release
+
+      - name: Upload MacOS (x64) build to GitHub
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kaspa-ng-${{ env.SHORT_SHA }}-macos-x64
+          path: target/release/kaspa-ng
 
       - name: Build on Linux
         if: runner.os == 'Linux'
@@ -307,16 +324,13 @@ jobs:
           cargo build --bin kaspa-ng --release
           mkdir -p .debpkg/usr/bin
           cp target/release/kaspa-ng .debpkg/usr/bin/
-          cp target/release/kaspa-ng kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/
-          archive="kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip"
-          zip -r "${archive}" ./kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/*
 
       - name: Upload Linux build to GitHub 
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip
-          path: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64
+          path: target/release/kaspa-ng
 
       - name: Package Debian Release
         if: runner.os == 'Linux'

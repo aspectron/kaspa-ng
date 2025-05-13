@@ -11,7 +11,7 @@ jobs:
       matrix:
         # Build gnu-linux on ubuntu-18.04 and musl on ubuntu latest
         # os: [ ubuntu-18.04, ubuntu-latest, windows-latest, macos-latest ]
-        os: [ ubuntu-22.04, windows-latest, macos-latest ]
+        os: [ ubuntu-22.04, windows-latest, macos-13, macos-latest ]
     name: Building, ${{ matrix.os }}
     steps:
       - name: Fix CRLF on Windows
@@ -44,7 +44,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install zig on linux
         if: runner.os == 'Linux'
@@ -65,8 +65,10 @@ jobs:
           echo "asset_path=${archive}" >> $GITHUB_ENV
           echo "asset_name=${asset_name}" >> $GITHUB_ENV
 
-      - name: Build on MacOS
-        if: runner.os == 'macOS'
+      - name: Build on MacOS (arm64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'ARM64'
         run: |
           cargo build --bin kaspa-ng --release
           mkdir kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64 || true
@@ -74,6 +76,20 @@ jobs:
           archive="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
           asset_name="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
           zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/*
+          echo "asset_path=${archive}" >> $GITHUB_ENV
+          echo "asset_name=${asset_name}" >> $GITHUB_ENV
+
+      - name: Build on MacOS (x64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'x64'
+        run: |
+          cargo build --bin kaspa-ng --release
+          mkdir kaspa-ng-${{ github.event.release.tag_name }}-macos-x64 || true
+          cp target/release/kaspa-ng kaspa-ng-${{ github.event.release.tag_name }}-macos-x64/
+          archive="kaspa-ng-${{ github.event.release.tag_name }}-macos-x64/kaspa-ng-${{ github.event.release.tag_name }}-macos-x64.zip"
+          asset_name="kaspa-ng-${{ github.event.release.tag_name }}-macos-x64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-macos-x64/*
           echo "asset_path=${archive}" >> $GITHUB_ENV
           echo "asset_name=${asset_name}" >> $GITHUB_ENV
 
@@ -115,8 +131,23 @@ jobs:
           asset_name: "${{ env.asset_name }}"
           asset_content_type: application/zip
 
-      - name: Upload release asset
-        if: runner.os == 'macOS'
+      - name: Build on MacOS (arm64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'ARM64'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: "./${{ env.asset_path }}"
+          asset_name: "${{ env.asset_name }}"
+          asset_content_type: application/zip
+
+      - name: Build on MacOS (x64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'x64'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
