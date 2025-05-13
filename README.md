@@ -72,6 +72,17 @@ Kaspa NG application binary can be started in 3 ways:
 
 If you need access to the wallet in a headless environment, you can start Kaspa NG in daemon mode and then use the CLI wallet to access the wallet.
 
+#### Software Rendering for Windows x64 VMs
+
+Kaspa NG uses OpenGL.  Due to that, Kaspa NG may have problems powering up on the legacy hardware or inside of virtualization platforms that do not support hardware acceleration.
+
+To address this, you can use Mesa 3d Software Emulation library.
+Mesa 3d library build is available for download from the `resources/windows/mesa3d` folder of this repository.  
+Simply extract the archive and place the `opengl32.dll` file in the same folder as the `kaspa-ng.exe` executable.
+
+This library build was placed in this repository for direct download on 2025-05-14.
+The original build was created by Federico Dossena at [https://fdossena.com/?p=mesa/index.frag](https://fdossena.com/?p=mesa/index.frag).
+
 #### Solo Mining
 
 You can use the following stratum bridge to solo mine with Kaspa NG: https://github.com/rdugan/kaspa-stratum-bridge/releases
