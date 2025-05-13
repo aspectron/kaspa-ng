@@ -3,7 +3,7 @@
 [<img alt="github" src="https://img.shields.io/badge/github-aspectron/kaspa--ng-8da0cb?style=for-the-badge&labelColor=555555&color=8da0cb&logo=github" height="20">](https://github.com/aspectron/kaspa-ng)
 <img src="https://img.shields.io/badge/platform-native-informational?style=for-the-badge&color=50a0f0" height="20">
 <img src="https://img.shields.io/badge/platform-wasm32-informational?style=for-the-badge&color=50a0f0" height="20">
-<img src="https://img.shields.io/github/actions/workflow/status/aspectron/kaspa-ng/ci.yaml?style=for-the-badge" height="20">
+<img src="https://img.shields.io/github/actions/workflow/status/aspectron/kaspa-ng/ci.yaml?branch=master&style=for-the-badge" height="20">
 
 <p align="center" style="margin:32px auto 0px auto;text-align:center;font-size:10px;color:#888;">
 <img src="https://aspectron.org/images/projects/kaspa-ng-screen-01.png" style="display:block;max-height:320px;max-width:524px;width:524px;height:auto;object-fit:cover;margin: 0px auto 0px auto;"><br/><sup>RUSTY KASPA P2P NODE &bull; KASPA WALLET &bull; BLOCKDAG VISUALIZER</sup></p>
