@@ -324,16 +324,13 @@ jobs:
           cargo build --bin kaspa-ng --release
           mkdir -p .debpkg/usr/bin
           cp target/release/kaspa-ng .debpkg/usr/bin/
-          cp target/release/kaspa-ng kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/
-          archive="kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip"
-          zip -r "${archive}" ./kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/*
 
       - name: Upload Linux build to GitHub 
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip
-          path: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64/kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-linux-gnu-amd64
+          path: target/release/kaspa-ng
 
       - name: Package Debian Release
         if: runner.os == 'Linux'
