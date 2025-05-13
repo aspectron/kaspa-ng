@@ -131,8 +131,23 @@ jobs:
           asset_name: "${{ env.asset_name }}"
           asset_content_type: application/zip
 
-      - name: Upload release asset
-        if: runner.os == 'macOS'
+      - name: Build on MacOS (arm64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'ARM64'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: "./${{ env.asset_path }}"
+          asset_name: "${{ env.asset_name }}"
+          asset_content_type: application/zip
+
+      - name: Build on MacOS (x64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'x64'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
