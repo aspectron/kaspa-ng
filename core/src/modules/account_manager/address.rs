@@ -23,7 +23,8 @@ impl<'context> AddressPane<'context> {
             //     });
             // })
             .clicked() {
-                ui.output_mut(|o| o.copied_text = rc.context.address().to_string());
+                //ui.output_mut(|o| o.copied_text = rc.context.address().to_string());
+                ui.ctx().copy_text(rc.context.address().to_string());
                 runtime().notify_clipboard(i18n("Copied to clipboard"));
             }
     }

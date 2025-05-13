@@ -27,7 +27,13 @@ impl WalletMenu {
             return;
         };
 
-        self.render_selector(core,ui,max_height,|ui|{ ui.add(Label::new(format!("{} {} ⏷", i18n("Wallet:"), wallet_name)).sense(Sense::click())) });
+        let label = if core.device().desktop(){
+            format!("{} {} ⏷", i18n("Wallet:"), wallet_name)
+        }else{
+            format!("{} ⏷", wallet_name)
+        };
+
+        self.render_selector(core,ui,max_height,|ui|{ ui.add(Label::new(label).sense(Sense::click())) });
     }
     
     pub fn render_selector(
@@ -49,7 +55,7 @@ impl WalletMenu {
         PopupPanel::new(PopupPanel::id(ui,"wallet_selector_popup"),widget, |ui, _| {
 
             ScrollArea::vertical()
-                .id_source("wallet_selector_popup_scroll")
+                .id_salt("wallet_selector_popup_scroll")
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 
@@ -134,7 +140,13 @@ impl AccountMenu {
         // rc : &RenderContext, 
     ) {
 
-        self.render_selector(core,ui,max_height,account_manager,rc,|ui|{ ui.add(Label::new(format!("{} {} ⏷",i18n("Account:"), rc.account.name_or_id())).sense(Sense::click())) });
+        let label = if core.device().desktop(){
+            format!("{} {} ⏷",i18n("Account:"), rc.account.name_or_id())
+        }else{
+            format!("{} ⏷", rc.account.name_or_id())
+        };
+
+        self.render_selector(core,ui,max_height,account_manager,rc,|ui|{ ui.add(Label::new(label).sense(Sense::click())) });
         
     }
 
@@ -155,7 +167,7 @@ impl AccountMenu {
         PopupPanel::new(PopupPanel::id(ui,"account_selector_popup"),widget, |ui, close| {
 
             egui::ScrollArea::vertical()
-                .id_source("account_selector_popup_scroll")
+                .id_salt("account_selector_popup_scroll")
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 
@@ -244,7 +256,7 @@ impl ToolsMenu {
         PopupPanel::new(PopupPanel::id(ui,"tools_popup"),|ui|{ ui.add(Label::new(format!("{} ⏷", i18n("Tools"))).sense(Sense::click())) }, |ui, _| {
 
             egui::ScrollArea::vertical()
-                .id_source("tools_popup_scroll")
+                .id_salt("tools_popup_scroll")
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
 

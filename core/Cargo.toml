@@ -85,13 +85,7 @@ epaint.workspace = true
 egui_plot.workspace = true
 egui_extras.workspace = true
 chrono.workspace = true
-eframe = { workspace = true, default-features = false, features = [
-    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
-    "default_fonts", # Embed the default egui fonts.
-    # "wgpu",          # Use the glow rendering backend. Alternative: "wgpu".
-    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
-    "persistence",   # Enable restoring app state when restarting the app.
-] }
+
 egui-phosphor = { workspace = true, features = ["light"] }
 # egui-phosphor = { workspace = true, features = ["thin","light","regular","bold"] }
 egui-notify.workspace = true
@@ -127,4 +121,22 @@ tokio.workspace = true
 # -- web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures.workspace = true
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+eframe = { workspace = true,  default-features = false, features = [
+    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+    "default_fonts", # Embed the default egui fonts.
+    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+    "persistence",   # Enable restoring app state when restarting the app.
+] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+eframe = { workspace = true, default-features = false, features = [
+    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+    "default_fonts", # Embed the default egui fonts.
+    # "wgpu",          # Use the glow rendering backend. Alternative: "wgpu".
+    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+    "persistence",   # Enable restoring app state when restarting the app.
+    "wayland"
+] }
 

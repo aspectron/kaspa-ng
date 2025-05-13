@@ -25,7 +25,7 @@ pub fn window_frame(
     if enable && !hide {
         let mut stroke = ctx.style().visuals.widgets.noninteractive.fg_stroke;
 
-        let (rounding, stroke_width) = if is_fullscreen || is_maximized {
+        let (corner_radius, stroke_width) = if is_fullscreen || is_maximized {
             (0.0.into(), 0.0)
         } else {
             (10.0.into(), 1.0)
@@ -35,7 +35,7 @@ pub fn window_frame(
 
         let panel_frame = egui::Frame {
             fill: ctx.style().visuals.window_fill(),
-            rounding,
+            corner_radius,
             stroke,
             // stroke: ctx.style().visuals.widgets.noninteractive.fg_stroke,
             outer_margin: 0.5.into(), // so the stroke is within the bounds
@@ -44,7 +44,7 @@ pub fn window_frame(
 
         let outline_frame = egui::Frame {
             // fill: ctx.style().visuals.window_fill(),
-            rounding,
+            corner_radius,
             stroke,
             // stroke: ctx.style().visuals.widgets.noninteractive.fg_stroke,
             outer_margin: 0.5.into(), // so the stroke is within the bounds
@@ -70,7 +70,13 @@ pub fn window_frame(
             };
             // .shrink(4.0);
             // .shrink2(vec2(8.0,4.0));
-            let mut content_ui = ui.child_ui(content_rect, *ui.layout(), None);
+            //let mut content_ui = ui.child_ui(content_rect, *ui.layout(), None);
+            let mut content_ui = ui.new_child(
+                UiBuilder::new()
+                    .max_rect(content_rect)
+                    .layout(*ui.layout())
+                    .ui_stack_info(UiStackInfo::default()),
+            );
             add_contents(&mut content_ui);
 
             // panel_frame.show(ui);
@@ -86,7 +92,13 @@ pub fn window_frame(
 
         CentralPanel::default().frame(panel_frame).show(ctx, |ui| {
             let app_rect = ui.max_rect();
-            let mut content_ui = ui.child_ui(app_rect, *ui.layout(), None);
+            //let mut content_ui = ui.child_ui(app_rect, *ui.layout(), None);
+            let mut content_ui = ui.new_child(
+                UiBuilder::new()
+                    .max_rect(app_rect)
+                    .layout(*ui.layout())
+                    .ui_stack_info(UiStackInfo::default()),
+            );
             add_contents(&mut content_ui);
         });
     }
@@ -132,7 +144,16 @@ fn title_bar_ui(
         ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
     }
 
-    ui.allocate_ui_at_rect(title_bar_rect, |ui| {
+    // ui.allocate_ui_at_rect(title_bar_rect, |ui| {
+    //     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+    //         ui.spacing_mut().item_spacing.x = 0.0;
+    //         ui.visuals_mut().button_frame = false;
+    //         ui.add_space(8.0);
+    //         close_maximize_minimize(ui, is_fullscreen, is_maximized);
+    //     });
+    // });
+
+    ui.allocate_new_ui(UiBuilder::new().max_rect(title_bar_rect), |ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
             ui.visuals_mut().button_frame = false;

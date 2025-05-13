@@ -122,7 +122,7 @@ impl ModuleT for Import {
                     // ui.add_space(32.);
 
                     egui::ScrollArea::vertical()
-                        .id_source("wallet-list")
+                        .id_salt("wallet-list")
                         .show(ui, |ui| {
                             ui.set_width(ui.available_width());
 
@@ -141,7 +141,7 @@ impl ModuleT for Import {
                     ui.heading(i18n("Unlock Wallet"));
 
                     egui::ScrollArea::vertical()
-                        .id_source("unlock-wallet")
+                        .id_salt("unlock-wallet")
                         .show(ui, |ui| {
                             ui.label(" ");
                             ui.label(i18n_args("Opening wallet: {wallet}", &[("wallet", self.selected_wallet.as_ref().unwrap())]));

@@ -22,7 +22,7 @@ pub trait RenderAccountDescriptor {
 impl RenderAccountDescriptor for AccountDescriptor {
     fn render(&self, ui: &mut Ui, network: Network) {
         let collapsing_header = CollapsingHeader::new(self.account_id.to_string())
-            .id_source("bip32_descriptor")
+            .id_salt("bip32_descriptor")
             .icon(paint_header_icon)
             .default_open(true);
 

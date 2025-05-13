@@ -148,7 +148,7 @@ pub fn render_public_server_selector(
         |_ui| response,
         |ui, close| {
             egui::ScrollArea::vertical()
-                .id_source("server_selector_popup_scroll")
+                .id_salt("server_selector_popup_scroll")
                 .auto_shrink([true; 2])
                 .show(ui, |ui| {
                     let mut first = true;

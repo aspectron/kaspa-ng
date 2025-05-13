@@ -94,30 +94,30 @@ impl UserNotification {
             UserNotifyKind::Info => {
                 toasts
                     .info(self.message)
-                    .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress)
-                    .set_closable(self.closable);
+                    .duration(self.duration)
+                    .show_progress_bar(self.progress)
+                    .closable(self.closable);
             }
             UserNotifyKind::Success => {
                 toasts
                     .success(self.message)
-                    .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress)
-                    .set_closable(self.closable);
+                    .duration(self.duration)
+                    .show_progress_bar(self.progress)
+                    .closable(self.closable);
             }
             UserNotifyKind::Warning => {
                 toasts
                     .warning(self.message)
-                    .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress)
-                    .set_closable(self.closable);
+                    .duration(self.duration)
+                    .show_progress_bar(self.progress)
+                    .closable(self.closable);
             }
             UserNotifyKind::Error => {
                 toasts
                     .error(self.message)
-                    .set_duration(self.duration)
-                    .set_show_progress_bar(self.progress)
-                    .set_closable(self.closable);
+                    .duration(self.duration)
+                    .show_progress_bar(self.progress)
+                    .closable(self.closable);
             }
         }
     }
@@ -209,7 +209,7 @@ impl Notifications {
             |ui| ui.add(Label::new(icon.size(device.top_icon_size())).sense(Sense::click())),
             |ui, close| {
                 egui::ScrollArea::vertical()
-                    .id_source("notification_popup_scroll")
+                    .id_salt("notification_popup_scroll")
                     .auto_shrink([false; 2])
                     .stick_to_bottom(true)
                     .show(ui, |ui| {
@@ -250,7 +250,8 @@ impl Notifications {
                             })
                             .collect::<Vec<String>>()
                             .join("\n");
-                        ui.output_mut(|o| o.copied_text = notifications);
+                        //ui.output_mut(|o| o.copy_text(notifications));
+                        ui.ctx().copy_text(notifications);
                         runtime().notify_clipboard(i18n("Copied to clipboard"));
                         *close = true;
                     }

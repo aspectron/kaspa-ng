@@ -59,7 +59,7 @@ impl<'context> Transfer<'context> {
             }, |ui, _| {
 
                 egui::ScrollArea::vertical()
-                    .id_source("transfer_selector_popup_scroll")
+                    .id_salt("transfer_selector_popup_scroll")
                     .auto_shrink([true; 2])
                     .show(ui, |ui| {
 

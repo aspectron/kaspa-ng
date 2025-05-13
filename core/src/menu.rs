@@ -78,7 +78,7 @@ impl<'core> Menu<'core> {
         //         // .load_for_size(ui.ctx(), vec2(32.0, 32.0)).unwrap()
         //         .maintain_aspect_ratio(true)
         //         .texture_options(TextureOptions::LINEAR),
-        //         // .rounding(10.0),
+        //         // .corner_radius(10.0),
         // );
 
         // ui.separator();
@@ -615,7 +615,9 @@ impl<'core> Menu<'core> {
                             if response.clicked() {
                                 *_close_popup = true;
                                 ui.ctx()
-                                    .send_viewport_cmd(egui::ViewportCommand::Screenshot);
+                                    .send_viewport_cmd(egui::ViewportCommand::Screenshot(
+                                        UserData { data: None },
+                                    ));
                             }
                         });
                     }

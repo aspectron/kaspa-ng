@@ -477,7 +477,7 @@ impl Settings {
                                                     .settings
                                                     .user_interface
                                                     .theme_color = name.to_string();
-                                                // core.store_settings();
+                                                core.store_settings();
                                                 ui.close_menu();
                                             }
                                         });
@@ -507,7 +507,7 @@ impl Settings {
                                                     .settings
                                                     .user_interface
                                                     .theme_style = name.to_string();
-                                                // core.store_settings();
+                                                core.store_settings();
                                                 ui.close_menu();
                                             }
                                         });

@@ -47,7 +47,8 @@ impl Donations {
         });
 
         if response.clicked() {
-            ui.output_mut(|o| Self::ADDRESS_KASPA_NG_FUND.clone_into(&mut o.copied_text));
+            //ui.output_mut(|o| Self::ADDRESS_KASPA_NG_FUND.clone_into(&mut o.copied_text));
+            ui.ctx().copy_text(Self::ADDRESS_KASPA_NG_FUND.to_string());
             runtime().notify_clipboard(i18n("Copied to clipboard"));
         }
 

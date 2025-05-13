@@ -3,7 +3,7 @@ use crate::imports::*;
 #[derive(Clone)]
 pub struct ThemeStyle {
     pub name: String,
-    pub widget_rounding: Rounding,
+    pub widget_rounding: CornerRadius,
     pub widget_spacing: f32,
     pub panel_icon_size: IconSize,
     pub panel_margin_size: f32,
@@ -23,7 +23,7 @@ impl ThemeStyle {
     pub fn rounded() -> ThemeStyle {
         Self {
             name: "Rounded".to_string(),
-            widget_rounding: Rounding::from(6.),
+            widget_rounding: CornerRadius::from(6.),
             widget_spacing: 6_f32,
             panel_icon_size: IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6., 0.)),
             error_icon_size: IconSize::new(Vec2::splat(64.)).with_padding(Vec2::new(6., 6.)),
@@ -43,7 +43,7 @@ impl ThemeStyle {
     pub fn sharp() -> ThemeStyle {
         Self {
             name: "Sharp".to_string(),
-            widget_rounding: Rounding::from(0.),
+            widget_rounding: CornerRadius::from(0.),
             widget_spacing: 6_f32,
             panel_icon_size: IconSize::new(Vec2::splat(26.)).with_padding(Vec2::new(6., 0.)),
             error_icon_size: IconSize::new(Vec2::splat(64.)).with_padding(Vec2::new(6., 6.)),

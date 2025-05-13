@@ -85,7 +85,7 @@ impl ModuleT for Metrics {
                     ui.space();
                     ui.separator();
                     ScrollArea::vertical()
-                        .id_source("metrics_popup_selector")
+                        .id_salt("metrics_popup_selector")
                         .auto_shrink([false;2])
                         .show(ui, |ui| {
 
@@ -202,7 +202,7 @@ impl ModuleT for Metrics {
         if let Some(metrics) = core.metrics().as_ref() {
 
             egui::ScrollArea::vertical()
-                .id_source("node_metrics")
+                .id_salt("node_metrics")
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
                     let view_width = ui.available_width() - 32.;
@@ -304,7 +304,7 @@ impl Metrics {
                             .legend(Legend::default())
                             .width(graph_width)
                             .height(graph_height)
-                            .auto_bounds([true, true].into())
+                            .auto_bounds([true, true])
                             .set_margin_fraction(vec2(0.0,0.0) )
                             .y_axis_min_width(4.0 * 12.0)
                             .show_axes(true)
@@ -365,7 +365,7 @@ impl Metrics {
                             plot = plot.include_y(100.);
                         }
                 
-                        let line = Line::new(PlotPoints::Owned(graph_data))
+                        let line = Line::new("", PlotPoints::Owned(graph_data))
                             .color(graph_color)
                             .style(LineStyle::Solid)
                             .fill(0.0);

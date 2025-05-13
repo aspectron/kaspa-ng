@@ -38,7 +38,12 @@ impl UILayoutExt for Ui {
         child_rect.min.x += indent;
 
         let mut child_ui =
-            self.child_ui_with_id_source(child_rect, *self.layout(), id_source, None);
+            //self.new_child(UiBuilder::new(), child_rect, *self.layout(), id_source, None);
+            self.new_child(UiBuilder::new()
+                .id_salt(id_source)
+                .max_rect(child_rect)
+                .layout(*self.layout())
+                .ui_stack_info(UiStackInfo::default()));
         let ret = add_contents(&mut child_ui);
 
         // let left_vline = self.visuals().indent_has_left_vline;
@@ -124,7 +129,7 @@ impl<Value: PartialEq> SelectionPanel<Value> {
         let visuals = ui.visuals();
         let selected_bg = visuals.selection.bg_fill;
         // let hover_stroke = Stroke::new(1.0, visuals.text_color()); //visuals.window_stroke;
-        let frame = Frame::none()
+        let frame = Frame::new()
             .stroke(Stroke::new(1.0, Color32::TRANSPARENT))
             .fill(if selected { selected_bg } else { bg_color });
         let mut prepared = frame.begin(ui);

@@ -227,7 +227,7 @@ impl Testing {
         ui: &mut egui::Ui,
     ) {
         egui::ScrollArea::vertical()
-            .id_source("test_mnemonic_size_scroll")
+            .id_salt("test_mnemonic_size_scroll")
             .auto_shrink([true; 2])
             .show(ui, |ui| {
 
@@ -463,7 +463,7 @@ impl Testing {
                         .render(ui);
 
                     // egui::ScrollArea::vertical()
-                    //     .id_source("unlock-wallet")
+                    //     .id_salt("unlock-wallet")
                     //     .show(ui, |ui| {
 
                     //     if ui

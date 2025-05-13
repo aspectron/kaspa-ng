@@ -509,14 +509,23 @@ impl Core {
 
             if self.device.orientation() == Orientation::Portrait {
                 CentralPanel::default()
-                    .frame(Frame::default().fill(ctx.style().visuals.panel_fill))
+                    .frame(
+                        Frame::default()
+                            .corner_radius(4.)
+                            .inner_margin(0.)
+                            .outer_margin(Margin::symmetric(0, 3)),
+                    )
                     .show_inside(ui, |ui| {
-                        egui::TopBottomPanel::bottom("portrait_bottom_panel").show_inside(
-                            ui,
-                            |ui| {
+                        egui::TopBottomPanel::bottom("portrait_bottom_panel")
+                            .frame(
+                                Frame::default()
+                                    .corner_radius(4.)
+                                    .inner_margin(0.)
+                                    .outer_margin(Margin::symmetric(0, 3)),
+                            )
+                            .show_inside(ui, |ui| {
                                 Status::new(self).render(ui);
-                            },
-                        );
+                            });
 
                         if self.device.mobile() {
                             egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(
@@ -587,7 +596,7 @@ impl Core {
             } else {
                 egui::TopBottomPanel::bottom("bottom_panel")
                     // TODO - review margins
-                    .frame(Frame::default().rounding(4.).inner_margin(3.))
+                    .frame(Frame::default().corner_radius(4.).inner_margin(3.))
                     .show_inside(ui, |ui| {
                         Status::new(self).render(ui);
                         egui::warn_if_debug_build(ui);

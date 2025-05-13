@@ -87,7 +87,8 @@ impl Request {
         });
 
         if response.clicked() {
-            ui.output_mut(|o| address.clone_into(&mut o.copied_text));
+            //ui.output_mut(|o| address.clone_into(&mut o.copied_text));
+            ui.ctx().copy_text(address.to_string());
             runtime().notify_clipboard(i18n("Address copied to clipboard"));
         }
 
@@ -103,7 +104,8 @@ impl Request {
         });
 
         if response.clicked() {
-            ui.output_mut(|o| address.clone_into(&mut o.copied_text));
+            //ui.output_mut(|o| address.clone_into(&mut o.copied_text));
+            ui.ctx().copy_text(address.to_string());
             runtime().notify_clipboard(i18n("URI copied to clipboard"));
         }
 
