@@ -65,8 +65,10 @@ jobs:
           echo "asset_path=${archive}" >> $GITHUB_ENV
           echo "asset_name=${asset_name}" >> $GITHUB_ENV
 
-      - name: Build on MacOS
-        if: runner.os == 'macOS'
+      - name: Build on MacOS (arm64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'ARM64'
         run: |
           cargo build --bin kaspa-ng --release
           mkdir kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64 || true
@@ -74,6 +76,20 @@ jobs:
           archive="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
           asset_name="kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64.zip"
           zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-macos-arm64/*
+          echo "asset_path=${archive}" >> $GITHUB_ENV
+          echo "asset_name=${asset_name}" >> $GITHUB_ENV
+
+      - name: Build on MacOS (x64)
+        if: |
+          runner.os == 'macOS' &&
+          runner.arch == 'x64'
+        run: |
+          cargo build --bin kaspa-ng --release
+          mkdir kaspa-ng-${{ github.event.release.tag_name }}-macos-x64 || true
+          cp target/release/kaspa-ng kaspa-ng-${{ github.event.release.tag_name }}-macos-x64/
+          archive="kaspa-ng-${{ github.event.release.tag_name }}-macos-x64/kaspa-ng-${{ github.event.release.tag_name }}-macos-x64.zip"
+          asset_name="kaspa-ng-${{ github.event.release.tag_name }}-macos-x64.zip"
+          zip -r "${archive}" ./kaspa-ng-${{ github.event.release.tag_name }}-macos-x64/*
           echo "asset_path=${archive}" >> $GITHUB_ENV
           echo "asset_name=${asset_name}" >> $GITHUB_ENV
 
