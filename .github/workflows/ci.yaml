@@ -274,15 +274,13 @@ jobs:
           cp target/release/kaspa-ng.exe kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng.exe
           cargo build --bin kaspa-ng --profile console --features console
           cp target/release/kaspa-ng.exe kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-console.exe
-          archive="kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip"
-          powershell "Compress-Archive kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/* \"${archive}\""
 
       - name: Upload Windows build to GitHub 
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with: 
-          name: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip
-          path: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/kaspa-ng-${{ env.SHORT_SHA }}-windows-x64.zip
+          name: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64
+          path: kaspa-ng-${{ env.SHORT_SHA }}-windows-x64/
 
       - name: Build on MacOS (arm64)
         if: |
