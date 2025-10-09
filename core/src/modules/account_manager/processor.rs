@@ -38,6 +38,7 @@ impl<'context> Processor<'context> {
                     let address = match network_type {
                         NetworkType::Testnet => Address::try_from("kaspatest:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhqrxplya").unwrap(),
                         NetworkType::Mainnet => Address::try_from("kaspa:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqkx9awp4e").unwrap(),
+                        NetworkType::Devnet => Address::try_from("kaspadev:qqqe9rulj2l8lt949sl3x6td434efpddmsanrpq3enh34rzywkz7jgstvykve").unwrap(),
                         _ => panic!("Unsupported network"),
                     };
 

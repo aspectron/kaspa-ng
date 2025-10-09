@@ -243,6 +243,15 @@ impl Overview {
                                 self.render_fee_rate(core, ui);
                             });
                     }
+                    Network::Devnet => {
+                        CollapsingHeader::new(i18n("Devnet"))
+                            .default_open(true)
+                            .show(ui, |ui| {
+                                self.render_network_info(core, ui);
+                                self.render_fee_rate(core, ui);
+                            });
+                    }
+
                     // Network::Testnet11 => {
                     //     CollapsingHeader::new(i18n("Testnet 11"))
                     //         .default_open(true)

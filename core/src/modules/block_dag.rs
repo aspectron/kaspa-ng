@@ -57,6 +57,7 @@ impl From<Network> for Preset {
         match network {
             Network::Mainnet => PRESETS[0].clone(),
             Network::Testnet10 => PRESETS[3].clone(),
+            Network::Devnet => PRESETS[1].clone(),
         }
     }
 }
