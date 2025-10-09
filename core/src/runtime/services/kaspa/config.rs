@@ -102,7 +102,7 @@ cfg_if! {
                         args.push("--testnet");
                         args.push("--netsuffix=10");
                     }
-                    
+
                     Network::Devnet => {
                         args.push("--devnet");
                         args.push("--enable-unsynced-mining");
