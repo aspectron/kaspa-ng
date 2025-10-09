@@ -68,6 +68,10 @@ cfg_if! {
                         args.testnet = true;
                         args.testnet_suffix = 10;
                     }
+                    Network::Devnet => {
+                        args.devnet = true;
+                        args.enable_unsynced_mining = true;
+                    }
                 }
 
                 args.perf_metrics = true;
@@ -97,6 +101,11 @@ cfg_if! {
                     Network::Testnet10 => {
                         args.push("--testnet");
                         args.push("--netsuffix=10");
+                    }
+                    
+                    Network::Devnet => {
+                        args.push("--devnet");
+                        args.push("--enable-unsynced-mining");
                     }
                 }
 

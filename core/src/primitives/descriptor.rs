@@ -33,6 +33,7 @@ impl RenderAccountDescriptor for AccountDescriptor {
             let explorer = match network {
                 Network::Mainnet => MAINNET_EXPLORER,
                 Network::Testnet10 => TESTNET10_EXPLORER,
+                Network::Devnet => DEVNET_EXPLORER,
             };
             let pixels_per_point = ui.ctx().pixels_per_point();
             let one_char_width = ui
