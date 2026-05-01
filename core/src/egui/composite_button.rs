@@ -455,9 +455,9 @@ impl Widget for CompositeButton<'_> {
             if let Some(text) = text {
                 let text_pos =
                     if image.is_some() || shortcut_text.is_some() || secondary_text.is_some() {
-                        if secondary_text.is_some() {
+                        if let Some(secondary_text) = &secondary_text {
                             let h = text.size().y + ui.spacing().item_spacing.y;
-                            let height = h + secondary_text.as_ref().unwrap().size().y;
+                            let height = h + secondary_text.size().y;
                             let y = rect.center().y - 0.5 * height;
                             text_max_y = Some(y + h);
                             pos2(cursor_x, y)
