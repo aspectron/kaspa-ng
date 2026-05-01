@@ -1,6 +1,5 @@
-#![allow(clippy::result_large_err)]
-
 pub mod client;
+pub mod error;
 pub mod imports;
 pub mod server;
 pub mod transport;

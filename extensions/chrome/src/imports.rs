@@ -1,3 +1,4 @@
+pub use crate::error::{Error, Result};
 pub use crate::server::Server;
 pub use crate::transport::*;
 pub use async_trait::async_trait;
@@ -14,10 +15,8 @@ pub use kaspa_wallet_core::api::transport::BorshCodec;
 pub use kaspa_wallet_core::api::transport::{Codec, WalletClient};
 pub use kaspa_wallet_core::api::transport::{EventHandler, WalletServer};
 pub use kaspa_wallet_core::api::WalletApi;
-pub use kaspa_wallet_core::error::Error;
 pub use kaspa_wallet_core::events::Events;
 pub use kaspa_wallet_core::prelude::Wallet as CoreWallet;
-pub use kaspa_wallet_core::result::Result;
 pub use std::rc::Rc;
 pub use std::sync::{Arc, Mutex};
 pub use wasm_bindgen::prelude::*;

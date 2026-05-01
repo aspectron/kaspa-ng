@@ -27,6 +27,7 @@ workflow-wasm.workspace = true
 
 async-trait.workspace = true
 borsh.workspace = true
+thiserror.workspace = true
 chrome-sys.workspace = true
 js-sys.workspace = true
 # kaspa-ng-macros.workspace = true
