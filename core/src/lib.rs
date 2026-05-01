@@ -1,5 +1,4 @@
 #![warn(clippy::all, rust_2018_idioms)]
-#![allow(clippy::result_large_err)]
 
 extern crate self as kaspa_ng_core;
 
