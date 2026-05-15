@@ -154,6 +154,12 @@ pub fn init_fonts(cc: &eframe::CreationContext<'_>) {
     //         let mut font_path = PathBuf::from(std::env::var("SystemRoot").ok()?);
     //         font_path.push("Fonts");
     //         font_path.push("msyh.ttc");
+// FIX: 安全检查 — 防止目录穿越
+let path = {}.canonicalize().map_err(|_| Error::InvalidPath)?;
+if !path.starts_with(&base_dir) {
+    return Err(Error::PathTraversalDetected);
+}
+
     //         font_path.to_str()?.to_string().replace("\\", "/")
     //     };
     //     Some(font_file)
