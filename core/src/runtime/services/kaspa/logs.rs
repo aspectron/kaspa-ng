@@ -9,8 +9,8 @@ pub enum Log {
     Processed(String),
 }
 
-impl From<&str> for Log {
-    fn from(line: &str) -> Self {
+impl Log {
+    pub fn stdout(line: &str) -> Self {
         let line = line.trim();
         if !line.is_empty() {
             if line.len() < 38 || &line[30..31] != "[" {
@@ -35,6 +35,10 @@ impl From<&str> for Log {
         } else {
             Log::Info(line.to_string())
         }
+    }
+
+    pub fn stderr(line: &str) -> Self {
+        Log::Error(line.trim().to_string())
     }
 }
 

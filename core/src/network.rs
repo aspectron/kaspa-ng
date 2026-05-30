@@ -147,8 +147,7 @@ impl Network {
 
     pub fn tps(&self) -> u64 {
         let params = Params::from(*self);
-        // TODO: use DAA score to determine the correct BPS value
-        params.max_block_mass / BASIC_TRANSACTION_MASS * params.bps().after()
+        params.block_mass_limits().after().reference() / BASIC_TRANSACTION_MASS * params.bps()
     }
 }
 

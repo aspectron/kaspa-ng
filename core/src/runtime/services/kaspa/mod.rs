@@ -1,6 +1,6 @@
 use crate::imports::*;
 use crate::runtime::Service;
-pub use futures::{future::FutureExt, select, Future};
+pub use futures::{Future, future::FutureExt, select};
 use kaspa_wallet_core::api::*;
 use kaspa_wallet_core::events::Events as CoreWalletEvents;
 #[allow(unused_imports)]
@@ -48,6 +48,7 @@ cfg_if! {
             StartExternalAsDaemon { path: PathBuf, config: Config, network : Network },
             StartRemoteConnection { rpc_config : RpcConfig, network : Network },
             Stdout { line : String },
+            Stderr { line : String },
             Disable { network : Network },
             Exit,
         }
@@ -244,13 +245,13 @@ impl KaspaService {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub async fn update_logs(&self, line: String) {
+    async fn push_log(&self, log: Log) {
         {
             let mut logs = self.logs.lock().unwrap();
             if logs.len() > LOG_BUFFER_LINES {
                 logs.drain(0..LOG_BUFFER_MARGIN);
             }
-            logs.push(line.as_str().into());
+            logs.push(log);
         }
 
         if update_logs_flag().load(Ordering::SeqCst) {
@@ -260,6 +261,16 @@ impl KaspaService {
                 .await
                 .unwrap();
         }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    async fn push_stdout_logs(&self, line: &str) {
+        self.push_log(Log::stdout(line)).await;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    async fn push_stderr_logs(&self, line: &str) {
+        self.push_log(Log::stderr(line)).await;
     }
 
     pub fn rpc_url(&self) -> Option<String> {
@@ -465,7 +476,12 @@ impl KaspaService {
                         .await?;
                 }
 
-                self.update_logs(line).await;
+                self.push_stdout_logs(&line).await;
+            }
+
+            #[cfg(not(target_arch = "wasm32"))]
+            KaspadServiceEvents::Stderr { line } => {
+                self.push_stderr_logs(&line).await;
             }
 
             #[cfg(not(target_arch = "wasm32"))]

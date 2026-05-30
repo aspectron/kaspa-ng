@@ -207,7 +207,7 @@ impl Server {
                 let port = Rc::new(port);
                 let port_clone = port.clone();
                 let mut rng = rand::thread_rng();
-                let port_id = rng.gen::<u64>();
+                let port_id = rng.r#gen::<u64>();
 
                 let this_clone = this.clone();
                 let message_closure = Rc::new(Closure::new(move |msg: JsValue| -> JsValue {
