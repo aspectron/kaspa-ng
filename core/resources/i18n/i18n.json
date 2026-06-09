@@ -4543,6 +4543,7 @@
       "Syncing Cryptographic Proof...": "Syncing Cryptographic Proof...",
       "Syncing DAG Blocks...": "Syncing DAG Blocks...",
       "Syncing Headers...": "Syncing Headers...",
+      "Syncing SMT state...": "Syncing SMT state...",
       "Syncing UTXO entries...": "Syncing UTXO entries...",
       "Syncing...": "Syncing...",
       "System": "System",
