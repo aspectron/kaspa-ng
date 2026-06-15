@@ -10,7 +10,7 @@ default-members = ["app"]
 
 [workspace.package]
 rust-version = "1.91.0"
-version = "1.0.3"
+version = "2.0.1"
 authors = ["ASPECTRON Inc.","Kaspa Developers"]
 license = "PROPRIETARY"
 edition = "2024"
@@ -18,9 +18,9 @@ repository = "https://github.com/aspectron/kaspa-ng"
 
 [workspace.dependencies]
 
-kaspa-ng = { version = "1.0.0", path = "app/", default-features = false }
-kaspa-ng-core = { version = "1.0.0", path = "core/", default-features = false }
-kaspa-ng-macros = { version = "1.0.0", path = "macros/", default-features = false }
+kaspa-ng = { version = "2.0.1", path = "app/", default-features = false }
+kaspa-ng-core = { version = "2.0.1", path = "core/", default-features = false }
+kaspa-ng-macros = { version = "2.0.1", path = "macros/", default-features = false }
 
 # ___________________
 #  ____ ____ _  _ _ 
@@ -126,23 +126,23 @@ egui-notify = { version = "=0.19.0"}
 # kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
 # kaspad = { path = "../rusty-kaspa/kaspad" }
 
-kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-cli = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-metrics-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-notify = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-rpc-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-rpc-service = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-utils = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-wallet-keys = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspa-txscript = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
-kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "895766fd6e882e5ebf1ede74f9de610d616afa14" }
+kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-bip32 = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-cli = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-consensus-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-metrics-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-notify = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-rpc-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-rpc-service = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-utils = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-wallet-core = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-wallet-keys = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-wrpc-client = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-wrpc-server = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspa-txscript = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
+kaspad = { git = "https://github.com/kaspanet/rusty-kaspa.git", rev = "cfafeb4c093fa37a303f1b9f19c58f986b870ce3" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
