@@ -74,16 +74,37 @@ impl super::Kaspad for Daemon {
         let cmd = cmd
             .args(config)
             .env("KASPA_NG_DAEMON", "1")
-            .stdout(Stdio::piped());
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
 
         let is_running = self.inner().is_running.clone();
         is_running.store(true, Ordering::SeqCst);
         let mut child = cmd.spawn().map_err(Error::NodeStartupError)?;
         let stdout = child.stdout.take().ok_or(Error::NodeStdoutHandleError)?;
+        let stderr = child.stderr.take().ok_or(Error::NodeStdErrHandleError)?;
         *self.inner.pid.lock().unwrap() = child.id();
 
-        let mut reader = BufReader::new(stdout).lines();
         let stdout_relay_sender = self.inner.service_events.sender.clone();
+        tokio::spawn(async move {
+            let mut reader = BufReader::new(stdout).lines();
+            while let Ok(Some(line)) = reader.next_line().await {
+                let _ = stdout_relay_sender
+                    .send(KaspadServiceEvents::Stdout { line })
+                    .await;
+            }
+        });
+
+        let stderr_relay_sender = self.inner.service_events.sender.clone();
+        tokio::spawn(async move {
+            let mut reader = BufReader::new(stderr).lines();
+            while let Ok(Some(line)) = reader.next_line().await {
+                stderr_relay_sender
+                    .send(KaspadServiceEvents::Stderr { line })
+                    .await
+                    .unwrap();
+            }
+        });
+
         let task_ctl = self.inner.task_ctl.clone();
 
         let this = self.clone();
@@ -112,8 +133,15 @@ impl super::Kaspad for Daemon {
                     }
                     status = child.wait().fuse() => {
                         match status {
-                            Ok(_status) => {
-                                // println!("kaspad shutdown: {:?}", _status);
+                            Ok(status) => {
+                                if !status.success() {
+                                    this.inner.service_events.sender
+                                        .send(KaspadServiceEvents::Stderr {
+                                            line: format!("kaspad exited with {status}"),
+                                        })
+                                        .await
+                                        .unwrap();
+                                }
                             }
                             Err(err) => {
                                 println!("kaspad shutdown error: {:?}", err);
@@ -122,17 +150,10 @@ impl super::Kaspad for Daemon {
                         is_running.store(false,Ordering::SeqCst);
                         break;
                     }
-
-                    line = reader.next_line().fuse() => {
-                        if let Ok(Some(line)) = line {
-                            // println!("kaspad: {}", line);
-                            stdout_relay_sender.send(KaspadServiceEvents::Stdout { line }).await.unwrap();
-                        }
-                    }
                 }
             }
 
-            task_ctl.response.send(()).await.unwrap();
+            let _ = task_ctl.response.send(()).await;
         });
 
         Ok(())

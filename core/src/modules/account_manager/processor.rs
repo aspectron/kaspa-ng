@@ -54,6 +54,7 @@ impl<'context> Processor<'context> {
                         let payment_output = PaymentOutput {
                             address,
                             amount: send_amount_sompi,
+                            covenant: None,
                         };
     
                         let actual_request = AccountsEstimateRequest {
@@ -108,6 +109,7 @@ impl<'context> Processor<'context> {
                             let payment_output = PaymentOutput {
                                 address,
                                 amount: send_amount_sompi,
+                                covenant: None,
                             };
         
                             spawn_with_result(&send_result, async move {
@@ -197,6 +199,7 @@ async fn calculate_fee_rate(network_type : NetworkType, account_id : AccountId, 
     let payment_output = PaymentOutput {
         address,
         amount: send_amount_sompi,
+        covenant: None,
     };
 
 

@@ -32,6 +32,7 @@ impl MarketDataProvider {
 }
 
 #[derive(Default, Serialize, Deserialize)]
+#[allow(dead_code)]
 struct MarketMonitorSettings {
     enabled: bool,
     provider: MarketDataProvider,
