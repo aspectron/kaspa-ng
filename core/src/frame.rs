@@ -54,37 +54,39 @@ pub fn window_frame(
             ..Default::default()
         };
 
-        CentralPanel::default().frame(panel_frame).show_inside(ui, |ui| {
-            let app_rect = ui.max_rect();
+        CentralPanel::default()
+            .frame(panel_frame)
+            .show_inside(ui, |ui| {
+                let app_rect = ui.max_rect();
 
-            let title_bar_height = 28.0;
-            let title_bar_rect = {
-                let mut rect = app_rect;
-                rect.max.y = rect.min.y + title_bar_height;
-                rect
-            };
-            title_bar_ui(ui, title_bar_rect, title, is_fullscreen, is_maximized);
+                let title_bar_height = 28.0;
+                let title_bar_rect = {
+                    let mut rect = app_rect;
+                    rect.max.y = rect.min.y + title_bar_height;
+                    rect
+                };
+                title_bar_ui(ui, title_bar_rect, title, is_fullscreen, is_maximized);
 
-            // Add the contents:
-            let content_rect = {
-                let mut rect = app_rect;
-                rect.min.y = title_bar_rect.max.y;
-                rect
-            };
-            // .shrink(4.0);
-            // .shrink2(vec2(8.0,4.0));
-            //let mut content_ui = ui.child_ui(content_rect, *ui.layout(), None);
-            let mut content_ui = ui.new_child(
-                UiBuilder::new()
-                    .max_rect(content_rect)
-                    .layout(*ui.layout())
-                    .ui_stack_info(UiStackInfo::default()),
-            );
-            add_contents(&mut content_ui);
+                // Add the contents:
+                let content_rect = {
+                    let mut rect = app_rect;
+                    rect.min.y = title_bar_rect.max.y;
+                    rect
+                };
+                // .shrink(4.0);
+                // .shrink2(vec2(8.0,4.0));
+                //let mut content_ui = ui.child_ui(content_rect, *ui.layout(), None);
+                let mut content_ui = ui.new_child(
+                    UiBuilder::new()
+                        .max_rect(content_rect)
+                        .layout(*ui.layout())
+                        .ui_stack_info(UiStackInfo::default()),
+                );
+                add_contents(&mut content_ui);
 
-            // panel_frame.show(ui);
-            ui.painter().add(outline_frame.paint(app_rect));
-        });
+                // panel_frame.show(ui);
+                ui.painter().add(outline_frame.paint(app_rect));
+            });
     } else {
         let panel_frame = egui::Frame {
             fill: ctx.global_style().visuals.window_fill(),
@@ -93,17 +95,19 @@ pub fn window_frame(
             ..Default::default()
         };
 
-        CentralPanel::default().frame(panel_frame).show_inside(ui, |ui| {
-            let app_rect = ui.max_rect();
-            //let mut content_ui = ui.child_ui(app_rect, *ui.layout(), None);
-            let mut content_ui = ui.new_child(
-                UiBuilder::new()
-                    .max_rect(app_rect)
-                    .layout(*ui.layout())
-                    .ui_stack_info(UiStackInfo::default()),
-            );
-            add_contents(&mut content_ui);
-        });
+        CentralPanel::default()
+            .frame(panel_frame)
+            .show_inside(ui, |ui| {
+                let app_rect = ui.max_rect();
+                //let mut content_ui = ui.child_ui(app_rect, *ui.layout(), None);
+                let mut content_ui = ui.new_child(
+                    UiBuilder::new()
+                        .max_rect(app_rect)
+                        .layout(*ui.layout())
+                        .ui_stack_info(UiStackInfo::default()),
+                );
+                add_contents(&mut content_ui);
+            });
     }
 }
 

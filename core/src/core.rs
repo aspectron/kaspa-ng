@@ -536,12 +536,9 @@ impl Core {
                             });
 
                         if self.device.mobile() {
-                            egui::Panel::bottom("mobile_menu_panel").show_inside(
-                                ui,
-                                |ui| {
-                                    MobileMenu::new(self).render(ui);
-                                },
-                            );
+                            egui::Panel::bottom("mobile_menu_panel").show_inside(ui, |ui| {
+                                MobileMenu::new(self).render(ui);
+                            });
                         }
 
                         egui::CentralPanel::default().show_inside(ui, |ui| {
@@ -582,12 +579,9 @@ impl Core {
                         });
 
                         if self.device.mobile() {
-                            egui::Panel::bottom("mobile_menu_panel").show_inside(
-                                ui,
-                                |ui| {
-                                    MobileMenu::new(self).render(ui);
-                                },
-                            );
+                            egui::Panel::bottom("mobile_menu_panel").show_inside(ui, |ui| {
+                                MobileMenu::new(self).render(ui);
+                            });
                         }
 
                         egui::CentralPanel::default()

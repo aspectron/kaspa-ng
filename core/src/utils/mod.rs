@@ -48,7 +48,13 @@ macro_rules! spawn {
 pub use spawn;
 
 pub fn icon_with_text(ui: &Ui, icon: &str, color: Color32, text: &str) -> LayoutJob {
-    let text_color = ui.ctx().global_style().visuals.widgets.inactive.text_color(); //.text_color();
+    let text_color = ui
+        .ctx()
+        .global_style()
+        .visuals
+        .widgets
+        .inactive
+        .text_color(); //.text_color();
     let text_size = ui
         .ctx()
         .global_style()
