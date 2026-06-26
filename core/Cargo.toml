@@ -21,7 +21,9 @@ default = []
 # default = ["browser-extension"]
 
 [build-dependencies]
-vergen = { version = "8.2.6", features = ["build", "git", "gitcl", "rustc", "cargo"] }
+# vergen 9+ moved git support into the `vergen-gitcl` crate (which re-exports the
+# build/cargo/rustc emitters too).
+vergen-gitcl = { version = "10.0.1", features = ["build", "cargo", "rustc"] }
 
 [dependencies]
 kaspa-addresses.workspace = true
@@ -121,7 +123,11 @@ tokio.workspace = true
 # -- web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures.workspace = true
-getrandom = { version = "0.3", features = ["wasm_js"] }
+getrandom = { version = "0.4", features = ["wasm_js"] }
+# ahash 0.8.12 (and other transitive deps) pull in getrandom 0.3, which also
+# needs its `wasm_js` feature enabled on wasm32. Declare it under an alias so the
+# feature unifies across the graph.
+getrandom_03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
 eframe = { workspace = true,  default-features = false, features = [

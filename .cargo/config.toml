@@ -2,5 +2,8 @@
 # https://rustwasm.github.io/docs/wasm-bindgen/web-sys/unstable-apis.html
 # check status at https://developer.mozilla.org/en-US/docs/Web/API/Clipboard#browser_compatibility
 # we don't use `[build]` because of rust analyzer's build cache invalidation https://github.com/emilk/eframe_template/issues/93
+# getrandom 0.3+ requires an explicit backend on wasm32-unknown-unknown; we use
+# the `wasm_js` backend (browser crypto), paired with the getrandom `wasm_js`
+# feature in core/Cargo.toml. (The feature alone is no longer sufficient.)
 [target.wasm32-unknown-unknown]
-rustflags = ["--cfg=web_sys_unstable_apis"]
+rustflags = ["--cfg=web_sys_unstable_apis", "--cfg", 'getrandom_backend="wasm_js"']

@@ -15,13 +15,13 @@ Macros for the Kaspa NG project
 proc-macro = true
 
 [dependencies]
-convert_case = "0.6.0"
-parse-variants = "1.0.1"
+convert_case = "0.11.0"
+parse-variants = "1.0.8"
 proc-macro-error = { version = "1.0.4", default-features = false }
-proc-macro2 = { version = "1.0.50" }
-quote = "1.0.23"
-sha2 = "0.10.7"
-syn = {version="1.0.107",features=["full","fold","extra-traits","parsing","proc-macro"]}
-rand = "0.8"
+proc-macro2 = { version = "1.0.106" }
+quote = "1.0.46"
+sha2 = "0.11.0"
+syn = {version="2.0.118",features=["full","fold","extra-traits","parsing","proc-macro"]}
+rand = "0.10"
 
 # workflow-macro-tools.workspace = true
