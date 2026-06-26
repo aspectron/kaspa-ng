@@ -1,4 +1,5 @@
 pub mod client;
+pub mod error;
 pub mod imports;
 pub mod server;
 pub mod transport;

@@ -32,20 +32,26 @@ impl ClientSender {
 }
 #[async_trait]
 impl interop::Sender for ClientSender {
-    async fn send_message(&self, target: Target, data: Vec<u8>) -> Result<Vec<u8>> {
-        Ok(self.send_message(target, data).await?)
+    async fn send_message(
+        &self,
+        target: Target,
+        data: Vec<u8>,
+    ) -> kaspa_wallet_core::result::Result<Vec<u8>> {
+        self.send_message(target, data)
+            .await
+            .map_err(Error::into_inner)
     }
 }
 
 #[async_trait]
 impl BorshCodec for ClientSender {
-    async fn call(&self, op: u64, data: Vec<u8>) -> Result<Vec<u8>> {
-        Ok(self
-            .send_message(
-                Target::Wallet,
-                borsh::to_vec(&WalletMessage::new(op, data)).unwrap(),
-            )
-            .await?)
+    async fn call(&self, op: u64, data: Vec<u8>) -> kaspa_wallet_core::result::Result<Vec<u8>> {
+        self.send_message(
+            Target::Wallet,
+            borsh::to_vec(&WalletMessage::new(op, data)).unwrap(),
+        )
+        .await
+        .map_err(Error::into_inner)
     }
 }
 

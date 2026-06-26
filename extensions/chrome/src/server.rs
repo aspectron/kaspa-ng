@@ -406,7 +406,10 @@ impl Server {
                 spawn_local(async move {
                     let resp = resp_to_jsv(
                         Target::Wallet,
-                        self.wallet_server.call_with_borsh(msg.op, &msg.data).await,
+                        self.wallet_server
+                            .call_with_borsh(msg.op, &msg.data)
+                            .await
+                            .map_err(Into::into),
                     );
                     if let Err(err) = callback.call1(&JsValue::UNDEFINED, &resp) {
                         log_error!("onMessage callback error: {:?}", err);

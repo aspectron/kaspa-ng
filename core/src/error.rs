@@ -12,7 +12,7 @@ pub enum Error {
     Eframe(String),
 
     #[error(transparent)]
-    WalletError(#[from] kaspa_wallet_core::error::Error),
+    WalletError(Box<kaspa_wallet_core::error::Error>),
 
     #[error("Not a local wallet")]
     WalletIsNotLocal,
@@ -33,7 +33,7 @@ pub enum Error {
     TryRecvError,
 
     #[error(transparent)]
-    WrpcClientError(#[from] kaspa_wrpc_client::error::Error),
+    WrpcClientError(Box<kaspa_wrpc_client::error::Error>),
 
     #[error(transparent)]
     WorkflowStorage(#[from] workflow_store::error::Error),
@@ -111,6 +111,18 @@ pub enum Error {
 impl Error {
     pub fn custom<T: Into<String>>(msg: T) -> Self {
         Error::Custom(msg.into())
+    }
+}
+
+impl From<kaspa_wallet_core::error::Error> for Error {
+    fn from(err: kaspa_wallet_core::error::Error) -> Self {
+        Error::WalletError(Box::new(err))
+    }
+}
+
+impl From<kaspa_wrpc_client::error::Error> for Error {
+    fn from(err: kaspa_wrpc_client::error::Error) -> Self {
+        Error::WrpcClientError(Box::new(err))
     }
 }
 
