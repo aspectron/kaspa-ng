@@ -1,7 +1,7 @@
 use crate::imports::*;
 use kaspa_wallet_core::events::SyncState;
 
-const SYNC_STAGES: usize = 5;
+const SYNC_STAGES: usize = 6;
 
 #[derive(Default)]
 pub struct SyncStatus {
@@ -46,23 +46,11 @@ impl SyncStatus {
                 progress_bar_text: Some(format!("{}%", progress)),
                 ..Default::default()
             },
-            SyncState::Blocks { blocks, progress } => SyncStatus {
-                stage: Some(3),
-                caption: format!(
-                    "{} {}",
-                    i18n("Syncing DAG Blocks..."),
-                    blocks.separated_string()
-                ),
-                // caption: "Syncing DAG Blocks...".to_string(),
-                progress_bar_percentage: Some(progress as f32 / 100_f32),
-                progress_bar_text: Some(format!("{}%", progress)),
-                ..Default::default()
-            },
             SyncState::TrustSync { processed, total } => {
                 let progress = processed * 100 / total;
 
                 SyncStatus {
-                    stage: Some(4),
+                    stage: Some(3),
                     caption: format!(
                         "{} {}",
                         i18n("Syncing DAG Trust..."),
@@ -75,6 +63,34 @@ impl SyncStatus {
                     ..Default::default()
                 }
             }
+            SyncState::SmtSync { processed, total } => {
+                let caption = if total == 0 {
+                    i18n("Syncing SMT state...").to_string()
+                } else {
+                    format!(
+                        "{} {} {} {}",
+                        i18n("Syncing SMT state..."),
+                        processed.separated_string(),
+                        i18n("of"),
+                        total.separated_string()
+                    )
+                };
+
+                let progress =
+                    (total > 0).then(|| (processed as f32 / total as f32).clamp(0.0, 1.0));
+
+                SyncStatus {
+                    stage: Some(4),
+                    caption,
+                    progress_bar_percentage: progress,
+                    progress_bar_text: progress.map(|progress| format!("{:.0}%", progress * 100.0)),
+                    ..Default::default()
+                }
+            }
+            SyncState::UtxoResync => SyncStatus {
+                caption: i18n("Syncing...").to_string(),
+                ..Default::default()
+            },
             SyncState::UtxoSync { total, .. } => SyncStatus {
                 stage: Some(5),
                 caption: format!(
@@ -86,8 +102,16 @@ impl SyncStatus {
                 // progress_bar_text: Some(total.separated_string()),
                 ..Default::default()
             },
-            SyncState::UtxoResync => SyncStatus {
-                caption: i18n("Syncing...").to_string(),
+            SyncState::Blocks { blocks, progress } => SyncStatus {
+                stage: Some(6),
+                caption: format!(
+                    "{} {}",
+                    i18n("Syncing DAG Blocks..."),
+                    blocks.separated_string()
+                ),
+                // caption: "Syncing DAG Blocks...".to_string(),
+                progress_bar_percentage: Some(progress as f32 / 100_f32),
+                progress_bar_text: Some(format!("{}%", progress)),
                 ..Default::default()
             },
             SyncState::NotSynced => SyncStatus {

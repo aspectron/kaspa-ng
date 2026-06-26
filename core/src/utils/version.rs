@@ -2,7 +2,7 @@ use crate::imports::*;
 use workflow_http::Request;
 
 pub fn kaspa_version() -> String {
-    kaspa_utils::git::version()
+    kaspa_core::kaspad_env::version().to_string()
 }
 
 #[derive(Debug, Clone)]

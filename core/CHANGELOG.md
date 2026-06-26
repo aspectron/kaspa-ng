@@ -1,5 +1,9 @@
 # Changelog
 
+# 2.0.0
+
+- Rusty Kaspa 2.0.0 (Toccata support)
+
 # 1.0.1
 
 - Resolve issues that came up during `1.0.0` pre-release testing.

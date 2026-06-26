@@ -1,10 +1,12 @@
 use crate::imports::*;
 use egui_phosphor::light::*;
-use kaspa_consensus_core::tx::{TransactionInput, TransactionOutpoint, TransactionOutput};
+use kaspa_consensus_core::tx::{
+    ComputeCommit, TransactionInput, TransactionOutpoint, TransactionOutput,
+};
 use kaspa_txscript::standard::extract_script_pub_key_address;
 use kaspa_wallet_core::storage::{
-    transaction::{TransactionData, UtxoRecord},
     TransactionKind,
+    transaction::{TransactionData, UtxoRecord},
 };
 
 pub trait AsColor {
@@ -502,17 +504,30 @@ impl Transaction {
                             previous_outpoint,
                             signature_script: _,
                             sequence,
-                            sig_op_count,
+                            compute_commit,
                         } = input;
                         let TransactionOutpoint {
                             transaction_id,
                             index,
                         } = previous_outpoint;
                         let transaction_id = transaction_id.to_string();
+                        let input_budget = if ComputeCommit::version_expects_compute_budget_field(
+                            transaction.version,
+                        ) {
+                            format!(
+                                "ComputeBudget: {}",
+                                compute_commit.compute_budget().unwrap_or_default()
+                            )
+                        } else {
+                            format!(
+                                "SigOps: {}",
+                                compute_commit.sig_op_count().unwrap_or_default()
+                            )
+                        };
                         ljb(&content)
                             .text(
                                 &format!(
-                                    "  {sequence:>2}: {}:{index} SigOps: {sig_op_count}",
+                                    "  {sequence:>2}: {}:{index} {input_budget}",
                                     format_partial_string(&transaction_id, padding_range)
                                 ),
                                 default_color,

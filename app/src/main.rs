@@ -15,7 +15,9 @@ cfg_if! {
         fn main() {
 
             #[cfg(feature = "console")] {
-                std::env::set_var("RUST_BACKTRACE", "full");
+                unsafe {
+                    std::env::set_var("RUST_BACKTRACE", "full");
+                }
             }
 
             kaspa_alloc::init_allocator_with_default_settings();
