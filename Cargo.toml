@@ -108,23 +108,23 @@ egui-notify = { version = "=0.19.0"}
 # kaspa-wrpc-server = "0.13.4"
 # kaspad = "0.13.4"
 
-# kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
-# kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
-# kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
-# kaspa-cli = { path = "../rusty-kaspa/cli" }
-# kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
-# kaspa-core = { path = "../rusty-kaspa/core" }
-# kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
-# kaspa-notify = { path = "../rusty-kaspa/notify" }
-# kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
-# kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
-# kaspa-utils = { path = "../rusty-kaspa/utils" }
-# kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
-# kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
-# kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
-# kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
-# kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
-# kaspad = { path = "../rusty-kaspa/kaspad" }
+kaspa-addresses = { path = "../rusty-kaspa/crypto/addresses" }
+kaspa-alloc = { path = "../rusty-kaspa/utils/alloc" }
+kaspa-bip32 = { path = "../rusty-kaspa/wallet/bip32" }
+kaspa-cli = { path = "../rusty-kaspa/cli" }
+kaspa-consensus-core = { path = "../rusty-kaspa/consensus/core" }
+kaspa-core = { path = "../rusty-kaspa/core" }
+kaspa-metrics-core = { path = "../rusty-kaspa/metrics/core" }
+kaspa-notify = { path = "../rusty-kaspa/notify" }
+kaspa-rpc-core = { path = "../rusty-kaspa/rpc/core" }
+kaspa-rpc-service = { path = "../rusty-kaspa/rpc/service" }
+kaspa-utils = { path = "../rusty-kaspa/utils" }
+kaspa-wallet-core = { path = "../rusty-kaspa/wallet/core" }
+kaspa-wallet-keys = { path = "../rusty-kaspa/wallet/keys" }
+kaspa-wrpc-client = { path = "../rusty-kaspa/rpc/wrpc/client"}
+kaspa-wrpc-server = { path = "../rusty-kaspa/rpc/wrpc/server" }
+kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
+kaspad = { path = "../rusty-kaspa/kaspad" }
 
 # kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
 # kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
