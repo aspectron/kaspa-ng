@@ -203,11 +203,11 @@ impl Overview {
                 
                                         ui.hyperlink_to_tab(
                                             format!("• {DATABASE} {}",i18n("Explorer")),
-                                            "https://explorer.kaspa.org/",
+                                            "https://kaspa.stream/",
                                         );
                                         ui.hyperlink_to_tab(
                                             format!("• {CHART_SCATTER} {}",i18n("Statistics")),
-                                            "https://kas.fyi",
+                                            "https://kaspa.stream",
                                         );
                                         // ui.hyperlink_to_tab(
                                         //     format!("• {DISCORD_LOGO} {}",i18n("Discord")),
@@ -230,7 +230,7 @@ impl Overview {
                 
                                         ui.hyperlink_to_tab(
                                             format!("• {DATABASE} {}",i18n("Explorer")),
-                                            "https://explorer-tn10.kaspa.org/",
+                                            "https://tn10.kaspa.stream/",
                                         );
                                         ui.hyperlink_to_tab(
                                             format!("• {HAND_COINS} {}",i18n("Faucet")),

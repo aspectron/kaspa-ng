@@ -273,7 +273,7 @@ impl Transaction {
                         .transaction_id(
                             ui,
                             &transaction_id,
-                            &format!("{explorer}/txs/{transaction_id}"),
+                            &format!("{explorer}/transactions/{transaction_id}"),
                             default_color,
                             padding_range,
                         );
@@ -450,7 +450,7 @@ impl Transaction {
                         .transaction_id(
                             ui,
                             &transaction_id,
-                            &format!("{explorer}/txs/{transaction_id}"),
+                            &format!("{explorer}/transactions/{transaction_id}"),
                             default_color,
                             padding_range,
                         );
