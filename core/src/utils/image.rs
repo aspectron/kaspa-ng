@@ -10,6 +10,12 @@ pub fn color_image_to_icon_data(image: epaint::ColorImage) -> egui::IconData {
 }
 
 pub fn svg_to_icon_data(svg_bytes: &[u8], size_hint: Option<SizeHint>) -> egui::IconData {
-    let image = load_svg_bytes_with_size(svg_bytes, size_hint).unwrap();
+    // egui_extras 0.34 made the size hint mandatory and added a `usvg::Options`
+    // parameter; fall back to the size-less loader when no hint is given.
+    let image = match size_hint {
+        Some(size_hint) => load_svg_bytes_with_size(svg_bytes, size_hint, &Default::default()),
+        None => load_svg_bytes(svg_bytes, &Default::default()),
+    }
+    .unwrap();
     color_image_to_icon_data(image)
 }

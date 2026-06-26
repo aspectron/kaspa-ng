@@ -481,7 +481,7 @@ impl AccountManager {
 
     fn render_menu(&mut self, core: &mut Core, ui: &mut Ui, rc : &RenderContext) {
         ui.horizontal(|ui| {
-            let screen_rect_height = ui.ctx().screen_rect().height();
+            let screen_rect_height = ui.ctx().content_rect().height();
 
             if runtime::is_chrome_extension() {
 
@@ -568,16 +568,16 @@ impl AccountManager {
 
         self.render_menu(core,ui,rc);
 
-        SidePanel::left("account_manager_left")
-            .exact_width(panel_width)
+        egui::Panel::left("account_manager_left")
+            .exact_size(panel_width)
             .resizable(false)
             .show_separator_line(true)
             .show_inside(ui, |ui| {
             Overview::new(&mut self.context).render(core,ui,rc);
         });
         
-        SidePanel::right("account_manager_right")
-            .exact_width(panel_width)
+        egui::Panel::right("account_manager_right")
+            .exact_size(panel_width)
             .resizable(false)
             .show_separator_line(false)
             .show_inside(ui, |ui| {

@@ -185,7 +185,7 @@ impl Notifications {
 
         if self.notifications.len() != self.last_notification {
             let id = PopupPanel::id(ui, "notification_popup");
-            ui.memory_mut(|mem| mem.open_popup(id));
+            egui::Popup::open_id(ui.ctx(), id);
             self.last_notification = self.notifications.len();
         }
 
@@ -199,7 +199,7 @@ impl Notifications {
             RichText::new(INFO)
         };
 
-        let screen_rect = ui.ctx().screen_rect();
+        let screen_rect = ui.ctx().content_rect();
         let width = (screen_rect.width() / 4. * 3.).min(500.);
         let height = (screen_rect.height() / 4.).min(240.);
 

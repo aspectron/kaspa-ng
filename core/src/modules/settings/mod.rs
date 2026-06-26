@@ -146,7 +146,7 @@ impl Settings {
         ui: &mut egui::Ui,
     ) {
         #[allow(unused_variables)]
-        let half_width = ui.ctx().screen_rect().width() * 0.5;
+        let half_width = ui.ctx().content_rect().width() * 0.5;
 
         let mut node_settings_error = None;
 
@@ -475,7 +475,7 @@ impl Settings {
                                                     .user_interface
                                                     .theme_color = name.to_string();
                                                 core.store_settings();
-                                                ui.close_menu();
+                                                ui.close();
                                             }
                                         });
                                     },
@@ -505,7 +505,7 @@ impl Settings {
                                                     .user_interface
                                                     .theme_style = name.to_string();
                                                 core.store_settings();
-                                                ui.close_menu();
+                                                ui.close();
                                             }
                                         });
                                     },

@@ -50,8 +50,8 @@ impl ModuleT for Overview {
 
                     let width = ui.available_width();
                     
-                    SidePanel::left("overview_left")
-                        .exact_width(width*0.5)
+                    egui::Panel::left("overview_left")
+                        .exact_size(width*0.5)
                         .resizable(false)
                         .show_separator_line(true)
                         .show_inside(ui, |ui| {
@@ -63,8 +63,8 @@ impl ModuleT for Overview {
                             });
                         });
                     
-                    SidePanel::right("overview_right")
-                        .exact_width(width*0.5)
+                    egui::Panel::right("overview_right")
+                        .exact_size(width*0.5)
                         .frame(Frame::default().fill(Color32::TRANSPARENT))
                         .resizable(false)
                         .show_separator_line(false)
@@ -107,7 +107,7 @@ impl Overview {
 
     fn render_details(&mut self, core: &mut Core, ui : &mut Ui) {
 
-        let screen_rect = ui.ctx().screen_rect();
+        let screen_rect = ui.ctx().content_rect();
         let logo_size = vec2(648., 994.,) * 0.25;
         let left = screen_rect.width() - logo_size.x - 8.;
         let top = core.device().top_offset() + 32.0;

@@ -49,7 +49,7 @@ impl<'core> Status<'core> {
     // }
 
     pub fn render(&mut self, ui: &mut egui::Ui) {
-        menu::bar(ui, |ui| {
+        egui::MenuBar::new().ui(ui, |ui| {
             if !self.state().is_connected() {
                 self.render_connected_state(ui, ConnectionStatus::Disconnected);
             } else {

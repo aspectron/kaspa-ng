@@ -74,7 +74,7 @@ impl Core {
         crate::fonts::init_fonts(cc);
         egui_extras::install_image_loaders(&cc.egui_ctx);
 
-        let mut default_style = (*cc.egui_ctx.style()).clone();
+        let mut default_style = (*cc.egui_ctx.global_style()).clone();
 
         default_style.text_styles.insert(
             TextStyle::Name("CompositeButtonSubtext".into()),
@@ -84,7 +84,7 @@ impl Core {
             },
         );
 
-        let mut mobile_style = (*cc.egui_ctx.style()).clone();
+        let mut mobile_style = (*cc.egui_ctx.global_style()).clone();
 
         mobile_style.text_styles.insert(
             TextStyle::Name("CompositeButtonSubtext".into()),
@@ -413,7 +413,14 @@ impl eframe::App for Core {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    //
+    // eframe 0.32+ made `ui(&mut self, &mut Ui, ...)` the required `App` method
+    // and deprecated `update(&mut self, &Context, ...)`. kaspa-ng lays everything
+    // out via ctx-level panels, so we recover the `Context` from the root `Ui`
+    // (which `run_ui` builds full-screen on the background layer) and keep the
+    // existing ctx-based body unchanged.
+    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        let ctx = &ui.ctx().clone();
         for event in self.application_events_channel.iter() {
             if let Err(err) = self.handle_events(event.clone(), ctx, frame) {
                 log_error!("error processing wallet runtime event: {}", err);
@@ -454,7 +461,7 @@ impl eframe::App for Core {
 
         // - TODO - TOAST BACKGROUND
         // ---
-        let current_visuals = ctx.style().visuals.clone(); //.widgets.noninteractive;
+        let current_visuals = ctx.global_style().visuals.clone(); //.widgets.noninteractive;
         let mut visuals = current_visuals.clone();
         visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(0, 0, 0);
         ctx.set_visuals(visuals);
@@ -462,9 +469,9 @@ impl eframe::App for Core {
         ctx.set_visuals(current_visuals);
         // ---
 
-        self.device_mut().set_screen_size(&ctx.screen_rect());
+        self.device_mut().set_screen_size(&ctx.content_rect());
 
-        self.render_frame(ctx, frame);
+        self.render_frame(ui, frame);
 
         if let Some(module) = self.deactivation.take() {
             module.deactivate(self);
@@ -478,8 +485,9 @@ impl eframe::App for Core {
 }
 
 impl Core {
-    fn render_frame(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
-        window_frame(self.window_frame, ctx, "Kaspa NG", |ui| {
+    fn render_frame(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        let ctx = &ui.ctx().clone();
+        window_frame(self.window_frame, ui, "Kaspa NG", |ui| {
             if !self.settings.initialized {
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     self.modules
@@ -501,7 +509,7 @@ impl Core {
             }
 
             if !self.module.modal() && !self.device.mobile() {
-                egui::TopBottomPanel::top("top_panel").show_inside(ui, |ui| {
+                egui::Panel::top("top_panel").show_inside(ui, |ui| {
                     Menu::new(self).render(ui);
                     // self.render_menu(ui, frame);
                 });
@@ -516,7 +524,7 @@ impl Core {
                             .outer_margin(Margin::symmetric(0, 3)),
                     )
                     .show_inside(ui, |ui| {
-                        egui::TopBottomPanel::bottom("portrait_bottom_panel")
+                        egui::Panel::bottom("portrait_bottom_panel")
                             .frame(
                                 Frame::default()
                                     .corner_radius(4.)
@@ -528,7 +536,7 @@ impl Core {
                             });
 
                         if self.device.mobile() {
-                            egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(
+                            egui::Panel::bottom("mobile_menu_panel").show_inside(
                                 ui,
                                 |ui| {
                                     MobileMenu::new(self).render(ui);
@@ -542,39 +550,39 @@ impl Core {
                     });
             } else if self.device.single_pane() {
                 if !self.device.mobile() {
-                    egui::TopBottomPanel::bottom("bottom_panel").show_inside(ui, |ui| {
+                    egui::Panel::bottom("bottom_panel").show_inside(ui, |ui| {
                         Status::new(self).render(ui);
                         egui::warn_if_debug_build(ui);
                     });
                 }
 
                 let device_width = 390.0;
-                let margin_width = (ctx.screen_rect().width() - device_width) * 0.5;
+                let margin_width = (ctx.content_rect().width() - device_width) * 0.5;
 
-                SidePanel::right("portrait_right")
-                    .exact_width(margin_width)
+                egui::Panel::right("portrait_right")
+                    .exact_size(margin_width)
                     .resizable(false)
                     .show_separator_line(true)
                     .frame(Frame::default().fill(Color32::BLACK))
                     .show_inside(ui, |_ui| {});
-                SidePanel::left("portrait_left")
-                    .exact_width(margin_width)
+                egui::Panel::left("portrait_left")
+                    .exact_size(margin_width)
                     .resizable(false)
                     .show_separator_line(true)
                     .frame(Frame::default().fill(Color32::BLACK))
                     .show_inside(ui, |_ui| {});
 
                 CentralPanel::default()
-                    .frame(Frame::default().fill(ctx.style().visuals.panel_fill))
+                    .frame(Frame::default().fill(ctx.global_style().visuals.panel_fill))
                     .show_inside(ui, |ui| {
                         ui.set_max_width(device_width);
 
-                        egui::TopBottomPanel::bottom("mobile_bottom_panel").show_inside(ui, |ui| {
+                        egui::Panel::bottom("mobile_bottom_panel").show_inside(ui, |ui| {
                             Status::new(self).render(ui);
                         });
 
                         if self.device.mobile() {
-                            egui::TopBottomPanel::bottom("mobile_menu_panel").show_inside(
+                            egui::Panel::bottom("mobile_menu_panel").show_inside(
                                 ui,
                                 |ui| {
                                     MobileMenu::new(self).render(ui);
@@ -587,14 +595,14 @@ impl Core {
                                 Frame::default()
                                     .inner_margin(0.)
                                     .outer_margin(4.)
-                                    .fill(ctx.style().visuals.panel_fill),
+                                    .fill(ctx.global_style().visuals.panel_fill),
                             )
                             .show_inside(ui, |ui| {
                                 self.module.clone().render(self, ctx, frame, ui);
                             });
                     });
             } else {
-                egui::TopBottomPanel::bottom("bottom_panel")
+                egui::Panel::bottom("bottom_panel")
                     // TODO - review margins
                     .frame(Frame::default().corner_radius(4.).inner_margin(3.))
                     .show_inside(ui, |ui| {
@@ -614,7 +622,7 @@ impl Core {
         match rfd::FileDialog::new().save_file() {
             Some(mut path) => {
                 path.set_extension("png");
-                let screen_rect = ctx.screen_rect();
+                let screen_rect = ctx.content_rect();
                 let pixels_per_point = ctx.pixels_per_point();
                 let screenshot = screenshot.clone();
                 let sender = self.sender();
@@ -651,7 +659,7 @@ impl Core {
     }
 
     fn _render_splash(&mut self, ui: &mut Ui) {
-        let logo_rect = ui.ctx().screen_rect();
+        let logo_rect = ui.ctx().content_rect();
         let logo_size = logo_rect.size();
         Image::new(ImageSource::Bytes {
             uri: Cow::Borrowed("bytes://logo.svg"),
