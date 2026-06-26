@@ -5,7 +5,7 @@ use kaspa_core::signals::Shutdown;
 use kaspa_utils::fd_budget;
 use kaspa_wallet_core::rpc::DynRpcApi;
 use kaspad_lib::args::Args;
-use kaspad_lib::daemon::{create_core_with_runtime, Runtime as KaspadRuntime};
+use kaspad_lib::daemon::{Runtime as KaspadRuntime, create_core_with_runtime};
 
 struct Inner {
     thread: std::thread::JoinHandle<()>,

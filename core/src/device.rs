@@ -82,10 +82,6 @@ impl Device {
     }
 
     pub fn top_icon_size(&self) -> f32 {
-        if self.single_pane() {
-            26.
-        } else {
-            20.
-        }
+        if self.single_pane() { 26. } else { 20. }
     }
 }

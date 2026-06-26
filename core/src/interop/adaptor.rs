@@ -2,7 +2,7 @@
 
 use crate::imports::*;
 use crate::interop::transport;
-use crate::interop::{message::*, Target};
+use crate::interop::{Target, message::*};
 
 #[derive(Debug, Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
 pub struct PendingRequest {

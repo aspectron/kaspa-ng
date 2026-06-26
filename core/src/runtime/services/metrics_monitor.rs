@@ -1,6 +1,6 @@
 use crate::imports::*;
 use crate::runtime::Service;
-pub use futures::{future::FutureExt, select, Future};
+pub use futures::{Future, future::FutureExt, select};
 use kaspa_metrics_core::{Metric, Metrics, MetricsSnapshot};
 use kaspa_rpc_core::GetSystemInfoResponse;
 #[allow(unused_imports)]

@@ -1036,7 +1036,10 @@ impl Core {
                                 });
                         }
                         Binding::Custom(_) => {
-                            log_error!("Error while processing transaction {}: custom bindings are not supported", record.id());
+                            log_error!(
+                                "Error while processing transaction {}: custom bindings are not supported",
+                                record.id()
+                            );
                         }
                     },
                     // Ignore stasis notifications
@@ -1072,7 +1075,10 @@ impl Core {
                                     });
                             }
                             Binding::Custom(_) => {
-                                log_error!("Error while processing transaction {}: custom bindings are not supported", record.id());
+                                log_error!(
+                                    "Error while processing transaction {}: custom bindings are not supported",
+                                    record.id()
+                                );
                             }
                         }
                     }
@@ -1101,7 +1107,10 @@ impl Core {
                                 });
                         }
                         Binding::Custom(_) => {
-                            log_error!("Error while processing transaction {}: custom bindings are not supported", record.id());
+                            log_error!(
+                                "Error while processing transaction {}: custom bindings are not supported",
+                                record.id()
+                            );
                         }
                     },
 
@@ -1116,7 +1125,10 @@ impl Core {
                                 });
                         }
                         Binding::Custom(_) => {
-                            log_error!("Error while processing transaction {}: custom bindings are not supported", record.id());
+                            log_error!(
+                                "Error while processing transaction {}: custom bindings are not supported",
+                                record.id()
+                            );
                         }
                     },
 

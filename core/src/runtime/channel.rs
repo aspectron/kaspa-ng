@@ -1,6 +1,6 @@
 use crate::runtime::runtime;
 use workflow_core::channel::{
-    unbounded, Receiver, RecvError, SendError, Sender as ChannelSender, TryRecvError, TrySendError,
+    Receiver, RecvError, SendError, Sender as ChannelSender, TryRecvError, TrySendError, unbounded,
 };
 
 #[derive(Debug, Clone)]

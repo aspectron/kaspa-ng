@@ -36,7 +36,9 @@ impl CoinGeckoSimplePrice {
             .map(|currency| currency.to_lowercase())
             .collect::<Vec<_>>()
             .join("%2C");
-        let url = format!("https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies={currencies}&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true");
+        let url = format!(
+            "https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies={currencies}&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true"
+        );
         Ok(http::get_json::<Self>(url).await?)
     }
 }

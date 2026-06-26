@@ -6,7 +6,7 @@
 )]
 
 use cfg_if::cfg_if;
-use kaspa_ng_core::app::{kaspa_ng_main, ApplicationContext};
+use kaspa_ng_core::app::{ApplicationContext, kaspa_ng_main};
 use workflow_log::*;
 
 cfg_if! {

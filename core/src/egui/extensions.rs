@@ -435,7 +435,7 @@ impl From<LayoutJobBuilder> for WidgetText {
 
 pub trait HyperlinkExtension {
     fn hyperlink_to_tab(&mut self, text: impl Into<WidgetText>, url: impl Into<String>)
-        -> Response;
+    -> Response;
     fn hyperlink_url_to_tab(&mut self, url: impl Into<String>) -> Response;
 }
 

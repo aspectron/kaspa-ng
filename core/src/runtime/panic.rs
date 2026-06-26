@@ -12,7 +12,9 @@ pub fn init_graceful_panic_handler() {
             dirs::home_dir().unwrap_or_default().join("kaspa-ng.log"),
             format!("{:#?}\n{:#?}", panic_info, backtrace),
         );
-        println!("An unexpected condition (panic) has occurred. Additional information has been written to `~/kaspa-ng.log`");
+        println!(
+            "An unexpected condition (panic) has occurred. Additional information has been written to `~/kaspa-ng.log`"
+        );
         default_hook(panic_info);
         crate::runtime::abort();
     }));
@@ -29,7 +31,9 @@ pub fn init_ungraceful_panic_handler() {
             format!("{:#?}\n{:#?}", panic_info, backtrace),
         );
         default_hook(panic_info);
-        println!("An unexpected condition (panic) has occurred. Additional information has been written to `~/kaspa-ng-service.log`");
+        println!(
+            "An unexpected condition (panic) has occurred. Additional information has been written to `~/kaspa-ng-service.log`"
+        );
         println!("Exiting...");
         std::process::exit(1);
     }));
