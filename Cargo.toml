@@ -126,23 +126,23 @@ egui-notify = { version = "=0.19.0"}
 # kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
 # kaspad = { path = "../rusty-kaspa/kaspad" }
 
-kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+# kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
@@ -168,23 +168,23 @@ kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma
 #  |_|_| |__| |  \ | \_ |    |___ |__| |_|_|    |  \ ___] 
 # _________________________________________________________
 
-workflow-core = "0.18.0"
-workflow-i18n = "0.18.0"
-workflow-chrome = "0.18.0"
-workflow-dom = "0.18.0"
-workflow-http = "0.18.0"
-workflow-log = "0.18.0"
-workflow-store = "0.18.0"
-workflow-wasm = "0.18.0"
+# workflow-core = "0.18.0"
+# workflow-i18n = "0.18.0"
+# workflow-chrome = "0.18.0"
+# workflow-dom = "0.18.0"
+# workflow-http = "0.18.0"
+# workflow-log = "0.18.0"
+# workflow-store = "0.18.0"
+# workflow-wasm = "0.18.0"
 
-# workflow-core = { path = "../workflow-rs/core" }
-# workflow-i18n = { path = "../workflow-rs/i18n" }
-# workflow-chrome = { path = "../workflow-rs/chrome" }
-# workflow-dom = { path = "../workflow-rs/dom" }
-# workflow-http = { path = "../workflow-rs/http" }
-# workflow-log = { path = "../workflow-rs/log" }
-# workflow-store = { path = "../workflow-rs/store" }
-# workflow-wasm = { path = "../workflow-rs/wasm" }
+workflow-core = { path = "../workflow-rs/core" }
+workflow-i18n = { path = "../workflow-rs/i18n" }
+workflow-chrome = { path = "../workflow-rs/chrome" }
+workflow-dom = { path = "../workflow-rs/dom" }
+workflow-http = { path = "../workflow-rs/http" }
+workflow-log = { path = "../workflow-rs/log" }
+workflow-store = { path = "../workflow-rs/store" }
+workflow-wasm = { path = "../workflow-rs/wasm" }
 
 # workflow-core = {  git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master", features = ["no-unsafe-eval"] }
 # workflow-i18n = { git = "https://github.com/workflow-rs/workflow-rs.git", branch = "master" }
