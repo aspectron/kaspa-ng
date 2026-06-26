@@ -349,10 +349,10 @@ impl KaspaService {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 let kaspad = self.kaspad.lock().unwrap().take();
-                if let Some(kaspad) = kaspad {
-                    if let Err(err) = kaspad.stop().await {
-                        println!("error shutting down kaspad: {}", err);
-                    }
+                if let Some(kaspad) = kaspad
+                    && let Err(err) = kaspad.stop().await
+                {
+                    println!("error shutting down kaspad: {}", err);
                 }
             }
         } else {

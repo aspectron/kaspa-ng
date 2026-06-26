@@ -85,11 +85,10 @@ impl Service for PeerMonitorService {
                         continue;
                     }
 
-                    if let Some(rpc_api) = this.rpc_api() {
-                        if let Ok(resp) = rpc_api.get_connected_peer_info().await {
+                    if let Some(rpc_api) = this.rpc_api()
+                        && let Ok(resp) = rpc_api.get_connected_peer_info().await {
                             this.peer_info.lock().unwrap().replace(Arc::new(resp.peer_info));
                         }
-                    }
                 },
                 msg = this.as_ref().service_events.receiver.recv().fuse() => {
                     if let Ok(event) = msg {

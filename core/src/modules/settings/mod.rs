@@ -251,11 +251,10 @@ impl Settings {
                                             ui.label(format!("\"{}\"",self.settings.node.kaspad_daemon_storage_folder.trim()));
 
                                             ui.add_space(4.);
-                                            if ui.medium_button(i18n("Create Data Folder")).clicked() {
-                                                if let Err(err) = std::fs::create_dir_all(appdir) {
+                                            if ui.medium_button(i18n("Create Data Folder")).clicked()
+                                                && let Err(err) = std::fs::create_dir_all(appdir) {
                                                     runtime().error(format!("Unable to create data storage folder `{appdir}`: {err}"));
                                                 }
-                                            }
                                             ui.add_space(4.);
 
                                             node_settings_error = Some(i18n("Data storage folder not found"));
@@ -399,17 +398,16 @@ impl Settings {
 
                 ui.add_space(8.);
 
-                if let Some(response) = ui.confirm_medium_cancel(Align::Max) {
-                    if matches!(response, Confirm::Nack) {
+                if let Some(response) = ui.confirm_medium_cancel(Align::Max)
+                    && matches!(response, Confirm::Nack) {
                         self.settings.node = core.settings.node.clone();
                         self.grpc_network_interface = NetworkInterfaceEditor::from(&self.settings.node.grpc_network_interface);
                     }
-                }
 
                 ui.separator();
 
-            } else if node_settings_error.is_none() {
-                if let Some(restart) = self.settings.node.compare(&core.settings.node) {
+            } else if node_settings_error.is_none()
+                && let Some(restart) = self.settings.node.compare(&core.settings.node) {
 
                     ui.add_space(16.);
                     if let Some(response) = ui.confirm_medium_apply_cancel(Align::Max) {
@@ -438,7 +436,6 @@ impl Settings {
                     }
                     ui.separator();
                 }
-            }
     }
 
 

@@ -448,10 +448,11 @@ impl Server {
                     }
                     ServerAction::Response(port_id, rid, data) => {
                         let response = interop::Response::try_from_slice(&data).unwrap();
-                        if let Some((pid, id)) = self.waiting_response.lock().unwrap().take() {
-                            if pid == port_id && Some(id.clone()) == rid {
-                                self.send_message_to_port(Some((port_id, id)), response)?;
-                            }
+                        if let Some((pid, id)) = self.waiting_response.lock().unwrap().take()
+                            && pid == port_id
+                            && Some(id.clone()) == rid
+                        {
+                            self.send_message_to_port(Some((port_id, id)), response)?;
                         }
 
                         let res = resp_to_jsv(Target::Adaptor, Ok(vec![]));

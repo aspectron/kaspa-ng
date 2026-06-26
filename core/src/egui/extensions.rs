@@ -164,10 +164,10 @@ impl UiExtension for Ui {
                 );
             }
 
-            if let Some(ack) = ack {
-                if ui.medium_button(ack).clicked() {
-                    resp.replace(Confirm::Ack);
-                }
+            if let Some(ack) = ack
+                && ui.medium_button(ack).clicked()
+            {
+                resp.replace(Confirm::Ack);
             }
 
             if ui.medium_button(nack).clicked() {

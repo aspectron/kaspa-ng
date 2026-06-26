@@ -461,10 +461,10 @@ impl Widget for CompositeIcon {
             }
         }
 
-        if let Some(cursor) = ui.visuals().interact_cursor {
-            if response.hovered() {
-                ui.ctx().set_cursor_icon(cursor);
-            }
+        if let Some(cursor) = ui.visuals().interact_cursor
+            && response.hovered()
+        {
+            ui.ctx().set_cursor_icon(cursor);
         }
 
         response

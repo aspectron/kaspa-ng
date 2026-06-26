@@ -494,10 +494,10 @@ impl Core {
 
             // delegate rendering to the adaptor, if any
             // return if adaptor consumes the rendering phase
-            if let Some(adaptor) = runtime().adaptor() {
-                if adaptor.render(self, ui) {
-                    return;
-                }
+            if let Some(adaptor) = runtime().adaptor()
+                && adaptor.render(self, ui)
+            {
+                return;
             }
 
             if !self.module.modal() && !self.device.mobile() {
@@ -969,10 +969,10 @@ impl Core {
                     } => {}
                     CoreWallet::AccountUpdate { account_descriptor } => {
                         let account_id = account_descriptor.account_id();
-                        if let Some(account_collection) = self.account_collection.as_ref() {
-                            if let Some(account) = account_collection.get(account_id) {
-                                account.update(account_descriptor);
-                            }
+                        if let Some(account_collection) = self.account_collection.as_ref()
+                            && let Some(account) = account_collection.get(account_id)
+                        {
+                            account.update(account_descriptor);
                         }
                     }
                     CoreWallet::WalletError { message: _ } => {}
@@ -990,21 +990,20 @@ impl Core {
                         self.purge_secure_stack();
                     }
                     CoreWallet::AccountSelection { id } => {
-                        if let Some(account_collection) = self.account_collection.as_ref() {
-                            if let Some(id) = id {
-                                if let Some(account) = account_collection.get(&id) {
-                                    let account = account.clone();
-                                    let device = self.device().clone();
-                                    let wallet = self.wallet();
-                                    // log_info!("--- selecting account: {id:?}");
-                                    self.get_mut::<modules::AccountManager>().select(
-                                        wallet,
-                                        Some(account),
-                                        device,
-                                        false,
-                                    );
-                                }
-                            }
+                        if let Some(account_collection) = self.account_collection.as_ref()
+                            && let Some(id) = id
+                            && let Some(account) = account_collection.get(&id)
+                        {
+                            let account = account.clone();
+                            let device = self.device().clone();
+                            let wallet = self.wallet();
+                            // log_info!("--- selecting account: {id:?}");
+                            self.get_mut::<modules::AccountManager>().select(
+                                wallet,
+                                Some(account),
+                                device,
+                                false,
+                            );
                         }
                     }
                     CoreWallet::DaaScoreChange { current_daa_score } => {

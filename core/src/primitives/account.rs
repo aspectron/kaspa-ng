@@ -202,10 +202,10 @@ impl Account {
         self.transactions().clear();
 
         transactions.sort_by(|a, b| {
-            if let Some(b_ts) = b.unixtime_msec {
-                if let Some(a_ts) = a.unixtime_msec {
-                    return b_ts.cmp(&a_ts);
-                }
+            if let Some(b_ts) = b.unixtime_msec
+                && let Some(a_ts) = a.unixtime_msec
+            {
+                return b_ts.cmp(&a_ts);
             }
             b.block_daa_score.cmp(&a.block_daa_score)
         });

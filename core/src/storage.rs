@@ -71,12 +71,11 @@ impl Storage {
     pub fn update(&self, options: Option<StorageUpdateOptions>) {
         let options = options.unwrap_or_default();
 
-        if options.update_if_not_present {
-            if let Some(network) = options.network {
-                if self.has_network(network) {
-                    return;
-                }
-            }
+        if options.update_if_not_present
+            && let Some(network) = options.network
+            && self.has_network(network)
+        {
+            return;
         }
 
         let rusty_kaspa_app_dir = self.storage_root();
@@ -93,25 +92,22 @@ impl Storage {
             let paths = std::fs::read_dir(rusty_kaspa_app_dir).unwrap();
             for path in paths {
                 let path = path?.path();
-                if std::fs::metadata(&path)?.is_dir() {
-                    if let Some(folder) = path.clone().file_name().and_then(|path| path.to_str()) {
-                        if !folder.starts_with('.') {
-                            if let Some(network) = folder
-                                .strip_prefix("kaspa-")
-                                .and_then(|folder| folder.parse::<Network>().ok())
-                            {
-                                let mut folder_size = 0;
-                                for entry in walkdir::WalkDir::new(&path).into_iter().flatten() {
-                                    folder_size += entry
-                                        .metadata()
-                                        .map(|metadata| metadata.len())
-                                        .unwrap_or_default();
-                                }
-
-                                this.update_folder_size(network, folder_size, path);
-                            }
-                        }
+                if std::fs::metadata(&path)?.is_dir()
+                    && let Some(folder) = path.clone().file_name().and_then(|path| path.to_str())
+                    && !folder.starts_with('.')
+                    && let Some(network) = folder
+                        .strip_prefix("kaspa-")
+                        .and_then(|folder| folder.parse::<Network>().ok())
+                {
+                    let mut folder_size = 0;
+                    for entry in walkdir::WalkDir::new(&path).into_iter().flatten() {
+                        folder_size += entry
+                            .metadata()
+                            .map(|metadata| metadata.len())
+                            .unwrap_or_default();
                     }
+
+                    this.update_folder_size(network, folder_size, path);
                 }
             }
 
@@ -229,11 +225,10 @@ impl Storage {
                                 let is_running = core.settings.node.network == *network && core.settings.node.node_kind.is_local();
 
                                 ui.horizontal(|ui|{
-                                    if ui.medium_button(i18n("Open Data Folder")).clicked() {
-                                        if let Err(err) = open::that(path) {
+                                    if ui.medium_button(i18n("Open Data Folder")).clicked()
+                                        && let Err(err) = open::that(path) {
                                             runtime().error(format!("Error opening folder: {:?}", err));
                                         }
-                                    }
                                     if ui.medium_button_enabled(!is_running && !*confirm_deletion, i18n("Delete Data Folder")).clicked() {
                                         *confirm_deletion = true;
                                     }

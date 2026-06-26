@@ -401,23 +401,23 @@ impl<'core> Status<'core> {
                         if !self.device().single_pane() {
                             ui.separator();
                             self.render_peers(ui, peers);
-                            if let Some(status) = sync_status.as_ref() {
-                                if !status.synced {
-                                    ui.separator();
-                                    status.render_text_state(ui);
-                                }
+                            if let Some(status) = sync_status.as_ref()
+                                && !status.synced
+                            {
+                                ui.separator();
+                                status.render_text_state(ui);
                             }
 
                             module.status_bar(self.core, ui);
                         }
                     });
 
-                    if let Some(status) = sync_status.as_ref() {
-                        if !status.synced {
-                            status
-                                .progress_bar(ui)
-                                .map(|bar| ui.add(bar.desired_width(status_area_width)));
-                        }
+                    if let Some(status) = sync_status.as_ref()
+                        && !status.synced
+                    {
+                        status
+                            .progress_bar(ui)
+                            .map(|bar| ui.add(bar.desired_width(status_area_width)));
                     }
                 });
             }

@@ -31,9 +31,9 @@ impl<'context> BalancePane<'context> {
                 );
             }
 
-            if core.settings.market_monitor && (core.settings.node.network == Network::Mainnet || core.settings.developer.market_monitor_on_testnet) {
-                if let Some(market) = core.market.as_ref() {
-                    if let Some(price_list) = market.price.as_ref() {
+            if core.settings.market_monitor && (core.settings.node.network == Network::Mainnet || core.settings.developer.market_monitor_on_testnet)
+                && let Some(market) = core.market.as_ref()
+                    && let Some(price_list) = market.price.as_ref() {
                         let mut symbols = price_list.keys().collect::<Vec<_>>();
                         symbols.sort();
                         ui.vertical_centered(|ui| {
@@ -49,8 +49,6 @@ impl<'context> BalancePane<'context> {
                             ui.label(RichText::new(text).font(FontId::proportional(14.)));
                         });
                     }
-                }
-            }
             
             if balance.pending != 0 {
                 ui.label(i18n_args(

@@ -129,8 +129,8 @@ impl Overview {
             .auto_shrink([false; 2])
             .show(ui, |ui| {
 
-                if core.settings.market_monitor {
-                    if let Some(market) = core.market.as_ref() {
+                if core.settings.market_monitor
+                    && let Some(market) = core.market.as_ref() {
 
                         CollapsingHeader::new(i18n("Market"))
                             .default_open(true)
@@ -177,7 +177,6 @@ impl Overview {
                                 }
                             });
                         }
-                    }
 
                 #[cfg(not(target_arch = "wasm32"))]
                 CollapsingHeader::new(i18n("Kaspa NG"))

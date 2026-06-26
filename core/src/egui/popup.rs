@@ -228,12 +228,11 @@ pub fn popup_above_or_below_widget_local<R>(
             let response = inner.response;
             ui.ctx().input(|i| {
                 let pointer = &i.pointer;
-                if pointer.any_click() {
-                    if let Some(pos) = pointer.interact_pos() {
-                        if !response.rect.contains(pos) {
-                            close_popup = true;
-                        }
-                    }
+                if pointer.any_click()
+                    && let Some(pos) = pointer.interact_pos()
+                    && !response.rect.contains(pos)
+                {
+                    close_popup = true;
                 }
             });
         }

@@ -30,11 +30,11 @@ impl CollapsingExtension for Ui {
             .show_header(self, |ui| heading(ui, &mut state))
             .body(body);
 
-        if state != previous_state {
-            if let Some(mut state) = CollapsingState::load(self.ctx(), id) {
-                state.toggle(self);
-                state.store(self.ctx());
-            }
+        if state != previous_state
+            && let Some(mut state) = CollapsingState::load(self.ctx(), id)
+        {
+            state.toggle(self);
+            state.store(self.ctx());
         }
     }
 }

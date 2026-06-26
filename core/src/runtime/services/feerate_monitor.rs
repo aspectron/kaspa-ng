@@ -54,18 +54,18 @@ impl FeerateMonitorService {
     }
 
     async fn fetch(self: &Arc<Self>) -> Result<()> {
-        if let Some(rpc_api) = self.rpc_api() {
-            if let Ok(resp) = rpc_api.get_fee_estimate().await {
-                // println!("{}",resp.priority_bucket.feerate);
-                // let feerate = Arc::new(resp);
-                // self.feerate.lock().unwrap().replace(feerate.clone());
-                self.application_events
-                    .send(Events::Feerate {
-                        feerate: Some(Arc::new(resp)),
-                    })
-                    .await
-                    .unwrap();
-            }
+        if let Some(rpc_api) = self.rpc_api()
+            && let Ok(resp) = rpc_api.get_fee_estimate().await
+        {
+            // println!("{}",resp.priority_bucket.feerate);
+            // let feerate = Arc::new(resp);
+            // self.feerate.lock().unwrap().replace(feerate.clone());
+            self.application_events
+                .send(Events::Feerate {
+                    feerate: Some(Arc::new(resp)),
+                })
+                .await
+                .unwrap();
         }
 
         Ok(())

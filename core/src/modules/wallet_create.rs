@@ -273,8 +273,8 @@ impl WalletCreate {
                 }
             })
             .render(ui);
-        let proceed = *proceed.borrow();
-        proceed
+        
+        *proceed.borrow()
     }
 }
 

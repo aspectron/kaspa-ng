@@ -140,11 +140,10 @@ impl ModuleT for AccountCreate {
                             if account.account_kind() != &BIP32_ACCOUNT_KIND {
                                 return;
                             }
-                            if let AssocPrvKeyDataIds::Single(key_id) = account.descriptor().prv_key_data_ids {
-                                if let Some(prv_key) = prv_key_data_map.get(&key_id){
+                            if let AssocPrvKeyDataIds::Single(key_id) = account.descriptor().prv_key_data_ids
+                                && let Some(prv_key) = prv_key_data_map.get(&key_id){
                                     prv_keys.insert(*prv_key.id(), prv_key.clone());
                                 }
-                            }
                         });
                     }
                     self.context.prv_keys = prv_keys.into_values().collect();

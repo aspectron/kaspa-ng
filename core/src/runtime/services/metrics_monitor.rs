@@ -147,23 +147,23 @@ impl Service for MetricsService {
     async fn connect_rpc(self: Arc<Self>) -> Result<()> {
         self.samples_since_connection.store(0, Ordering::SeqCst);
 
-        if let Some(rpc_api) = self.rpc_api() {
-            if let Ok(system_info) = rpc_api.get_system_info().await {
-                let GetSystemInfoResponse {
-                    version, system_id, ..
-                } = system_info;
+        if let Some(rpc_api) = self.rpc_api()
+            && let Ok(system_info) = rpc_api.get_system_info().await
+        {
+            let GetSystemInfoResponse {
+                version, system_id, ..
+            } = system_info;
 
-                let system_id = system_id
-                    .map(|id| format!(" - {}", id[0..8].to_vec().to_hex()))
-                    .unwrap_or_else(|| "".to_string());
+            let system_id = system_id
+                .map(|id| format!(" - {}", id[0..8].to_vec().to_hex()))
+                .unwrap_or_else(|| "".to_string());
 
-                self.application_events
-                    .sender
-                    .try_send(crate::events::Events::NodeInfo {
-                        node_info: Some(Box::new(format!("{}{}", version, system_id))),
-                    })
-                    .unwrap();
-            }
+            self.application_events
+                .sender
+                .try_send(crate::events::Events::NodeInfo {
+                    node_info: Some(Box::new(format!("{}{}", version, system_id))),
+                })
+                .unwrap();
         }
 
         Ok(())
