@@ -22,6 +22,15 @@ cfg_if! {
 
             kaspa_alloc::init_allocator_with_default_settings();
 
+            // rustls 0.23 cannot auto-select a crypto provider when more than one
+            // is compiled in. reqwest 0.13 pulls `aws-lc-rs` while the wRPC/
+            // websocket (tungstenite) stack pulls `ring`, so auto-selection panics
+            // ("Could not automatically determine the process-level CryptoProvider").
+            // Install `ring` explicitly so reqwest HTTPS and the wRPC client agree.
+            // `install_default` is idempotent here; ignore the error if a provider
+            // was already installed.
+            let _ = rustls::crypto::ring::default_provider().install_default();
+
             let body = async {
                 if let Err(err) = kaspa_ng_main(ApplicationContext::default()).await {
                     log_error!("Error: {err}");

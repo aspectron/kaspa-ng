@@ -4380,6 +4380,7 @@ dependencies = [
  "cfg-if",
  "kaspa-alloc",
  "kaspa-ng-core",
+ "rustls",
  "tokio",
  "wasm-bindgen-futures",
  "workflow-log",
