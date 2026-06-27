@@ -286,7 +286,7 @@ impl Overview {
                         );
                         ui.hyperlink_to_tab(
                             format!("• {}",i18n("NPM Modules for NodeJS")),
-                            "https://www.npmjs.com/package/kaspa",
+                            "https://www.npmjs.com/package/@kluster/kaspa-wasm",
                         );
                         ui.hyperlink_to_tab(
                             format!("• {}",i18n("WASM SDK for JavaScript and TypeScript")),
