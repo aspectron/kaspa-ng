@@ -193,6 +193,14 @@ pub fn popup_above_or_below_widget_local<R>(
     add_contents: impl FnOnce(&mut Ui) -> R,
 ) -> Option<R> {
     if egui::Popup::is_id_open(ui.ctx(), popup_id) {
+        // egui 0.32+ closes a popup at the end of each pass unless it is
+        // re-affirmed via `keep_popup_open`. This custom popup does not use
+        // `Popup::show`, so without this the popup would render for a single
+        // frame and then immediately disappear. `keep_popup_open` is deprecated
+        // in favour of `Popup::show`, but egui's own `Popup::open_id` docs direct
+        // callers that don't use `Popup::show` to call it, so allow it here.
+        #[allow(deprecated)]
+        ui.ctx().memory_mut(|mem| mem.keep_popup_open(popup_id));
         let (pos, pivot) = match above_or_below {
             AboveOrBelow::Above => (widget_response.rect.left_top(), Align2::LEFT_BOTTOM),
             AboveOrBelow::Below => (widget_response.rect.left_bottom(), Align2::LEFT_TOP),
