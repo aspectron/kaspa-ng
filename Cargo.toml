@@ -183,7 +183,10 @@ workflow-core = { path = "../workflow-rs/core" }
 workflow-i18n = { path = "../workflow-rs/i18n" }
 workflow-chrome = { path = "../workflow-rs/chrome" }
 workflow-dom = { path = "../workflow-rs/dom" }
-workflow-http = { path = "../workflow-rs/http" }
+# `default-features = false` + `rustls-no-provider` so reqwest does not pull the
+# aws-lc-rs crypto provider (C/cmake); the pure-Rust `ring` provider is installed
+# at startup (app main + the wRPC SDK). Mirrors rusty-kaspa's declaration.
+workflow-http = { path = "../workflow-rs/http", default-features = false, features = ["rustls-no-provider", "http2", "charset", "system-proxy"] }
 workflow-log = { path = "../workflow-rs/log" }
 workflow-store = { path = "../workflow-rs/store" }
 workflow-wasm = { path = "../workflow-rs/wasm" }
