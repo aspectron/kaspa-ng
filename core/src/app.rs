@@ -261,7 +261,14 @@ cfg_if! {
                         .with_title(i18n("Kaspa NG"))
                         .with_min_inner_size([400.0,320.0])
                         .with_inner_size([1000.0,600.0])
-                        .with_icon(svg_to_icon_data(KASPA_NG_ICON_SVG, Some(SizeHint::Size(256,256))));
+                        .with_icon(svg_to_icon_data(
+                            KASPA_NG_ICON_SVG,
+                            Some(SizeHint::Size {
+                                width: 256,
+                                height: 256,
+                                maintain_aspect_ratio: true,
+                            }),
+                        ));
 
                     if window_frame {
                         viewport = viewport

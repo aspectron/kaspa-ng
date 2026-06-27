@@ -272,8 +272,13 @@ impl CompositeIcon {
         // }
 
         let valign = ui.layout().vertical_align();
-        let mut layout_job = WidgetText::from(self.icon.clone().size(self.icon_size))
-            .into_layout_job(ui.style(), FontSelection::Default, valign);
+        let mut layout_job = std::sync::Arc::unwrap_or_clone(
+            WidgetText::from(self.icon.clone().size(self.icon_size)).into_layout_job(
+                ui.style(),
+                FontSelection::Default,
+                valign,
+            ),
+        );
 
         let truncate = true;
         let wrap = !truncate && ui.wrap_mode() == TextWrapMode::Wrap;
@@ -298,12 +303,12 @@ impl CompositeIcon {
             if let Some(first_section) = layout_job.sections.first_mut() {
                 first_section.leading_space = first_row_indentation;
             }
-            let text_galley = ui.fonts(|fonts| fonts.layout_job(layout_job));
+            let text_galley = ui.ctx().fonts_mut(|fonts| fonts.layout_job(layout_job));
 
             let pos = pos2(ui.max_rect().left(), ui.cursor().top());
             assert!(!text_galley.rows.is_empty(), "Galleys are never empty");
             // collect a response from many rows:
-            let mut rect = text_galley.rows[0].rect;
+            let mut rect = text_galley.rows[0].rect();
             let mut rect_size = rect.size();
             let icon_size = rect_size;
             rect_size.x = text_size.x.max(rect_size.x) + padding.x * 2.0;
@@ -314,7 +319,7 @@ impl CompositeIcon {
             let rect = rect.translate(vec2(pos.x, pos.y));
             let mut response = ui.allocate_rect(rect, sense);
             for row in text_galley.rows.iter().skip(1) {
-                let rect = row.rect.translate(vec2(pos.x, pos.y));
+                let rect = row.rect().translate(vec2(pos.x, pos.y));
                 response |= ui.allocate_rect(rect, sense);
             }
 
@@ -333,7 +338,7 @@ impl CompositeIcon {
             layout_job.halign = Align::Center;
             layout_job.justify = ui.layout().horizontal_justify();
 
-            let text_galley = ui.fonts(|fonts| fonts.layout_job(layout_job));
+            let text_galley = ui.ctx().fonts_mut(|fonts| fonts.layout_job(layout_job));
 
             let mut size = text_galley.size();
             let icon_size = size;

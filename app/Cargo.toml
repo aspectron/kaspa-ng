@@ -19,6 +19,10 @@ cfg-if.workspace = true
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 kaspa-alloc.workspace = true
 tokio.workspace = true
+# Install the process-level rustls crypto provider (ring) at startup, before any
+# direct workflow-http (reqwest) use such as market/release fetches. The wRPC SDK
+# also does this on client construction; both calls are idempotent.
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures.workspace = true

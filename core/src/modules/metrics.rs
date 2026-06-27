@@ -38,7 +38,7 @@ impl ModuleT for Metrics {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        let screen_rect_height = ui.ctx().screen_rect().height();
+        let screen_rect_height = ui.ctx().content_rect().height();
 
         let mut store_settings = false;
                             

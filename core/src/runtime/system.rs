@@ -22,11 +22,12 @@ cfg_if! {
 
                 use sysinfo::*;
                 let mut system = System::new();
-                system.refresh_cpu_specifics(CpuRefreshKind::new().with_frequency());
+                system.refresh_cpu_specifics(CpuRefreshKind::nothing().with_frequency());
                 system.refresh_memory();
                 let cpus = system.cpus();
-                let cpu_physical_core_count = system.physical_core_count();
-                let long_os_version = system.long_os_version();
+                // sysinfo 0.30+ made these system-wide queries associated functions.
+                let cpu_physical_core_count = System::physical_core_count();
+                let long_os_version = System::long_os_version();
                 let total_memory = system.total_memory();
 
                 let (cpu_frequency,cpu_brand) = cpus

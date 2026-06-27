@@ -259,7 +259,9 @@ impl Widget for CompositeButton<'_> {
         let pulldown_padding = if pulldown_selector { 20.0 } else { 0.0 };
 
         let space_available_for_image = if let Some(text) = &text {
-            let font_height = ui.fonts(|fonts| font_height(text, fonts, ui.style()));
+            let font_height = ui
+                .ctx()
+                .fonts_mut(|fonts| font_height(text, fonts, ui.style()));
             Vec2::splat(font_height) // Reasonable?
         } else {
             ui.available_size() - 2.0 * button_padding
@@ -417,7 +419,7 @@ impl Widget for CompositeButton<'_> {
                             texture_load_result_response(&image.source(ui.ctx()), &tlr, response);
                     }
                     Composite::Icon(icon) => {
-                        let galley = WidgetText::RichText(icon.clone().size(image_size.y))
+                        let galley = WidgetText::RichText(icon.clone().size(image_size.y).into())
                             .into_galley(
                                 ui,
                                 wrap.map(|wrap| {
@@ -498,7 +500,7 @@ impl Widget for CompositeButton<'_> {
             }
 
             if pulldown_selector {
-                let galley = WidgetText::RichText(RichText::new("⏷").size(14.)).into_galley(
+                let galley = WidgetText::RichText(RichText::new("⏷").size(14.).into()).into_galley(
                     ui,
                     wrap.map(|wrap| {
                         if wrap {
@@ -538,8 +540,11 @@ impl Widget for CompositeButton<'_> {
     }
 }
 
-fn font_height(text: &WidgetText, fonts: &epaint::Fonts, style: &Style) -> f32 {
+fn font_height(text: &WidgetText, fonts: &mut epaint::FontsView<'_>, style: &Style) -> f32 {
     match text {
+        // egui 0.34 added a plain-text `WidgetText::Text` variant; it carries no
+        // styling, so it uses the default font's row height.
+        WidgetText::Text(_) => fonts.row_height(&FontSelection::Default.resolve(style)),
         WidgetText::RichText(text) => text.font_height(fonts, style),
         WidgetText::LayoutJob(job) => job.font_height(fonts),
         WidgetText::Galley(galley) => {

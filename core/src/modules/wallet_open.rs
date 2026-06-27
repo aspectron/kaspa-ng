@@ -212,7 +212,7 @@ fn _render_wallet_descriptor(wallet: &WalletDescriptor, ui: &mut Ui) -> LayoutJo
         0.0,
         TextFormat {
             font_id: FontId::new(18.0, FontFamily::Proportional),
-            color: ui.ctx().style().visuals.strong_text_color(), //text_color(),
+            color: ui.ctx().global_style().visuals.strong_text_color(), //text_color(),
             ..Default::default()
         },
     );
@@ -221,7 +221,7 @@ fn _render_wallet_descriptor(wallet: &WalletDescriptor, ui: &mut Ui) -> LayoutJo
         0.0,
         TextFormat {
             font_id: FontId::new(12.0, FontFamily::Proportional),
-            color: ui.ctx().style().visuals.text_color(),
+            color: ui.ctx().global_style().visuals.text_color(),
             ..Default::default()
         },
     );
@@ -230,7 +230,7 @@ fn _render_wallet_descriptor(wallet: &WalletDescriptor, ui: &mut Ui) -> LayoutJo
         0.0,
         TextFormat {
             font_id: FontId::new(12.0, FontFamily::Proportional),
-            color: ui.ctx().style().visuals.text_color(),
+            color: ui.ctx().global_style().visuals.text_color(),
             ..Default::default()
         },
     );

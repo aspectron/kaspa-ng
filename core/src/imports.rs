@@ -64,6 +64,11 @@ pub use egui::epaint::{
 pub use egui::*;
 pub use egui_plot::{PlotPoint, PlotPoints};
 
+// egui 0.35 introduced its own `egui::Panel`, which collides with kaspa-ng's
+// `crate::egui::Panel` under the two glob imports below. Re-export the local one
+// explicitly so it wins (explicit `use` shadows glob `use`).
+pub use crate::egui::Panel;
+
 pub use crate::collection::Collection;
 pub use crate::core::Core;
 pub use crate::core::MAINNET_EXPLORER;

@@ -273,7 +273,7 @@ impl<'core> Menu<'core> {
     pub fn render(&mut self, ui: &mut Ui) {
         let device = self.core.device().clone();
 
-        egui::menu::bar(ui, |ui| {
+        egui::MenuBar::new().ui(ui, |ui| {
             ui.columns(2, |cols| {
                 cols[0].horizontal(|ui| {
                     if device.single_pane() {
@@ -355,7 +355,7 @@ impl<'core> Menu<'core> {
     pub fn render_desktop_menu(&mut self, ui: &mut Ui) {
         if ui.button(i18n("Overview")).clicked() {
             self.select::<modules::Overview>();
-            ui.close_menu();
+            ui.close();
         }
         ui.separator();
 
@@ -363,12 +363,12 @@ impl<'core> Menu<'core> {
         if self.core.state().is_open() {
             if ui.button(i18n("Wallet")).clicked() {
                 self.select::<modules::AccountManager>();
-                ui.close_menu();
+                ui.close();
             }
         } else {
             if ui.button(i18n("Wallet")).clicked() {
                 self.select::<modules::WalletOpen>();
-                ui.close_menu();
+                ui.close();
             }
         }
         // if ui.button(i18n("Wallet")).clicked() {
@@ -377,7 +377,7 @@ impl<'core> Menu<'core> {
         //     } else {
         //         self.select::<modules::WalletOpen>();
         //     }
-        //     ui.close_menu();
+        //     ui.close();
         // }
 
         #[cfg(not(feature = "lean"))]
@@ -385,13 +385,13 @@ impl<'core> Menu<'core> {
             ui.separator();
             if ui.button(i18n("Metrics")).clicked() {
                 self.select::<modules::Metrics>();
-                ui.close_menu();
+                ui.close();
             }
 
             ui.separator();
             if ui.button(i18n("Block DAG")).clicked() {
                 self.select::<modules::BlockDag>();
-                ui.close_menu();
+                ui.close();
             }
         }
 
@@ -401,7 +401,7 @@ impl<'core> Menu<'core> {
                 ui.separator();
                 if ui.button(i18n("Node")).clicked() {
                     self.select::<modules::Node>();
-                    ui.close_menu();
+                    ui.close();
                 }
             }
         }
@@ -410,7 +410,7 @@ impl<'core> Menu<'core> {
 
         if ui.button(i18n("Settings")).clicked() {
             self.select::<modules::Settings>();
-            ui.close_menu();
+            ui.close();
         }
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -419,7 +419,7 @@ impl<'core> Menu<'core> {
                 ui.separator();
                 if ui.button(i18n("Logs")).clicked() {
                     self.select::<modules::Logs>();
-                    ui.close_menu();
+                    ui.close();
                 }
             }
         }
@@ -445,7 +445,7 @@ impl<'core> Menu<'core> {
             tests.into_iter().for_each(|module| {
                 if ui.button(module.name()).clicked() {
                     self.core.select_with_type_id(module.type_id());
-                    ui.close_menu();
+                    ui.close();
                 }
             });
 
@@ -455,7 +455,7 @@ impl<'core> Menu<'core> {
             modules.into_iter().for_each(|module| {
                 if ui.button(module.name()).clicked() {
                     self.core.select_with_type_id(module.type_id());
-                    ui.close_menu();
+                    ui.close();
                 }
             });
         });
@@ -505,7 +505,7 @@ impl<'core> Menu<'core> {
                             .expect("Unable to activate language");
                         self.core.settings.language_code = code.to_string();
                         self.core.store_settings();
-                        ui.close_menu();
+                        ui.close();
                     }
                 });
         });
@@ -542,7 +542,7 @@ impl<'core> Menu<'core> {
                                             self.core.settings.user_interface.theme_color =
                                                 name.to_string();
                                             self.core.store_settings();
-                                            ui.close_menu();
+                                            ui.close();
                                         }
                                     });
                                 });
@@ -564,7 +564,7 @@ impl<'core> Menu<'core> {
                                         self.core.settings.user_interface.theme_style =
                                             name.to_string();
                                         self.core.store_settings();
-                                        ui.close_menu();
+                                        ui.close();
                                     }
                                 });
                             });

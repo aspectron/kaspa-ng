@@ -1,3 +1,10 @@
 [build]
 target = "app/index.html"
 dist = "dist"
+
+# Pin the wasm-bindgen toolchain so the build is reproducible regardless of what
+# happens to be on a contributor's PATH. binaryen < 119 cannot parse the wasm
+# emitted by wasm-bindgen 0.2.126 (fails with "invalid code after misc prefix"),
+# so wasm-opt must be a recent release.
+[tools]
+wasm_opt = "version_130"

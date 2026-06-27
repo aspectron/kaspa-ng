@@ -70,7 +70,7 @@ impl<'panel> PopupPanel<'panel> {
     // }
 
     pub fn is_open(ui: &mut Ui, popup_id: Id) -> bool {
-        ui.memory(|mem| mem.is_popup_open(popup_id))
+        egui::Popup::is_id_open(ui.ctx(), popup_id)
     }
 
     pub fn with_min_width(mut self, min_width: f32) -> Self {
@@ -109,9 +109,11 @@ impl<'panel> PopupPanel<'panel> {
     }
 
     pub fn build(self, ui: &mut Ui) {
+        // egui 0.34's `Memory::close_popup` now takes the popup id.
+        let popup_id = self.id;
         let response = (self.widget)(ui);
         if response.clicked() {
-            ui.memory_mut(|mem| mem.toggle_popup(self.id));
+            egui::Popup::toggle_id(ui.ctx(), self.id);
         }
 
         // replica of [`egui::popup::popup_above_or_below_widget`] that
@@ -144,7 +146,7 @@ impl<'panel> PopupPanel<'panel> {
                                 .add(Label::new(RichText::new(X).size(16.)).sense(Sense::click()))
                                 .clicked()
                             {
-                                ui.memory_mut(|mem| mem.close_popup());
+                                egui::Popup::close_id(ui.ctx(), popup_id);
                             }
                         });
                     });
@@ -174,7 +176,7 @@ impl<'panel> PopupPanel<'panel> {
                 }
 
                 if close_popup {
-                    ui.memory_mut(|mem| mem.close_popup());
+                    egui::Popup::close_id(ui.ctx(), popup_id);
                 }
             },
         );
@@ -190,7 +192,15 @@ pub fn popup_above_or_below_widget_local<R>(
     close_on_escape: bool,
     add_contents: impl FnOnce(&mut Ui) -> R,
 ) -> Option<R> {
-    if ui.memory(|mem| mem.is_popup_open(popup_id)) {
+    if egui::Popup::is_id_open(ui.ctx(), popup_id) {
+        // egui 0.32+ closes a popup at the end of each pass unless it is
+        // re-affirmed via `keep_popup_open`. This custom popup does not use
+        // `Popup::show`, so without this the popup would render for a single
+        // frame and then immediately disappear. `keep_popup_open` is deprecated
+        // in favour of `Popup::show`, but egui's own `Popup::open_id` docs direct
+        // callers that don't use `Popup::show` to call it, so allow it here.
+        #[allow(deprecated)]
+        ui.ctx().memory_mut(|mem| mem.keep_popup_open(popup_id));
         let (pos, pivot) = match above_or_below {
             AboveOrBelow::Above => (widget_response.rect.left_top(), Align2::LEFT_BOTTOM),
             AboveOrBelow::Below => (widget_response.rect.left_bottom(), Align2::LEFT_TOP),
@@ -238,7 +248,7 @@ pub fn popup_above_or_below_widget_local<R>(
         }
 
         if close_popup {
-            ui.memory_mut(|mem| mem.close_popup());
+            egui::Popup::close_id(ui.ctx(), popup_id);
         }
 
         Some(inner.inner)

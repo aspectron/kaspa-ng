@@ -22,6 +22,12 @@ cfg_if! {
 
             kaspa_alloc::init_allocator_with_default_settings();
 
+            // Install the pure-Rust `ring` rustls crypto provider before any TLS
+            // (workflow-http/reqwest or the wRPC client). reqwest 0.13 ships with
+            // `rustls-no-provider`, so a provider must be installed explicitly;
+            // `install_default` is idempotent (no-op if already set).
+            let _ = rustls::crypto::ring::default_provider().install_default();
+
             let body = async {
                 if let Err(err) = kaspa_ng_main(ApplicationContext::default()).await {
                     log_error!("Error: {err}");

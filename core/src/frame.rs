@@ -2,10 +2,13 @@ use crate::imports::*;
 
 pub fn window_frame(
     enable: bool,
-    ctx: &egui::Context,
+    ui: &mut egui::Ui,
     title: &str,
     add_contents: impl FnOnce(&mut egui::Ui),
 ) {
+    // egui 0.34 deprecated ctx-level `CentralPanel::show`; we now nest it into
+    // the root `Ui` provided by `eframe::App::ui` via `show_inside`.
+    let ctx = ui.ctx().clone();
     let (is_fullscreen, is_maximized) = ctx.input(|i| {
         let viewport = i.viewport();
         (
@@ -23,7 +26,7 @@ pub fn window_frame(
     }
 
     if enable && !hide {
-        let mut stroke = ctx.style().visuals.widgets.noninteractive.fg_stroke;
+        let mut stroke = ctx.global_style().visuals.widgets.noninteractive.fg_stroke;
 
         let (corner_radius, stroke_width) = if is_fullscreen || is_maximized {
             (0.0.into(), 0.0)
@@ -34,73 +37,77 @@ pub fn window_frame(
         stroke.width = stroke_width;
 
         let panel_frame = egui::Frame {
-            fill: ctx.style().visuals.window_fill(),
+            fill: ctx.global_style().visuals.window_fill(),
             corner_radius,
             stroke,
-            // stroke: ctx.style().visuals.widgets.noninteractive.fg_stroke,
+            // stroke: ctx.global_style().visuals.widgets.noninteractive.fg_stroke,
             outer_margin: 0.5.into(), // so the stroke is within the bounds
             ..Default::default()
         };
 
         let outline_frame = egui::Frame {
-            // fill: ctx.style().visuals.window_fill(),
+            // fill: ctx.global_style().visuals.window_fill(),
             corner_radius,
             stroke,
-            // stroke: ctx.style().visuals.widgets.noninteractive.fg_stroke,
+            // stroke: ctx.global_style().visuals.widgets.noninteractive.fg_stroke,
             outer_margin: 0.5.into(), // so the stroke is within the bounds
             ..Default::default()
         };
 
-        CentralPanel::default().frame(panel_frame).show(ctx, |ui| {
-            let app_rect = ui.max_rect();
+        CentralPanel::default()
+            .frame(panel_frame)
+            .show_inside(ui, |ui| {
+                let app_rect = ui.max_rect();
 
-            let title_bar_height = 28.0;
-            let title_bar_rect = {
-                let mut rect = app_rect;
-                rect.max.y = rect.min.y + title_bar_height;
-                rect
-            };
-            title_bar_ui(ui, title_bar_rect, title, is_fullscreen, is_maximized);
+                let title_bar_height = 28.0;
+                let title_bar_rect = {
+                    let mut rect = app_rect;
+                    rect.max.y = rect.min.y + title_bar_height;
+                    rect
+                };
+                title_bar_ui(ui, title_bar_rect, title, is_fullscreen, is_maximized);
 
-            // Add the contents:
-            let content_rect = {
-                let mut rect = app_rect;
-                rect.min.y = title_bar_rect.max.y;
-                rect
-            };
-            // .shrink(4.0);
-            // .shrink2(vec2(8.0,4.0));
-            //let mut content_ui = ui.child_ui(content_rect, *ui.layout(), None);
-            let mut content_ui = ui.new_child(
-                UiBuilder::new()
-                    .max_rect(content_rect)
-                    .layout(*ui.layout())
-                    .ui_stack_info(UiStackInfo::default()),
-            );
-            add_contents(&mut content_ui);
+                // Add the contents:
+                let content_rect = {
+                    let mut rect = app_rect;
+                    rect.min.y = title_bar_rect.max.y;
+                    rect
+                };
+                // .shrink(4.0);
+                // .shrink2(vec2(8.0,4.0));
+                //let mut content_ui = ui.child_ui(content_rect, *ui.layout(), None);
+                let mut content_ui = ui.new_child(
+                    UiBuilder::new()
+                        .max_rect(content_rect)
+                        .layout(*ui.layout())
+                        .ui_stack_info(UiStackInfo::default()),
+                );
+                add_contents(&mut content_ui);
 
-            // panel_frame.show(ui);
-            ui.painter().add(outline_frame.paint(app_rect));
-        });
+                // panel_frame.show(ui);
+                ui.painter().add(outline_frame.paint(app_rect));
+            });
     } else {
         let panel_frame = egui::Frame {
-            fill: ctx.style().visuals.window_fill(),
+            fill: ctx.global_style().visuals.window_fill(),
             inner_margin: 0.0.into(),
             outer_margin: 0.0.into(),
             ..Default::default()
         };
 
-        CentralPanel::default().frame(panel_frame).show(ctx, |ui| {
-            let app_rect = ui.max_rect();
-            //let mut content_ui = ui.child_ui(app_rect, *ui.layout(), None);
-            let mut content_ui = ui.new_child(
-                UiBuilder::new()
-                    .max_rect(app_rect)
-                    .layout(*ui.layout())
-                    .ui_stack_info(UiStackInfo::default()),
-            );
-            add_contents(&mut content_ui);
-        });
+        CentralPanel::default()
+            .frame(panel_frame)
+            .show_inside(ui, |ui| {
+                let app_rect = ui.max_rect();
+                //let mut content_ui = ui.child_ui(app_rect, *ui.layout(), None);
+                let mut content_ui = ui.new_child(
+                    UiBuilder::new()
+                        .max_rect(app_rect)
+                        .layout(*ui.layout())
+                        .ui_stack_info(UiStackInfo::default()),
+                );
+                add_contents(&mut content_ui);
+            });
     }
 }
 
@@ -153,7 +160,7 @@ fn title_bar_ui(
     //     });
     // });
 
-    ui.allocate_new_ui(UiBuilder::new().max_rect(title_bar_rect), |ui| {
+    ui.scope_builder(UiBuilder::new().max_rect(title_bar_rect), |ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
             ui.visuals_mut().button_frame = false;

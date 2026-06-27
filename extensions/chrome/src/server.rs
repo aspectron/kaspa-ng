@@ -14,7 +14,7 @@ use crate::imports::*;
 pub type PortListenerClosure = Closure<dyn FnMut(chrome_runtime_port::Port) -> JsValue>;
 pub type PortEventClosure = Closure<dyn FnMut(JsValue) -> JsValue>;
 use kaspa_ng_core::interop::Target;
-use rand::Rng;
+use rand::RngExt;
 use std::collections::HashMap;
 use workflow_core::enums::Describe;
 use workflow_wasm::extensions::ObjectExtension;
@@ -206,8 +206,8 @@ impl Server {
                 // log_info!("port connected: {port:?}");
                 let port = Rc::new(port);
                 let port_clone = port.clone();
-                let mut rng = rand::thread_rng();
-                let port_id = rng.r#gen::<u64>();
+                let mut rng = rand::rng();
+                let port_id = rng.random::<u64>();
 
                 let this_clone = this.clone();
                 let message_closure = Rc::new(Closure::new(move |msg: JsValue| -> JsValue {
