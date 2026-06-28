@@ -2,7 +2,7 @@
 
 # 2.0.1
 
-- Rusty Kaspa 2.0.1 (Toccata Hard Fork)
+- Rusty Kaspa 2.0.1
 - Updated to `workflow-rs` 0.19.0.
 - Dependencies are up to date with all known `RUSTSEC` security advisories resolved.
 - The system has been updated to the latest WebAssembly (`wasm-bindgen`) toolchain.
@@ -10,7 +10,7 @@
 
 # 2.0.0
 
-- Rusty Kaspa 2.0.0 (Toccata support)
+- Rusty Kaspa 2.0.0 (Toccata hard fork support)
 
 # 1.0.1
 
