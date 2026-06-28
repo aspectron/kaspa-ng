@@ -1,5 +1,13 @@
 # Changelog
 
+# 2.0.1
+
+- Rusty Kaspa 2.0.1 (Toccata Hard Fork)
+- Updated to `workflow-rs` 0.19.0.
+- Dependencies are up to date with all known `RUSTSEC` security advisories resolved.
+- The system has been updated to the latest WebAssembly (`wasm-bindgen`) toolchain.
+- Kaspa NG has been updated to EGUI 0.34, which includes various improvements and bug fixes.
+
 # 2.0.0
 
 - Rusty Kaspa 2.0.0 (Toccata support)
