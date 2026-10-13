@@ -54,16 +54,37 @@ After replacing local paths with the published immutable SDK Git reference,
 cargo check --workspace --tests --benches also passed. The local SDK tree
 was committed without further source changes before publication.
 
+Additional SDK validation (Windows x86_64, Rust 1.95.0)
+-----------------------------------------------------
+- cargo fmt --all -- --check: passed.
+- cargo clippy --locked --workspace --tests --benches: passed.
+- cargo nextest run --locked --workspace --lib --test-threads 4:
+  1022 passed, 14 skipped. Development profile (not a release-profile run).
+- All 13 wasm32 compile/clippy feature and test-module checks corresponding
+  to the SDK check script: passed. These compile tests; they do not execute
+  the WASM tests in a browser or Node.js.
+
+Native optimized NG builds and packaging are tracked separately:
+https://github.com/Shantee-Chris/kaspa-ng/actions/runs/38412809242
+The packaging workflow lives on the fork's multiplatform release tags.
+It is not part of this application-upgrade branch.
+
+The contributor reports synchronization running in the Windows development
+test build. Completed synchronization and live wallet transactions have not
+been verified. No existing wallet data was opened by the automated checks.
+
 Not yet validated
 -----------------
-Full node synchronization, database upgrades, wallet create/restore/send,
-WASM/browser behavior, Linux/macOS builds and release packaging.
-No existing wallet data was opened and no transaction was sent.
+Completed full-network synchronization, database upgrades, GUI wallet
+create/restore/send, browser runtime behavior, WASM release packaging,
+TLS backend combinations and a release-profile run of the full SDK suite.
 
 Maintainer handoff
 ------------------
 SDK branch:
 https://github.com/Shantee-Chris/rusty-kaspa/tree/integration/kaspa-ng-v2.1.0
+SDK upstream review:
+https://github.com/kaspanet/rusty-kaspa/pull/1149
 NG branch:
 https://github.com/Shantee-Chris/kaspa-ng/tree/upgrade/rusty-kaspa-2.1.0
 
