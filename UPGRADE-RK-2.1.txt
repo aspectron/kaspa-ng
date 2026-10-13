@@ -1,0 +1,80 @@
+Kaspa NG / Rusty Kaspa 2.1.0 integration for maintainer review
+==========================================================
+
+This is a review branch, not an official Kaspa NG release.
+
+Base versions
+-------------
+Kaspa NG: aspectron/kaspa-ng 58d65f21af939402b36882bde7ab0d4c6ddee212
+Rusty Kaspa: kaspanet/rusty-kaspa v2.1.0
+             01b532e8b553523216471682649693af92f0fd16
+Existing NG SDK fork: aspectron/rusty-kaspa sigma
+                     35616f7bfa10be97ad94891c328ca5b569a6adcb
+Integrated SDK: Shantee-Chris/rusty-kaspa
+               6aa2c21ae8f2d4b7752e070213394c0ec90f7a20
+
+Why a direct version change did not build
+----------------------------------------
+NG master uses workflow-rs 0.19 and wasm-bindgen 0.2.126/js-sys 0.3.103.
+Official RK v2.1.0 uses workflow-rs 0.18 and pins wasm-bindgen 0.2.100 /
+js-sys 0.3.77. Replacing the sigma reference with the v2.1.0 tag fails
+dependency resolution. The existing sigma SDK compatibility changes were
+therefore applied on top of the official v2.1.0 release.
+
+The port preserves the existing workflow, WASM ABI and TLS adaptations.
+The redundant global risc0 export-syscalls dependency from sigma was
+omitted: v2.1.0 already contains the Windows-specific dependency.
+The SDK Cargo.lock was updated from the release lockfile.
+These are adaptations of existing Aspectron work, not a new consensus
+implementation. The integration still requires independent review.
+
+NG changes
+----------
+All 17 RK workspace dependencies use the same immutable integration commit.
+Cargo.lock resolves the RK packages to version 2.1.0 from that commit.
+Network::tps uses Params.block_mass_limits.reference(), matching the
+v2.1.0 API after removal of the pre/post-activation accessor.
+NG's application version remains 2.0.1; its embedded node is 2.1.0.
+
+Validation performed on Windows x86_64, Rust 1.95.0
+---------------------------------------------------
+With the local SDK source matching the integration commit:
+- cargo check --locked --workspace --tests --benches: passed.
+- cargo test --locked --workspace --lib: passed (3 tests).
+- cargo build --locked --bin kaspa-ng: passed (development profile).
+- kaspa-ng.exe --help identifies rusty-kaspa 2.1.0.
+- kaspa-ng.exe --daemon --version prints "kaspad 2.1.0".
+  The daemon version path returns exit code 1 because NG treats clap's
+  display-version result as a parse error; this behavior was not changed.
+
+The three NG tests cover the markup parser, generic transaction-mass
+calculation and fee averaging. They are not a full wallet or consensus test.
+
+After replacing local paths with the published immutable SDK Git reference,
+cargo check --workspace --tests --benches also passed. The local SDK tree
+was committed without further source changes before publication.
+
+Not yet validated
+-----------------
+Full node synchronization, database upgrades, wallet create/restore/send,
+WASM/browser behavior, Linux/macOS builds and release packaging.
+No existing wallet data was opened and no transaction was sent.
+
+Maintainer handoff
+------------------
+SDK branch:
+https://github.com/Shantee-Chris/rusty-kaspa/tree/integration/kaspa-ng-v2.1.0
+NG branch:
+https://github.com/Shantee-Chris/kaspa-ng/tree/upgrade/rusty-kaspa-2.1.0
+
+A maintainer can integrate the SDK compatibility changes into the maintained
+Aspectron fork, then replace NG's temporary Shantee-Chris SDK reference with
+the approved immutable commit and regenerate Cargo.lock. Complete the
+remaining platform/runtime validation before publishing an official release.
+
+Build reproduction (requires the upstream Rusty Kaspa build prerequisites):
+git clone --branch upgrade/rusty-kaspa-2.1.0 https://github.com/Shantee-Chris/kaspa-ng.git
+cd kaspa-ng
+cargo check --locked --workspace --tests --benches
+cargo test --locked --workspace --lib
+cargo build --locked --bin kaspa-ng

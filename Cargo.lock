@@ -763,7 +763,7 @@ version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16e2cdb6d5ed835199484bb92bb8b3edd526effe995c61732580439c1a67e2e9"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "http",
  "log",
  "url",
@@ -834,6 +834,12 @@ name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
+name = "base64"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
 
 [[package]]
 name = "base64ct"
@@ -1749,6 +1755,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed17f5901b6630b993ca003def43f2f8ef4014fc13b047b57aad617ff32bc2ec"
+dependencies = [
+ "darling_core 0.24.1",
+ "darling_macro 0.24.1",
+]
+
+[[package]]
 name = "darling_core"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1776,6 +1792,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling_core"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6837e2cf7485aaae18f86181d2f0e9a7ed297a025e220aeabf63fdebd3a2ddff"
+dependencies = [
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "syn 3.0.9",
+]
+
+[[package]]
 name = "darling_macro"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1795,6 +1824,17 @@ dependencies = [
  "darling_core 0.23.0",
  "quote",
  "syn 2.0.118",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ac7135c3ef02b2f7833bbeb1be5ba7f966dcde8a87c6b87f65a778d71a02785"
+dependencies = [
+ "darling_core 0.24.1",
+ "quote",
+ "syn 3.0.9",
 ]
 
 [[package]]
@@ -3299,7 +3339,7 @@ version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96547c2556ec9d12fb1578c4eaf448b04993e7fb79cbaad930a656880a6bdfa0"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "futures-channel",
  "futures-util",
@@ -3612,10 +3652,12 @@ checksum = "34f877a98676d2fb664698d74cc6a51ce6c484ce8c770f05d0108ec9090aeb46"
 dependencies = [
  "defmt",
  "jiff-static",
+ "jiff-tzdb-platform",
  "log",
  "portable-atomic",
  "portable-atomic-util",
  "serde_core",
+ "windows-link",
 ]
 
 [[package]]
@@ -3627,6 +3669,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.118",
+]
+
+[[package]]
+name = "jiff-tzdb"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa8377070c6bae868759445e5a77f66d84f0b72f3a054bfb00e6d038b8282da7"
+
+[[package]]
+name = "jiff-tzdb-platform"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "875a5a69ac2bab1a891711cf5eccbec1ce0341ea805560dcd90b7a2e925132e8"
+dependencies = [
+ "jiff-tzdb",
 ]
 
 [[package]]
@@ -3710,8 +3767,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-addresses"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "borsh",
  "js-sys",
@@ -3725,8 +3782,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-addressmanager"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "borsh",
  "igd-next",
@@ -3747,16 +3804,16 @@ dependencies = [
 
 [[package]]
 name = "kaspa-alloc"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "mimalloc",
 ]
 
 [[package]]
 name = "kaspa-bip32"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "borsh",
  "bs58",
@@ -3782,8 +3839,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-build-info"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "duct",
  "faster-hex 0.9.0",
@@ -3791,8 +3848,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-cli"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3839,8 +3896,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-connectionmanager"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "duration-string",
  "futures-util",
@@ -3857,8 +3914,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "arc-swap",
  "async-channel",
@@ -3901,8 +3958,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus-client"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "ahash",
  "borsh",
@@ -3931,8 +3988,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus-core"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "arc-swap",
  "async-trait",
@@ -3970,8 +4027,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus-notify"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "cfg-if",
@@ -3990,8 +4047,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensus-wasm"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "cfg-if",
  "faster-hex 0.9.0",
@@ -4015,8 +4072,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-consensusmanager"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "duration-string",
  "futures",
@@ -4035,8 +4092,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-core"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -4055,8 +4112,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-daemon"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-trait",
  "borsh",
@@ -4078,8 +4135,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-database"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "bincode",
  "enum-primitive-derive",
@@ -4101,8 +4158,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-grpc-client"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "async-stream",
@@ -4134,8 +4191,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-grpc-core"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "async-stream",
@@ -4166,8 +4223,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-grpc-server"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "async-stream",
@@ -4202,8 +4259,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-hashes"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "blake2b_simd",
  "blake3",
@@ -4223,8 +4280,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-index-core"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -4243,8 +4300,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-index-processor"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -4269,8 +4326,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-math"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "borsh",
  "faster-hex 0.9.0",
@@ -4289,16 +4346,16 @@ dependencies = [
 
 [[package]]
 name = "kaspa-merkle"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "kaspa-hashes",
 ]
 
 [[package]]
 name = "kaspa-metrics-core"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-trait",
  "borsh",
@@ -4314,8 +4371,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-mining"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "futures-util",
  "itertools 0.13.0",
@@ -4340,8 +4397,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-mining-errors"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "kaspa-consensus-core",
  "thiserror 2.0.18",
@@ -4349,8 +4406,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-muhash"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "kaspa-hashes",
  "kaspa-math",
@@ -4494,8 +4551,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-notify"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -4526,8 +4583,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-p2p-flows"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4552,6 +4609,7 @@ dependencies = [
  "kaspa-utils-tower",
  "log",
  "parking_lot",
+ "prost",
  "rand 0.8.6",
  "regex",
  "semver",
@@ -4563,8 +4621,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-p2p-lib"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "borsh",
  "ctrlc",
@@ -4595,8 +4653,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-p2p-mining"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "kaspa-consensus-core",
  "kaspa-consensusmanager",
@@ -4613,8 +4671,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-perf-monitor"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "kaspa-core",
  "log",
@@ -4626,8 +4684,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-pow"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "js-sys",
  "kaspa-consensus-client",
@@ -4642,8 +4700,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-rpc-core"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -4684,8 +4742,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-rpc-macros"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-error",
@@ -4697,8 +4755,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-rpc-service"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-trait",
  "kaspa-addresses",
@@ -4729,8 +4787,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-seq-commit"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "kaspa-hashes",
  "kaspa-merkle",
@@ -4740,8 +4798,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-smt"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "blake3",
  "kaspa-hashes",
@@ -4751,8 +4809,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-smt-store"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "kaspa-consensus-core",
  "kaspa-core",
@@ -4771,8 +4829,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-system-info"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "kaspa-utils",
  "mac_address",
@@ -4783,8 +4841,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-txscript"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "ark-bn254",
  "ark-ec",
@@ -4826,8 +4884,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-txscript-errors"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "borsh",
  "kaspa-hashes",
@@ -4837,8 +4895,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-utils"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "arc-swap",
  "async-channel",
@@ -4864,8 +4922,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-utils-tower"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "bytes",
  "cfg-if",
@@ -4881,8 +4939,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-utxoindex"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "futures",
  "kaspa-consensus-core",
@@ -4901,8 +4959,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wallet-core"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "aes",
  "ahash",
@@ -4910,7 +4968,7 @@ dependencies = [
  "async-channel",
  "async-lock",
  "async-trait",
- "base64",
+ "base64 0.22.1",
  "borsh",
  "cfb-mode",
  "cfg-if",
@@ -4979,8 +5037,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wallet-keys"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-trait",
  "borsh",
@@ -5012,8 +5070,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wallet-macros"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "convert_case 0.5.0",
  "proc-macro-error",
@@ -5026,8 +5084,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wallet-pskt"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "bincode",
  "derive_builder",
@@ -5055,8 +5113,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wasm-core"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "faster-hex 0.9.0",
  "hexplay",
@@ -5067,8 +5125,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wrpc-client"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-lock",
  "async-trait",
@@ -5104,8 +5162,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wrpc-server"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-trait",
  "borsh",
@@ -5133,8 +5191,8 @@ dependencies = [
 
 [[package]]
 name = "kaspa-wrpc-wasm"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "ahash",
  "async-lock",
@@ -5164,8 +5222,8 @@ dependencies = [
 
 [[package]]
 name = "kaspad"
-version = "2.0.1"
-source = "git+https://github.com/aspectron/rusty-kaspa.git?branch=sigma#35616f7bfa10be97ad94891c328ca5b569a6adcb"
+version = "2.1.0"
+source = "git+https://github.com/Shantee-Chris/rusty-kaspa.git?rev=6aa2c21ae8f2d4b7752e070213394c0ec90f7a20#6aa2c21ae8f2d4b7752e070213394c0ec90f7a20"
 dependencies = [
  "async-channel",
  "cfg-if",
@@ -7244,7 +7302,7 @@ version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "219c5811de6525e5416c7d5d53bb656d3afdbc6c5af816e0802bcfa42dbdc1c3"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -7848,9 +7906,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.150"
+version = "1.0.154"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9"
+checksum = "e7e9cc8b1b85264074fbcc02a88680c4096b1e47df8f739dceb03bf482f04bd6"
 dependencies = [
  "itoa",
  "memchr",
@@ -7890,16 +7948,17 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.21.0"
+version = "3.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76a5c54c7310e7b8b9577c286d7e399ddd876c3e12b3ed917a8aabc4b96e9e8c"
+checksum = "df9adc193c780ef8f159aee8b61e2d5801aaa555e6eb0947fe45530ec506296f"
 dependencies = [
- "base64",
+ "base64 0.23.1",
  "bs58",
  "chrono",
  "hex",
  "indexmap 1.9.3",
  "indexmap 2.14.0",
+ "jiff",
  "schemars 0.9.0",
  "schemars 1.2.1",
  "serde_core",
@@ -7910,14 +7969,14 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.21.0"
+version = "3.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84d57bc0c8b9a17920c178daa6bb924850d54a9c97ab45194bb8c17ad66bb660"
+checksum = "3e17bbc68e28663bbbb90df47e058aa7eda4fb445b89fe70457bb94fbccf6e49"
 dependencies = [
- "darling 0.23.0",
+ "darling 0.24.1",
  "proc-macro2",
  "quote",
- "syn 2.0.118",
+ "syn 3.0.9",
 ]
 
 [[package]]
@@ -8397,6 +8456,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "3.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d78c8dee4c7bf0e14673097256fed6142ce9d3b85a408189d07482442145823b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "sync_wrapper"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8832,7 +8902,7 @@ checksum = "ac2a5518c70fa84342385732db33fb3f44bc4cc748936eb5833d2df34d6445ef"
 dependencies = [
  "async-trait",
  "axum",
- "base64",
+ "base64 0.22.1",
  "bytes",
  "flate2",
  "h2",
@@ -9186,7 +9256,7 @@ version = "0.45.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80be9b06fbae3b8b303400ab20778c80bbaf338f563afe567cf3c9eea17b47ef"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "data-url",
  "flate2",
  "imagesize",
@@ -10557,7 +10627,7 @@ version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8d7b2027b97ae99a527e59a09af97d37492fe01f5f7f5b08105d819bf83dcb2"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "cfg-if",
  "chrome-sys",
  "faster-hex 0.10.0",
