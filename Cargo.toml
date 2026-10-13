@@ -128,23 +128,23 @@ egui-notify = { version = "=0.22.0"}
 # kaspa-txscript = { path = "../rusty-kaspa/crypto/txscript" }
 # kaspad = { path = "../rusty-kaspa/kaspad" }
 
-kaspa-addresses = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-alloc = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-bip32 = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-cli = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-consensus-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-metrics-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-notify = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-rpc-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-rpc-service = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-utils = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-wallet-core = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-wallet-keys = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-wrpc-client = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-wrpc-server = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspa-txscript = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
-kaspad = { git = "https://github.com/aspectron/rusty-kaspa.git", branch = "sigma" }
+kaspa-addresses = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-alloc = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-bip32 = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-cli = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-consensus-core = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-core = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-metrics-core = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-notify = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-rpc-core = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-rpc-service = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-utils = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-wallet-core = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-wallet-keys = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-wrpc-client = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-wrpc-server = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspa-txscript = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
+kaspad = { git = "https://github.com/Shantee-Chris/rusty-kaspa.git", rev = "6aa2c21ae8f2d4b7752e070213394c0ec90f7a20" }
 
 # kaspa-addresses = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }
 # kaspa-alloc = { git = "https://github.com/kaspanet/rusty-kaspa.git", branch = "master" }

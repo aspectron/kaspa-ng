@@ -21,8 +21,8 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust 1.95.0
+        uses: dtolnay/rust-toolchain@1.95.0
 
       - name: Cache
         uses: actions/cache@v4
@@ -64,14 +64,14 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust 1.95.0
+        uses: dtolnay/rust-toolchain@1.95.0
       
       - name: Set up cache
         uses: Swatinem/rust-cache@v2
       
       - name: Install cargo-nextest
-        run: cargo install cargo-nextest --locked
+        run: cargo install cargo-nextest --version 0.9.148 --locked
 
       - name: Cache
         uses: actions/cache@v4
@@ -111,8 +111,8 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust 1.95.0
+        uses: dtolnay/rust-toolchain@1.95.0
         with:
           components: rustfmt, clippy
 
@@ -174,14 +174,14 @@ jobs:
           packages: libglib2.0-dev libatk1.0-dev libgtk-3-dev
           version: 1.0
 
-      - name: Install stable toolchain
+      - name: Install Rust 1.95.0
         if: steps.install_llvm.outcome == 'success' && steps.install_llvm.conclusion == 'success'
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
 
       - name: Cargo install wasm-pack and trunk
         run: |
-          cargo install wasm-pack
-          cargo install trunk
+          cargo install wasm-pack --version 0.15.0 --locked
+          cargo install trunk --version 0.21.14 --locked
 
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown
@@ -224,7 +224,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-13, macos-latest ]
+        os: [ ubuntu-latest, windows-latest, macos-15-intel, macos-latest ]
     name: Building, ${{ matrix.os }}
     steps:
 
@@ -251,8 +251,8 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust 1.95.0
+        uses: dtolnay/rust-toolchain@1.95.0
 
       - name: Cache
         uses: actions/cache@v4

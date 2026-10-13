@@ -147,7 +147,7 @@ impl Network {
 
     pub fn tps(&self) -> u64 {
         let params = Params::from(*self);
-        params.block_mass_limits().after().reference() / BASIC_TRANSACTION_MASS * params.bps()
+        params.block_mass_limits.reference() / BASIC_TRANSACTION_MASS * params.bps()
     }
 }
 
